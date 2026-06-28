@@ -1,0 +1,14 @@
+# SC4S runtime configuration. Copy to /opt/sc4s/env_file.
+# Keep this file out of git once populated with real tokens.
+SC4S_DEST_SPLUNK_HEC_DEFAULT_URL=https://your.splunk.instance:8088
+SC4S_DEST_SPLUNK_HEC_DEFAULT_TOKEN=xxxxxx...xxxx
+
+# Optional listener/status defaults. Compose port publishing is controlled by /opt/sc4s/.env.
+SC4S_LISTEN_STATUS_PORT=8080
+SC4S_SOURCE_LISTEN_TCP_PORT=514
+SC4S_SOURCE_LISTEN_UDP_PORT=514
+SC4S_SOURCE_LISTEN_TLS_PORT=6514
+SC4S_SOURCE_TLS_ENABLE=no
+
+# Uncomment if your Splunk HEC endpoint uses an untrusted certificate.
+#SC4S_DEST_SPLUNK_HEC_DEFAULT_TLS_VERIFY=no

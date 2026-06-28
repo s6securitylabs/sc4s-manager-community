@@ -1,0 +1,88 @@
+# SC4S Manager Docker-first release compose template.
+#
+# This is intentionally aligned to the upstream SC4S Docker Compose process:
+#   - place this file in /opt/sc4s/compose.yaml or docker-compose.yml
+#   - keep SC4S configuration in /opt/sc4s/env_file
+#   - keep local parser/config material under /opt/sc4s/local
+#   - keep archive and TLS material under /opt/sc4s/archive and /opt/sc4s/tls
+#   - keep syslog-ng disk-buffer state in the splunk-sc4s-var Docker volume
+#
+# Quick start:
+#   sudo mkdir -p /opt/sc4s/{local,archive,tls,manager}
+#   sudo cp deploy/compose/compose.yaml /opt/sc4s/compose.yaml
+#   sudo cp deploy/compose/env_file.example /opt/sc4s/env_file
+#   sudo cp deploy/compose/manager.env.example /opt/sc4s/manager.env
+#   sudo cp deploy/compose/.env.example /opt/sc4s/.env
+#   sudo editor /opt/sc4s/env_file /opt/sc4s/manager.env /opt/sc4s/.env
+#   cd /opt/sc4s && sudo docker compose -f compose.yaml up -d
+#
+# This template deliberately does NOT mount /var/run/docker.sock. Without a
+# narrow host-provided control socket, runtime restart/reload/control actions are
+# unavailable and the UI reports runtime control as unknown/unavailable. That is
+# safer than giving a web-adjacent container host-root Docker control.
+services:
+  sc4s:
+    image: ${SC4S_IMAGE:-ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0}
+    container_name: SC4S
+    restart: unless-stopped
+    env_file:
+      - /opt/sc4s/env_file
+    ports:
+      - target: 514
+        published: ${SC4S_SOURCE_LISTEN_TCP_PORT:-514}
+        protocol: tcp
+      - target: 514
+        published: ${SC4S_SOURCE_LISTEN_UDP_PORT:-514}
+        protocol: udp
+      - target: 601
+        published: ${SC4S_SOURCE_LISTEN_RFC6587_PORT:-601}
+        protocol: tcp
+      - target: 6514
+        published: ${SC4S_SOURCE_LISTEN_TLS_PORT:-6514}
+        protocol: tcp
+      - target: 8080
+        published: ${SC4S_LISTEN_STATUS_PORT:-8080}
+        protocol: tcp
+    volumes:
+      - /opt/sc4s/local:/etc/syslog-ng/conf.d/local:z
+      - splunk-sc4s-var:/var/lib/syslog-ng
+      - /opt/sc4s/archive:/var/lib/syslog-ng/archive:z
+      - /opt/sc4s/tls:/etc/syslog-ng/tls:ro,z
+
+  manager:
+    image: ghcr.io/s6securitylabs/sc4s-manager:${SC4S_MANAGER_VERSION:-latest}
+    container_name: sc4s-manager
+    restart: unless-stopped
+    depends_on:
+      - sc4s
+    env_file:
+      - /opt/sc4s/manager.env
+    environment:
+      SC4S_ROOT: /opt/sc4s
+      SC4S_MANAGER_ROOT: /opt/sc4s-manager
+      SC4S_CONTROL_SOCKET: /run/sc4s-manager/control.sock
+    ports:
+      - target: 8090
+        published: ${SC4S_MANAGER_PORT:-8090}
+        protocol: tcp
+    volumes:
+      - /opt/sc4s/local:/opt/sc4s/local:z
+      - /opt/sc4s/tls:/opt/sc4s/tls:z
+      - /opt/sc4s/manager:/opt/sc4s-manager:z
+      - sc4s-manager-run:/run/sc4s-manager
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, urllib.request; data=json.loads(urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=3).read().decode()); raise SystemExit(0 if data.get('status') == 'ok' else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  splunk-sc4s-var:
+  sc4s-manager-run:

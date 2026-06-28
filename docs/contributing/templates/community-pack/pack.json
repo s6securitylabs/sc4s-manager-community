@@ -1,0 +1,119 @@
+{
+  "schema_version": "0.1",
+  "id": "example_vendor_example_product",
+  "version": "0.1.0",
+  "display_name": "Example Vendor Example Product",
+  "vendor": "example_vendor",
+  "product": "example_product",
+  "description": "Community submission template for an SecHub Resources SC4S pack. Replace every placeholder before submitting.",
+  "effective_origin": "community-extra",
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "community_submitted",
+  "quality_status": "draft",
+  "feedback": {
+    "likes": 0,
+    "rating_average": null,
+    "rating_count": 0,
+    "comments_url": null
+  },
+  "supported_transports": [
+    {
+      "id": "udp_bsd",
+      "label": "UDP syslog BSD",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Replace with the transport actually used by the source.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    }
+  ],
+  "event_families": [
+    {
+      "id": "primary",
+      "label": "Primary event family",
+      "match": "^EXAMPLE",
+      "match_engine": "pcre",
+      "expected_sourcetype": "example:product:event",
+      "required_fields": [
+        "message_id"
+      ]
+    }
+  ],
+  "test_event_sets": [
+    {
+      "id": "example_primary_fixture",
+      "label": "Example single-line fixture set",
+      "path": "test-events/example_vendor_example_product.log",
+      "format": "custom_application",
+      "wire_format": "headerless_syslog_payload",
+      "envelope": "none",
+      "serialization": "text",
+      "event_count": 1,
+      "events_per_file": "single",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_MANAGER_TEMPLATE_MARKER"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_local_time_requires_timezone",
+        "primary_field": "event_time",
+        "primary_timezone": "UTC",
+        "fallback_fields": [],
+        "fallback_time_mode": "none",
+        "fallback_timezone": null,
+        "requires_source_timezone_when_fields_missing": [],
+        "notes": "Replace with the real source timestamp policy."
+      },
+      "field_delimiting": {
+        "style": "custom",
+        "field_pattern": "key=value",
+        "field_separator": "space_between_pairs",
+        "value_wrapper": "none",
+        "allows_spaces_in_values": false,
+        "notes": "Document the real fixture field format here."
+      },
+      "expected_families": [
+        "primary"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-example_vendor_example_product.conf",
+      "target_path": "local/config/app_parsers/syslog/app-example_vendor_example_product.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "context_lookup",
+      "group": "sc4s",
+      "source_path": "sc4s/context/example_lookup.csv",
+      "target_path": "local/context/example_lookup.csv",
+      "kind": "lookup_table",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "default/props.conf",
+      "kind": "splunk_conf",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ]
+}

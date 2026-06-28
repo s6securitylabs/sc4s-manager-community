@@ -1,0 +1,30 @@
+[Unit]
+Description=SC4S Manager local SC4S control daemon
+Documentation=https://github.com/splunk/splunk-connect-for-syslog
+Requires=sc4s-manager-control.socket
+After=docker.service podman.service
+
+[Service]
+Type=simple
+User=root
+Group=sc4s-manager
+WorkingDirectory=/opt/sc4s-manager
+EnvironmentFile=-/etc/sc4s-manager/control.env
+Environment=SC4S_ROOT=/opt/sc4s
+Environment=SC4S_CONTAINER=SC4S
+Environment=SC4S_CONTROL_SOCKET=/run/sc4s-manager/control.sock
+Environment=SC4S_CONTROL_AUDIT=/opt/sc4s-manager/state/control-audit.jsonl
+Environment=PYTHONPATH=/opt/sc4s-manager/src
+ExecStart=/usr/bin/python3 /opt/sc4s-manager/src/sc4s_manager/control.py
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/sc4s /opt/sc4s-manager /run/sc4s-manager
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

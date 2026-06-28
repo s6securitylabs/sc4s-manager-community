@@ -1,0 +1,24 @@
+[project]
+name = "sc4s-manager"
+version = "0.1.0"
+description = "Enterprise control plane for Splunk Connect for Syslog"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=9",
+  "pytest-cov>=7",
+  "jsonschema>=4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--cov=src/sc4s_manager --cov-report=term-missing --cov-fail-under=75"
+
+[tool.coverage.run]
+source = ["src/sc4s_manager"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

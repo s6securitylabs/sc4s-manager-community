@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  test-package-and-docker:
+    runs-on: ubuntu-24.04
+    env:
+      RELEASE_VERSION: 0.0.0-ci
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        run: scripts/build_frontend.sh
+
+      - name: Run backend/package regression suite
+        run: ./scripts/test.sh
+
+      - name: Build release tarball
+        run: python3 scripts/build_release_artifact.py --version "${RELEASE_VERSION}" --output-dir dist/release
+
+      - name: Validate release tarball install dry run
+        run: |
+          python3 scripts/validate_package_install.py \
+            --dry-run \
+            --artifact "dist/release/sc4s-manager-${RELEASE_VERSION}.tar.gz" \
+            --workdir "${RUNNER_TEMP}/sc4s-manager-package-drill" \
+            --evidence-out "dist/release/package-install-dry-run.json"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image without push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: false
+          tags: ghcr.io/${{ github.repository }}:${{ env.RELEASE_VERSION }}
+          labels: |
+            org.opencontainers.image.version=${{ env.RELEASE_VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - name: Upload package dry-run evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-install-dry-run
+          path: dist/release/package-install-dry-run.json

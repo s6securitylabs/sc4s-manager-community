@@ -1,0 +1,854 @@
+{
+  "schema_version": "0.1",
+  "id": "pan_panos",
+  "version": "0.1.0",
+  "url": "https://pan.dev/panos/docs/syslog/",
+  "description": "First-class SecHub Resources SC4S pack for Palo Alto Networks PAN-OS, Panorama, and compatible PAN-OS syslog streams. Routes official PAN-OS CSV log families to Splunk TA-compatible pan:* sourcetypes while preserving the original payload.",
+  "display_name": "Palo Alto Networks PAN-OS",
+  "vendor": "palo_alto_networks",
+  "product": "pan-os",
+  "default_index": "netfw",
+  "default_source": "pan_panos",
+  "listener": {
+    "source_id": "PAN_PANOS",
+    "transport": "tls",
+    "port": 6514,
+    "env": {
+      "SC4S_LISTEN_PAN_PANOS_TLS_PORT": "6514",
+      "SOURCE_ALL_SET_APPEND": "PAN_PANOS"
+    }
+  },
+  "sourcetypes": {
+    "traffic": "pan:traffic",
+    "threat": "pan:threat",
+    "wildfire": "pan:wildfire",
+    "system": "pan:system",
+    "config": "pan:config",
+    "hipmatch": "pan:hipmatch",
+    "userid": "pan:userid",
+    "globalprotect": "pan:globalprotect",
+    "auth": "pan:auth",
+    "decryption": "pan:decryption",
+    "tunnel": "pan:tunnel",
+    "correlation": "pan:correlation",
+    "iptag": "pan:iptag",
+    "gtp": "pan:gtp",
+    "sctp": "pan:sctp"
+  },
+  "event_families": [
+    {
+      "id": "traffic",
+      "label": "Traffic",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,TRAFFIC,",
+      "expected_sourcetype": "pan:traffic",
+      "primary_id_field": "Session ID",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time",
+        "Start Time"
+      ]
+    },
+    {
+      "id": "threat",
+      "label": "Threat / URL / vulnerability / spyware",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,THREAT,",
+      "expected_sourcetype": "pan:threat",
+      "primary_id_field": "Threat ID",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "wildfire",
+      "label": "WildFire submissions/verdicts",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,WILDFIRE,",
+      "expected_sourcetype": "pan:wildfire",
+      "primary_id_field": "Threat ID",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "system",
+      "label": "System",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,SYSTEM,",
+      "expected_sourcetype": "pan:system",
+      "primary_id_field": "Event ID",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "config",
+      "label": "Configuration",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,CONFIG,",
+      "expected_sourcetype": "pan:config",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "hipmatch",
+      "label": "HIP Match",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,HIPMATCH,",
+      "expected_sourcetype": "pan:hipmatch",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "userid",
+      "label": "User-ID",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,USERID,",
+      "expected_sourcetype": "pan:userid",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "globalprotect",
+      "label": "GlobalProtect",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,GLOBALPROTECT,",
+      "expected_sourcetype": "pan:globalprotect",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "auth",
+      "label": "Authentication",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,(?:AUTHENTICATION|AUTH),",
+      "expected_sourcetype": "pan:auth",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "decryption",
+      "label": "Decryption",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,DECRYPTION,",
+      "expected_sourcetype": "pan:decryption",
+      "primary_id_field": "Session ID",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "tunnel",
+      "label": "Tunnel inspection",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,TUNNEL,",
+      "expected_sourcetype": "pan:tunnel",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "correlation",
+      "label": "Correlation",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,CORRELATION,",
+      "expected_sourcetype": "pan:correlation",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "iptag",
+      "label": "IP Tag",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,IPTAG,",
+      "expected_sourcetype": "pan:iptag",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "gtp",
+      "label": "GTP",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,GTP,",
+      "expected_sourcetype": "pan:gtp",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    },
+    {
+      "id": "sctp",
+      "label": "SCTP",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])[0-9]+,[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[^,]+,SCTP,",
+      "expected_sourcetype": "pan:sctp",
+      "primary_id_field": "Sequence Number",
+      "required_fields": [
+        "Type",
+        "Receive Time",
+        "Serial Number"
+      ],
+      "timestamp_fields": [
+        "Receive Time",
+        "Generated Time"
+      ]
+    }
+  ],
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-pan_panos.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf"
+    ],
+    "test_events": [
+      "test-events/pan_panos_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tls_6514.sh"
+    ],
+    "docs": [
+      "README.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425",
+      "transport": "tls",
+      "recommended": true,
+      "default_port": 6514,
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "csv",
+      "notes": "Best production option: encrypted transport with explicit framing and timezone-qualified header support."
+    },
+    {
+      "id": "tcp_rfc5424",
+      "label": "TCP syslog RFC5424/IETF",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 601,
+      "syslog_protocol": "rfc5424_over_tcp",
+      "framing": "line_delimited",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "csv",
+      "notes": "Acceptable when TLS is terminated upstream or unavailable."
+    },
+    {
+      "id": "udp_bsd",
+      "label": "UDP BSD syslog",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "csv",
+      "notes": "Legacy/lab only; risk of event loss and timezone ambiguity."
+    },
+    {
+      "id": "tcp_bsd",
+      "label": "TCP BSD syslog",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 514,
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "csv",
+      "notes": "Legacy/plain TCP fallback."
+    }
+  ],
+  "recommended_transport": "tls_rfc5425",
+  "source_log_version": {
+    "name": "PAN-OS syslog field descriptions",
+    "min": "10.2",
+    "max": "11.1+",
+    "notes": "Official PAN-OS syslog schemas are positional CSV and vary by release; parser routes by Type and tolerates trailing fields. Confirm exact PAN-OS/Panorama version during field validation."
+  },
+  "validation": {
+    "date_validated": "2026-05-28",
+    "validated_by": "S6 Security Labs",
+    "source_log_version": "Official PAN-OS 11.1 docs and Splunk Add-on current docs reviewed 2026-05-28; synthetic-equivalent fixtures for 15 PAN-OS families.",
+    "sc4s_version": "3.43.0",
+    "splunk_version": "TA-compatible, Splunk version not lab-readback validated",
+    "evidence": "Schema and fixture validation only. Live downstream read-back from a real PAN-OS/Panorama source is still required before validated/field_validated promotion."
+  },
+  "test_event_sets": [
+    {
+      "id": "panos_csv_single_line",
+      "label": "PAN-OS default CSV single-line fixtures",
+      "path": "test-events/pan_panos_test_events.txt",
+      "format": "csv",
+      "wire_format": "headerless_syslog_payload",
+      "envelope": "none",
+      "serialization": "csv",
+      "event_count": 15,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S-PAN-TRAFFIC-MARKER",
+        "SC4S-PAN-THREAT-MARKER",
+        "SC4S-PAN-WILDFIRE-MARKER",
+        "SC4S-PAN-SYSTEM-MARKER",
+        "SC4S-PAN-CONFIG-MARKER",
+        "SC4S-PAN-HIPMATCH-MARKER",
+        "SC4S-PAN-USERID-MARKER",
+        "SC4S-PAN-GLOBALPROTECT-MARKER",
+        "SC4S-PAN-AUTH-MARKER",
+        "SC4S-PAN-DECRYPTION-MARKER",
+        "SC4S-PAN-TUNNEL-MARKER",
+        "SC4S-PAN-CORRELATION-MARKER",
+        "SC4S-PAN-IPTAG-MARKER",
+        "SC4S-PAN-GTP-MARKER",
+        "SC4S-PAN-SCTP-MARKER"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_without_timezone_source_local",
+        "primary_field": "Generated Time",
+        "primary_timezone": null,
+        "fallback_fields": [
+          "Receive Time",
+          "syslog_header"
+        ],
+        "fallback_time_mode": "source_local_time_requires_timezone",
+        "fallback_timezone": null,
+        "requires_source_timezone_when_fields_missing": [
+          "Generated Time",
+          "Receive Time"
+        ],
+        "notes": "PAN-OS CSV timestamps normally omit timezone. Prefer timezone-qualified RFC5424/RFC5425 header if present; otherwise configure/record source timezone."
+      },
+      "field_delimiting": {
+        "style": "positional_csv",
+        "field_separator": ",",
+        "quote_character": "\"",
+        "escape_policy": "PAN-OS default syslog CSV; preserve empty FUTURE_USE fields and trailing fields",
+        "allows_empty_fields": true,
+        "notes": "Field positions are family-specific. Do not collapse delimiters or convert to JSON when targeting the Splunk TA."
+      },
+      "expected_families": [
+        "traffic",
+        "threat",
+        "wildfire",
+        "system",
+        "config",
+        "hipmatch",
+        "userid",
+        "globalprotect",
+        "auth",
+        "decryption",
+        "tunnel",
+        "correlation",
+        "iptag",
+        "gtp",
+        "sctp"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-pan_panos.conf",
+      "target_path": "local/config/app_parsers/syslog/app-pan_panos.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/pan_panos.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk_app/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk_app/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk_app/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk_app/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/pan_panos_test_events.txt",
+      "target_path": "test-events/pan_panos_test_events.txt",
+      "kind": "fixture",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tls_script",
+      "group": "scripts",
+      "source_path": "scripts/send_tls_6514.sh",
+      "target_path": "scripts/send_tls_6514.sh",
+      "kind": "send_script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "pack_readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "documentation",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resource",
+    "pack_class": "sechub-resource",
+    "source": {
+      "type": "mixed",
+      "reference": "PAN-OS official syslog docs, pan.dev syslog landing page, Splunk Add-on for Palo Alto Networks docs, and upstream SC4S pan_panos parser metadata.",
+      "redistribution": "commit_safe",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are synthetic-equivalent records constructed from documented field positions and TA-compatible sourcetype conventions; no customer data."
+    },
+    "curation": {
+      "reviewed_by": "S6 Security Labs",
+      "reviewed_at": "2026-05-28",
+      "notes": "Consolidated official Palo Alto and Splunk TA guidance into SecHub Resources first-class pack artifacts."
+    },
+    "upstream": {
+      "repo": "splunk/splunk-connect-for-syslog",
+      "ref": "3.43.0",
+      "commit": null,
+      "sc4s_version": "3.43.0",
+      "paths": [
+        "package/etc/conf.d/conflib/syslog/app-syslog-pan_panos.conf",
+        "docs/sources/vendor/PaloaltoNetworks/panos.md"
+      ]
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic",
+      "description": "PAN-OS family detection and TA-compatible pan:* sourcetype routing; no drops or reductions.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-pan_panos.conf"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf"
+        }
+      ],
+      "reduction_rules": []
+    },
+    {
+      "id": "standard",
+      "label": "Standard",
+      "description": "Basic routing plus eventtypes/tags for Network Traffic, Intrusion/Malware, Change, and Authentication analyst workflows.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-pan_panos.conf"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf"
+        },
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf"
+        }
+      ],
+      "reduction_rules": []
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced",
+      "description": "Reserved for reviewed local noise controls; intentionally empty by default because firewall logs are evidence, not confetti.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-pan_panos.conf"
+        }
+      ],
+      "reduction_rules": []
+    }
+  ],
+  "reduction_rules": [],
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "Source IP",
+            "Client IP",
+            "Public IP"
+          ],
+          "status": "partial",
+          "notes": "TA maps source-side address fields by sourcetype."
+        },
+        "dest": {
+          "source_fields": [
+            "Destination IP",
+            "Portal",
+            "Gateway"
+          ],
+          "status": "partial",
+          "notes": "TA maps destination-side fields where applicable."
+        },
+        "src_port": {
+          "source_fields": [
+            "Source Port"
+          ],
+          "status": "partial",
+          "notes": "Traffic/threat/decryption network families."
+        },
+        "dest_port": {
+          "source_fields": [
+            "Destination Port"
+          ],
+          "status": "partial",
+          "notes": "Traffic/threat/decryption network families."
+        },
+        "transport": {
+          "source_fields": [
+            "Protocol"
+          ],
+          "status": "partial",
+          "notes": "Network Traffic / IDS families."
+        },
+        "app": {
+          "source_fields": [
+            "Application"
+          ],
+          "status": "partial",
+          "notes": "PAN-OS application field."
+        },
+        "action": {
+          "source_fields": [
+            "Action",
+            "Result",
+            "Command",
+            "Status"
+          ],
+          "status": "partial",
+          "notes": "Family-specific action/result normalization by TA."
+        },
+        "severity": {
+          "source_fields": [
+            "Severity"
+          ],
+          "status": "partial",
+          "notes": "Threat/system/correlation severity where present."
+        },
+        "signature": {
+          "source_fields": [
+            "Threat/Content Name",
+            "Event ID",
+            "Object"
+          ],
+          "status": "partial",
+          "notes": "Threat/system/correlation signatures differ by family."
+        },
+        "signature_id": {
+          "source_fields": [
+            "Threat ID",
+            "Event ID",
+            "Sequence Number"
+          ],
+          "status": "partial",
+          "notes": "Family-specific identifiers."
+        },
+        "user": {
+          "source_fields": [
+            "Source User",
+            "Destination User",
+            "Admin",
+            "User"
+          ],
+          "status": "partial",
+          "notes": "Identity fields by PAN-OS family."
+        },
+        "rule": {
+          "source_fields": [
+            "Rule Name"
+          ],
+          "status": "partial",
+          "notes": "Security policy rule for traffic/threat/decryption."
+        },
+        "category": {
+          "source_fields": [
+            "Category",
+            "Threat Category",
+            "URL Category"
+          ],
+          "status": "partial",
+          "notes": "Content/category semantics vary by family and PAN-OS release."
+        },
+        "vendor_product": {
+          "source_fields": [
+            "vendor",
+            "product",
+            "sourcetype"
+          ],
+          "status": "partial",
+          "notes": "Set by SC4S and refined by Splunk TA."
+        }
+      }
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "network_activity": {
+          "source_fields": [
+            "TRAFFIC",
+            "DECRYPTION",
+            "TUNNEL",
+            "GTP",
+            "SCTP"
+          ],
+          "status": "partial",
+          "notes": "Maps to network activity classes after TA extraction."
+        },
+        "security_finding": {
+          "source_fields": [
+            "THREAT",
+            "WILDFIRE",
+            "CORRELATION"
+          ],
+          "status": "partial",
+          "notes": "Threat and malware classes need TA fields to map cleanly."
+        },
+        "authentication": {
+          "source_fields": [
+            "AUTHENTICATION",
+            "GLOBALPROTECT",
+            "USERID"
+          ],
+          "status": "partial",
+          "notes": "Identity and VPN events."
+        }
+      }
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "Source IP"
+          ],
+          "status": "partial",
+          "notes": "Available for traffic/threat/decryption."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "Destination IP"
+          ],
+          "status": "partial",
+          "notes": "Available for traffic/threat/decryption."
+        },
+        "event.action": {
+          "source_fields": [
+            "Action",
+            "Result",
+            "Command",
+            "Status"
+          ],
+          "status": "partial",
+          "notes": "Family-specific source fields."
+        },
+        "rule.name": {
+          "source_fields": [
+            "Rule Name"
+          ],
+          "status": "partial",
+          "notes": "Policy rule where present."
+        }
+      }
+    }
+  },
+  "known_limitations": [
+    "Not 5-star field_validated until real PAN-OS/Panorama source-version logs are replayed and read back from Splunk.",
+    "Custom PAN-OS syslog formats can break positional CSV assumptions and must be profiled separately.",
+    "Payload timestamps lack timezone; record source timezone or prefer timezone-qualified RFC5424/RFC5425 headers."
+  ],
+  "ci": {
+    "last_updated": "2026-05-28",
+    "last_tested": "2026-05-28",
+    "tested_commit": "b14759a",
+    "tested_artifact_hashes": {
+      "sc4s/app_parsers/syslog/app-pan_panos.conf": "sha256:18e2ec51f00605d4b3210b2dcd78684f6455a3e2bdbbae2c95f0e46a9518527e",
+      "sc4s/env.example": "sha256:2c9c0bccc6d7eff136ef28c0dc52ce0f23afa5d432e680ef5600af48a8bf04a1",
+      "splunk/default/props.conf": "sha256:f88c001066c4e90b02262e9035dfba502c1166ca152e867181df3ecd91bd0d6d",
+      "splunk/default/transforms.conf": "sha256:4ef6efcdc08edbe215b5faf436dcca860d51e4cd8b84ab5fa97256521bbe7f46",
+      "splunk/default/eventtypes.conf": "sha256:84b43b3be563a44b1b124c7a88eb2a980c31cf4418aa0878341c3f53b5a2f347",
+      "splunk/default/tags.conf": "sha256:e043d9d2cdcabb6b50396d53b79dfa3f4f89cd61aa276450ef4f3f8e81710db8",
+      "test-events/pan_panos_test_events.txt": "sha256:623883e6c01f783dd3e4240ce86505dfc9790f1f15d25b25c748139d070a6d18",
+      "scripts/send_tls_6514.sh": "sha256:8660b52443d42c280e52406cfeeaac87dd81f912f3aff270e1f740b8ce05fcae",
+      "README.md": "sha256:5945bd0753daabde357a1d83c9ef6b901514e0bb0201b800004a999497a2498c"
+    }
+  }
+}

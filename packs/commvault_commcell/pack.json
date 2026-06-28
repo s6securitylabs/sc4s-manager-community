@@ -1,0 +1,535 @@
+{
+  "id": "commvault_commcell",
+  "version": "0.1.0",
+  "url": "https://documentation.commvault.com/11.40/software/configuring_syslog_server.html",
+  "description": "Commvault CommCell syslog/SIEM pack for AuditTrail, Events, and Alerts. Includes SC4S dedicated TLS listener guidance, parser config, family-specific Splunk sourcetypes, CIM-oriented normalized fields, Splunk props/transforms/eventtypes/tags exports, and test events for validation.",
+  "display_name": "Commvault CommCell",
+  "vendor": "commvault",
+  "product": "commcell",
+  "default_index": "commvault",
+  "default_source": "commvault_commcell",
+  "listener": {
+    "source_id": "COMMVAULT_COMMCELL",
+    "transport": "tls",
+    "port": 20029,
+    "env": {
+      "SC4S_LISTEN_COMMVAULT_COMMCELL_TLS_PORT": "20029",
+      "SOURCE_ALL_SET_APPEND": "COMMVAULT_COMMCELL"
+    }
+  },
+  "sourcetypes": {
+    "audit": "commvault:commcell:audittrail",
+    "event": "commvault:commcell:events",
+    "alert": "commvault:commcell:alerts"
+  },
+  "event_families": [
+    {
+      "id": "audit",
+      "label": "AuditTrail",
+      "match": "^(AuditTrail:|Opid[[:space:]]*=)",
+      "primary_id_field": "Opid",
+      "timestamp_fields": [
+        "Utctimestamp",
+        "Audittime"
+      ],
+      "match_engine": "pcre",
+      "expected_sourcetype": "commvault:commcell:audittrail",
+      "required_fields": [
+        "Opid"
+      ]
+    },
+    {
+      "id": "event",
+      "label": "Events",
+      "match": "^(Events?:|Eventid[[:space:]]*=)",
+      "primary_id_field": "Eventid",
+      "timestamp_fields": [
+        "Utctimestamp",
+        "Occurrencetime"
+      ],
+      "match_engine": "pcre",
+      "expected_sourcetype": "commvault:commcell:events",
+      "required_fields": [
+        "Eventid"
+      ]
+    },
+    {
+      "id": "alert",
+      "label": "Alerts",
+      "match": "^(Alerts?:|Alertid[[:space:]]*=)",
+      "primary_id_field": "Alertid",
+      "timestamp_fields": [
+        "Utctimestamp",
+        "Alerttime"
+      ],
+      "match_engine": "pcre",
+      "expected_sourcetype": "commvault:commcell:alerts",
+      "required_fields": [
+        "Alertid"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Commvault",
+    "product": "CommCell",
+    "vendor_product": "commvault:commcell",
+    "action": "cv_event_type",
+    "signature_id": "Opid|Eventid|Alertid",
+    "signature": "Operation|Description|Alertname",
+    "severity": "Severitylevel|Eventseverity|Alertseverity",
+    "user": "Username",
+    "dest": "Computer|Clientname",
+    "process": "Program",
+    "process_id": "Jobid",
+    "app": "AgentType|backup",
+    "message": "Details|Description|Alertdescription"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-commvault_commcell.conf",
+      "sc4s/postfilters/app-postfilter-commvault_commcell-drop-alerts.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf"
+    ],
+    "test_events": [
+      "test-events/commvault_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tls_20029.sh"
+    ],
+    "docs": [
+      "README.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425",
+      "transport": "tls",
+      "recommended": true,
+      "default_port": 20029,
+      "notes": "Recommended production transport for Commvault CommCell into SC4S.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "tcp_rfc5424",
+      "label": "TCP syslog RFC5424",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 20029,
+      "notes": "Use when TLS termination is handled elsewhere or source cannot use TLS.",
+      "syslog_protocol": "rfc5424_over_tcp",
+      "framing": "line_delimited",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "udp_bsd",
+      "label": "UDP syslog BSD/headerless",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Supported for lab/legacy use only; avoid for production where event loss matters.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "tcp_bsd",
+      "label": "TCP syslog BSD/headerless",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Legacy/plain TCP option when source emits BSD/headerless payloads.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tls_rfc5425",
+  "source_log_version": {
+    "name": "Commvault Platform Release",
+    "min": null,
+    "max": null,
+    "notes": "Commvault syslog/SIEM field shape validated from current documentation and representative samples; set min/max when customer source version is confirmed."
+  },
+  "validation": {
+    "date_validated": "2026-05-26",
+    "validated_by": "S6 Security Labs",
+    "source_log_version": "Commvault documentation current as of 2026-05-26; lab samples for AuditTrail, Events, Alerts",
+    "sc4s_version": "3.43.0",
+    "splunk_version": "10.2.3",
+    "evidence": "SC4S TLS 20029 -> Splunk HEC -> index=commvault with family-specific sourcetypes validated."
+  },
+  "test_event_sets": [
+    {
+      "id": "commvault_headerless_single_line",
+      "label": "Commvault headerless single-line AuditTrail/Events/Alerts fixtures",
+      "path": "test-events/commvault_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "headerless_syslog_payload",
+      "envelope": "none",
+      "serialization": "text",
+      "event_count": 3,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "<MARKER>_AUDIT",
+        "<MARKER>_EVENT",
+        "<MARKER>_ALERT"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_utc_epoch",
+        "primary_field": "Utctimestamp",
+        "primary_timezone": "UTC",
+        "fallback_fields": [
+          "Audittime",
+          "Occurrencetime",
+          "Alerttime"
+        ],
+        "fallback_time_mode": "source_local_time_requires_timezone",
+        "fallback_timezone": null,
+        "requires_source_timezone_when_fields_missing": [
+          "Utctimestamp"
+        ],
+        "notes": "Commvault samples include Utctimestamp epoch seconds and local display-time fields. Parser should prefer Utctimestamp. If a source omits it, the pack must be amended with the source host or application timezone before production validation."
+      },
+      "field_delimiting": {
+        "style": "braced_key_value",
+        "field_pattern": "<Key> = {<Value>}",
+        "field_separator": "space_between_pairs",
+        "value_wrapper": "curly_braces",
+        "allows_spaces_in_values": true,
+        "notes": "Do not split values on raw spaces inside braces. Treat each physical line as the event boundary for these fixtures."
+      },
+      "expected_families": [
+        "audit",
+        "event",
+        "alert"
+      ]
+    }
+  ],
+  "schema_version": "0.1",
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-commvault_commcell.conf",
+      "target_path": "local/config/app_parsers/syslog/app-commvault_commcell.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_drop_alerts_postfilter",
+      "group": "sc4s",
+      "source_path": "sc4s/postfilters/app-postfilter-commvault_commcell-drop-alerts.conf",
+      "target_path": "local/config/app_parsers/postfilters/app-postfilter-commvault_commcell-drop-alerts.conf",
+      "kind": "syslog_ng_postfilter",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/commvault_commcell.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk_app/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk_app/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk_app/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk_app/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/commvault_test_events.txt",
+      "target_path": "test-events/commvault_test_events.txt",
+      "kind": "fixture",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tls_script",
+      "group": "scripts",
+      "source_path": "scripts/send_tls_20029.sh",
+      "target_path": "scripts/send_tls_20029.sh",
+      "kind": "send_script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "pack_readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "documentation",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resource",
+    "pack_class": "sechub-resource",
+    "source": {
+      "type": "mixed",
+      "reference": "Commvault public documentation and S6 Security Labs lab validation fixtures",
+      "redistribution": "commit_safe",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are synthetic equivalents shaped from documented CommCell AuditTrail, Events, and Alerts fields."
+    },
+    "curation": {
+      "reviewed_by": "S6 Security Labs",
+      "reviewed_at": "2026-05-26",
+      "notes": "Curated parser, Splunk knowledge, and fixtures for SecHub Resources SC4S pack."
+    },
+    "upstream": {
+      "repo": "splunk/splunk-connect-for-syslog",
+      "ref": "3.43.0",
+      "commit": null,
+      "sc4s_version": "3.43.0",
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "s6_verified",
+  "quality_status": "validated",
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic",
+      "description": "Parser and required Splunk knowledge only; no reduction/drop behaviour.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-commvault_commcell.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        },
+        {
+          "artifact_id": "splunk_transforms",
+          "path": "splunk/default/transforms.conf",
+          "kind": "splunk_transforms"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Functional config stays in referenced .conf files."
+    },
+    {
+      "id": "standard",
+      "label": "Standard",
+      "description": "SOC default for family-specific sourcetypes and CIM-oriented knowledge without event drops.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-commvault_commcell.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "No reduction rules are shipped until reviewed postfilter artifacts exist."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced",
+      "description": "Adds the reviewable postfilter reduction artifact to drop Commvault alert-family noise before Splunk indexing.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_drop_alerts_postfilter",
+          "path": "sc4s/postfilters/app-postfilter-commvault_commcell-drop-alerts.conf",
+          "kind": "syslog_ng_postfilter",
+          "notes": "Routes matching Commvault alert-family events to the SC4S null queue before indexing."
+        }
+      ],
+      "reduction_rules": [
+        "drop_alert_family_noise"
+      ],
+      "notes": "Reduction remains optional and file-backed; enable only after validating alert-family volume trade-offs."
+    }
+  ],
+  "reduction_rules": [
+    {
+      "id": "drop_alert_family_noise",
+      "label": "Drop Commvault alert-family noise",
+      "description": "Routes Alert/Alerts fixture traffic to the SC4S null queue so noisy alert families can be reduced before Splunk indexing.",
+      "drop_behavior": "routes_to_null_queue",
+      "safety_notes": "Optional preset only. Review alert coverage before enabling in production because matching events are discarded before indexing.",
+      "artifact": {
+        "artifact_id": "sc4s_drop_alerts_postfilter",
+        "path": "sc4s/postfilters/app-postfilter-commvault_commcell-drop-alerts.conf",
+        "kind": "syslog_ng_postfilter",
+        "notes": "Uses r_set_dest_splunk_null_queue for pre-index reduction."
+      }
+    }
+  ],
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "notes": "Primary mapping target uses Splunk CIM/common fields exposed by props/transforms and normalized_fields.",
+      "fields": {
+        "action": {
+          "source_fields": [
+            "cv_event_type"
+          ],
+          "status": "partial",
+          "notes": "Event-family action is derived from Commvault family/type."
+        },
+        "signature_id": {
+          "source_fields": [
+            "Opid",
+            "Eventid",
+            "Alertid"
+          ],
+          "status": "partial",
+          "notes": "Family-specific identifier fields are normalized."
+        },
+        "signature": {
+          "source_fields": [
+            "Operation",
+            "Description",
+            "Alertname"
+          ],
+          "status": "partial",
+          "notes": "Best available human-readable signature per family."
+        },
+        "severity": {
+          "source_fields": [
+            "Severitylevel",
+            "Eventseverity",
+            "Alertseverity"
+          ],
+          "status": "partial",
+          "notes": "Severity values are preserved from source fields."
+        },
+        "user": {
+          "source_fields": [
+            "Username"
+          ],
+          "status": "partial",
+          "notes": "Available for AuditTrail events where present."
+        },
+        "dest": {
+          "source_fields": [
+            "Computer",
+            "Clientname"
+          ],
+          "status": "partial",
+          "notes": "Host/client attribution varies by family."
+        }
+      }
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "notes": "Secondary OCSF alignment is descriptive until OCSF class-specific output is added.",
+      "fields": {
+        "activity_id": {
+          "source_fields": [
+            "Opid",
+            "Eventid",
+            "Alertid"
+          ],
+          "status": "partial",
+          "notes": "Maps to event identifiers when family is known."
+        },
+        "severity_id": {
+          "source_fields": [
+            "Severitylevel",
+            "Eventseverity",
+            "Alertseverity"
+          ],
+          "status": "partial",
+          "notes": "Requires future value normalization for complete OCSF severity IDs."
+        }
+      }
+    },
+    "ecs": {
+      "mapping_status": "unknown",
+      "optional": true,
+      "notes": "ECS mapping is optional/reference only for this pack version.",
+      "fields": {}
+    }
+  },
+  "ci": {
+    "last_updated": "2026-05-27T20:00:41Z",
+    "last_tested": "2026-05-27T20:15:00Z",
+    "tested_commit": "088e8d0",
+    "tested_artifact_hashes": {}
+  }
+}

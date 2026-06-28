@@ -1,0 +1,30 @@
+{
+  "ok": true,
+  "generated_at": "2026-06-14T00:00:00Z",
+  "manager": {"version": "1.0.0", "health": "ok"},
+  "control_daemon": {"ok": true, "provider": "unix_socket"},
+  "sc4s": {
+    "running": true,
+    "status": "running",
+    "health": "healthy",
+    "image": "ghcr.io/splunk/sc4s:3.43.0",
+    "image_version": "3.43.0",
+    "supported_version": "3.43.0",
+    "version_drift": false
+  },
+  "listeners": [
+    {"protocol": "tcp", "port": 514, "desired": true, "live": true, "bind": "0.0.0.0"},
+    {"protocol": "udp", "port": 514, "desired": true, "live": true, "bind": "0.0.0.0"}
+  ],
+  "counters": [
+    {"name": "source.s_DEFAULT", "component": "source", "metric": "processed", "value": 1000},
+    {"name": "source.s_DEFAULT", "component": "source", "metric": "dropped", "value": 0},
+    {"name": "dst.d_hec_DEFAULT", "component": "destination", "metric": "written", "value": 950},
+    {"name": "dst.d_hec_DEFAULT", "component": "destination", "metric": "dropped", "value": 2}
+  ],
+  "destinations": [
+    {"id": "d_hec_DEFAULT", "kind": "splunk_hec", "written": 950, "dropped": 2, "queued": null}
+  ],
+  "warnings": [],
+  "redaction": {"secrets_present": true}
+}

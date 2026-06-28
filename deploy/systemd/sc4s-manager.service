@@ -1,0 +1,30 @@
+[Unit]
+Description=SC4S Manager API and UI
+Documentation=https://github.com/splunk/splunk-connect-for-syslog
+After=network-online.target sc4s-manager-control.service
+Wants=network-online.target
+Requires=sc4s-manager-control.service
+
+[Service]
+Type=simple
+User=sc4s-manager
+Group=sc4s-manager
+WorkingDirectory=/opt/sc4s-manager
+EnvironmentFile=-/etc/sc4s-manager/manager.env
+Environment=SC4S_ROOT=/opt/sc4s
+Environment=SC4S_MANAGER_ROOT=/opt/sc4s-manager
+Environment=SC4S_CONTROL_SOCKET=/run/sc4s-manager/control.sock
+Environment=PYTHONPATH=/opt/sc4s-manager/src
+ExecStart=/usr/bin/python3 /opt/sc4s-manager/src/sc4s_manager/app.py
+Restart=on-failure
+RestartSec=5s
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/sc4s /opt/sc4s-manager /run/sc4s-manager
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target
