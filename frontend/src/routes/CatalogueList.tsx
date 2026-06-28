@@ -7,6 +7,7 @@ import {
   Checkbox,
   Group,
   Loader,
+  Pagination,
   Paper,
   Select,
   SimpleGrid,
@@ -17,7 +18,9 @@ import {
   Title,
 } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+const CATALOGUE_PAGE_SIZE = 30;
 
 import { CatalogueFacetItem, CatalogueListEntry, listCatalogue } from '../api/packs';
 import { RouterAnchor } from '../components/RouterAnchor';
@@ -32,9 +35,9 @@ const ORIGIN_LABELS: Record<string, string> = {
 
 const SOURCE_STATUS_LABELS: Record<string, string> = {
   candidate: 'Community candidate',
-  validated: 'Source-review validation evidence',
-  draft: 'Draft candidate',
-  deprecated: 'Deprecated source',
+  validated: 'Validated by S6',
+  draft: 'Draft',
+  deprecated: 'Deprecated',
 };
 
 export type CatalogueFilters = {
@@ -44,9 +47,7 @@ export type CatalogueFilters = {
   vendor: string | null;
   review_status?: string | null;
   min_quality_score: string | null;
-  artifact_type: string | null;
   source_status: string | null;
-  is_verified: boolean;
   has_reduction: boolean;
   has_splunk_knowledge: boolean;
 };
@@ -58,9 +59,7 @@ export const EMPTY_FILTERS: CatalogueFilters = {
   vendor: null,
   review_status: null,
   min_quality_score: null,
-  artifact_type: null,
   source_status: null,
-  is_verified: false,
   has_reduction: false,
   has_splunk_knowledge: false,
 };
@@ -119,10 +118,7 @@ function activeFilters(filters: CatalogueFilters) {
     filters.product ? `Product: ${filters.product}` : null,
     filters.vendor ? `Vendor: ${filters.vendor}` : null,
     filters.review_status ? `Review status: ${formatTokenLabel(filters.review_status)}` : null,
-    filters.min_quality_score ? `Manager evidence ≥ ${filters.min_quality_score}/5` : null,
-    filters.artifact_type ? `Recorded file: ${formatTokenLabel(filters.artifact_type)}` : null,
     filters.source_status ? `Status: ${sourceStatusLabel(filters.source_status)}` : null,
-    filters.is_verified ? 'Recorded validation evidence only' : null,
     filters.has_reduction ? 'Has log reduction' : null,
     filters.has_splunk_knowledge ? 'Has Splunk props/transforms' : null,
   ].filter((value): value is string => Boolean(value));
@@ -144,22 +140,18 @@ function capabilityBadges(entry: CatalogueListEntry) {
   return items.filter((value): value is { label: string; color: string } => Boolean(value));
 }
 
-function statText(entry: CatalogueListEntry) {
-  const capabilityCount = capabilityBadges(entry).length;
-  return `${capabilityCount} validated capability signal${capabilityCount === 1 ? '' : 's'} · quality ${entry.quality_score}/5`;
-}
-
-export function buildCatalogueParams(filters: CatalogueFilters) {
-  const next: Record<string, string> = { limit: '60' };
+export function buildCatalogueParams(filters: CatalogueFilters, page = 1) {
+  const next: Record<string, string> = {
+    limit: String(CATALOGUE_PAGE_SIZE),
+    offset: String((page - 1) * CATALOGUE_PAGE_SIZE),
+  };
   if (filters.q.trim()) next.q = filters.q.trim();
   if (filters.origin) next.origin = filters.origin;
   if (filters.product) next.product = filters.product;
   if (filters.vendor) next.vendor = filters.vendor;
   if (filters.review_status) next.review_status = filters.review_status;
   if (filters.min_quality_score) next.min_quality_score = filters.min_quality_score;
-  if (filters.artifact_type) next.artifact_type = filters.artifact_type;
   if (filters.source_status) next.source_status = filters.source_status;
-  if (filters.is_verified) next.is_verified = 'true';
   if (filters.has_reduction) next.has_reduction = 'true';
   if (filters.has_splunk_knowledge) next.has_splunk_knowledge = 'true';
   return next;
@@ -196,17 +188,6 @@ export function CatalogueListCard({ entry }: { entry: CatalogueListEntry }) {
 
         <Text className="readable-panel-text" lineClamp={3}>{entry.summary}</Text>
 
-        <div className="catalogue-chip-row">
-          <Badge variant="light" color="gray">{formatTokenLabel(entry.relationship_to_upstream)}</Badge>
-          <Badge variant="light" color="gray">No community rating</Badge>
-          <Badge variant="light" color="gray">Manager evidence score {entry.quality_score}/5</Badge>
-          {entry.source_status && (
-            <Badge color="yellow" variant="outline">
-              {sourceStatusLabel(entry.source_status)}
-            </Badge>
-          )}
-        </div>
-
         {showCandidateWarning ? (
           <Alert color="yellow" title="Unvalidated candidate" variant="light">
             <Stack gap={4}>
@@ -221,31 +202,9 @@ export function CatalogueListCard({ entry }: { entry: CatalogueListEntry }) {
               )}
             </Stack>
           </Alert>
-        ) : (
-          <Paper withBorder p="sm" radius="md">
-            <Stack gap={4}>
-              <Text className="panel-overline">Evidence posture</Text>
-              <Text size="sm">{statText(entry)}</Text>
-              <Text size="xs" c="dimmed">
-                Shown only from catalogue provenance, capability, and recorded validation evidence.
-              </Text>
-            </Stack>
-          </Paper>
-        )}
-
-        <Stack gap="xs">
-          <Text className="panel-overline">Catalogue origins</Text>
-          <div className="catalogue-chip-row">
-            {entry.origins.map((origin) => (
-              <Badge key={origin} variant={origin === entry.effective_origin ? 'filled' : 'light'} color={origin === entry.effective_origin ? 'cyan' : 'gray'}>
-                {originLabel(origin)}
-              </Badge>
-            ))}
-          </div>
-        </Stack>
+        ) : null}
 
         <Stack gap="xs" mt="auto">
-          <Text className="panel-overline">Recorded capabilities</Text>
           {badges.length > 0 ? (
             <div className="catalogue-chip-row">
               {badges.map((badge) => (
@@ -256,13 +215,13 @@ export function CatalogueListCard({ entry }: { entry: CatalogueListEntry }) {
             </div>
           ) : (
             <Text size="sm" c="dimmed">
-              No parser, reduction, fixture, or Splunk ingestion evidence is recorded yet.
+              No capabilities recorded yet.
             </Text>
           )}
         </Stack>
 
         <Group justify="space-between" align="center" mt="xs">
-          <Text size="sm" c="dimmed">Review provenance, evidence, and recorded files before download, import, or apply.</Text>
+          <Text size="sm" c="dimmed">Check the details before downloading.</Text>
           <Button component={RouterAnchor} to={`/catalogue/${encodeURIComponent(entry.id)}`} variant="light" color="cyan">
             View details
           </Button>
@@ -274,12 +233,16 @@ export function CatalogueListCard({ entry }: { entry: CatalogueListEntry }) {
 
 export function CatalogueList() {
   const [filters, setFilters] = useState<CatalogueFilters>(EMPTY_FILTERS);
+  const [page, setPage] = useState(1);
 
-  const params = useMemo(() => buildCatalogueParams(filters), [filters]);
+  useEffect(() => { setPage(1); }, [filters]);
+
+  const params = useMemo(() => buildCatalogueParams(filters, page), [filters, page]);
 
   const catalogueQuery = useQuery({
     queryKey: ['catalogue', params],
     queryFn: ({ signal }) => listCatalogue(params, signal),
+    placeholderData: (prev) => prev,
   });
 
   const facets = catalogueQuery.data?.facets;
@@ -298,9 +261,8 @@ export function CatalogueList() {
   }
 
   const totalEntries = catalogueQuery.data?.count ?? 0;
+  const totalPages = Math.ceil(totalEntries / CATALOGUE_PAGE_SIZE);
   const reviewedCount = facets?.review_statuses?.find((item) => item.value === 'reviewed')?.count ?? 0;
-  const candidateCount = facets?.source_statuses.find((item) => item.value === 'candidate')?.count ?? 0;
-  const curatedOrigins = facets?.origins.find((item) => item.value === 'sechub-resource')?.count ?? 0;
 
   return (
     <Stack gap="lg">
@@ -310,10 +272,10 @@ export function CatalogueList() {
             <Text className="panel-overline">Catalogue review</Text>
             <Title order={1}>SC4S source catalogue</Title>
             <Text className="readable-panel-text" maw={760}>
-              Review SC4S built-ins, SC4S Library entries, and community candidates with explicit provenance, review status, trust boundaries, and capability evidence. Catalogue evidence does not mean local import, apply, or production readiness.
+              Browse SC4S source types. Find the parser for your device, check what's included, and download it.
             </Text>
           </Stack>
-          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
+          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
             <Paper className="catalogue-summary-card" withBorder p="md" radius="lg">
               <Text className="panel-overline">Catalogue entries</Text>
               <Title order={2}>{totalEntries}</Title>
@@ -324,17 +286,12 @@ export function CatalogueList() {
               <Title order={2}>{reviewedCount}</Title>
               <Text size="sm" c="dimmed">Reviewed by S6; still requires local validation before production use.</Text>
             </Paper>
-            <Paper className="catalogue-summary-card" withBorder p="md" radius="lg">
-              <Text className="panel-overline">Unreviewed community candidates</Text>
-              <Title order={2}>{candidateCount}</Title>
-              <Text size="sm" c="dimmed">Discovery inputs that require maintainer review, local validation, and Splunk evidence before promotion.</Text>
-            </Paper>
           </SimpleGrid>
         </SimpleGrid>
       </Paper>
 
-      <Alert color="yellow" title="Community candidate boundary" variant="light">
-        Community issue and PR snippets remain discovery inputs only. They are Unreviewed until maintainer review, and still need local validation before production use.
+      <Alert color="yellow" title="Community sources — not yet reviewed" variant="light">
+        Community sources appear in this catalogue but have not been reviewed by S6. They require local validation before use in production.
       </Alert>
 
       <Paper className="catalogue-filter-panel" withBorder p="lg" radius="lg">
@@ -342,7 +299,7 @@ export function CatalogueList() {
           <Group justify="space-between" align="end">
             <div>
               <Text className="panel-overline">Search and filters</Text>
-              <Text size="sm" c="dimmed">Search first, then filter by origin, review status, recorded file type, or Manager evidence.</Text>
+              <Text size="sm" c="dimmed">Search by vendor, product, or device type. Filter by origin or review status.</Text>
             </div>
             {selectedFilters.length > 0 && (
               <Button variant="light" onClick={() => setFilters(EMPTY_FILTERS)}>
@@ -401,36 +358,9 @@ export function CatalogueList() {
               value={filters.source_status}
               onChange={(source_status) => setFilters((current) => ({ ...current, source_status }))}
             />
-            <Select
-              label="Manager evidence score"
-              placeholder="Any evidence score"
-              data={[
-                { value: '1', label: '1/5 or better' },
-                { value: '2', label: '2/5 or better' },
-                { value: '3', label: '3/5 or better' },
-                { value: '4', label: '4/5 or better' },
-                { value: '5', label: '5/5 only' },
-              ]}
-              clearable
-              value={filters.min_quality_score}
-              onChange={(min_quality_score) => setFilters((current) => ({ ...current, min_quality_score }))}
-            />
-            <Select
-              label="Recorded file type"
-              placeholder="Any file type"
-              data={facetOptions(facets?.artifact_types)}
-              clearable
-              value={filters.artifact_type}
-              onChange={(artifact_type) => setFilters((current) => ({ ...current, artifact_type }))}
-            />
           </SimpleGrid>
 
           <Group gap="xl" wrap="wrap">
-            <Checkbox
-              label="Recorded validation evidence only"
-              checked={filters.is_verified}
-              onChange={(event) => setFilters((current) => ({ ...current, is_verified: event.currentTarget.checked }))}
-            />
             <Checkbox
               label="Has log reduction"
               checked={filters.has_reduction}
@@ -458,19 +388,6 @@ export function CatalogueList() {
         </Stack>
       </Paper>
 
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-        <Paper className="catalogue-summary-card" withBorder p="md" radius="lg">
-          <Text className="panel-overline">SC4S Library entries</Text>
-          <Title order={3}>{curatedOrigins}</Title>
-          <Text size="sm" c="dimmed">Catalogue entries from the curated SC4S Library pack source.</Text>
-        </Paper>
-        <Paper className="catalogue-summary-card" withBorder p="md" radius="lg">
-          <Text className="panel-overline">Review status</Text>
-          <Title order={3}>{catalogueQuery.data?.entries.length ?? 0} shown</Title>
-          <Text size="sm" c="dimmed">Every visible card keeps candidate and validation warnings in view.</Text>
-        </Paper>
-      </SimpleGrid>
-
       {catalogueQuery.data?.entries.length === 0 ? (
         <Paper className="catalogue-empty-box" p="xl">
           <Stack gap="sm" align="start">
@@ -483,11 +400,26 @@ export function CatalogueList() {
           </Stack>
         </Paper>
       ) : (
-        <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }}>
-          {catalogueQuery.data?.entries.map((entry) => (
-            <CatalogueListCard key={entry.id} entry={entry} />
-          ))}
-        </SimpleGrid>
+        <Stack gap="md">
+          <Group justify="space-between" align="center">
+            <Text size="sm" c="dimmed">
+              Showing {((page - 1) * CATALOGUE_PAGE_SIZE) + 1}–{Math.min(page * CATALOGUE_PAGE_SIZE, totalEntries)} of {totalEntries} entries
+            </Text>
+            {totalPages > 1 && (
+              <Pagination total={totalPages} value={page} onChange={setPage} size="sm" />
+            )}
+          </Group>
+          <SimpleGrid cols={{ base: 1, md: 2, xl: 3 }}>
+            {catalogueQuery.data?.entries.map((entry) => (
+              <CatalogueListCard key={entry.id} entry={entry} />
+            ))}
+          </SimpleGrid>
+          {totalPages > 1 && (
+            <Group justify="center">
+              <Pagination total={totalPages} value={page} onChange={setPage} />
+            </Group>
+          )}
+        </Stack>
       )}
     </Stack>
   );

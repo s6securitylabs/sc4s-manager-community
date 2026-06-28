@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """SC4S Manager: dependency-free GUI/API for controlled SC4S operations.
 
-Designed for Authentik/APISIX protected deployments. Unsafe actions require a
+Designed for reverse-proxy protected deployments. Unsafe actions require a
 trusted proxy header secret, local API token, or explicit manual login token.
 Health is intentionally open.
 """
@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlencode, urlparse, unquote
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 SUPPORTED_SC4S_VERSION = "3.43.0"
 SC4S_DOCS_BASE = "https://splunk.github.io/splunk-connect-for-syslog/3.43.0"
 ROOT = Path(os.environ.get("SC4S_ROOT", "/opt/sc4s"))
@@ -225,7 +225,7 @@ def redact(value: Any) -> Any:
             # Redact actual credential-bearing fields only.
             # removed_env_keys carries env var *names* (never values) so API
             # consumers can verify credential cleanup after a destination delete.
-            sensitive = SECRET_KEY_RE.search(ks) and ks.lower() not in {"key", "listen_key", "secret", "contains_secrets", "removed_env_keys"}
+            sensitive = SECRET_KEY_RE.search(ks) and ks.lower() not in {"key", "listen_key", "secret", "contains_secrets", "removed_env_keys", "authenticated"}
             out[k] = "[REDACTED]" if sensitive else redact(v)
         return out
     if isinstance(value, list):
@@ -1998,15 +1998,11 @@ def static_asset_response(h: BaseHTTPRequestHandler, request_path: str) -> bool:
 
 
 def frontend_response(h: BaseHTTPRequestHandler, request_path: str) -> bool:
-    if request_path in ["/", "/index.html"]:
-        index = frontend_index_path()
-        if index.is_file():
-            file_response(h, 200, index, "text/html; charset=utf-8", "no-store")
-        else:
-            html_response(h, 200, INDEX_HTML)
-        return True
-    if frontend_dist_available():
-        file_response(h, 200, frontend_index_path(), "text/html; charset=utf-8", "no-store")
+    index = frontend_index_path()
+    if not index.is_file():
+        return False
+    if request_path in ["/", "/index.html"] or frontend_dist_available():
+        file_response(h, 200, index, "text/html; charset=utf-8", "no-store")
         return True
     return False
 
@@ -2025,41 +2021,6 @@ def read_body(h: BaseHTTPRequestHandler) -> dict[str, Any]:
     return {k: v[-1] for k, v in parse_qs(raw).items()}
 
 
-INDEX_HTML = """
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SC4S Manager</title>
-<style>
-body{font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#0b1020;color:#e8eefc;margin:0}header{background:#121a33;padding:16px 24px;border-bottom:1px solid #25345f}main{padding:20px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}.card{background:#111936;border:1px solid #27365f;border-radius:12px;padding:16px;box-shadow:0 8px 30px #0004}.ok{color:#67e8a5}.bad{color:#ff7b8a}button,input,select,textarea{background:#0b1020;color:#e8eefc;border:1px solid #33436d;border-radius:8px;padding:8px;margin:3px}button{cursor:pointer;background:#1d4ed8}button.danger{background:#a21caf}pre{white-space:pre-wrap;max-height:360px;overflow:auto;background:#050816;padding:10px;border-radius:8px}.wide{grid-column:1/-1}label{display:block;margin-top:8px}.muted{color:#9fb0d8;font-size:12px}</style></head>
-<body><header><h1>SC4S Manager</h1><div class="muted">Protected management UI for Splunk Connect for Syslog</div></header><main>
-<section class="card"><h2>Status</h2><div id="status">Loading…</div><button onclick="loadAll()">Refresh</button><button class="danger" onclick="post('/api/restart',{})">Restart SC4S</button></section>
-<section class="card"><h2>Ports</h2><div id="ports"></div></section>
-<section class="card"><h2>Add service/source</h2><label>Filter <input id="svc_filter" placeholder="cisco_asa_lab"></label><label>Source IP/CIDR/host glob <input id="svc_source" placeholder="10.10.1.0/24"></label><label>Vendor product <input id="svc_vendor" placeholder="cisco_asa"></label><label>Splunk index <input id="svc_index" placeholder="netops"></label><label>Compliance tag <input id="svc_compliance" placeholder="pci"></label><button onclick="addService()">Add service</button></section>
-<section class="card"><h2>Environment</h2><label>Key <input id="env_key" placeholder="SC4S_ARCHIVE_GLOBAL"></label><label>Value <input id="env_value" placeholder="yes"></label><button onclick="post('/api/env',{key:env_key.value,value:env_value.value})">Save env value</button><label>Secret key <input id="secret_key" placeholder="SC4S_DEST_SPLUNK_HEC_DEFAULT_TOKEN"></label><label>Secret value <input id="secret_value" type="password" placeholder="new secret"></label><button class="danger" onclick="post('/api/env/secret',{key:secret_key.value,value:secret_value.value})">Update secret</button><pre id="env"></pre></section>
-<section class="card wide"><h2>Config editor</h2><select id="files" onchange="loadFile()"></select><br><textarea id="file_content" style="width:98%;height:260px"></textarea><br><button onclick="saveFile()">Save file</button></section>
-<section class="card"><h2>TLS certificates</h2><div id="tls"></div><textarea id="tls_cert" placeholder="server.pem certificate" style="width:98%;height:80px"></textarea><textarea id="tls_key" placeholder="server.key private key" style="width:98%;height:80px"></textarea><textarea id="tls_ca" placeholder="optional CA bundle" style="width:98%;height:60px"></textarea><button onclick="post('/api/tls',{cert:tls_cert.value,key:tls_key.value,ca:tls_ca.value})">Install TLS bundle</button><button class="danger" onclick="post('/api/tls/delete',{})">Delete TLS bundle</button></section>
-<section class="card"><h2>Validation</h2><button onclick="validateConfig()">Validate config</button><pre id="validation"></pre></section>
-<section class="card wide"><h2>Metrics Explorer</h2><label>Source name <input id="metric_source_name" placeholder="source, dst.http, filter"></label><label>Type <input id="metric_type" placeholder="processed, dropped, matched"></label><label>Search raw rows <input id="metric_search" placeholder="f_prod or d_hec"></label><button onclick="loadMetrics()">Refresh metrics</button><pre id="metrics"></pre></section>
-<section class="card wide"><h2>Option help/schema</h2><pre id="schema"></pre></section>
-<section class="card wide"><h2>Backups / rollback</h2><div id="backups"></div><pre id="backup_diff"></pre></section>
-<section class="card"><h2>Templates</h2><input id="tpl_name" placeholder="template name"><button onclick="post('/api/templates/export',{name:tpl_name.value||'sc4s-template'})">Export current config</button><br><input type="file" id="tpl_file"><button onclick="uploadTemplate()">Upload/import zip</button><div id="templates"></div></section>
-<section class="card wide"><h2>Operations</h2><div id="ops"></div><h3>Recent SC4S logs</h3><pre id="logs"></pre></section>
-<section class="card wide"><h2>Audit</h2><pre id="audit"></pre></section>
-</main><script>
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-async function api(p,o){let r=await fetch(p,o);let t=await r.text();try{return JSON.parse(t)}catch(e){return {error:t,status:r.status}}}
-async function post(p,d){let r=await api(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}); alert(JSON.stringify(r,null,2)); await loadAll();}
-async function loadAll(){let s=await api('/api/stats'); status.innerHTML=`<b class="${s.health&&s.health.ok?'ok':'bad'}">Health: ${s.health&&s.health.ok?'healthy':'unhealthy'}</b><pre>${esc(JSON.stringify(s.docker,null,2))}</pre><div>${esc(s.disk||'')}</div>`; logs.textContent=(s.recent_logs||[]).join('\n'); ops.innerHTML=`<div>Control provider: <b>${esc((s.control_provider||{}).provider||'unknown')}</b> ${s.control_provider&&s.control_provider.ok?'<span class="ok">healthy</span>':'<span class="bad">unhealthy</span>'}</div><div>SC4S version: ${esc(s.running_sc4s_version||'unknown')} / supported ${esc(s.supported_sc4s_version||'unknown')} ${s.version_drift&&s.version_drift.drift?'<span class="bad">drift</span>':'<span class="ok">aligned</span>'}</div><pre>${esc(JSON.stringify(s.log_findings||{},null,2))}</pre>`; ports.innerHTML=Object.entries(s.ports||{}).map(([k,v])=>`<div><b>${esc(k)}</b>: desired ${esc(v.enabled?'enabled '+v.port:'disabled')}; live listener ${v.listener_active?'<span class=\"ok\">active</span>':'<span class=\"bad\">inactive</span>'} <button onclick=\"post('/api/ports',{kind:'${k}',enabled:true,port:prompt('Port',v.port||v.last_disabled_port||'514')})\">Enable/set</button><button class=\"danger\" onclick=\"post('/api/ports',{kind:'${k}',enabled:false})\">Disable</button></div>`).join(''); tls.textContent=JSON.stringify(s.tls,null,2); metrics.textContent=JSON.stringify(s.metrics_summary||{},null,2); let c=await api('/api/config'); env.textContent=JSON.stringify(c.env,null,2); files.innerHTML=(c.files||[]).map(f=>`<option value="${esc(f.rel)}">${esc(f.rel)} (${esc(f.size)})</option>`).join(''); if(files.value) await loadFile(); let ts=await api('/api/templates'); templates.innerHTML=(ts.templates||[]).map(t=>`<div>${esc(t.name)} (${esc(t.size)}) <a href="/api/templates/download?name=${encodeURIComponent(t.name)}">Download</a> <button onclick='post("/api/templates/import",{path:${JSON.stringify(t.path)}})'>Import</button></div>`).join(''); let sc=await api('/api/schema'); schema.textContent=JSON.stringify(sc.options||[],null,2); let b=await api('/api/backups'); backups.innerHTML=(b.backups||[]).slice(0,30).map(x=>`<div>${esc(x.name)} (${esc(x.size)}) <button onclick=\"showBackupDiff('${esc(x.name)}')\">Diff</button> <button onclick=\"post('/api/backups/restore',{name:'${esc(x.name)}'})\">Restore</button></div>`).join(''); let a=await api('/api/audit'); audit.textContent=(a.lines||[]).join('\n');}
-async function loadFile(){let r=await api('/api/config/file?path='+encodeURIComponent(files.value)); file_content.value=r.content||'';}
-async function saveFile(){await post('/api/config/file',{path:files.value,content:file_content.value});}
-async function addService(){await post('/api/services',{filter:svc_filter.value,source:svc_source.value,vendor_product:svc_vendor.value,index:svc_index.value,compliance:svc_compliance.value});}
-async function uploadTemplate(){let f=tpl_file.files[0]; if(!f){alert('Choose a zip first');return;} let b=await f.arrayBuffer(); let bin=''; new Uint8Array(b).forEach(x=>bin+=String.fromCharCode(x)); await post('/api/templates/import',{name:f.name,content_base64:btoa(bin)});}
-async function loadMetrics(){let q=new URLSearchParams({source_name:metric_source_name.value,type:metric_type.value,search:metric_search.value,limit:'500'});let m=await api('/api/metrics/syslog-ng?'+q.toString()); metrics.textContent=JSON.stringify(m,null,2);}
-async function validateConfig(){let v=await api('/api/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}); validation.textContent=JSON.stringify(v,null,2);}
-async function showBackupDiff(name){let d=await api('/api/backups/diff?name='+encodeURIComponent(name)); backup_diff.textContent=d.diff||JSON.stringify(d,null,2);}
-loadAll();
-</script></body></html>
-"""
-
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "SC4SManager/" + APP_VERSION
@@ -2068,15 +2029,24 @@ class Handler(BaseHTTPRequestHandler):
         print(json.dumps({"ts": now(), "remote": self.client_address[0], "msg": redact_request_log_message(fmt % args)}))
 
     def deny(self) -> None:
-        json_response(self, HTTPStatus.FORBIDDEN, {"error": "forbidden", "hint": "route must be reached through trusted Authentik/APISIX proxy"})
+        json_response(self, HTTPStatus.FORBIDDEN, {"error": "forbidden", "hint": "provide a valid API token or access through a configured proxy"})
 
     def do_GET(self) -> None:
         try:
             if manual_login_redirect(self):
                 return
+            parsed = urlparse(self.path)
+            if parsed.path == "/api/auth/status":
+                return json_response(self, 200, {"authenticated": authorized(self, unsafe=False)})
+            # Serve the frontend app and its assets without auth so the login page can render.
+            # API routes below this block still require authentication.
+            if static_asset_response(self, parsed.path):
+                return
+            if parsed.path not in ["/health", "/api/health"] and not parsed.path.startswith("/api/"):
+                if parsed.path.startswith("/") and frontend_response(self, parsed.path):
+                    return
             if not authorized(self, unsafe=False):
                 return self.deny()
-            parsed = urlparse(self.path)
             if parsed.path in ["/health", "/api/health"]:
                 return json_response(self, 200, {"status": "ok", "version": APP_VERSION, "sc4s": health_probe()})
             if parsed.path == "/api/stats":
@@ -2178,12 +2148,6 @@ class Handler(BaseHTTPRequestHandler):
                 return json_response(self, 200, {"lines": lines})
             if parsed.path.startswith("/api/"):
                 return json_response(self, 404, {"error": "not found"})
-            if static_asset_response(self, parsed.path):
-                return
-            if parsed.path == "/assets" or parsed.path.startswith("/assets/"):
-                return json_response(self, 404, {"error": "not found"})
-            if parsed.path.startswith("/") and frontend_response(self, parsed.path):
-                return
             return json_response(self, 404, {"error": "not found"})
         except ValueError as e:
             return json_response(self, 400, {"error": str(e)})
@@ -2192,10 +2156,36 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         try:
+            parsed = urlparse(self.path)
+            if parsed.path in ("/api/login", "/api/logout"):
+                payload = read_body(self)
+                if parsed.path == "/api/login":
+                    if not MANUAL_LOGIN_TOKEN:
+                        return json_response(self, 403, {"error": "standalone login is not configured", "hint": "set SC4S_MANAGER_MANUAL_LOGIN_TOKEN in manager.env"})
+                    token = payload.get("token", "")
+                    if not isinstance(token, str) or not _token_matches(token, MANUAL_LOGIN_TOKEN):
+                        return json_response(self, 401, {"error": "invalid token"})
+                    body = json.dumps({"ok": True}).encode()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.send_header("Set-Cookie", "sc4s_manual_session=%s; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax" % MANUAL_LOGIN_TOKEN)
+                    self.send_header("Cache-Control", "no-store")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                    return
+                body = json.dumps({"ok": True}).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Set-Cookie", "sc4s_manual_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax")
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             if not authorized(self, unsafe=True):
                 return self.deny()
             actor = actor_from(self)
-            parsed = urlparse(self.path)
             payload = read_body(self)
             if parsed.path == "/api/preview":
                 return json_response(self, 200, preview_change(payload))

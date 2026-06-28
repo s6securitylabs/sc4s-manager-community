@@ -10,14 +10,15 @@ import {
   Paper,
   Select,
   Stack,
-  Table,
   Text,
   TextInput,
   Title,
 } from '@mantine/core';
+import { createColumnHelper } from '@tanstack/react-table';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
+import { DataTable } from '../components/DataTable';
 import { MutationOutcome, type MutationOutcomeData } from '../components/MutationOutcome';
 import { operatorSafeErrorMessage } from '../lib/displayError';
 import {
@@ -27,6 +28,8 @@ import {
   onboardSource,
   type SourceEntry,
 } from '../api/operations';
+
+const colHelper = createColumnHelper<SourceEntry>();
 
 export function Sources() {
   const queryClient = useQueryClient();
@@ -87,11 +90,11 @@ export function Sources() {
     <Stack gap="lg">
       <div>
         <Title order={1}>Sources</Title>
-        <Text c="dimmed">Save staged source filters by network match, map them to SC4S vendor_product, index, and compliance tags, then optionally validate and reload SC4S.</Text>
+        <Text c="dimmed">Map IP addresses or hostnames to SC4S source types. Each source tells SC4S which parser to use and which Splunk index to write to.</Text>
       </div>
 
-      <Alert color="cyan" title="When this becomes live" variant="light">
-        Onboarding writes staged filter and context CSV changes under <Code>local/config/filters/</Code>. SC4S uses the change only after validation and reload; prove it is live with Splunk readback.
+      <Alert color="cyan" title="Changes need a restart to take effect" variant="light">
+        Saving a source writes config files but does not restart SC4S. Tick the checkbox below to apply and restart immediately, or restart later from SC4S Manager. Search Splunk for incoming events to confirm it's working.
       </Alert>
 
       {actionError && <Alert color="red" title="Action failed">{actionError}</Alert>}
@@ -100,8 +103,8 @@ export function Sources() {
       <Card withBorder padding="lg">
         <Stack gap="md">
           <div>
-            <Text className="panel-overline">Stage source onboarding</Text>
-            <Title order={3}>Add a staged syslog source</Title>
+            <Text className="panel-overline">Add a source</Text>
+            <Title order={3}>Add a syslog source</Title>
           </div>
           <Group grow>
             <TextInput label="Source ID" placeholder="asa_lab" value={name} onChange={(e) => setName(e.currentTarget.value)} required />
@@ -109,7 +112,7 @@ export function Sources() {
           </Group>
           <Group grow>
             <Select
-              label="SC4S vendor_product"
+              label="Source type"
               placeholder="cisco_asa"
               data={catalogOptions}
               value={vendorProduct}
@@ -121,13 +124,13 @@ export function Sources() {
             <TextInput label="Compliance tag (optional)" placeholder="pci" value={compliance} onChange={(e) => setCompliance(e.currentTarget.value)} />
           </Group>
           <Checkbox
-            label="Validate and reload SC4S now. Leave unchecked to keep this source staged."
+            label="Apply and restart SC4S now (leave unchecked to save without restarting)"
             checked={applyNow}
             onChange={(e) => setApplyNow(e.currentTarget.checked)}
           />
           <Group>
             <Button loading={busyKey === 'onboard'} disabled={!name.trim() || !sourceMatch.trim()} onClick={submitSource}>
-              {applyNow ? 'Stage, validate, and reload' : 'Save staged source'}
+              {applyNow ? 'Save and restart SC4S' : 'Save source'}
             </Button>
           </Group>
         </Stack>
@@ -137,53 +140,62 @@ export function Sources() {
         <Stack gap="md">
           <Group justify="space-between">
             <div>
-              <Text className="panel-overline">Saved source entries</Text>
-              <Title order={3}>Saved source staging inventory</Title>
+              <Title order={3}>Configured sources</Title>
             </div>
             <Badge variant="light" color="cyan">{sourcesQuery.data?.sources.length ?? 0} saved</Badge>
           </Group>
           {sourcesQuery.isLoading ? <Loader size="sm" /> : null}
           {sourcesQuery.isError ? <Alert color="red" title="Failed to load sources">{operatorSafeErrorMessage(sourcesQuery.error)}</Alert> : null}
           {sourcesQuery.data?.sources.length ? (
-            <Table striped highlightOnHover>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Name</Table.Th>
-                  <Table.Th>Match</Table.Th>
-                  <Table.Th>SC4S vendor_product</Table.Th>
-                  <Table.Th>Index</Table.Th>
-                  <Table.Th>Compliance</Table.Th>
-                  <Table.Th>Apply/reload mode</Table.Th>
-                  <Table.Th />
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {sourcesQuery.data.sources.map((entry) => (
-                  <Table.Tr key={entry.filter}>
-                    <Table.Td><Code>{entry.name}</Code></Table.Td>
-                    <Table.Td>{entry.source || '—'}</Table.Td>
-                    <Table.Td>{entry.vendor_product || '—'}</Table.Td>
-                    <Table.Td>{entry.index || '—'}</Table.Td>
-                    <Table.Td>{entry.compliance || '—'}</Table.Td>
-                    <Table.Td><Badge color="gray" variant="light">{entry.apply_mode}</Badge></Table.Td>
-                    <Table.Td>
-                      <Button
-                        color="red"
-                        variant="light"
-                        size="xs"
-                        loading={busyKey === `delete:${entry.name}`}
-                        onClick={() => removeSource(entry)}
-                      >
-                        Delete
-                      </Button>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
+            <DataTable
+              data={sourcesQuery.data.sources}
+              searchPlaceholder="Search by name, IP, source type…"
+              miw={760}
+              columns={[
+                colHelper.accessor('name', {
+                  header: 'Name',
+                  cell: (info) => <Code>{info.getValue()}</Code>,
+                }),
+                colHelper.accessor('source', {
+                  header: 'Match',
+                  cell: (info) => info.getValue() || '—',
+                }),
+                colHelper.accessor('vendor_product', {
+                  header: 'Source type',
+                  cell: (info) => info.getValue() || '—',
+                }),
+                colHelper.accessor('index', {
+                  header: 'Index',
+                  cell: (info) => info.getValue() || '—',
+                }),
+                colHelper.accessor('compliance', {
+                  header: 'Compliance',
+                  cell: (info) => info.getValue() || '—',
+                }),
+                colHelper.accessor('apply_mode', {
+                  header: 'Apply mode',
+                  cell: (info) => <Badge color="gray" variant="light">{info.getValue()}</Badge>,
+                }),
+                colHelper.display({
+                  id: 'actions',
+                  header: '',
+                  cell: (info) => (
+                    <Button
+                      color="red"
+                      variant="light"
+                      size="xs"
+                      loading={busyKey === `delete:${info.row.original.name}`}
+                      onClick={() => removeSource(info.row.original)}
+                    >
+                      Delete
+                    </Button>
+                  ),
+                }),
+              ]}
+            />
           ) : !sourcesQuery.isLoading && !sourcesQuery.isError ? (
             <Paper withBorder p="md" radius="md">
-              <Text c="dimmed">No source entries saved yet. Add one above; it remains staged until validation, reload, and live Splunk readback.</Text>
+              <Text c="dimmed">No sources configured yet. Add one above.</Text>
             </Paper>
           ) : null}
         </Stack>

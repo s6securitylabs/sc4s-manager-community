@@ -12,15 +12,15 @@ import {
   PasswordInput,
   Select,
   Stack,
-  ScrollArea,
-  Table,
   Text,
   TextInput,
   Title,
 } from '@mantine/core';
+import { createColumnHelper } from '@tanstack/react-table';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { DataTable } from '../components/DataTable';
 import { MutationOutcome, type MutationOutcomeData } from '../components/MutationOutcome';
 import { operatorSafeErrorMessage } from '../lib/displayError';
 import {
@@ -29,6 +29,8 @@ import {
   listDestinations,
   type DestinationEntry,
 } from '../api/operations';
+
+const colHelper = createColumnHelper<DestinationEntry>();
 
 type DestinationKind = 'hec' | 'syslog' | 'bsd';
 
@@ -97,11 +99,11 @@ export function Destinations() {
     <Stack gap="lg">
       <div>
         <Title order={1}>Destinations</Title>
-        <Text c="dimmed">Save Splunk HEC and syslog/BSD forwarding targets. Secrets stay in the environment file and are redacted on readback.</Text>
+        <Text c="dimmed">Configure where SC4S sends events — Splunk HEC for indexing, or syslog to forward to another system. Tokens are never shown after saving.</Text>
       </div>
 
-      <Alert color="cyan" title="Restart boundary" variant="light">
-        Destination changes are restart-scoped. Saving writes staged environment-file changes; they take effect only after validation and SC4S restart.
+      <Alert color="cyan" title="Restart required to take effect" variant="light">
+        Saving a destination writes config but doesn't restart SC4S. Tick the checkbox below to restart immediately, or restart later from SC4S Manager.
       </Alert>
 
       {actionError && <Alert color="red" title="Action failed">{actionError}</Alert>}
@@ -110,7 +112,7 @@ export function Destinations() {
       <Card withBorder padding="lg">
         <Stack gap="md">
           <div>
-            <Text className="panel-overline">Stage destination change</Text>
+            <Text className="panel-overline">Add a destination</Text>
             <Title order={3}>Add or edit a forwarding target</Title>
           </div>
           <Group grow>
@@ -124,7 +126,7 @@ export function Destinations() {
               value={kind}
               onChange={(value) => setKind((value as DestinationKind) || 'hec')}
             />
-            <TextInput label="Destination ID / SC4S target name" placeholder="SIEM" value={destId} onChange={(e) => setDestId(e.currentTarget.value)} required />
+            <TextInput label="Destination ID" placeholder="SIEM" value={destId} onChange={(e) => setDestId(e.currentTarget.value)} required />
             <Select
               label="Routing mode"
               data={[
@@ -133,13 +135,13 @@ export function Destinations() {
               ]}
               value={mode}
               onChange={setMode}
-              description="GLOBAL receives all routed events by default; SELECT receives only explicit selector-routed events."
+              description="GLOBAL sends all events here by default. SELECT sends only events from specific routes you define."
             />
           </Group>
           {kind === 'hec' ? (
             <Group grow>
               <TextInput label="HEC URL" placeholder="https://splunk.example:8088" value={url} onChange={(e) => setUrl(e.currentTarget.value)} required />
-              <PasswordInput label="HEC token (write-only, never echoed)" value={token} onChange={(e) => setToken(e.currentTarget.value)} autoComplete="off" />
+              <PasswordInput label="HEC token (hidden after saving)" value={token} onChange={(e) => setToken(e.currentTarget.value)} autoComplete="off" />
               <Select
                 label="Verify TLS certificate"
                 data={[
@@ -170,14 +172,14 @@ export function Destinations() {
           )}
           {kind !== 'hec' && mode === 'SELECT' ? (
             <TextInput
-              label="Selector vendor_product — only matching events route to this destination"
+              label="Filter by source type — only events from this source type go to this destination"
               placeholder="cisco_asa"
               value={selectorVendorProduct}
               onChange={(e) => setSelectorVendorProduct(e.currentTarget.value)}
             />
           ) : null}
           <Checkbox
-            label="Validate and restart SC4S now. Leave unchecked to keep this destination staged in the environment file."
+            label="Apply and restart SC4S now (leave unchecked to save without restarting)"
             checked={applyNow}
             onChange={(e) => setApplyNow(e.currentTarget.checked)}
           />
@@ -187,7 +189,7 @@ export function Destinations() {
               disabled={!destId.trim() || (kind === 'hec' ? !url.trim() : !host.trim())}
               onClick={submitDestination}
             >
-              {applyNow ? 'Save, validate, and restart' : 'Save staged destination'}
+              {applyNow ? 'Save and restart SC4S' : 'Save destination'}
             </Button>
           </Group>
         </Stack>
@@ -197,65 +199,73 @@ export function Destinations() {
         <Stack gap="md">
           <Group justify="space-between">
             <div>
-              <Text className="panel-overline">Saved destination entries</Text>
-              <Title order={3}>Saved destination staging inventory</Title>
+              <Title order={3}>Configured destinations</Title>
             </div>
             <Badge variant="light" color="cyan">{destinationsQuery.data?.destinations.length ?? 0} saved</Badge>
           </Group>
           {destinationsQuery.isLoading ? <Loader size="sm" /> : null}
           {destinationsQuery.isError ? <Alert color="red" title="Failed to load destinations">{operatorSafeErrorMessage(destinationsQuery.error)}</Alert> : null}
           {destinationsQuery.data?.destinations.length ? (
-            <ScrollArea type="auto" offsetScrollbars>
-            <Table striped highlightOnHover miw={840}>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Destination type</Table.Th>
-                  <Table.Th>ID</Table.Th>
-                  <Table.Th>Target</Table.Th>
-                  <Table.Th>Mode</Table.Th>
-                  <Table.Th>Token status</Table.Th>
-                  <Table.Th />
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {destinationsQuery.data.destinations.map((entry) => (
-                  <Table.Tr key={`${entry.kind}:${entry.id}`}>
-                    <Table.Td><Badge variant="light" color={entry.kind === 'hec' ? 'cyan' : 'violet'}>{entry.kind}</Badge></Table.Td>
-                    <Table.Td><Code className="breakable-code-text" title={entry.id}>{entry.id}</Code></Table.Td>
-                    <Table.Td>
-                      <Text
-                        size="sm"
-                        className="breakable-table-text"
-                        title={entry.url || (entry.host ? `${entry.host}:${entry.port || ''} ${entry.transport || ''}` : '—')}
+            <DataTable
+              data={destinationsQuery.data.destinations}
+              searchPlaceholder="Search by ID, type, target…"
+              miw={840}
+              columns={[
+                colHelper.accessor('kind', {
+                  header: 'Type',
+                  cell: (info) => (
+                    <Badge variant="light" color={info.getValue() === 'hec' ? 'cyan' : 'violet'}>{info.getValue()}</Badge>
+                  ),
+                }),
+                colHelper.accessor('id', {
+                  header: 'ID',
+                  cell: (info) => <Code className="breakable-code-text">{info.getValue()}</Code>,
+                }),
+                colHelper.display({
+                  id: 'target',
+                  header: 'Target',
+                  cell: (info) => {
+                    const e = info.row.original;
+                    const label = e.url || (e.host ? `${e.host}:${e.port || ''} ${e.transport || ''}`.trim() : '—');
+                    return <Text size="sm" className="breakable-table-text">{label}</Text>;
+                  },
+                }),
+                colHelper.accessor('mode', {
+                  header: 'Mode',
+                  cell: (info) => (
+                    <Badge variant="light" color={info.getValue() === 'SELECT' ? 'yellow' : 'gray'}>{info.getValue() || 'GLOBAL'}</Badge>
+                  ),
+                }),
+                colHelper.display({
+                  id: 'token',
+                  header: 'Token',
+                  cell: (info) => <DestinationTokenStatus token={info.row.original.token} />,
+                }),
+                colHelper.display({
+                  id: 'actions',
+                  header: '',
+                  cell: (info) => {
+                    const e = info.row.original;
+                    return e.id !== 'DEFAULT' ? (
+                      <Button
+                        color="red"
+                        variant="light"
+                        size="xs"
+                        loading={busyKey === `delete:${e.kind}:${e.id}`}
+                        onClick={() => removeDestination(e)}
                       >
-                        {entry.url || (entry.host ? `${entry.host}:${entry.port || ''} ${entry.transport || ''}` : '—')}
-                      </Text>
-                    </Table.Td>
-                    <Table.Td><Badge variant="light" color={entry.mode === 'SELECT' ? 'yellow' : 'gray'}>{entry.mode || 'GLOBAL'}</Badge></Table.Td>
-                    <Table.Td><DestinationTokenStatus token={entry.token} /></Table.Td>
-                    <Table.Td>
-                      {entry.id !== 'DEFAULT' ? (
-                        <Button
-                          color="red"
-                          variant="light"
-                          size="xs"
-                          loading={busyKey === `delete:${entry.kind}:${entry.id}`}
-                          onClick={() => removeDestination(entry)}
-                        >
-                          Delete
-                        </Button>
-                      ) : (
-                        <Badge variant="light" color="gray">default target</Badge>
-                      )}
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-            </ScrollArea>
+                        Delete
+                      </Button>
+                    ) : (
+                      <Badge variant="light" color="gray">default target</Badge>
+                    );
+                  },
+                }),
+              ]}
+            />
           ) : !destinationsQuery.isLoading && !destinationsQuery.isError ? (
             <Paper withBorder p="md" radius="md">
-              <Text c="dimmed">No destination entries saved yet. Add one above; it remains staged until validation and SC4S restart.</Text>
+              <Text c="dimmed">No destinations configured yet. Add one above.</Text>
             </Paper>
           ) : null}
         </Stack>

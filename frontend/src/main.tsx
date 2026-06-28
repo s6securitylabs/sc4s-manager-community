@@ -7,12 +7,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import { AppLayout } from './components/AppLayout';
+import { checkAuthStatus, logout } from './api/auth';
 import { CatalogueDetail } from './routes/CatalogueDetail';
 import { CatalogueList } from './routes/CatalogueList';
 import { Dashboard } from './routes/Dashboard';
 import { Exports } from './routes/Exports';
 import { Library } from './routes/Library';
 import { Destinations } from './routes/Destinations';
+import { Login } from './routes/Login';
 import { OnboardingPreview } from './routes/OnboardingPreview';
 import { PackDetail } from './routes/PackDetail';
 import { PacksList } from './routes/PacksList';
@@ -26,46 +28,49 @@ const theme = createTheme({
   primaryColor: 'cyan',
   defaultRadius: 'md',
   fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+  fontSmoothing: true,
   headings: {
     fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
     fontWeight: '700',
   },
   colors: {
     dark: [
-      '#eef7fb',
-      '#c9d8e6',
-      '#aab8c9',
-      '#8a9eb8',
-      '#6f829f',
-      '#506079',
-      '#2a3446',
-      '#171f33',
-      '#131b2e',
-      '#0b1326',
+      '#f1f5f9',
+      '#cbd5e1',
+      '#94a3b8',
+      '#64748b',
+      '#475569',
+      '#334155',
+      '#1e293b',
+      '#0f172a',
+      '#0a1120',
+      '#060c17',
     ],
     cyan: [
-      '#dbfbff',
-      '#b0f5ff',
-      '#7ceeff',
-      '#44e8ff',
-      '#1fd5f0',
-      '#10b8d2',
-      '#0596af',
-      '#037488',
-      '#035764',
-      '#013846',
+      '#ecfeff',
+      '#cffafe',
+      '#a5f3fc',
+      '#67e8f9',
+      '#22d3ee',
+      '#06b6d4',
+      '#0891b2',
+      '#0e7490',
+      '#155e75',
+      '#164e63',
     ],
   },
   components: {
     Badge: {
-      defaultProps: {
-        radius: 'sm',
-      },
+      defaultProps: { radius: 'sm' },
     },
     Card: {
-      defaultProps: {
-        radius: 'lg',
-      },
+      defaultProps: { radius: 'lg' },
+    },
+    Paper: {
+      defaultProps: { radius: 'lg' },
+    },
+    Button: {
+      defaultProps: { radius: 'md' },
     },
   },
 });
@@ -76,6 +81,19 @@ function currentPath() {
 
 function AppRouter() {
   const [path, setPath] = useState(currentPath());
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    checkAuthStatus()
+      .then((authenticated) => {
+        setIsAuthenticated(authenticated);
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        setAuthChecked(true);
+      });
+  }, []);
 
   useEffect(() => {
     const onPopState = () => setPath(currentPath());
@@ -109,12 +127,24 @@ function AppRouter() {
     return <Dashboard />;
   }, [path]);
 
-  return <AppLayout path={path}>{route}</AppLayout>;
+  const handleLogout = async () => {
+    await logout();
+    setIsAuthenticated(false);
+    queryClient.clear();
+  };
+
+  if (!authChecked) return null;
+
+  if (!isAuthenticated) {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
+
+  return <AppLayout path={path} onLogout={handleLogout}>{route}</AppLayout>;
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <MantineProvider defaultColorScheme="auto" theme={theme}>
+    <MantineProvider defaultColorScheme="light" theme={theme}>
       <QueryClientProvider client={queryClient}>
         <AppRouter />
       </QueryClientProvider>

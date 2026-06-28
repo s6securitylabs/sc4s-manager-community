@@ -49,7 +49,7 @@ function CandidateCard({ match }: { match: CandidateMatch }) {
           {match.reason}
         </Text>
         <Alert color="yellow" variant="light" p="xs" radius="sm">
-          Preview only — not applied, not validated. Operator review required before configuring.
+          Preview only — confirm in Splunk before adding a source.
         </Alert>
       </Stack>
     </Card>
@@ -81,7 +81,7 @@ function SplunkFieldsPanel({ metadata }: { metadata: ExpectedMetadata }) {
           </Group>
         ))}
         <Text size="xs" c="dimmed">
-          These values are heuristic estimates. Validate against a live Splunk readback before treating
+          These values are heuristic estimates. Search Splunk for incoming events to confirm, rather than treating
           as authoritative.
         </Text>
       </Stack>
@@ -145,16 +145,14 @@ export function OnboardingPreview() {
   return (
     <Stack gap="lg">
       <Box>
-        <Title order={2}>Source onboarding preview</Title>
+        <Title order={1}>Parser preview</Title>
         <Text c="dimmed" size="sm" mt="xs">
-          Paste a representative sample event to identify likely parser and pack candidates and expected
-          Splunk fields. Sample content is not stored or applied.
+          Paste a sample log event to identify the likely parser and expected Splunk fields. Nothing is stored or applied.
         </Text>
       </Box>
 
       <Alert color="yellow" variant="light" radius="md">
-        Sample content is not stored or applied. Results are heuristic estimates only and require
-        operator validation before use. Secret-looking strings are redacted from the preview output.
+        Results are estimates only and require review before use. Secret-looking strings are redacted from the output.
       </Alert>
 
       <Card withBorder p="md" radius="md">
@@ -173,7 +171,7 @@ export function OnboardingPreview() {
           <Group grow align="flex-start">
             <Textarea
               label="Source hint (optional)"
-              description="Vendor/product hint, e.g. cisco_asa"
+              description="Device type hint, e.g. cisco_asa"
               placeholder="cisco_asa"
               minRows={1}
               value={sourceHint}
@@ -197,7 +195,7 @@ export function OnboardingPreview() {
           )}
 
           <Button onClick={() => void handlePreview()} loading={loading} disabled={!sample.trim()}>
-            Preview parser and pack match
+            Find matching parser
           </Button>
         </Stack>
       </Card>
@@ -253,7 +251,7 @@ export function OnboardingPreview() {
 
           {result.candidate_matches.length > 0 ? (
             <Stack gap="sm">
-              <Text fw={600}>Candidate parser and pack matches</Text>
+              <Text fw={600}>Matching parsers</Text>
               {result.candidate_matches.map((match) => (
                 <CandidateCard key={match.pack_id} match={match} />
               ))}

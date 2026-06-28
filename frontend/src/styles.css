@@ -4,76 +4,226 @@ body,
   min-height: 100%;
 }
 
+/* ── Light mode (default) ───────────────────────────── */
 :root {
-  color-scheme: dark light;
-  --shell-bg-start: #0b1326;
-  --shell-bg-mid: #101a2c;
-  --shell-bg-end: #0b1326;
-  --shell-radial: rgba(31, 213, 240, 0.08);
-  --shell-text: #eef7fb;
-  --shell-header-bg: rgba(11, 19, 38, 0.94);
-  --shell-navbar-bg: rgba(19, 27, 46, 0.96);
-  --shell-panel-bg: rgba(19, 27, 46, 0.92);
-  --shell-panel-muted-bg: rgba(11, 19, 38, 0.4);
-  --shell-input-bg: rgba(11, 19, 38, 0.8);
-  --shell-border: rgba(138, 158, 184, 0.18);
-  --shell-border-strong: rgba(138, 158, 184, 0.34);
-  --shell-nav-bg: rgba(19, 27, 46, 0.4);
-  --shell-nav-hover-bg: rgba(28, 40, 68, 0.7);
-  --shell-nav-active-bg: rgba(31, 213, 240, 0.12);
-  --shell-nav-label: #eef7fb;
-  --shell-nav-description: #aab8c9;
-  --shell-overline: #8a9eb8;
-  --shell-focus: rgba(31, 213, 240, 0.72);
-  --shell-focus-shadow: rgba(31, 213, 240, 0.28);
-  --shell-hover-shadow: rgba(0, 0, 0, 0.22);
-}
-
-[data-mantine-color-scheme='light'] {
   color-scheme: light;
-  --shell-bg-start: #f7fbff;
-  --shell-bg-mid: #eef6fb;
-  --shell-bg-end: #e8f1f8;
-  --shell-radial: rgba(3, 116, 136, 0.14);
-  --shell-text: #142033;
-  --shell-header-bg: rgba(255, 255, 255, 0.92);
-  --shell-navbar-bg: rgba(248, 252, 255, 0.96);
-  --shell-panel-bg: rgba(255, 255, 255, 0.92);
-  --shell-panel-muted-bg: rgba(239, 247, 252, 0.82);
-  --shell-input-bg: rgba(255, 255, 255, 0.94);
-  --shell-border: rgba(80, 96, 121, 0.2);
-  --shell-border-strong: rgba(80, 96, 121, 0.34);
-  --shell-nav-bg: rgba(255, 255, 255, 0.66);
-  --shell-nav-hover-bg: rgba(226, 242, 250, 0.86);
-  --shell-nav-active-bg: rgba(3, 116, 136, 0.12);
-  --shell-nav-label: #142033;
-  --shell-nav-description: #506079;
-  --shell-overline: #506079;
-  --shell-focus: rgba(3, 116, 136, 0.72);
-  --shell-focus-shadow: rgba(3, 116, 136, 0.22);
-  --shell-hover-shadow: rgba(40, 54, 76, 0.14);
+
+  --shell-bg:               #f8fafd;
+  --shell-text:             #0f172a;
+
+  --shell-header-bg:        #ffffff;
+  --shell-header-border:    rgba(15, 23, 42, 0.08);
+  --shell-header-shadow:    0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  --shell-navbar-bg:        #ffffff;
+  --shell-navbar-border:    rgba(15, 23, 42, 0.08);
+
+  --shell-panel-bg:         #ffffff;
+  --shell-panel-muted-bg:   #f1f5f9;
+  --shell-panel-shadow:     0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  --shell-input-bg:         #ffffff;
+  --shell-border:           rgba(15, 23, 42, 0.09);
+  --shell-border-strong:    rgba(15, 23, 42, 0.18);
+
+  --shell-nav-bg:           transparent;
+  --shell-nav-hover-bg:     #f0fdff;
+  --shell-nav-active-bg:    #ecfeff;
+  --shell-nav-label:        #0f172a;
+  --shell-nav-description:  #64748b;
+
+  --shell-overline:         #94a3b8;
+  --shell-section-label:    #94a3b8;
+
+  --shell-focus:            #0891b2;
+  --shell-focus-shadow:     rgba(8, 145, 178, 0.18);
+  --shell-hover-shadow:     rgba(15, 23, 42, 0.08);
+
+  --shell-radial:           rgba(8, 145, 178, 0.05);
 }
 
+/* ── Dark mode override ─────────────────────────────── */
+[data-mantine-color-scheme='dark'] {
+  color-scheme: dark;
+
+  --shell-bg:               #0b1326;
+  --shell-text:             #eef7fb;
+
+  --shell-header-bg:        rgba(11, 19, 38, 0.96);
+  --shell-header-border:    rgba(138, 158, 184, 0.16);
+  --shell-header-shadow:    none;
+
+  --shell-navbar-bg:        rgba(19, 27, 46, 0.98);
+  --shell-navbar-border:    rgba(138, 158, 184, 0.14);
+
+  --shell-panel-bg:         rgba(19, 27, 46, 0.92);
+  --shell-panel-muted-bg:   rgba(11, 19, 38, 0.4);
+  --shell-panel-shadow:     none;
+
+  --shell-input-bg:         rgba(11, 19, 38, 0.8);
+  --shell-border:           rgba(138, 158, 184, 0.18);
+  --shell-border-strong:    rgba(138, 158, 184, 0.34);
+
+  --shell-nav-bg:           rgba(19, 27, 46, 0.4);
+  --shell-nav-hover-bg:     rgba(28, 40, 68, 0.7);
+  --shell-nav-active-bg:    rgba(8, 145, 178, 0.14);
+  --shell-nav-label:        #eef7fb;
+  --shell-nav-description:  #94a3b8;
+
+  --shell-overline:         #64748b;
+  --shell-section-label:    #64748b;
+
+  --shell-focus:            rgba(34, 211, 238, 0.8);
+  --shell-focus-shadow:     rgba(34, 211, 238, 0.22);
+  --shell-hover-shadow:     rgba(0, 0, 0, 0.28);
+
+  --shell-radial:           rgba(8, 145, 178, 0.08);
+}
+
+/* ── Base ───────────────────────────────────────────── */
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at top, var(--shell-radial), transparent 28%),
-    linear-gradient(180deg, var(--shell-bg-start) 0%, var(--shell-bg-mid) 45%, var(--shell-bg-end) 100%);
+  background: var(--shell-bg);
   color: var(--shell-text);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
   color: inherit;
 }
 
+/* ── Shell ──────────────────────────────────────────── */
+.manager-shell {
+  background: transparent;
+}
+
+.shell-header {
+  background: var(--shell-header-bg);
+  border-bottom: 1px solid var(--shell-header-border);
+  box-shadow: var(--shell-header-shadow);
+}
+
+.shell-navbar {
+  background: var(--shell-navbar-bg);
+  border-right: 1px solid var(--shell-navbar-border);
+}
+
+.shell-main {
+  background: transparent;
+}
+
+/* ── Cards and panels ───────────────────────────────── */
+.cluster-card,
+.shell-status-card,
+.catalogue-hero,
+.catalogue-filter-panel,
+.catalogue-summary-card,
+.catalogue-detail-card,
+.catalogue-evidence-card,
+.catalogue-list-card {
+  border: 1px solid var(--shell-border);
+  background: var(--shell-panel-bg);
+  box-shadow: var(--shell-panel-shadow);
+}
+
+/* ── Search input ───────────────────────────────────── */
+.shell-search-input,
+.shell-search-input input,
+.shell-search-input .mantine-TextInput-input {
+  background: var(--shell-input-bg);
+  border-color: var(--shell-border-strong);
+}
+
+.shell-search-input:focus-within input,
+.shell-search-input .mantine-TextInput-input:focus {
+  border-color: var(--shell-focus);
+  box-shadow: 0 0 0 2px var(--shell-focus-shadow);
+}
+
+/* ── Typography overlines ───────────────────────────── */
+.shell-section-label,
+.panel-overline {
+  color: var(--shell-overline);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ── Nav links ──────────────────────────────────────── */
+.shell-nav-link {
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  border-radius: 10px;
+  background: var(--shell-nav-bg);
+  transition: background 100ms ease, border-color 100ms ease;
+}
+
+.shell-nav-link:hover {
+  background: var(--shell-nav-hover-bg);
+  border-color: var(--shell-border);
+  border-left-color: transparent;
+}
+
+.shell-nav-link[data-active='true'] {
+  border-left-color: var(--mantine-color-cyan-6);
+  border-color: var(--shell-border);
+  background: var(--shell-nav-active-bg);
+}
+
+.shell-nav-label {
+  color: var(--shell-nav-label);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.shell-nav-description {
+  color: var(--shell-nav-description);
+  font-size: 0.775rem;
+  line-height: 1.4;
+}
+
+/* ── Catalogue cards ────────────────────────────────── */
+.catalogue-list-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.catalogue-list-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(8, 145, 178, 0.3);
+  box-shadow: 0 8px 24px var(--shell-hover-shadow), 0 2px 8px rgba(8, 145, 178, 0.06);
+}
+
+.catalogue-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.catalogue-code {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace;
+  font-size: 0.82em;
+}
+
+.catalogue-empty-box {
+  border: 1.5px dashed var(--shell-border-strong);
+  border-radius: 12px;
+  background: var(--shell-panel-muted-bg);
+}
+
+/* ── Utilities ──────────────────────────────────────── */
+.readable-panel-text {
+  color: var(--shell-text);
+}
+
 .muted-code {
   white-space: pre-wrap;
   word-break: break-word;
-}
-
-.readable-panel-text {
-  color: var(--shell-text);
 }
 
 .breakable-code-text,
@@ -87,112 +237,4 @@ a {
 .breakable-code-text {
   display: inline-block;
   max-width: 100%;
-}
-
-.manager-shell {
-  background: transparent;
-}
-
-.shell-header {
-  background: var(--shell-header-bg);
-  border-bottom: 1px solid var(--shell-border);
-  backdrop-filter: blur(12px);
-}
-
-.shell-navbar {
-  background: var(--shell-navbar-bg);
-  border-right: 1px solid var(--shell-border);
-}
-
-.shell-main {
-  background: transparent;
-}
-
-.cluster-card,
-.shell-status-card,
-.catalogue-hero,
-.catalogue-filter-panel,
-.catalogue-summary-card,
-.catalogue-detail-card,
-.catalogue-evidence-card,
-.catalogue-list-card {
-  border-color: var(--shell-border);
-  background: var(--shell-panel-bg);
-}
-
-.shell-search-input,
-.shell-search-input input,
-.shell-search-input .mantine-TextInput-input {
-  background: var(--shell-input-bg);
-  border-color: var(--shell-border-strong);
-}
-
-.shell-search-input:focus,
-.shell-search-input input:focus,
-.shell-search-input .mantine-TextInput-input:focus {
-  border-color: var(--shell-focus);
-  box-shadow: 0 0 0 1px var(--shell-focus-shadow);
-}
-
-.shell-section-label,
-.panel-overline {
-  color: var(--shell-overline);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.shell-nav-link {
-  border: 1px solid var(--shell-border);
-  border-left: 3px solid transparent;
-  border-radius: 12px;
-  background: var(--shell-nav-bg);
-}
-
-.shell-nav-link:hover {
-  background: var(--shell-nav-hover-bg);
-}
-
-.shell-nav-link[data-active='true'] {
-  border-left-color: var(--mantine-color-cyan-6);
-  background: var(--shell-nav-active-bg);
-}
-
-.shell-nav-label {
-  color: var(--shell-nav-label);
-  font-weight: 600;
-}
-
-.shell-nav-description {
-  color: var(--shell-nav-description);
-}
-
-.catalogue-list-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
-}
-
-.catalogue-list-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--shell-focus-shadow);
-  box-shadow: 0 14px 30px var(--shell-hover-shadow);
-}
-
-.catalogue-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.catalogue-code {
-  font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, monospace;
-}
-
-.catalogue-empty-box {
-  border: 1px dashed var(--shell-border-strong);
-  border-radius: 16px;
-  background: var(--shell-panel-muted-bg);
 }

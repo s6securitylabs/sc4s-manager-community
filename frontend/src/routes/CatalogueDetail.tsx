@@ -3,10 +3,9 @@ import {
   Anchor,
   Badge,
   Card,
-  Divider,
   Group,
-  Loader,
   List,
+  Loader,
   Paper,
   SimpleGrid,
   Stack,
@@ -69,16 +68,16 @@ function truthyString(value: unknown) {
 
 function capabilityItems(entry: CatalogueDetailEntry) {
   const map = [
-    { key: 'parser', label: 'Parser artifact recorded' },
-    { key: 'filters', label: 'Filter artifact recorded' },
-    { key: 'postfilters', label: 'Postfilter artifact recorded' },
-    { key: 'log_reduction', label: 'Log reduction artifact recorded' },
-    { key: 'splunk_props_transforms', label: 'Splunk props/transforms recorded' },
-    { key: 'cim_mapping', label: 'CIM mapping recorded' },
-    { key: 'ocsf_mapping', label: 'OCSF mapping recorded' },
-    { key: 'fixtures', label: 'Test fixtures recorded' },
-    { key: 'syntax_validated', label: 'Syntax check evidence recorded' },
-    { key: 'splunk_ingestion_validated', label: 'Splunk ingestion evidence recorded' },
+    { key: 'parser', label: 'Parser' },
+    { key: 'filters', label: 'Filter' },
+    { key: 'postfilters', label: 'Post-filter' },
+    { key: 'log_reduction', label: 'Log reduction' },
+    { key: 'splunk_props_transforms', label: 'Splunk knowledge' },
+    { key: 'cim_mapping', label: 'CIM mapping' },
+    { key: 'ocsf_mapping', label: 'OCSF mapping' },
+    { key: 'fixtures', label: 'Test events' },
+    { key: 'syntax_validated', label: 'Syntax validated' },
+    { key: 'splunk_ingestion_validated', label: 'Splunk tested' },
   ] as const;
   return map.filter((item) => Boolean(entry.capabilities[item.key])).map((item) => item.label);
 }
@@ -109,8 +108,8 @@ function CapabilityPanel({ entry }: { entry: CatalogueDetailEntry }) {
     <Card className="catalogue-detail-card" withBorder>
       <Stack gap="md">
         <div>
-          <Text className="panel-overline">Recorded capability evidence</Text>
-          <Title order={3}>Capabilities reported by evidence</Title>
+          <Text className="panel-overline">Included components</Text>
+          <Title order={3}>What's included</Title>
         </div>
 
         {enabled.length > 0 ? (
@@ -120,121 +119,9 @@ function CapabilityPanel({ entry }: { entry: CatalogueDetailEntry }) {
             ))}
           </div>
         ) : (
-          <EmptyEvidence title="No capability evidence recorded yet" body="This entry does not yet expose parser, fixture, reduction, or Splunk-validation signals." />
+          <EmptyEvidence title="No components recorded yet" body="This entry does not yet expose parser, fixture, reduction, or Splunk-validation signals." />
         )}
 
-      </Stack>
-    </Card>
-  );
-}
-
-function ValidationPanel({ entry }: { entry: CatalogueDetailEntry }) {
-  const state = truthyString(entry.validation?.state) || 'Unknown';
-  const lastVerifiedAt = truthyString(entry.validation?.last_verified_at) || 'Not recorded';
-  const validatedBy = truthyString(entry.validation?.validated_by) || 'Not recorded';
-  const summary = truthyString(entry.validation?.summary);
-  const evidencePaths = Array.isArray(entry.validation?.evidence_paths) ? entry.validation.evidence_paths : [];
-
-  return (
-    <Card className="catalogue-evidence-card" withBorder>
-      <Stack gap="md">
-        <div>
-          <Text className="panel-overline">Review and validation evidence</Text>
-          <Title order={3}>Catalogue review state</Title>
-        </div>
-
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <EvidencePair label="Recorded validation state" value={formatTokenLabel(state)} />
-          <EvidencePair label="Last evidence timestamp" value={lastVerifiedAt} />
-          <EvidencePair label="Reviewed/validated by" value={validatedBy} />
-          <EvidencePair label="Review status" value={entry.review_status ? formatTokenLabel(entry.review_status) : reviewStateLabel(entry)} />
-          <EvidencePair label="Community rating" value="Not recorded" />
-          <EvidencePair label="Manager evidence score" value={`${entry.quality_score}/5 · ${formatTokenLabel(entry.quality_status)}`} />
-        </SimpleGrid>
-
-        {summary ? (
-          <Paper withBorder p="md" radius="md">
-            <Text className="panel-overline">Validation summary</Text>
-            <Text size="sm">{summary}</Text>
-          </Paper>
-        ) : (
-          <EmptyEvidence title="No human-readable validation summary recorded" body="This entry has not yet published human-readable fixture or Splunk-evidence notes." />
-        )}
-
-        {evidencePaths.length > 0 ? (
-          <Stack gap="xs">
-            <Text className="panel-overline">Evidence file paths</Text>
-            <List spacing="xs" size="sm">
-              {evidencePaths.map((path) => (
-                <List.Item key={path}><Text className="catalogue-code" span>{path}</Text></List.Item>
-              ))}
-            </List>
-          </Stack>
-        ) : (
-          <EmptyEvidence title="No evidence file paths recorded" body="No evidence file paths are recorded for this entry." />
-        )}
-      </Stack>
-    </Card>
-  );
-}
-
-function ComparisonPanel({ entry }: { entry: CatalogueDetailEntry }) {
-  const comparison = entry.comparison_to_upstream || {};
-  const eventDelta = Array.isArray(comparison.event_family_delta) ? comparison.event_family_delta : [];
-  const fieldDelta = Array.isArray(comparison.field_extraction_delta) ? comparison.field_extraction_delta : [];
-  const fixtureSummary = truthyString(comparison.fixture_validation_summary);
-
-  return (
-    <Card className="catalogue-detail-card" withBorder>
-      <Stack gap="md">
-        <div>
-          <Text className="panel-overline">Comparison with upstream SC4S</Text>
-          <Title order={3}>Relationship to upstream and recorded differences</Title>
-        </div>
-
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <EvidencePair label="Relationship" value={formatTokenLabel(truthyString(comparison.relationship) || entry.relationship_to_upstream)} />
-          <EvidencePair label="Reduction added" value={comparison.reduction_added ? 'Yes' : 'No'} />
-          <EvidencePair label="Splunk knowledge added" value={comparison.splunk_knowledge_added ? 'Yes' : 'No'} />
-          <EvidencePair label="Changed event families" value={String(eventDelta.length)} />
-        </SimpleGrid>
-
-        <Divider color="rgba(138, 158, 184, 0.18)" />
-
-        {eventDelta.length > 0 ? (
-          <Stack gap="xs">
-            <Text className="panel-overline">Event families added or changed</Text>
-            <div className="catalogue-chip-row">
-              {eventDelta.map((value) => (
-                <Badge key={value} variant="light" color="cyan">{value}</Badge>
-              ))}
-            </div>
-          </Stack>
-        ) : (
-          <EmptyEvidence title="No event-family delta recorded" body="The entry does not currently report distinct upstream event-family changes." />
-        )}
-
-        {fieldDelta.length > 0 ? (
-          <Stack gap="xs">
-            <Text className="panel-overline">Changed field extractions</Text>
-            <div className="catalogue-chip-row">
-              {fieldDelta.map((value) => (
-                <Badge key={value} variant="light" color="violet">{value}</Badge>
-              ))}
-            </div>
-          </Stack>
-        ) : (
-          <EmptyEvidence title="No field extraction delta recorded" body="No field-level additions are reported for this entry." />
-        )}
-
-        {fixtureSummary ? (
-          <Paper withBorder p="md" radius="md">
-            <Text className="panel-overline">Fixture validation summary</Text>
-            <Text size="sm">{fixtureSummary}</Text>
-          </Paper>
-        ) : (
-          <EmptyEvidence title="No fixture validation summary recorded" body="This entry does not yet include fixture-driven summary text." />
-        )}
       </Stack>
     </Card>
   );
@@ -247,8 +134,8 @@ function ArtifactsPanel({ entry }: { entry: CatalogueDetailEntry }) {
     <Card className="catalogue-detail-card" withBorder>
       <Stack gap="md">
         <div>
-          <Text className="panel-overline">Recorded artifacts</Text>
-          <Title order={3}>Artifact inventory by type</Title>
+          <Text className="panel-overline">Files</Text>
+          <Title order={3}>Files included in this source</Title>
         </div>
 
         {artifactGroups.length > 0 ? (
@@ -374,7 +261,7 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
           <Text className="readable-panel-text" maw={900}>{entry.summary}</Text>
 
           <Alert color="blue" title="Viewing only — not applied to SC4S" variant="light">
-            Catalogue entries, downloaded artifacts, and capability evidence are for review only. Nothing is applied to SC4S until you import and install a pack through Manager. After installing, reload SC4S and use Splunk readback to confirm.
+            Nothing is applied to SC4S until you download and install a pack through the SC4S Library page.
           </Alert>
 
           <div className="catalogue-chip-row">
@@ -383,8 +270,6 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
                 {originLabel(origin)}
               </Badge>
             ))}
-            <Badge variant="light" color="gray">{formatTokenLabel(entry.relationship_to_upstream)}</Badge>
-            <Badge variant="light" color="gray">Trust level: {formatTokenLabel(entry.trust_level)}</Badge>
           </div>
         </Stack>
       </Paper>
@@ -416,21 +301,16 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
         </Alert>
       )}
 
-      <SimpleGrid cols={{ base: 1, lg: 4 }}>
+      <SimpleGrid cols={{ base: 1, lg: 3 }}>
         <Paper className="catalogue-summary-card" withBorder p="md" radius="lg">
           <Text className="panel-overline">Primary catalogue origin</Text>
           <Title order={3}>{originLabel(entry.effective_origin)}</Title>
           <Text size="sm" c="dimmed">Primary catalogue origin for this entry.</Text>
         </Paper>
         <Paper className="catalogue-summary-card" withBorder p="md" radius="lg">
-          <Text className="panel-overline">Provenance source type</Text>
-          <Title order={3}>{entry.provenance?.source_kind ? formatTokenLabel(entry.provenance.source_kind) : 'Not recorded'}</Title>
-          <Text size="sm" c="dimmed">Where this catalogue record came from: SC4S Library, community input, or upstream SC4S inventory.</Text>
-        </Paper>
-        <Paper className="catalogue-summary-card" withBorder p="md" radius="lg">
-          <Text className="panel-overline">Recorded artifacts</Text>
+          <Text className="panel-overline">Files included</Text>
           <Title order={3}>{entry.artifacts.length}</Title>
-          <Text size="sm" c="dimmed">Files or snippets recorded for this catalogue entry; not necessarily applied locally.</Text>
+          <Text size="sm" c="dimmed">Files recorded for this catalogue entry.</Text>
         </Paper>
         <Paper className="catalogue-summary-card" withBorder p="md" radius="lg">
           <Text className="panel-overline">Presets</Text>
@@ -448,9 +328,7 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
             </div>
             <SimpleGrid cols={{ base: 1, sm: 2 }}>
               <EvidencePair label="Review status" value={reviewStateLabel(entry)} />
-              <EvidencePair label="Validation state" value={formatTokenLabel(truthyString(entry.validation?.state) || 'Unknown')} />
               <EvidencePair label="Primary catalogue origin" value={originLabel(entry.effective_origin)} />
-              <EvidencePair label="Source review state" value={entry.source_status ? formatTokenLabel(entry.source_status) : 'Not recorded'} />
             </SimpleGrid>
             {provenanceHost && (entry.provenance?.url || entry.provenance_url) ? (
               <Paper withBorder p="md" radius="md">
@@ -466,8 +344,6 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
         </Card>
 
         <CapabilityPanel entry={entry} />
-        <ValidationPanel entry={entry} />
-        <ComparisonPanel entry={entry} />
         <ArtifactsPanel entry={entry} />
         <PresetsPanel entry={entry} />
       </SimpleGrid>

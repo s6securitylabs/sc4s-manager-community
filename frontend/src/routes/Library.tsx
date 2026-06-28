@@ -7,7 +7,9 @@ import {
   Code,
   Group,
   Loader,
+  Pagination,
   Paper,
+  SimpleGrid,
   Stack,
   Text,
   TextInput,
@@ -15,6 +17,8 @@ import {
 } from '@mantine/core';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
+
+const LIBRARY_PAGE_SIZE = 10;
 import { operatorSafeErrorMessage } from '../lib/displayError';
 
 import {
@@ -30,6 +34,17 @@ import {
   type LibraryCatalogueEntry,
   type LibraryImportRecord,
 } from '../api/library';
+
+const CHECK_LABELS: Record<string, string> = {
+  catalogue: 'Pack list',
+  manifest: 'Pack metadata',
+  test_bundle: 'Test download',
+  sample_bundle: 'Sample download',
+};
+
+function formatCheckName(name: string) {
+  return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 function formatSourceLine(source: Record<string, unknown>) {
   const sourceId = String(source.source_id || 'unknown');
@@ -55,6 +70,7 @@ export function Library() {
   const [search, setSearch] = useState('');
   const [downloadableOnly, setDownloadableOnly] = useState(true);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [libPage, setLibPage] = useState(1);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
@@ -75,6 +91,8 @@ export function Library() {
       setSourceId(firstSource);
     }
   }, [sourceId, sourcesQuery.data]);
+
+  useEffect(() => { setLibPage(1); }, [search, downloadableOnly, sourceId]);
 
   const catalogueParams = useMemo(() => {
     const next: Record<string, string> = { source_id: sourceId || 'official' };
@@ -129,10 +147,14 @@ export function Library() {
   const selectedEntry = detailQuery.data?.entry || null;
   const selectedEligibility = detailQuery.data?.eligibility || null;
 
+  const allEntries = catalogueQuery.data?.entries ?? [];
+  const libTotalPages = Math.ceil(allEntries.length / LIBRARY_PAGE_SIZE);
+  const pagedEntries = allEntries.slice((libPage - 1) * LIBRARY_PAGE_SIZE, libPage * LIBRARY_PAGE_SIZE);
+
   return (
     <Stack gap="lg">
       <div>
-        <Title order={1}>SecHub packs</Title>
+        <Title order={1}>SC4S Library</Title>
         <Text c="dimmed">Browse packs from SecHub and install them into your SC4S instance. Nothing changes on your instance until you explicitly install a pack.</Text>
       </div>
 
@@ -159,13 +181,12 @@ export function Library() {
           {healthQuery.isError ? <Alert color="red" title="Could not reach SecHub">{operatorSafeErrorMessage(healthQuery.error, 'Could not reach SecHub. Check your network connection and try again.')}</Alert> : null}
           {healthQuery.data ? (
             <Stack gap="xs">
-              <Text size="sm" c="dimmed">Packs available: {healthQuery.data.catalogue.entry_count} · downloadable bundles: {healthQuery.data.manifest.download_count} · last checked: {healthQuery.data.checked_at}</Text>
+              <Text size="sm" c="dimmed">{healthQuery.data.catalogue.entry_count} packs available · last updated: {healthQuery.data.checked_at}</Text>
               {healthQuery.data.checks.map((check) => (
                 <Paper key={check.name} withBorder p="sm" radius="md">
                   <Group justify="space-between" align="start">
                     <div>
-                      <Text fw={600}>{check.name}</Text>
-                      <Text size="xs" c="dimmed">{check.url || 'no URL recorded'}</Text>
+                      <Text fw={600}>{CHECK_LABELS[check.name] || formatCheckName(check.name)}</Text>
                       {!check.ok ? <Text size="sm">{check.message || 'check failed'} {check.next_action ? `What to do: ${check.next_action}` : ''}</Text> : null}
                     </div>
                     <Badge color={check.ok ? 'green' : 'red'} variant="light">{check.ok ? 'OK' : check.error_code || 'failed'}</Badge>
@@ -205,37 +226,50 @@ export function Library() {
                   <Text fw={600}>{formatSourceLine(source)}</Text>
                   <Badge color={source.enabled ? 'green' : 'red'} variant="light">{source.enabled ? 'Enabled' : 'Disabled'}</Badge>
                 </Group>
-                <Text size="sm" c="dimmed">Last refreshed: {source.last_sync || 'never'} · packs cached: {source.entry_count ?? 0} · downloadable bundles: {source.manifest_download_count ?? 0}</Text>
+                <Text size="sm" c="dimmed">Last updated: {source.last_sync || 'never'} · {source.entry_count ?? 0} packs available</Text>
               </Stack>
             </Paper>
           ))}
         </Stack>
       </Card>
 
-      <Group align="start" grow>
-        <Card withBorder padding="lg">
-          <Stack gap="md">
+      <Card withBorder padding="lg">
+        <Stack gap="md">
+          <Group justify="space-between" align="center">
             <div>
               <Text className="panel-overline">Available packs</Text>
               <Title order={3}>Packs from SecHub</Title>
             </div>
-            <TextInput label="Search packs" placeholder="pan, fortinet, commvault" value={search} onChange={(event) => setSearch(event.currentTarget.value)} />
-            <Checkbox label="Show downloadable packs only" checked={downloadableOnly} onChange={(event) => setDownloadableOnly(event.currentTarget.checked)} />
-            {catalogueQuery.isLoading ? <Loader size="sm" /> : null}
-            {catalogueQuery.isError ? <Alert color="red" title="Could not load pack list from SecHub">{operatorSafeErrorMessage(catalogueQuery.error)}</Alert> : null}
-            {catalogueQuery.data?.entries?.map((entry: LibraryCatalogueEntry) => (
-              <Paper key={entry.id} withBorder p="md" radius="md">
-                <Stack gap="sm">
-                  <Group justify="space-between" align="start">
-                    <div>
-                      <Text fw={700}>{entry.display_name || entry.id}</Text>
-                      <Text size="sm" c="dimmed">{entry.vendor || 'Unknown vendor'} / {entry.product || 'Unknown product'} · version {entry.version || 'unknown'}</Text>
-                    </div>
-                    <Badge color={entry.download_available ? 'green' : 'gray'} variant="light">{entry.download_available ? 'Download available' : 'No download yet'}</Badge>
+            <Checkbox label="Downloadable only" checked={downloadableOnly} onChange={(event) => setDownloadableOnly(event.currentTarget.checked)} />
+          </Group>
+          <TextInput placeholder="Search packs — pan, fortinet, commvault…" value={search} onChange={(event) => setSearch(event.currentTarget.value)} />
+          {catalogueQuery.isLoading ? <Loader size="sm" /> : null}
+          {catalogueQuery.isError ? <Alert color="red" title="Could not load pack list from SecHub">{operatorSafeErrorMessage(catalogueQuery.error)}</Alert> : null}
+          {allEntries.length > 0 && (
+            <Group justify="space-between" align="center">
+              <Text size="xs" c="dimmed">
+                {((libPage - 1) * LIBRARY_PAGE_SIZE) + 1}–{Math.min(libPage * LIBRARY_PAGE_SIZE, allEntries.length)} of {allEntries.length} packs
+              </Text>
+              {libTotalPages > 1 && <Pagination total={libTotalPages} value={libPage} onChange={setLibPage} size="xs" />}
+            </Group>
+          )}
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+            {pagedEntries.map((entry: LibraryCatalogueEntry) => (
+              <Paper key={entry.id} withBorder p="md" radius="md" style={{ display: 'flex', flexDirection: 'column' }}>
+                <Stack gap="sm" style={{ flex: 1 }}>
+                  <Group justify="space-between" align="start" wrap="nowrap">
+                    <Text fw={700} size="sm">{entry.display_name || entry.id}</Text>
+                    <Badge size="xs" color={entry.download_available ? 'green' : 'gray'} variant="light" style={{ whiteSpace: 'nowrap' }}>
+                      {entry.download_available ? 'Available' : 'Not yet'}
+                    </Badge>
                   </Group>
-                  <Group>
-                    <Button variant={selectedEntryId === entry.id ? 'filled' : 'light'} onClick={() => setSelectedEntryId(entry.id)}>View details</Button>
+                  {entry.version && <Text size="xs" c="dimmed">Version {entry.version}</Text>}
+                  <Group gap="xs" mt="auto" pt="xs">
+                    <Button size="xs" variant={selectedEntryId === entry.id ? 'filled' : 'light'} onClick={() => setSelectedEntryId(selectedEntryId === entry.id ? null : entry.id)}>
+                      {selectedEntryId === entry.id ? 'Hide details' : 'View details'}
+                    </Button>
                     <Button
+                      size="xs"
                       variant="default"
                       loading={busyKey === `download:${entry.id}`}
                       onClick={() => runAction(`download:${entry.id}`, () => downloadLibraryBundle(sourceId || 'official', entry.id), `Pack downloaded. Click "Check pack" to validate it before installing.`)}
@@ -243,6 +277,7 @@ export function Library() {
                       Download
                     </Button>
                     <Button
+                      size="xs"
                       color="cyan"
                       loading={busyKey === `validate:${entry.id}`}
                       onClick={() => runAction(`validate:${entry.id}`, () => validateLibraryImport(sourceId || 'official', entry.id), `Pack checked. Review the results below and click "Install to SC4S" if everything looks good.`)}
@@ -253,20 +288,27 @@ export function Library() {
                 </Stack>
               </Paper>
             ))}
-          </Stack>
-        </Card>
+          </SimpleGrid>
+          {libTotalPages > 1 && (
+            <Group justify="center">
+              <Pagination total={libTotalPages} value={libPage} onChange={setLibPage} size="sm" />
+            </Group>
+          )}
+        </Stack>
+      </Card>
 
+      {selectedEntryId && (
         <Card withBorder padding="lg">
           <Stack gap="md">
-            <div>
-              <Text className="panel-overline">Pack details</Text>
-              <Title order={3}>{selectedEntry ? String(selectedEntry.display_name || selectedEntry.id || selectedEntryId) : 'Select a pack'}</Title>
-            </div>
+            <Group justify="space-between" align="start">
+              <div>
+                <Text className="panel-overline">Pack details</Text>
+                <Title order={3}>{selectedEntry ? String(selectedEntry.display_name || selectedEntry.id || selectedEntryId) : selectedEntryId}</Title>
+              </div>
+              <Button size="xs" variant="subtle" color="gray" onClick={() => setSelectedEntryId(null)}>Close</Button>
+            </Group>
             {detailQuery.isLoading ? <Loader size="sm" /> : null}
             {detailQuery.isError ? <Alert color="red" title="Could not load pack details">{operatorSafeErrorMessage(detailQuery.error)}</Alert> : null}
-            {!selectedEntry && !detailQuery.isLoading && !detailQuery.isError ? (
-              <Text c="dimmed">Select a pack from the list to see what is included and whether it can be installed.</Text>
-            ) : null}
             {selectedEntry && selectedEligibility ? (
               <Stack gap="sm">
                 <Group>
@@ -280,7 +322,7 @@ export function Library() {
             ) : null}
           </Stack>
         </Card>
-      </Group>
+      )}
 
       <Card withBorder padding="lg">
         <Stack gap="md">
@@ -312,7 +354,7 @@ export function Library() {
                       color="cyan"
                       disabled={!item.apply_allowed}
                       loading={busyKey === `apply:${item.import_id}`}
-                      onClick={() => runAction(`apply:${item.import_id}`, () => applyLibraryImport(item.import_id, true), `SC4S config files installed. Reload SC4S and verify with Splunk readback.`)}
+                      onClick={() => runAction(`apply:${item.import_id}`, () => applyLibraryImport(item.import_id, true), `SC4S config files installed. Reload SC4S and check Splunk for incoming events to confirm.`)}
                     >
                       Install to SC4S
                     </Button>

@@ -28,7 +28,7 @@ export function PacksList() {
       <Group justify="space-between">
         <div>
           <Title order={1}>Local packs</Title>
-          <Text c="dimmed">{packsQuery.data?.count ?? 0} local or built-in packs saved in Manager; review and export before apply.</Text>
+          <Text c="dimmed">{packsQuery.data?.count ?? 0} local or built-in packs. Review and export from the Exports page.</Text>
         </div>
       </Group>
 
@@ -41,7 +41,6 @@ export function PacksList() {
                   <RouterAnchor to={`/packs/${encodeURIComponent(pack.id)}`} fw={700} size="lg">
                     {pack.display_name}
                   </RouterAnchor>
-                  <Text size="sm" c="dimmed">{pack.vendor} / {pack.product}</Text>
                 </div>
                 <Badge>Version {pack.version}</Badge>
               </Group>

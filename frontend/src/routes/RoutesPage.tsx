@@ -8,17 +8,17 @@ import {
   Group,
   Loader,
   Paper,
-  ScrollArea,
   Select,
   Stack,
-  Table,
   Text,
   TextInput,
   Title,
 } from '@mantine/core';
+import { createColumnHelper } from '@tanstack/react-table';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
+import { DataTable } from '../components/DataTable';
 import { MutationOutcome, type MutationOutcomeData } from '../components/MutationOutcome';
 import { operatorSafeErrorMessage } from '../lib/displayError';
 import {
@@ -29,6 +29,8 @@ import {
   upsertRoute,
   type RouteEntry,
 } from '../api/operations';
+
+const colHelper = createColumnHelper<RouteEntry>();
 
 export function RoutesPage() {
   const queryClient = useQueryClient();
@@ -104,11 +106,11 @@ export function RoutesPage() {
     <Stack gap="lg">
       <div>
         <Title order={1}>Routes</Title>
-        <Text c="dimmed">Save selector-based routes from an onboarded source and SC4S vendor_product to a SELECT-mode destination.</Text>
+        <Text c="dimmed">Direct events from a specific source to a specific destination, based on source type.</Text>
       </div>
 
-      <Alert color="cyan" title="How route changes become live" variant="light">
-        A route writes a staged selector under <Code>local/config/app_parsers/selectors/</Code> that matches the SC4S vendor_product and sends matching events to a SELECT-mode destination. The route remains staged until validation and reload; prove it is live with Splunk readback of a marker event.
+      <Alert color="cyan" title="Routes need a restart to take effect" variant="light">
+        Saving a route writes a selector file that tells SC4S which events to send where. Changes take effect after SC4S restarts. Search Splunk for incoming events to confirm it's working.
       </Alert>
 
       {actionError && <Alert color="red" title="Action failed">{actionError}</Alert>}
@@ -117,14 +119,14 @@ export function RoutesPage() {
       <Card withBorder padding="lg">
         <Stack gap="md">
           <div>
-            <Text className="panel-overline">Stage route</Text>
-            <Title order={3}>Source → vendor_product → destination</Title>
+            <Text className="panel-overline">Add a route</Text>
+            <Title order={3}>Route a source to a destination</Title>
           </div>
           <Group grow>
-            <TextInput label="Route ID / selector name" placeholder="asa_to_siem" value={routeId} onChange={(e) => setRouteId(e.currentTarget.value)} required />
+            <TextInput label="Route ID" placeholder="asa_to_siem" value={routeId} onChange={(e) => setRouteId(e.currentTarget.value)} required />
             <Select
               label="Source"
-              placeholder={sourcesQuery.isError ? 'Source inventory failed to load' : sourcesQuery.data?.sources.length ? 'Select an onboarded source' : 'No sources onboarded yet'}
+              placeholder={sourcesQuery.isError ? 'Could not load sources' : sourcesQuery.data?.sources.length ? 'Select a source' : 'No sources configured yet'}
               data={sourceOptions}
               value={source}
               onChange={(value) => {
@@ -135,7 +137,7 @@ export function RoutesPage() {
               searchable
             />
             <TextInput
-              label="SC4S vendor_product"
+              label="Source type"
               placeholder={sourceVendorProduct || 'cisco_asa'}
               value={pack}
               onChange={(e) => setPack(e.currentTarget.value)}
@@ -143,7 +145,7 @@ export function RoutesPage() {
             />
             <Select
               label="Destination"
-              placeholder={destinationsQuery.isError ? 'Destination inventory failed to load' : destinationOptions.length ? 'Select a destination' : 'No non-default destinations saved yet'}
+              placeholder={destinationsQuery.isError ? 'Could not load destinations' : destinationOptions.length ? 'Select a destination' : 'No SELECT-mode destinations saved yet'}
               data={destinationOptions}
               value={destination}
               onChange={setDestination}
@@ -154,12 +156,12 @@ export function RoutesPage() {
           {sourcesQuery.isError ? <Alert color="red" title="Unable to load source prerequisites">{operatorSafeErrorMessage(sourcesQuery.error)}</Alert> : null}
           {destinationsQuery.isError ? <Alert color="red" title="Unable to load destination prerequisites">{operatorSafeErrorMessage(destinationsQuery.error)}</Alert> : null}
           {prerequisiteQueryError ? (
-            <Alert color="red" title="Route submission blocked">
-              Resolve prerequisite inventory failures before saving a route; otherwise the selector could target stale or unknown source/destination state.
+            <Alert color="red" title="Fix the errors above before saving">
+              Source or destination data could not be loaded. Resolve the errors above before saving a route.
             </Alert>
           ) : null}
           <Checkbox
-            label="Validate and reload SC4S now. Leave unchecked to keep this route staged."
+            label="Apply and restart SC4S now (leave unchecked to save without restarting)"
             checked={applyNow}
             onChange={(e) => setApplyNow(e.currentTarget.checked)}
           />
@@ -169,7 +171,7 @@ export function RoutesPage() {
               disabled={prerequisiteQueryError || !routeId.trim() || !source || !pack.trim() || !destination}
               onClick={submitRoute}
             >
-              {applyNow ? 'Stage, validate, and reload' : 'Save staged route'}
+              {applyNow ? 'Save and restart SC4S' : 'Save route'}
             </Button>
           </Group>
         </Stack>
@@ -179,70 +181,72 @@ export function RoutesPage() {
         <Stack gap="md">
           <Group justify="space-between">
             <div>
-              <Text className="panel-overline">Saved route entries</Text>
-              <Title order={3}>Saved route staging inventory</Title>
+              <Title order={3}>Configured routes</Title>
             </div>
             <Badge variant="light" color="cyan">{routesQuery.data?.routes.length ?? 0} saved</Badge>
           </Group>
           {routesQuery.isLoading ? <Loader size="sm" /> : null}
           {routesQuery.isError ? <Alert color="red" title="Failed to load routes">{operatorSafeErrorMessage(routesQuery.error)}</Alert> : null}
           {routesQuery.data?.routes.length ? (
-            <ScrollArea type="auto" offsetScrollbars>
-            <Table striped highlightOnHover miw={1040}>
-              <Table.Thead>
-                <Table.Tr>
-                  <Table.Th>Route</Table.Th>
-                  <Table.Th>Source</Table.Th>
-                  <Table.Th>vendor_product</Table.Th>
-                  <Table.Th>Selector path</Table.Th>
-                  <Table.Th>Destination</Table.Th>
-                  <Table.Th>Apply/reload mode</Table.Th>
-                  <Table.Th />
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>
-                {routesQuery.data.routes.map((entry) => (
-                  <Table.Tr key={entry.id}>
-                    <Table.Td><Code className="breakable-code-text" title={entry.id}>{entry.id}</Code></Table.Td>
-                    <Table.Td><Text size="sm" className="breakable-table-text" title={entry.source}>{entry.source}</Text></Table.Td>
-                    <Table.Td><Text size="sm" className="breakable-table-text" title={entry.pack}>{entry.pack}</Text></Table.Td>
-                    <Table.Td>
-                      {entry.selector ? (
-                        <Code className="breakable-code-text" title={entry.selector}>{entry.selector}</Code>
-                      ) : (
-                        <Text size="sm" c="dimmed">Generated from route ID</Text>
-                      )}
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge
-                        className="breakable-badge"
-                        variant="light"
-                        color={entry.destination_kind === 'hec' ? 'cyan' : 'violet'}
-                        title={`${entry.destination_kind.toUpperCase()} ${entry.destination_id}`}
-                      >
-                        {entry.destination_kind.toUpperCase()} {entry.destination_id}
+            <DataTable
+              data={routesQuery.data.routes}
+              searchPlaceholder="Search by route ID, source, destination…"
+              miw={1040}
+              columns={[
+                colHelper.accessor('id', {
+                  header: 'Route',
+                  cell: (info) => <Code className="breakable-code-text">{info.getValue()}</Code>,
+                }),
+                colHelper.accessor('source', {
+                  header: 'Source',
+                  cell: (info) => <Text size="sm" className="breakable-table-text">{info.getValue()}</Text>,
+                }),
+                colHelper.accessor('pack', {
+                  header: 'Source type',
+                  cell: (info) => <Text size="sm" className="breakable-table-text">{info.getValue()}</Text>,
+                }),
+                colHelper.accessor('selector', {
+                  header: 'Config file',
+                  cell: (info) => info.getValue()
+                    ? <Code className="breakable-code-text">{info.getValue()}</Code>
+                    : <Text size="sm" c="dimmed">Generated from route ID</Text>,
+                }),
+                colHelper.display({
+                  id: 'destination',
+                  header: 'Destination',
+                  cell: (info) => {
+                    const e = info.row.original;
+                    return (
+                      <Badge className="breakable-badge" variant="light" color={e.destination_kind === 'hec' ? 'cyan' : 'violet'}>
+                        {e.destination_kind.toUpperCase()} {e.destination_id}
                       </Badge>
-                    </Table.Td>
-                    <Table.Td><Badge color="gray" variant="light">{entry.apply_mode || 'reloadable'}</Badge></Table.Td>
-                    <Table.Td>
-                      <Button
-                        color="red"
-                        variant="light"
-                        size="xs"
-                        loading={busyKey === `delete:${entry.id}`}
-                        onClick={() => removeRoute(entry)}
-                      >
-                        Delete
-                      </Button>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
-              </Table.Tbody>
-            </Table>
-            </ScrollArea>
+                    );
+                  },
+                }),
+                colHelper.accessor('apply_mode', {
+                  header: 'Apply mode',
+                  cell: (info) => <Badge color="gray" variant="light">{info.getValue() || 'reloadable'}</Badge>,
+                }),
+                colHelper.display({
+                  id: 'actions',
+                  header: '',
+                  cell: (info) => (
+                    <Button
+                      color="red"
+                      variant="light"
+                      size="xs"
+                      loading={busyKey === `delete:${info.row.original.id}`}
+                      onClick={() => removeRoute(info.row.original)}
+                    >
+                      Delete
+                    </Button>
+                  ),
+                }),
+              ]}
+            />
           ) : !routesQuery.isLoading && !routesQuery.isError ? (
             <Paper withBorder p="md" radius="md">
-              <Text c="dimmed">No route entries saved yet. Routes require an onboarded source and a saved non-default SELECT-mode destination.</Text>
+              <Text c="dimmed">No routes configured yet. Add a source and a SELECT-mode destination first.</Text>
             </Paper>
           ) : null}
         </Stack>

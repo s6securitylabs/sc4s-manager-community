@@ -7,7 +7,6 @@ import {
   Divider,
   Group,
   NavLink,
-  Paper,
   ScrollArea,
   Stack,
   Text,
@@ -30,15 +29,15 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', to: '/', description: 'Overview of source catalogue, local packs, SC4S Library sync, and Manager connection', section: 'Operate' },
-  { label: 'SC4S Library', to: '/library', description: 'Sync configured Library sources and review local import candidates', section: 'Operate' },
-  { label: 'Source Catalogue', to: '/catalogue', description: 'Review curated and candidate source coverage', section: 'Operate' },
-  { label: 'Local Packs', to: '/packs', description: 'Inspect local packs and export artifacts', section: 'Operate' },
-  { label: 'Onboarding Preview', to: '/onboarding-preview', description: 'Paste a sample event to preview parser and pack candidates before configuring a source', section: 'Operate' },
-  { label: 'Sources', to: '/sources', description: 'Onboard syslog sources and manage staged source changes', section: 'Operate' },
-  { label: 'Destinations', to: '/destinations', description: 'Save staged Splunk HEC and syslog/BSD forwarding targets', section: 'Operate' },
-  { label: 'Routes', to: '/routes', description: 'Route staged sources by SC4S vendor_product to destinations', section: 'Operate' },
-  { label: 'Exports', to: '/exports', description: 'Download SC4S/Splunk config and evidence artifacts', section: 'Evidence' },
+  { label: 'Dashboard', to: '/', description: 'SC4S runtime health, connection status, and a summary of sources, packs, and library sync', section: 'Operate' },
+  { label: 'SC4S Library', to: '/library', description: 'Browse and download SecHub packs, then install them to SC4S', section: 'Operate' },
+  { label: 'Source Catalogue', to: '/catalogue', description: 'Browse SC4S source types. Find the parser for your device and download it.', section: 'Operate' },
+  { label: 'Local Packs', to: '/packs', description: 'View installed packs and export config bundles', section: 'Operate' },
+  { label: 'Parser Preview', to: '/onboarding-preview', description: 'Paste a sample log event to identify the right SC4S parser before configuring a source', section: 'Operate' },
+  { label: 'Sources', to: '/sources', description: 'Map IP addresses and hostnames to SC4S source types', section: 'Operate' },
+  { label: 'Destinations', to: '/destinations', description: 'Configure where SC4S sends events — Splunk HEC or syslog', section: 'Operate' },
+  { label: 'Routes', to: '/routes', description: 'Send specific source types to specific destinations', section: 'Operate' },
+  { label: 'Export bundles', to: '/exports', description: 'Download config files from a local pack', section: 'Evidence' },
 ];
 
 const routeSearch = navItems.map((item) => ({
@@ -109,9 +108,8 @@ function ColorSchemeToggle() {
   );
 }
 
-export function AppLayout({ children, path }: { children: ReactNode; path: string }) {
+export function AppLayout({ children, path, onLogout }: { children: ReactNode; path: string; onLogout?: () => void }) {
   const [opened, { toggle }] = useDisclosure();
-  const route = currentRoute(path);
   const sections: Array<'Operate' | 'Evidence'> = ['Operate', 'Evidence'];
 
   return (
@@ -131,7 +129,7 @@ export function AppLayout({ children, path }: { children: ReactNode; path: strin
                 <Badge variant="light" color="cyan">operator console</Badge>
               </Group>
               <Text size="sm" c="dimmed">
-                Operator console for Library source status, local packs, staged source changes, and export evidence.
+                Manage SC4S sources, destinations, packs, and config from one place.
               </Text>
             </Stack>
           </Group>
@@ -141,31 +139,24 @@ export function AppLayout({ children, path }: { children: ReactNode; path: strin
               <RouteSearchInput />
             </Box>
             <ColorSchemeToggle />
-            <Paper className="shell-status-card" withBorder p="sm" radius="md">
-              <Stack gap={2}>
-                <Text size="xs" tt="uppercase" fw={700} c="dimmed">Current route</Text>
-                <Text fw={600}>{route.label}</Text>
-                <Text size="sm" c="dimmed">{route.description}</Text>
-              </Stack>
-            </Paper>
+            {onLogout && (
+              <ActionIcon
+                aria-label="Sign out"
+                title="Sign out"
+                variant="light"
+                color="gray"
+                size="lg"
+                onClick={onLogout}
+              >
+                ⏻
+              </ActionIcon>
+            )}
           </Group>
         </Group>
       </AppShell.Header>
 
       <AppShell.Navbar className="shell-navbar" p="md">
-        <AppShell.Section>
-          <Paper className="cluster-card" withBorder p="md" radius="md">
-            <Stack gap={4}>
-              <Text size="xs" tt="uppercase" fw={700} c="cyan.6">Control plane</Text>
-              <Text fw={700}>SC4S Manager operator workspace</Text>
-              <Text size="sm" c="dimmed">
-                Keep provenance, validation evidence, and candidate warnings visible.
-              </Text>
-            </Stack>
-          </Paper>
-        </AppShell.Section>
-
-        <Divider my="md" />
+        <Divider mb="md" />
 
         <AppShell.Section grow component={ScrollArea} type="never">
           <Stack gap="lg">

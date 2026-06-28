@@ -38,11 +38,11 @@ function RuntimeHealthSection() {
     return (
       <Stack gap="sm">
         <Title order={2}>Runtime health</Title>
-        <Alert color="orange" title="Runtime state unavailable">
-          Unable to load runtime state. The Manager service may be unreachable. Check Manager logs for details.
+        <Alert color="orange" title="SC4S is not reachable">
+          Manager can't connect to SC4S right now. SC4S may still be starting up, or may not be running. Check that the SC4S container is up and try refreshing.
         </Alert>
         <Text size="xs" c="dimmed">
-          Saved config does not prove SC4S is processing events — use Splunk readback to confirm.
+          Config saved here does not mean SC4S is processing events — search Splunk for incoming events to confirm.
         </Text>
       </Stack>
     );
@@ -70,7 +70,7 @@ function RuntimeHealthSection() {
 
       <Alert color="blue" variant="light">
         <Text size="xs">
-          Saved config does not prove SC4S is processing events — use Splunk readback to confirm.
+          Config saved here does not mean SC4S is processing events — search Splunk to confirm events are flowing.
         </Text>
       </Alert>
 
@@ -80,9 +80,9 @@ function RuntimeHealthSection() {
           <Text size="sm" c="dimmed">Manager</Text>
           <Text fw={500}>{rt.manager.version}</Text>
           <Text size="xs" c="dimmed" mt={4}>
-            Manager service:{' '}
+            SC4S control bridge:{' '}
             <Badge color={rt.control_daemon.ok ? 'green' : 'red'} size="xs">
-              {rt.control_daemon.ok ? 'reachable' : 'unreachable'}
+              {rt.control_daemon.ok ? 'connected' : 'not connected'}
             </Badge>
           </Text>
           {rt.control_daemon.error && (
@@ -105,8 +105,9 @@ function RuntimeHealthSection() {
           </Group>
           {rt.sc4s.image_version && (
             <Text size="xs" c={rt.sc4s.version_drift ? 'red' : 'dimmed'} mt={4}>
-              {rt.sc4s.version_drift ? '⚠ ' : ''}Image: {rt.sc4s.image_version}
-              {rt.sc4s.version_drift && ` (supported: ${rt.sc4s.supported_version})`}
+              {rt.sc4s.version_drift
+                ? `Update available — running ${rt.sc4s.image_version}, supported ${rt.sc4s.supported_version}`
+                : `Version: ${rt.sc4s.image_version}`}
             </Text>
           )}
         </Card>
@@ -147,7 +148,7 @@ function RuntimeHealthSection() {
         <Card withBorder shadow="sm" padding="lg">
           <Text size="sm" c="dimmed">Counter summary</Text>
           {rt.counters.length === 0 ? (
-            <Text size="xs" c="dimmed">No metrics (control daemon may be unreachable)</Text>
+            <Text size="xs" c="dimmed">No metrics available — SC4S may not be running yet</Text>
           ) : (
             <Stack gap={2} mt={4}>
               {Object.entries(counterSummary).map(([metric, total]) => (
@@ -246,27 +247,6 @@ export function Dashboard() {
           connection.
         </Text>
       </div>
-
-      {packsQuery.isError && (
-        <Alert color="red" title="Unable to load packs">
-          {operatorSafeErrorMessage(packsQuery.error)}
-        </Alert>
-      )}
-      {catalogueQuery.isError && (
-        <Alert color="red" title="Unable to load source catalogue">
-          {operatorSafeErrorMessage(catalogueQuery.error)}
-        </Alert>
-      )}
-      {librarySourcesQuery.isError && (
-        <Alert color="red" title="Could not load SecHub sources">
-          {operatorSafeErrorMessage(librarySourcesQuery.error)}
-        </Alert>
-      )}
-      {libraryImportsQuery.isError && (
-        <Alert color="red" title="Could not load checked packs">
-          {operatorSafeErrorMessage(libraryImportsQuery.error)}
-        </Alert>
-      )}
 
       <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
         <Card withBorder shadow="sm" padding="lg">
