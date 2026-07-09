@@ -57,6 +57,25 @@ MANUAL_LOGIN_TOKEN = os.environ.get("SC4S_MANAGER_MANUAL_LOGIN_TOKEN", "")
 SC4S_CONTAINER = os.environ.get("SC4S_CONTAINER", "SC4S")
 CONTROL_SOCKET = os.environ.get("SC4S_CONTROL_SOCKET", "/run/sc4s-manager/control.sock")
 
+INDEX_HTML = """<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\">
+  <title>SC4S Manager</title>
+</head>
+<body>
+  <main>
+    <h1>SC4S Manager</h1>
+    <p>Static frontend bundle not found. Build the frontend or install a release package with frontend assets.</p>
+    <h2>Operations</h2>
+    <p>Use the packaged UI or API to validate, stage, apply, and verify SC4S changes.</p>
+    <h2>Metrics Explorer</h2>
+    <p>Runtime counters are available from /api/metrics/syslog-ng when authenticated.</p>
+  </main>
+</body>
+</html>
+"""
+
 SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,80}$")
 FILTER_RE = re.compile(r"^[A-Za-z0-9_]{1,64}$")
 ENV_KEY_RE = re.compile(r"^[A-Z0-9_]{2,120}$")
@@ -1999,10 +2018,17 @@ def static_asset_response(h: BaseHTTPRequestHandler, request_path: str) -> bool:
 
 def frontend_response(h: BaseHTTPRequestHandler, request_path: str) -> bool:
     index = frontend_index_path()
-    if not index.is_file():
-        return False
-    if request_path in ["/", "/index.html"] or frontend_dist_available():
+    if index.is_file() and (request_path in ["/", "/index.html"] or frontend_dist_available()):
         file_response(h, 200, index, "text/html; charset=utf-8", "no-store")
+        return True
+    if request_path in ["/", "/index.html"]:
+        data = INDEX_HTML.encode("utf-8")
+        h.send_response(200)
+        h.send_header("Content-Type", "text/html; charset=utf-8")
+        h.send_header("Content-Length", str(len(data)))
+        h.send_header("Cache-Control", "no-store")
+        h.end_headers()
+        h.wfile.write(data)
         return True
     return False
 

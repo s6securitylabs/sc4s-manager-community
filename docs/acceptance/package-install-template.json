@@ -1,0 +1,40 @@
+{
+  "ok": false,
+  "version": "<release-version>",
+  "artifact_sha256": "<sha256-or-empty-for-dry-run>",
+  "evidence_mode": "template",
+  "install": {
+    "started_at": "<iso8601>",
+    "finished_at": "<iso8601>",
+    "ok": false,
+    "notes": "Replace this template with dry-run or live package-install evidence. Do not include secrets."
+  },
+  "upgrade": {
+    "ok": false,
+    "notes": "Not captured in template."
+  },
+  "rollback": {
+    "ok": false,
+    "notes": "Not captured in template."
+  },
+  "service_state": {
+    "manager": {
+      "ok": false,
+      "status": "not_captured"
+    },
+    "control_daemon": {
+      "ok": false,
+      "status": "not_captured"
+    }
+  },
+  "state_preservation": {
+    "imports": "not_captured",
+    "backups": "not_captured",
+    "audit": "not_captured"
+  },
+  "redaction": {
+    "ok": false,
+    "findings": []
+  },
+  "commands": []
+}

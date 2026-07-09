@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/s6securitylabs/sc4s-manager-community/schemas/pack.schema.json",
+  "title": "SC4S Manager Pack Manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "display_name",
+    "vendor",
+    "product",
+    "sourcetypes",
+    "artifacts",
+    "export_artifacts",
+    "provenance",
+    "trust_level",
+    "quality_status",
+    "field_contract"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_:-]{1,120}$"},
+    "version": {"type": "string", "minLength": 1},
+    "url": {"type": "string"},
+    "description": {"type": "string"},
+    "display_name": {"type": "string", "minLength": 1},
+    "vendor": {"type": "string", "minLength": 1},
+    "product": {"type": "string", "minLength": 1},
+    "trust_level": {
+      "type": "string",
+      "enum": [
+        "unverified",
+        "community_submitted",
+        "trusted_contributor_verified",
+        "s6_verified",
+        "field_verified"
+      ]
+    },
+    "quality_status": {
+      "type": "string",
+      "enum": ["draft", "catalogued", "curated", "validated", "field_validated"]
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"$ref": "#/$defs/relativePath"}
+      }
+    },
+    "export_artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "group", "source_path", "target_path", "kind", "contains_secrets", "required"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "group": {"type": "string", "minLength": 1},
+          "source_path": {"$ref": "#/$defs/relativePath"},
+          "target_path": {"$ref": "#/$defs/relativePath"},
+          "kind": {"type": "string", "minLength": 1},
+          "rendered": {"type": "boolean"},
+          "contains_secrets": {"type": "boolean"},
+          "required": {"type": "boolean"}
+        }
+      }
+    },
+    "logging_presets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "artifact_references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "artifact_id": {"type": "string", "minLength": 1},
+                "path": {"$ref": "#/$defs/relativePath"},
+                "kind": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    "field_contract": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "mapping_status": {"$ref": "#/$defs/mappingStatus"},
+          "primary": {"type": "boolean"},
+          "secondary": {"type": "boolean"},
+          "optional": {"type": "boolean"},
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "status": {"$ref": "#/$defs/mappingStatus"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["origin", "pack_class", "source"],
+      "properties": {
+        "origin": {"type": "string"},
+        "pack_class": {"type": "string"},
+        "source": {"type": "object"},
+        "community_promotion": {"type": "boolean"}
+      }
+    }
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "not": {"anyOf": [
+        {"pattern": "(^|/)\\.\\.($|/)"},
+        {"pattern": "^/"},
+        {"pattern": "[;{}\\n\\r]"}
+      ]}
+    },
+    "mappingStatus": {
+      "type": "string",
+      "enum": ["unknown", "none", "partial", "complete", "not_applicable"]
+    }
+  }
+}
