@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/s6securitylabs/sc4s-manager-community/security/advisories/new
+    about: Report security vulnerabilities privately. Do not open a public issue.
+  - name: Community pack submission guide
+    url: https://github.com/s6securitylabs/sc4s-manager-community/blob/main/docs/contributing/pack-submission-guide.md
+    about: Read the required layout, sanitization, evidence, and review rules.

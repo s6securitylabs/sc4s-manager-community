@@ -1,0 +1,68 @@
+name: Bug report
+description: Report a reproducible SC4S Manager defect
+title: "[Bug]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, tokens, customer data, private events, or internal infrastructure details. Report security vulnerabilities privately through GitHub's **Report a vulnerability** workflow.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What failed, and what did you expect instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SC4S Manager version
+      placeholder: v1.0.1, image tag, or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: sc4s-version
+    attributes:
+      label: SC4S version or image
+      placeholder: ghcr.io/splunk/splunk-connect-for-syslog:...
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest safe sequence that reproduces the problem.
+      placeholder: |
+        1. Open ...
+        2. Configure ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized evidence
+      description: Include relevant logs, counters, screenshots, or API responses after removing secrets and identifying data.
+      render: shell
+  - type: dropdown
+    id: state
+    attributes:
+      label: Affected state
+      options:
+        - Saved or staged configuration
+        - Validation
+        - Apply, reload, or restart
+        - Runtime health or counters
+        - Splunk readback
+        - Installation, upgrade, or rollback
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Deployment method, operating system, browser, reverse proxy, and other relevant versions. Do not include private addresses or credentials.
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context

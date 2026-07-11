@@ -1,0 +1,74 @@
+name: Community pack proposal
+description: Propose or prepare a community SC4S source pack
+title: "[Pack]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read the [community pack submission guide](https://github.com/s6securitylabs/sc4s-manager-community/blob/main/docs/contributing/pack-submission-guide.md) before submitting. Do not attach unsanitized customer events, credentials, tokens, private keys, or restricted vendor material.
+  - type: input
+    id: source
+    attributes:
+      label: Vendor and product
+      placeholder: Example Vendor / Example Product
+    validations:
+      required: true
+  - type: input
+    id: pack-id
+    attributes:
+      label: Proposed pack ID
+      placeholder: example_vendor_example_product
+    validations:
+      required: true
+  - type: dropdown
+    id: relationship
+    attributes:
+      label: Relationship to upstream SC4S
+      options:
+        - New pack
+        - Extends an upstream source
+        - Adds postfilters or reduction rules
+        - Adds Splunk knowledge objects
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: events
+    attributes:
+      label: Event families and transports
+      description: Describe supported event types, transport, framing, and known source versions.
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Fixture provenance and sanitization
+      description: Explain where samples came from, your right to submit them, and how sensitive values were removed.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Planned artifacts
+      description: List parser, selector, filter, postfilter, context, Splunk knowledge, fixture, and documentation files.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation completed
+      description: State exact commands and results. Be explicit where runtime or Splunk readback has not been performed.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Submission checks
+      options:
+        - label: I have the right to submit the proposed files and fixtures.
+          required: true
+        - label: I will remove credentials, customer-identifying data, private infrastructure details, and other secrets.
+          required: true
+        - label: I understand that submission does not imply validation, S6 verification, or production readiness.
+          required: true

@@ -45,7 +45,7 @@ See [docs/runbooks/install.md](docs/runbooks/install.md) for the full install gu
 
 Packs are configuration bundles for a specific log source. They include SC4S parser config, Splunk props/transforms, test event fixtures, and CIM/OCSF field mappings.
 
-The `packs/` directory in this repo contains built-in packs. Community pack submissions: see [docs/contributing/pack-submission-guide.md](docs/contributing/pack-submission-guide.md).
+The `packs/` directory in this repo contains built-in packs. Community pack submissions: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [pack submission guide](docs/contributing/pack-submission-guide.md).
 
 ## Documentation
 
