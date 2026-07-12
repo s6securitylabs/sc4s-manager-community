@@ -20,7 +20,7 @@ jobs:
       RELEASE_VERSION: 0.0.0-ci
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v5
