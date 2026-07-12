@@ -67,7 +67,7 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       - name: Upload package dry-run evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: package-install-dry-run
           path: dist/release/package-install-dry-run.json
