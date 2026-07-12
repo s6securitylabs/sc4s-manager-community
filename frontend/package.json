@@ -20,7 +20,7 @@
     "zod": "^3.25.32"
   },
   "devDependencies": {
-    "@types/node": "^22.15.24",
+    "@types/node": "^26.1.1",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "@vitejs/plugin-react": "^4.5.0",
