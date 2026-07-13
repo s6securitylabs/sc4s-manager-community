@@ -189,7 +189,7 @@ def test_github_release_workflow_validates_install_artifact_before_publish():
     assert "--evidence-out \"dist/release/package-install-dry-run.json\"" in workflow
     assert workflow.index("Build release tarball") < workflow.index("Validate release tarball install dry run")
     assert workflow.index("Validate release tarball install dry run") < workflow.index("Build and push Docker image")
-    assert "docker/build-push-action@v6" in workflow
+    assert "docker/build-push-action@v7" in workflow
     assert "IMAGE_NAME: ghcr.io/${{ github.repository }}" in workflow
     assert "${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}" in workflow
 

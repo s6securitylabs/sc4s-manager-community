@@ -24,6 +24,19 @@ updates:
         patterns:
           - "zod"
           - "@types/*"
+    ignore:
+      - dependency-name: "@mantine/core"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@mantine/hooks"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "@types/node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: "github-actions"
     directory: "/"

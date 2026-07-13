@@ -352,7 +352,7 @@ export function filenameFromContentDisposition(header: string | null): string | 
     if (decoded) return decoded;
   }
 
-  const filename = header.match(/(?:^|;)\s*filename=("(?:\\.|[^"])*"|[^;]+)/i);
+  const filename = header.match(/(?:^|;)\s*filename=("(?:\\.|[^"\\])*"|[^";][^;]*)/i);
   if (!filename?.[1]) return undefined;
 
   return filename[1].trim().replace(/^"|"$/g, '').replace(/\\"/g, '"');
