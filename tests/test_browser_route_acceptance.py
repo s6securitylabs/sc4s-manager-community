@@ -95,6 +95,23 @@ def test_sanitize_payload_redacts_oauth_authorization_query_material():
     assert "opaque-state" not in rendered
 
 
+def test_login_url_requires_exact_https_authentik_boundary():
+    mod = load_runner_module()
+    assert mod.is_login_url("https://login.s6ops.com/application/o/authorize/")
+    assert not mod.is_login_url("https://login.s6ops.com.attacker.invalid/application/o/authorize/")
+    assert not mod.is_login_url("https://login.s6ops.com@attacker.invalid/application/o/authorize/")
+    assert not mod.is_login_url("http://login.s6ops.com/application/o/authorize/")
+    assert not mod.is_login_url("https://login.s6ops.com/other")
+
+
+def test_error_url_removes_credentials_query_and_fragment():
+    mod = load_runner_module()
+    safe = mod.safe_url_for_error("https://user:password@example.invalid/path?login_token=secret#fragment")
+    assert safe == "https://example.invalid/path"
+    assert "password" not in safe
+    assert "secret" not in safe
+
+
 def test_validate_acceptance_evidence_rejects_oauth_authorization_query_leak():
     validator_spec = importlib.util.spec_from_file_location("acceptance_validator_test", ROOT / "scripts" / "validate_acceptance_evidence.py")
     assert validator_spec is not None and validator_spec.loader is not None

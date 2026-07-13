@@ -13,6 +13,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,15 +62,22 @@ def text_has_secret_shape(path: Path) -> str | None:
     return None
 
 
+def is_login_url(value: str) -> bool:
+    try:
+        return urlsplit(value).hostname == "login.s6ops.com"
+    except ValueError:
+        return False
+
+
 def is_login_html(data: dict[str, Any]) -> bool:
     body = f"{data.get('body_prefix', '')} {data.get('body', '')}".lower()
     content_type = str(data.get("content_type", "")).lower()
     redirect_url = str(data.get("redirect_url", "")).lower()
     return (
         "<!doctype html" in body
-        or "login.s6ops.com" in body
         or "application/o/authorize" in body
         or "text/html" in content_type
+        or is_login_url(redirect_url)
         or "application/o/authorize" in redirect_url
     )
 
@@ -169,8 +177,9 @@ def validate_browser_proof(path: Path = BROWSER_PROOF) -> list[Finding]:
                     findings.append(Finding(str(path), False, f"route {route} missing api_path readback linkage"))
                 if not entry.get("api_summary"):
                     findings.append(Finding(str(path), False, f"route {route} is shell-only; api_summary/readback evidence is required"))
+            redirect_url = str(entry.get("redirect_url", ""))
             rendered = json.dumps(entry, sort_keys=True)
-            if "login.s6ops.com" in rendered or "application/o/authorize" in rendered:
+            if is_login_url(redirect_url) or "application/o/authorize" in rendered:
                 findings.append(Finding(str(path), False, f"route {route} appears to contain login redirect evidence instead of authenticated app output"))
 
     checks = data.get("checks")

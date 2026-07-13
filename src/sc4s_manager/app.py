@@ -11,6 +11,7 @@ import base64
 import csv
 import datetime as dt
 import difflib
+import hashlib
 import hmac
 import html
 import ipaddress
@@ -257,9 +258,21 @@ def safe_actor(actor: str) -> str:
     return cleaned or "unknown"
 
 
+def resolved_under(path: Path, roots: tuple[Path, ...], *, label: str = "path") -> Path:
+    candidate = path.resolve(strict=False)
+    for root in roots:
+        try:
+            candidate.relative_to(root.resolve(strict=False))
+            return candidate
+        except ValueError:
+            continue
+    raise ValueError(f"{label} is outside the allowed roots")
+
+
 def backup(path: Path, actor: str) -> Path:
     ensure_dirs()
-    rel = path.relative_to(ROOT) if str(path).startswith(str(ROOT)) else path.name
+    path = resolved_under(path, (ROOT,), label="backup source")
+    rel = path.relative_to(ROOT.resolve(strict=False))
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
     target = BACKUP_DIR / f"{str(rel).replace('/', '__')}.{stamp}.{safe_actor(actor)}.bak"
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -268,10 +281,24 @@ def backup(path: Path, actor: str) -> Path:
 
 
 def atomic_write(path: Path, content: str) -> None:
+    path = resolved_under(path, (ROOT, MANAGER_ROOT), label="write target")
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
     try:
         with os.fdopen(fd, "w") as f:
+            f.write(content)
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+
+def atomic_write_bytes(path: Path, content: bytes) -> None:
+    path = resolved_under(path, (ROOT, MANAGER_ROOT), label="write target")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "wb") as f:
             f.write(content)
         os.replace(tmp, path)
     finally:
@@ -482,11 +509,14 @@ def backup_target_from_name(name: str) -> Path:
     rel_token = match.group("rel") if match else safe.split(".", 1)[0]
     if rel_token == "env_file":
         return ENV_FILE
-    if rel_token.startswith(("local__", "tls__")):
-        dest = (ROOT / rel_token.replace("__", "/")).resolve()
-        try:
-            dest.relative_to(ROOT.resolve())
-        except ValueError:
+    if rel_token.startswith("local__"):
+        dest = resolved_under(ROOT / rel_token.replace("__", "/"), tuple(EDITABLE_ROOTS), label="backup target")
+        if dest.suffix not in EDITABLE_SUFFIXES:
+            raise ValueError("invalid backup target")
+        return dest
+    if rel_token.startswith("tls__"):
+        dest = resolved_under(ROOT / rel_token.replace("__", "/"), (TLS_DIR,), label="backup target")
+        if dest.name not in {"server.pem", "server.key", "ca.pem"}:
             raise ValueError("invalid backup target")
         return dest
     # Backward compatibility for legacy backup names created before backups used
@@ -499,11 +529,7 @@ def backup_target_from_name(name: str) -> Path:
 def backup_diff(name: str) -> dict[str, Any]:
     ensure_dirs()
     safe = Path(name).name
-    src = (BACKUP_DIR / safe).resolve()
-    try:
-        src.relative_to(BACKUP_DIR.resolve())
-    except ValueError:
-        raise ValueError("invalid backup name")
+    src = resolved_under(BACKUP_DIR / safe, (BACKUP_DIR,), label="backup name")
     if not src.exists() or src.suffix != ".bak":
         raise ValueError("backup not found")
     dest = backup_target_from_name(safe)
@@ -882,11 +908,7 @@ def backups() -> list[dict[str, Any]]:
 def restore_backup(name: str, actor: str) -> dict[str, Any]:
     ensure_dirs()
     safe = Path(name).name
-    src = (BACKUP_DIR / safe).resolve()
-    try:
-        src.relative_to(BACKUP_DIR.resolve())
-    except ValueError:
-        raise ValueError("invalid backup name")
+    src = resolved_under(BACKUP_DIR / safe, (BACKUP_DIR,), label="backup name")
     if not src.exists() or src.suffix != ".bak":
         raise ValueError("backup not found")
     # Backup filenames are relpath.timestamp.actor.bak where / became __.
@@ -1462,7 +1484,8 @@ def delete_route(route_id: str, actor: str) -> dict[str, Any]:
     target = next((route for route in routes if isinstance(route, dict) and route.get("id") == rid), None)
     if not target:
         raise ValueError("route not found")
-    selector = Path(str(target.get("selector", "")))
+    selector_dir = LOCAL_ROOT / "config" / "app_parsers" / "selectors"
+    selector = resolved_under(Path(str(target.get("selector", ""))), (selector_dir,), label="route selector")
     removed_selectors: list[str] = []
     snapshot = mutation_snapshot()
     with _lock:
@@ -1480,9 +1503,9 @@ def delete_route(route_id: str, actor: str) -> dict[str, Any]:
 
 def safe_editable_path(rel: str) -> Path:
     rel = unquote(rel).lstrip("/")
-    path = (LOCAL_ROOT / rel).resolve() if not rel.startswith("local/") else (ROOT / rel).resolve()
-    allowed = any(str(path).startswith(str(root.resolve()) + os.sep) or path == root.resolve() for root in EDITABLE_ROOTS)
-    if not allowed or path.suffix not in EDITABLE_SUFFIXES:
+    candidate = LOCAL_ROOT / rel if not rel.startswith("local/") else ROOT / rel
+    path = resolved_under(candidate, tuple(EDITABLE_ROOTS), label="editable path")
+    if path.suffix not in EDITABLE_SUFFIXES:
         raise ValueError("file is not in an editable SC4S config path")
     return path
 
@@ -1528,11 +1551,7 @@ def export_template(name: str, actor: str) -> dict[str, Any]:
 
 def import_template(path: str, actor: str) -> dict[str, Any]:
     ensure_dirs()
-    src = Path(path).resolve()
-    try:
-        src.relative_to(TEMPLATE_DIR.resolve())
-    except ValueError:
-        raise ValueError("template must be an existing zip in the template directory")
+    src = resolved_under(Path(path), (TEMPLATE_DIR,), label="template")
     if src.suffix != ".zip" or not src.exists():
         raise ValueError("template must be an existing zip in the template directory")
     if src.stat().st_size > 10_000_000:
@@ -1549,15 +1568,14 @@ def import_template(path: str, actor: str) -> dict[str, Any]:
             member = info.filename
             if member == "manifest.json" or member.endswith("/"):
                 continue
-            dest = (ROOT / member).resolve()
-            allowed = any(str(dest).startswith(str(root.resolve()) + os.sep) for root in EDITABLE_ROOTS)
-            if not allowed or dest.suffix not in EDITABLE_SUFFIXES:
+            dest = resolved_under(ROOT / member, tuple(EDITABLE_ROOTS), label="template member")
+            if dest.suffix not in EDITABLE_SUFFIXES:
                 raise ValueError(f"unsafe template member: {member}")
         for info in infos:
             member = info.filename
             if member == "manifest.json" or member.endswith("/"):
                 continue
-            dest = (ROOT / member).resolve()
+            dest = resolved_under(ROOT / member, tuple(EDITABLE_ROOTS), label="template member")
             if dest.exists():
                 backup(dest, actor)
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -1576,11 +1594,7 @@ def templates() -> list[dict[str, Any]]:
 def template_path_by_name(name: str) -> Path:
     ensure_dirs()
     safe = Path(name).name
-    path = (TEMPLATE_DIR / safe).resolve()
-    try:
-        path.relative_to(TEMPLATE_DIR.resolve())
-    except ValueError:
-        raise ValueError("invalid template name")
+    path = resolved_under(TEMPLATE_DIR / safe, (TEMPLATE_DIR,), label="template name")
     if path.suffix != ".zip" or not path.exists():
         raise ValueError("template not found")
     return path
@@ -1591,17 +1605,11 @@ def import_template_upload(name: str, content_b64: str, actor: str) -> dict[str,
     safe = re.sub(r"[^A-Za-z0-9_.-]", "_", Path(name or "upload.zip").name)[:80]
     if not safe.endswith(".zip"):
         safe += ".zip"
-    target = (TEMPLATE_DIR / safe).resolve()
-    try:
-        target.relative_to(TEMPLATE_DIR.resolve())
-    except ValueError:
-        raise ValueError("invalid template name")
+    target = resolved_under(TEMPLATE_DIR / safe, (TEMPLATE_DIR,), label="template name")
     raw = base64.b64decode(content_b64, validate=True)
     if len(raw) > 10_000_000:
         raise ValueError("template upload too large")
-    atomic_write(target, raw.decode("latin1"))
-    # Re-write bytes exactly because atomic_write is text-oriented.
-    target.write_bytes(raw)
+    atomic_write_bytes(target, raw)
     audit("upload_template", actor, {"template": str(target), "size": len(raw)})
     return import_template(str(target), actor)
 
@@ -1644,6 +1652,16 @@ def _token_matches(candidate: str, expected: str) -> bool:
     return bool(candidate and expected and hmac.compare_digest(candidate, expected))
 
 
+def _manual_session_token() -> str:
+    if not MANUAL_LOGIN_TOKEN:
+        return ""
+    return hmac.new(
+        MANUAL_LOGIN_TOKEN.encode("utf-8"),
+        b"sc4s-manager-manual-session-v1",
+        hashlib.sha256,
+    ).hexdigest()
+
+
 def _cookie_value(cookie_header: str, name: str) -> str:
     for part in (cookie_header or "").split(";"):
         key, sep, value = part.strip().partition("=")
@@ -1660,7 +1678,7 @@ def manual_token_authorized(handler: BaseHTTPRequestHandler) -> bool:
         return True
     if _token_matches(handler.headers.get("X-SC4S-Manual-Token", ""), MANUAL_LOGIN_TOKEN):
         return True
-    if _token_matches(_cookie_value(handler.headers.get("Cookie", ""), "sc4s_manual_session"), MANUAL_LOGIN_TOKEN):
+    if _token_matches(_cookie_value(handler.headers.get("Cookie", ""), "sc4s_manual_session"), _manual_session_token()):
         return True
     qs = parse_qs(urlparse(handler.path).query)
     for key in ("token", "login_token"):
@@ -1672,6 +1690,7 @@ def manual_token_authorized(handler: BaseHTTPRequestHandler) -> bool:
 def manual_login_redirect(handler: BaseHTTPRequestHandler) -> bool:
     if not MANUAL_LOGIN_TOKEN:
         return False
+    raw_target_has_controls = "\r" in handler.path or "\n" in handler.path
     parsed = urlparse(handler.path)
     qs = parse_qs(parsed.query)
     token = next((value for key in ("token", "login_token") for value in qs.get(key, [])), "")
@@ -1686,9 +1705,14 @@ def manual_login_redirect(handler: BaseHTTPRequestHandler) -> bool:
     target = parsed.path or "/"
     if clean_items:
         target = f"{target}?{urlencode(clean_items)}"
+    if raw_target_has_controls or "\r" in target or "\n" in target:
+        target = "/"
     handler.send_response(HTTPStatus.SEE_OTHER)
     handler.send_header("Location", target)
-    handler.send_header("Set-Cookie", "sc4s_manual_session=%s; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax" % token)
+    handler.send_header(
+        "Set-Cookie",
+        "sc4s_manual_session=%s; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax" % _manual_session_token(),
+    )
     handler.send_header("Cache-Control", "no-store")
     handler.end_headers()
     return True
@@ -1984,7 +2008,7 @@ def binary_response(h: BaseHTTPRequestHandler, status: int, data: bytes, filenam
     h.send_response(status)
     h.send_header("Content-Type", ctype)
     h.send_header("Content-Length", str(len(data)))
-    h.send_header("Content-Disposition", f'attachment; filename="{Path(filename).name}"')
+    h.send_header("Content-Disposition", 'attachment; filename="download.zip"')
     h.send_header("Cache-Control", "no-store")
     h.end_headers()
     h.wfile.write(data)
@@ -2194,7 +2218,7 @@ class Handler(BaseHTTPRequestHandler):
                     body = json.dumps({"ok": True}).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.send_header("Set-Cookie", "sc4s_manual_session=%s; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax" % MANUAL_LOGIN_TOKEN)
+                    self.send_header("Set-Cookie", "sc4s_manual_session=%s; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax" % _manual_session_token())
                     self.send_header("Cache-Control", "no-store")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()

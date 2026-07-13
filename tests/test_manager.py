@@ -152,6 +152,17 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertEqual(response.headers_sent["Content-Type"], "application/json; charset=utf-8")
             self.assertNotIn(b"do-not-serve", response.wfile.getvalue())
 
+    def test_binary_response_sanitizes_content_disposition_filename(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            response = FakeResponseHandler()
+            app.binary_response(response, 200, b"payload", 'bad";\r\nX-Injected: yes.zip', "application/zip")
+            disposition = response.headers_sent["Content-Disposition"]
+            self.assertNotIn("\r", disposition)
+            self.assertNotIn("\n", disposition)
+            self.assertNotIn('";', disposition)
+            self.assertEqual(response.wfile.getvalue(), b"payload")
+
     def test_env_redacts_secrets_and_disable_enable_port(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
@@ -499,7 +510,10 @@ class ManagerUnitTests(unittest.TestCase):
             handler = type("Handler", (), {})()
             handler.path = "/api/stats"
             handler.client_address = ("203.0.113.10", 55555)
-            handler.headers = {"Cookie": "other=1; sc4s_manual_session=manual-secret", "Host": "sc4s-manager.example"}
+            handler.headers = {
+                "Cookie": f"other=1; sc4s_manual_session={app._manual_session_token()}",
+                "Host": "sc4s-manager.example",
+            }
             self.assertTrue(app.authorized(handler, unsafe=False))
 
     def test_manual_login_query_sets_cookie_and_removes_token_from_location(self):
@@ -518,8 +532,24 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertIn(("header", "Location", "/?tab=stats"), calls)
             headers = {call[1]: call[2] for call in calls if call[0] == "header"}
             cookie = headers["Set-Cookie"]
-            self.assertIn("sc4s_manual_session=manual-secret", cookie)
+            self.assertIn(f"sc4s_manual_session={app._manual_session_token()}", cookie)
+            self.assertNotIn("manual-secret", cookie)
             self.assertNotIn("token=", headers["Location"])
+
+    def test_manual_login_redirect_rejects_raw_header_newlines(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            handler = type("Handler", (), {})()
+            handler.path = "/safe\r\nX-Injected: yes?login_token=manual-secret"
+            handler.headers = {"Host": "sc4s-manager.example"}
+            calls = []
+            handler.send_response = lambda status: calls.append(("status", status))
+            handler.send_header = lambda key, value: calls.append(("header", key, value))
+            handler.end_headers = lambda: calls.append(("end",))
+
+            self.assertTrue(app.manual_login_redirect(handler))
+            self.assertIn(("header", "Location", "/"), calls)
 
 
     def test_actor_from_uses_authentik_identity_when_present(self):
