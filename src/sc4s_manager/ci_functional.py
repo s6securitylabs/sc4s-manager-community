@@ -9,6 +9,7 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import urlsplit
 
 from sc4s_manager.packs import load_packs
 
@@ -304,7 +305,11 @@ def validate_ci_evidence(evidence: dict[str, Any], *, release_mode: bool = False
         if page.get("critical_api_failures"):
             findings.append({"ok": False, "detail": f"UI route {route} has critical API failures"})
         redirect_url = str(page.get("redirect_url", "")).lower()
-        if page.get("status") in {302, 303} or "application/o/authorize" in redirect_url or "login.s6ops.com" in redirect_url:
+        try:
+            login_host = urlsplit(redirect_url).hostname == "login.s6ops.com"
+        except ValueError:
+            login_host = False
+        if page.get("status") in {302, 303} or "application/o/authorize" in redirect_url or login_host:
             findings.append({"ok": False, "detail": f"UI route {route} authenticated page appears to be a login redirect"})
 
     for row in evidence.get("pack_matrix", []):

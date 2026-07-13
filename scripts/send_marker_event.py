@@ -54,14 +54,12 @@ def send_tcp(host: str, port: int, payload: bytes, timeout: float) -> Attempt:
         return Attempt("tcp", host, port, False, type(exc).__name__)
 
 
-def send_tls(host: str, port: int, payload: bytes, timeout: float, verify: bool) -> Attempt:
+def send_tls(host: str, port: int, payload: bytes, timeout: float, ca_file: str | None = None) -> Attempt:
     try:
-        context = ssl.create_default_context()
-        if not verify:
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
+        context = ssl.create_default_context(cafile=ca_file)
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         with socket.create_connection((host, port), timeout=timeout) as raw:
-            with context.wrap_socket(raw, server_hostname=host if verify else None) as sock:
+            with context.wrap_socket(raw, server_hostname=host) as sock:
                 sock.sendall(payload + b"\n")
         return Attempt("tls", host, port, True, "sent")
     except Exception as exc:
@@ -78,7 +76,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--timeout", type=float, default=3.0)
     parser.add_argument("--hostname", default=socket.gethostname())
     parser.add_argument("--marker-id", default="")
-    parser.add_argument("--tls-no-verify", action="store_true", help="Allow self-signed TLS listener certificates.")
+    parser.add_argument("--tls-ca-file", help="CA bundle for a private or self-signed TLS listener certificate.")
     parser.add_argument("--dry-run", action="store_true", help="Build the marker report without sending packets.")
     return parser.parse_args()
 
@@ -102,7 +100,7 @@ def main() -> int:
             elif proto == "tcp":
                 attempts.append(send_tcp(args.host, args.tcp_port, payload, args.timeout))
             elif proto == "tls":
-                attempts.append(send_tls(args.host, args.tls_port, payload, args.timeout, not args.tls_no_verify))
+                attempts.append(send_tls(args.host, args.tls_port, payload, args.timeout, args.tls_ca_file))
 
     report = {
         "marker_id": marker_id,
