@@ -88,7 +88,7 @@ export const listenerSchema = z
     source_id: z.string(),
     transport: transportSchema,
     port: z.number().int().min(1).max(65535),
-    env: z.record(z.unknown()),
+    env: z.record(z.string(), z.unknown()),
   })
   .passthrough();
 
@@ -212,9 +212,9 @@ export const packSummarySchema = z
     default_index: z.string().min(1),
     default_source: z.string().min(1),
     listener: listenerSchema,
-    sourcetypes: z.record(z.string().min(1)),
+    sourcetypes: z.record(z.string(), z.string().min(1)),
     event_families: z.array(eventFamilySchema).min(1),
-    artifacts: z.record(z.unknown()),
+    artifacts: z.record(z.string(), z.unknown()),
     supported_transports: z.array(supportedTransportSchema).min(1),
     recommended_transport: z.string(),
     source_log_version: sourceLogVersionSchema,
@@ -283,14 +283,14 @@ export const catalogueListResponseSchema = z.object({
 
 export const catalogueDetailSchema = catalogueListEntrySchema.extend({
   provenance: catalogueProvenanceSchema.nullable(),
-  upstream: z.record(z.unknown()),
-  sc4s_manager: z.record(z.unknown()).nullable(),
+  upstream: z.record(z.string(), z.unknown()),
+  sc4s_manager: z.record(z.string(), z.unknown()).nullable(),
   artifacts: z.array(catalogueArtifactSchema),
-  artifact_inventory: z.record(z.array(z.string())),
-  presets: z.array(z.record(z.unknown())),
-  field_contract: z.record(z.unknown()),
-  comparison_to_upstream: z.record(z.unknown()),
-  validation: z.record(z.unknown()),
+  artifact_inventory: z.record(z.string(), z.array(z.string())),
+  presets: z.array(z.record(z.string(), z.unknown())),
+  field_contract: z.record(z.string(), z.unknown()),
+  comparison_to_upstream: z.record(z.string(), z.unknown()),
+  validation: z.record(z.string(), z.unknown()),
   known_limitations: z.array(z.string()),
   feedback: catalogueFeedbackSchema,
 });

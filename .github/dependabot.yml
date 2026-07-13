@@ -11,15 +11,39 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      frontend-runtime:
+        patterns:
+          - "@mantine/*"
+          - "@vitejs/*"
+          - "react"
+          - "react-dom"
+          - "vite"
+          - "vitest"
+      frontend-contracts:
+        patterns:
+          - "zod"
+          - "@types/*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      actions-runtime:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: "node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "python"
+        update-types:
+          - "version-update:semver-major"

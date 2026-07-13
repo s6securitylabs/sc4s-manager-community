@@ -113,8 +113,8 @@ const libraryImportRecordSchema = z.object({
   runtime_files: z.array(libraryArtifactSchema).optional(),
   reference_files: z.array(libraryArtifactSchema).optional(),
   download: libraryDownloadSchema.optional(),
-  detail: z.record(z.unknown()).optional(),
-  last_apply: z.record(z.unknown()).optional(),
+  detail: z.record(z.string(), z.unknown()).optional(),
+  last_apply: z.record(z.string(), z.unknown()).optional(),
 }).passthrough();
 
 export const librarySourcesResponseSchema = z.object({
@@ -123,14 +123,14 @@ export const librarySourcesResponseSchema = z.object({
 
 export const libraryCatalogueResponseSchema = z.object({
   source_id: z.string(),
-  source: z.record(z.unknown()).optional(),
+  source: z.record(z.string(), z.unknown()).optional(),
   entries: z.array(libraryCatalogueEntrySchema),
-  filters: z.record(z.string()),
+  filters: z.record(z.string(), z.string()),
 });
 
 export const libraryEntryResponseSchema = z.object({
   source_id: z.string(),
-  entry: z.record(z.unknown()),
+  entry: z.record(z.string(), z.unknown()),
   refresh: z.boolean(),
   eligibility: libraryEligibilitySchema,
 });
@@ -139,7 +139,7 @@ export const libraryDownloadResponseSchema = z.object({
   ok: z.boolean(),
   source_id: z.string(),
   entry_id: z.string(),
-  detail: z.record(z.unknown()),
+  detail: z.record(z.string(), z.unknown()),
   download: libraryDownloadSchema,
   verification: libraryVerificationSchema,
 });
@@ -166,9 +166,9 @@ export const libraryApplyResponseSchema = z.object({
   apply: z.boolean(),
   apply_allowed: z.boolean(),
   changed_targets: z.array(z.string()),
-  validation: z.record(z.unknown()),
-  control: z.record(z.unknown()),
-  post_check: z.record(z.unknown()),
+  validation: z.record(z.string(), z.unknown()),
+  control: z.record(z.string(), z.unknown()),
+  post_check: z.record(z.string(), z.unknown()),
   rolled_back: z.boolean(),
   reference_only: z.boolean().optional(),
 }).passthrough();

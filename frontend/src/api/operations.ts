@@ -6,8 +6,8 @@ import { ApiError, apiErrorSchema } from './library';
 
 const validationSchema = z.object({
   ok: z.boolean().optional(),
-  syntax: z.record(z.unknown()).optional(),
-  tls: z.record(z.unknown()).optional(),
+  syntax: z.record(z.string(), z.unknown()).optional(),
+  tls: z.record(z.string(), z.unknown()).optional(),
   checked_at: z.string().optional(),
 }).passthrough();
 
@@ -45,10 +45,10 @@ export const sourceCatalogResponseSchema = z.object({
 export const onboardSourceResponseSchema = z.object({
   ok: z.boolean(),
   apply_mode: z.string(),
-  service: z.record(z.unknown()),
+  service: z.record(z.string(), z.unknown()),
   validation: validationSchema,
   control: controlSchema,
-  test_instructions: z.record(z.string()).optional(),
+  test_instructions: z.record(z.string(), z.string()).optional(),
 }).passthrough();
 
 export const deleteSourceResponseSchema = z.object({
@@ -81,7 +81,7 @@ export const configureDestinationResponseSchema = z.object({
   kind: z.string(),
   id: z.string(),
   apply_mode: z.string(),
-  updates: z.record(z.string()),
+  updates: z.record(z.string(), z.string()),
   selector: z.string().nullable().optional(),
   backup: z.string().nullable().optional(),
   validation: validationSchema,
