@@ -21,14 +21,18 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { DataTable } from '../components/DataTable';
+import { DeleteConfirmation } from '../components/DeleteConfirmation';
 import { MutationOutcome, type MutationOutcomeData } from '../components/MutationOutcome';
 import { operatorSafeErrorMessage } from '../lib/displayError';
 import {
   configureDestination,
   deleteDestination,
+  isConfiguredDestination,
   listDestinations,
+  listRoutes,
   type DestinationEntry,
 } from '../api/operations';
+import { clearPendingChange, recordPendingChange } from '../lib/pendingChanges';
 
 const colHelper = createColumnHelper<DestinationEntry>();
 
@@ -57,8 +61,11 @@ export function Destinations() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<MutationOutcomeData | null>(null);
   const [outcomeTitle, setOutcomeTitle] = useState('');
+  const [deleteCandidate, setDeleteCandidate] = useState<DestinationEntry | null>(null);
 
   const destinationsQuery = useQuery({ queryKey: ['destinations'], queryFn: ({ signal }) => listDestinations(signal) });
+  const routesQuery = useQuery({ queryKey: ['routes'], queryFn: ({ signal }) => listRoutes(signal) });
+  const configuredDestinations = (destinationsQuery.data?.destinations || []).filter(isConfiguredDestination);
 
   async function runAction(key: string, title: string, action: () => Promise<MutationOutcomeData>) {
     setBusyKey(key);
@@ -69,7 +76,11 @@ export function Destinations() {
       setOutcome(result);
       setOutcomeTitle(title);
       setToken('');
-      await queryClient.invalidateQueries({ queryKey: ['destinations'] });
+      const pendingId = `destination:${key}:${title}`;
+      if (result.validation?.ok !== false && (!result.control || result.control.skipped || !result.control.ok)) recordPendingChange({ id: pendingId, summary: title, applyMode: 'restart_required' });
+      else if (result.ok && result.control?.ok) clearPendingChange(pendingId);
+      if (key.startsWith('delete:')) setDeleteCandidate(null);
+      await Promise.all([queryClient.invalidateQueries({ queryKey: ['destinations'] }), queryClient.invalidateQueries({ queryKey: ['routes'] })]);
     } catch (error) {
       setActionError(operatorSafeErrorMessage(error, 'Manager could not complete that action. Check the entered values and retry.'));
     } finally {
@@ -99,11 +110,11 @@ export function Destinations() {
     <Stack gap="lg">
       <div>
         <Title order={1}>Destinations</Title>
-        <Text c="dimmed">Configure where SC4S sends events — Splunk HEC for indexing, or syslog to forward to another system. Tokens are never shown after saving.</Text>
+        <Text c="dimmed">Configure where SC4S sends events — Splunk HEC for indexing, or syslog to forward to another system. Secret tokens are never echoed after saving.</Text>
       </div>
 
-      <Alert color="cyan" title="Restart required to take effect" variant="light">
-        Saving a destination writes config but doesn't restart SC4S. Tick the checkbox below to restart immediately, or restart later from SC4S Manager.
+      <Alert color="cyan" title="Destination changes require restart" variant="light">
+        Saving stages destination config. Choose Validate and restart SC4S now, or use Pending changes later. Restart can be disruptive and is not Splunk delivery proof.
       </Alert>
 
       {actionError && <Alert color="red" title="Action failed">{actionError}</Alert>}
@@ -179,7 +190,7 @@ export function Destinations() {
             />
           ) : null}
           <Checkbox
-            label="Apply and restart SC4S now (leave unchecked to save without restarting)"
+            label="Validate and restart SC4S now (leave unchecked to save staged config)"
             checked={applyNow}
             onChange={(e) => setApplyNow(e.currentTarget.checked)}
           />
@@ -189,7 +200,7 @@ export function Destinations() {
               disabled={!destId.trim() || (kind === 'hec' ? !url.trim() : !host.trim())}
               onClick={submitDestination}
             >
-              {applyNow ? 'Save and restart SC4S' : 'Save destination'}
+              {applyNow ? 'Save, validate and restart SC4S' : 'Save staged destination'}
             </Button>
           </Group>
         </Stack>
@@ -201,10 +212,11 @@ export function Destinations() {
             <div>
               <Title order={3}>Configured destinations</Title>
             </div>
-            <Badge variant="light" color="cyan">{destinationsQuery.data?.destinations.length ?? 0} saved</Badge>
+            <Badge variant="light" color="cyan">{configuredDestinations.length} configured</Badge>
           </Group>
           {destinationsQuery.isLoading ? <Loader size="sm" /> : null}
           {destinationsQuery.isError ? <Alert color="red" title="Failed to load destinations">{operatorSafeErrorMessage(destinationsQuery.error)}</Alert> : null}
+          {routesQuery.isError ? <Alert color="red" title="Destination deletion blocked">Dependent routes could not be loaded. Retry before deleting a destination.</Alert> : null}
           {destinationsQuery.data?.destinations.length ? (
             <DataTable
               data={destinationsQuery.data.destinations}
@@ -252,12 +264,13 @@ export function Destinations() {
                         variant="light"
                         size="xs"
                         loading={busyKey === `delete:${e.kind}:${e.id}`}
-                        onClick={() => removeDestination(e)}
+                        disabled={routesQuery.isError}
+                        onClick={() => setDeleteCandidate(e)}
                       >
                         Delete
                       </Button>
                     ) : (
-                      <Badge variant="light" color="gray">default target</Badge>
+                      <Badge variant="light" color={isConfiguredDestination(e) ? 'green' : 'orange'}>{isConfiguredDestination(e) ? 'configured default' : 'DEFAULT setup required'}</Badge>
                     );
                   },
                 }),
@@ -268,6 +281,7 @@ export function Destinations() {
               <Text c="dimmed">No destinations configured yet. Add one above.</Text>
             </Paper>
           ) : null}
+          {deleteCandidate ? <DeleteConfirmation objectLabel={`destination ${deleteCandidate.id}`} dependents={(routesQuery.data?.routes || []).filter((route) => route.destination_kind === deleteCandidate.kind && route.destination_id === deleteCandidate.id).map((route) => route.id)} busy={busyKey === `delete:${deleteCandidate.kind}:${deleteCandidate.id}`} onCancel={() => setDeleteCandidate(null)} onConfirm={() => removeDestination(deleteCandidate)} /> : null}
         </Stack>
       </Card>
     </Stack>

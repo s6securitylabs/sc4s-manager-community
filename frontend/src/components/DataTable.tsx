@@ -7,7 +7,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Badge, Group, ScrollArea, Table, Text, TextInput } from '@mantine/core';
+import { Badge, Group, ScrollArea, Table, Text, TextInput, UnstyledButton } from '@mantine/core';
 import { useState } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,10 +24,11 @@ type DataTableProps<TData> = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<TData, any>[];
   searchPlaceholder?: string;
+  searchLabel?: string;
   miw?: number;
 };
 
-export function DataTable<TData>({ data, columns, searchPlaceholder = 'Search…', miw }: DataTableProps<TData>) {
+export function DataTable<TData>({ data, columns, searchPlaceholder = 'Search…', searchLabel = 'Search inventory', miw }: DataTableProps<TData>) {
   const [globalFilter, setGlobalFilter] = useState('');
 
   const table = useReactTable({
@@ -47,6 +48,7 @@ export function DataTable<TData>({ data, columns, searchPlaceholder = 'Search…
     <div>
       <Group justify="space-between" align="center" mb="sm">
         <TextInput
+          label={searchLabel}
           placeholder={searchPlaceholder}
           value={globalFilter}
           onChange={(e) => setGlobalFilter(e.currentTarget.value)}
@@ -68,17 +70,18 @@ export function DataTable<TData>({ data, columns, searchPlaceholder = 'Search…
                   return (
                     <Table.Th
                       key={header.id}
-                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
-                      style={canSort ? { cursor: 'pointer', userSelect: 'none' } : undefined}
+                      aria-sort={canSort ? (sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none') : undefined}
                     >
-                      <Group gap={4} wrap="nowrap">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                        {canSort && (
+                      {canSort ? (
+                        <UnstyledButton type="button" onClick={header.column.getToggleSortingHandler()} aria-label={`Sort by ${String(header.column.columnDef.header)}`}>
+                          <Group gap={4} wrap="nowrap">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
                           <Text size="xs" c="dimmed" component="span">
                             {sorted === 'asc' ? '↑' : sorted === 'desc' ? '↓' : '↕'}
                           </Text>
-                        )}
-                      </Group>
+                          </Group>
+                        </UnstyledButton>
+                      ) : flexRender(header.column.columnDef.header, header.getContext())}
                     </Table.Th>
                   );
                 })}

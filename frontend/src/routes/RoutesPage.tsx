@@ -19,6 +19,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { DataTable } from '../components/DataTable';
+import { DeleteConfirmation } from '../components/DeleteConfirmation';
 import { MutationOutcome, type MutationOutcomeData } from '../components/MutationOutcome';
 import { operatorSafeErrorMessage } from '../lib/displayError';
 import {
@@ -27,8 +28,10 @@ import {
   listRoutes,
   listSources,
   upsertRoute,
+  isConfiguredDestination,
   type RouteEntry,
 } from '../api/operations';
+import { clearPendingChange, recordPendingChange } from '../lib/pendingChanges';
 
 const colHelper = createColumnHelper<RouteEntry>();
 
@@ -43,6 +46,7 @@ export function RoutesPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<MutationOutcomeData | null>(null);
   const [outcomeTitle, setOutcomeTitle] = useState('');
+  const [deleteCandidate, setDeleteCandidate] = useState<RouteEntry | null>(null);
 
   const routesQuery = useQuery({ queryKey: ['routes'], queryFn: ({ signal }) => listRoutes(signal) });
   const sourcesQuery = useQuery({ queryKey: ['sources'], queryFn: ({ signal }) => listSources(signal) });
@@ -59,7 +63,7 @@ export function RoutesPage() {
 
   const destinationOptions = useMemo(
     () => (destinationsQuery.data?.destinations || [])
-      .filter((item) => item.id !== 'DEFAULT')
+      .filter((item) => item.mode === 'SELECT' && isConfiguredDestination(item))
       .map((item) => ({ value: `${item.kind}:${item.id}`, label: `${item.kind.toUpperCase()} ${item.id}` })),
     [destinationsQuery.data],
   );
@@ -72,6 +76,10 @@ export function RoutesPage() {
       const result = await action();
       setOutcome(result);
       setOutcomeTitle(title);
+      const pendingId = `route:${key}:${title}`;
+      if (result.validation?.ok !== false && (!result.control || result.control.skipped || !result.control.ok)) recordPendingChange({ id: pendingId, summary: title, applyMode: 'reloadable' });
+      else if (result.ok && result.control?.ok) clearPendingChange(pendingId);
+      if (key.startsWith('delete:')) setDeleteCandidate(null);
       await queryClient.invalidateQueries({ queryKey: ['routes'] });
     } catch (error) {
       setActionError(operatorSafeErrorMessage(error, 'Manager could not complete that action. Check the entered values and retry.'));
@@ -109,8 +117,8 @@ export function RoutesPage() {
         <Text c="dimmed">Direct events from a specific source to a specific destination, based on source type.</Text>
       </div>
 
-      <Alert color="cyan" title="Routes need a restart to take effect" variant="light">
-        Saving a route writes a selector file that tells SC4S which events to send where. Changes take effect after SC4S restarts. Search Splunk for incoming events to confirm it's working.
+      <Alert color="cyan" title="Route changes are reloadable" variant="light">
+        Saving stages a selector. Choose Validate and reload SC4S now, or use Pending changes later. Complete runtime post-check and Splunk readback before treating the route as live.
       </Alert>
 
       {actionError && <Alert color="red" title="Action failed">{actionError}</Alert>}
@@ -137,7 +145,7 @@ export function RoutesPage() {
               searchable
             />
             <TextInput
-              label="Source type"
+              label="SC4S vendor_product (source type)"
               placeholder={sourceVendorProduct || 'cisco_asa'}
               value={pack}
               onChange={(e) => setPack(e.currentTarget.value)}
@@ -156,12 +164,12 @@ export function RoutesPage() {
           {sourcesQuery.isError ? <Alert color="red" title="Unable to load source prerequisites">{operatorSafeErrorMessage(sourcesQuery.error)}</Alert> : null}
           {destinationsQuery.isError ? <Alert color="red" title="Unable to load destination prerequisites">{operatorSafeErrorMessage(destinationsQuery.error)}</Alert> : null}
           {prerequisiteQueryError ? (
-            <Alert color="red" title="Fix the errors above before saving">
+            <Alert color="red" title="Route submission blocked">
               Source or destination data could not be loaded. Resolve the errors above before saving a route.
             </Alert>
           ) : null}
           <Checkbox
-            label="Apply and restart SC4S now (leave unchecked to save without restarting)"
+            label="Validate and reload SC4S now (leave unchecked to stage only)"
             checked={applyNow}
             onChange={(e) => setApplyNow(e.currentTarget.checked)}
           />
@@ -171,7 +179,7 @@ export function RoutesPage() {
               disabled={prerequisiteQueryError || !routeId.trim() || !source || !pack.trim() || !destination}
               onClick={submitRoute}
             >
-              {applyNow ? 'Save and restart SC4S' : 'Save route'}
+              {applyNow ? 'Save, validate and reload SC4S' : 'Stage route'}
             </Button>
           </Group>
         </Stack>
@@ -236,7 +244,7 @@ export function RoutesPage() {
                       variant="light"
                       size="xs"
                       loading={busyKey === `delete:${info.row.original.id}`}
-                      onClick={() => removeRoute(info.row.original)}
+                      onClick={() => setDeleteCandidate(info.row.original)}
                     >
                       Delete
                     </Button>
@@ -249,6 +257,7 @@ export function RoutesPage() {
               <Text c="dimmed">No routes configured yet. Add a source and a SELECT-mode destination first.</Text>
             </Paper>
           ) : null}
+          {deleteCandidate ? <DeleteConfirmation objectLabel={`route ${deleteCandidate.id}`} busy={busyKey === `delete:${deleteCandidate.id}`} onCancel={() => setDeleteCandidate(null)} onConfirm={() => removeRoute(deleteCandidate)} /> : null}
         </Stack>
       </Card>
     </Stack>

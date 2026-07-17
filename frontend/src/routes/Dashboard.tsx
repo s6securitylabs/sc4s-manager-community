@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { listCatalogue, listPacks } from '../api/packs';
 import { listLibraryImports, listLibrarySources } from '../api/library';
 import { getRuntimeState } from '../api/runtime';
+import { isConfiguredDestination, listDestinations, listSources } from '../api/operations';
 import { RouterAnchor } from '../components/RouterAnchor';
 import { operatorSafeErrorMessage } from '../lib/displayError';
 
@@ -70,7 +71,7 @@ function RuntimeHealthSection() {
 
       <Alert color="blue" variant="light">
         <Text size="xs">
-          Config saved here does not mean SC4S is processing events — search Splunk to confirm events are flowing.
+          Saved config does not prove SC4S is processing events. Complete a marker test and Splunk readback to confirm events are flowing.
         </Text>
       </Alert>
 
@@ -237,6 +238,9 @@ export function Dashboard() {
     queryKey: ['library', 'imports'],
     queryFn: ({ signal }) => listLibraryImports(signal),
   });
+  const sourcesQuery = useQuery({ queryKey: ['sources'], queryFn: ({ signal }) => listSources(signal) });
+  const destinationsQuery = useQuery({ queryKey: ['destinations'], queryFn: ({ signal }) => listDestinations(signal) });
+  const configuredDestinations = destinationsQuery.data?.destinations.filter(isConfiguredDestination).length ?? 0;
 
   return (
     <Stack gap="lg">
@@ -264,12 +268,12 @@ export function Dashboard() {
           </Group>
         </Card>
         <Card withBorder shadow="sm" padding="lg">
-          <Text size="sm" c="dimmed">SecHub sources</Text>
+          <Text size="sm" c="dimmed">SC4S Library sources</Text>
           <Group justify="space-between" align="end">
             <div>
               <Title order={2}>{librarySourcesQuery.data?.sources?.length ?? '—'}</Title>
               <Text size="xs" c="dimmed">
-                {libraryImportsQuery.isError ? 'SecHub connection unavailable — check source health' : `${libraryImportsQuery.data?.imports?.length ?? 0} packs checked`}
+                {libraryImportsQuery.isError ? 'Library source unavailable — check source health' : `${libraryImportsQuery.data?.imports?.length ?? 0} packs checked`}
               </Text>
             </div>
             <RouterAnchor to="/library">Open</RouterAnchor>
@@ -294,6 +298,30 @@ export function Dashboard() {
           </Badge>
         </Card>
       </SimpleGrid>
+
+      {(catalogueQuery.isError || packsQuery.isError || librarySourcesQuery.isError || libraryImportsQuery.isError) ? (
+        <Stack gap="xs">
+          {catalogueQuery.isError ? <Alert color="red" title="Unable to load source catalogue">{operatorSafeErrorMessage(catalogueQuery.error)}</Alert> : null}
+          {packsQuery.isError ? <Alert color="red" title="Unable to load local packs">{operatorSafeErrorMessage(packsQuery.error)}</Alert> : null}
+          {librarySourcesQuery.isError ? <Alert color="red" title="Could not load Library sources">{operatorSafeErrorMessage(librarySourcesQuery.error)}</Alert> : null}
+          {libraryImportsQuery.isError ? <Alert color="red" title="Could not load checked packs">{operatorSafeErrorMessage(libraryImportsQuery.error)}</Alert> : null}
+        </Stack>
+      ) : null}
+
+      <Card withBorder>
+        <Stack gap="sm">
+          <Group justify="space-between"><Title order={2}>First-run readiness checklist</Title><Badge color="orange">Not live proof</Badge></Group>
+          <Text size="sm">Complete every prerequisite before calling onboarding ready. Status comes from current Manager inventories; install/auth/env-file preflight still requires backend capability reporting.</Text>
+          <List spacing="xs">
+            <List.Item>Authentication mode selected and Manager session working: <Badge color="green">current session ready</Badge></List.Item>
+            <List.Item>Control daemon available for validate/reload/restart: <Badge color="gray">verify in Runtime health</Badge></List.Item>
+            <List.Item>At least one configured destination (the synthetic DEFAULT placeholder does not count): <Badge color={configuredDestinations ? 'green' : 'red'}>{configuredDestinations ? `${configuredDestinations} configured` : 'setup required'}</Badge></List.Item>
+            <List.Item>At least one source with an explicit parser/source type: <Badge color={sourcesQuery.data?.sources.some((source) => source.vendor_product) ? 'green' : 'red'}>{sourcesQuery.data?.sources.some((source) => source.vendor_product) ? 'configured' : 'setup required'}</Badge></List.Item>
+            <List.Item>Staged configuration validated and correct reload/restart completed: <Badge color="gray">review Pending changes</Badge></List.Item>
+            <List.Item>Listener/counter post-check, marker event, and Splunk readback captured: <Badge color="red">operator evidence required</Badge></List.Item>
+          </List>
+        </Stack>
+      </Card>
 
       <RuntimeHealthSection />
     </Stack>

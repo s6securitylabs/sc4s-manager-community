@@ -1,26 +1,29 @@
 import '@mantine/core/styles.css';
 import './styles.css';
 
-import { MantineProvider, createTheme } from '@mantine/core';
+import { Alert, Center, Loader, MantineProvider, Stack, Text, createTheme } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import { AppLayout } from './components/AppLayout';
 import { checkAuthStatus, logout } from './api/auth';
-import { CatalogueDetail } from './routes/CatalogueDetail';
-import { CatalogueList } from './routes/CatalogueList';
-import { Dashboard } from './routes/Dashboard';
-import { Exports } from './routes/Exports';
-import { Library } from './routes/Library';
-import { Destinations } from './routes/Destinations';
 import { Login } from './routes/Login';
-import { OnboardingPreview } from './routes/OnboardingPreview';
-import { PackDetail } from './routes/PackDetail';
-import { PacksList } from './routes/PacksList';
-import { RoutesPage } from './routes/RoutesPage';
-import { Sources } from './routes/Sources';
 import { appPathFromLocation, safeDecodeURIComponent } from './lib/navigation';
+import { AUTH_EXPIRED_EVENT } from './api/client';
+
+const Dashboard = lazy(() => import('./routes/Dashboard').then((module) => ({ default: module.Dashboard })));
+const Library = lazy(() => import('./routes/Library').then((module) => ({ default: module.Library })));
+const CatalogueList = lazy(() => import('./routes/CatalogueList').then((module) => ({ default: module.CatalogueList })));
+const CatalogueDetail = lazy(() => import('./routes/CatalogueDetail').then((module) => ({ default: module.CatalogueDetail })));
+const PacksList = lazy(() => import('./routes/PacksList').then((module) => ({ default: module.PacksList })));
+const PackDetail = lazy(() => import('./routes/PackDetail').then((module) => ({ default: module.PackDetail })));
+const OnboardingPreview = lazy(() => import('./routes/OnboardingPreview').then((module) => ({ default: module.OnboardingPreview })));
+const Sources = lazy(() => import('./routes/Sources').then((module) => ({ default: module.Sources })));
+const Destinations = lazy(() => import('./routes/Destinations').then((module) => ({ default: module.Destinations })));
+const RoutesPage = lazy(() => import('./routes/RoutesPage').then((module) => ({ default: module.RoutesPage })));
+const Operations = lazy(() => import('./routes/Operations').then((module) => ({ default: module.Operations })));
+const Exports = lazy(() => import('./routes/Exports').then((module) => ({ default: module.Exports })));
 
 const queryClient = new QueryClient();
 
@@ -83,6 +86,7 @@ function AppRouter() {
   const [path, setPath] = useState(currentPath());
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuthStatus()
@@ -91,8 +95,19 @@ function AppRouter() {
         setAuthChecked(true);
       })
       .catch(() => {
+        setAuthError('Manager is unreachable or returned an invalid authentication response. Check the service/network and retry.');
         setAuthChecked(true);
       });
+  }, []);
+
+  useEffect(() => {
+    const expired = () => {
+      setIsAuthenticated(false);
+      setAuthError('Your session expired or is no longer authorized. Sign in again to return to this page.');
+      queryClient.clear();
+    };
+    window.addEventListener(AUTH_EXPIRED_EVENT, expired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, expired);
   }, []);
 
   useEffect(() => {
@@ -123,6 +138,7 @@ function AppRouter() {
     if (path === '/sources') return <Sources />;
     if (path === '/destinations') return <Destinations />;
     if (path === '/routes') return <RoutesPage />;
+    if (path === '/operations') return <Operations />;
     if (path === '/exports') return <Exports />;
     return <Dashboard />;
   }, [path]);
@@ -133,13 +149,13 @@ function AppRouter() {
     queryClient.clear();
   };
 
-  if (!authChecked) return null;
+  if (!authChecked) return <Center mih="100vh"><Stack align="center"><Loader /><Text>Checking Manager authentication…</Text></Stack></Center>;
 
   if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
+    return <Login authError={authError} onRetry={() => window.location.reload()} onLogin={() => { setAuthError(null); setIsAuthenticated(true); }} />;
   }
 
-  return <AppLayout path={path} onLogout={handleLogout}>{route}</AppLayout>;
+  return <AppLayout path={path} onLogout={handleLogout}><Suspense fallback={<Alert color="blue" title="Loading page"><Loader size="sm" /></Alert>}>{route}</Suspense></AppLayout>;
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiFetch } from './client';
 
 const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '');
 
@@ -76,7 +77,7 @@ export type RuntimeDestination = z.infer<typeof runtimeDestinationSchema>;
 export type RuntimeWarning = z.infer<typeof runtimeWarningSchema>;
 
 export async function getRuntimeState(signal?: AbortSignal): Promise<RuntimeState> {
-  const res = await fetch(`${API_BASE}/runtime/state`, { signal });
+  const res = await apiFetch(`${API_BASE}/runtime/state`, { signal });
   if (!res.ok) {
     throw new Error(`Runtime state fetch failed: ${res.status}`);
   }

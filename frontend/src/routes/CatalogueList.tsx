@@ -20,7 +20,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
-const CATALOGUE_PAGE_SIZE = 30;
+const CATALOGUE_PAGE_SIZE = 60;
 
 import { CatalogueFacetItem, CatalogueListEntry, listCatalogue } from '../api/packs';
 import { RouterAnchor } from '../components/RouterAnchor';
@@ -30,6 +30,7 @@ const ORIGIN_LABELS: Record<string, string> = {
   'sc4s-inbuilt': 'SC4S built-in',
   'sc4s-inbuilt-lite': 'SC4S Lite',
   'sechub-resource': 'SC4S Library pack',
+  'sechub-resources-pack': 'SC4S Library pack',
   'community-extra': 'Community candidate',
 };
 
@@ -143,8 +144,8 @@ function capabilityBadges(entry: CatalogueListEntry) {
 export function buildCatalogueParams(filters: CatalogueFilters, page = 1) {
   const next: Record<string, string> = {
     limit: String(CATALOGUE_PAGE_SIZE),
-    offset: String((page - 1) * CATALOGUE_PAGE_SIZE),
   };
+  if (page > 1) next.offset = String((page - 1) * CATALOGUE_PAGE_SIZE);
   if (filters.q.trim()) next.q = filters.q.trim();
   if (filters.origin) next.origin = filters.origin;
   if (filters.product) next.product = filters.product;

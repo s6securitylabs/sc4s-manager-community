@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiFetch } from './client';
 
 const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '');
 
@@ -23,7 +24,7 @@ export class ApiError extends Error {
 }
 
 const transportSchema = z.enum(['udp', 'tcp', 'tls']);
-const catalogueOriginSchema = z.enum(['sc4s-inbuilt', 'sc4s-inbuilt-lite', 'sechub-resource', 'community-extra']);
+const catalogueOriginSchema = z.enum(['sc4s-inbuilt', 'sc4s-inbuilt-lite', 'sechub-resource', 'sechub-resources-pack', 'community-extra']);
 const relationshipSchema = z.enum([
   'upstream_only',
   'new_pack',
@@ -369,29 +370,29 @@ async function parseResponse<T>(response: Response, schema: z.ZodType<T>): Promi
 }
 
 export async function listPacks(signal?: AbortSignal): Promise<PacksListResponse> {
-  const response = await fetch(`${API_BASE}/packs`, { signal });
+  const response = await apiFetch(`${API_BASE}/packs`, { signal });
   return parseResponse(response, packsListResponseSchema);
 }
 
 export async function listCatalogue(params?: Record<string, string>, signal?: AbortSignal): Promise<CatalogueListResponse> {
   const query = new URLSearchParams(params || {});
   const suffix = query.size ? `?${query.toString()}` : '';
-  const response = await fetch(`${API_BASE}/catalogue${suffix}`, { signal });
+  const response = await apiFetch(`${API_BASE}/catalogue${suffix}`, { signal });
   return parseResponse(response, catalogueListResponseSchema);
 }
 
 export async function getCatalogueEntry(entryId: string, signal?: AbortSignal): Promise<CatalogueDetail> {
-  const response = await fetch(`${API_BASE}/catalogue/${encodeURIComponent(entryId)}`, { signal });
+  const response = await apiFetch(`${API_BASE}/catalogue/${encodeURIComponent(entryId)}`, { signal });
   return parseResponse(response, catalogueDetailSchema);
 }
 
 export async function getPack(packId: string, signal?: AbortSignal): Promise<PackDetail> {
-  const response = await fetch(`${API_BASE}/packs/${encodeURIComponent(packId)}`, { signal });
+  const response = await apiFetch(`${API_BASE}/packs/${encodeURIComponent(packId)}`, { signal });
   return parseResponse(response, packDetailSchema);
 }
 
 export async function exportPack(packId: string): Promise<ExportPackResult> {
-  const response = await fetch(`${API_BASE}/packs/${encodeURIComponent(packId)}/export`);
+  const response = await apiFetch(`${API_BASE}/packs/${encodeURIComponent(packId)}/export`);
   if (!response.ok) {
     throw apiErrorFromResponse(response, await readJsonOrText(response));
   }

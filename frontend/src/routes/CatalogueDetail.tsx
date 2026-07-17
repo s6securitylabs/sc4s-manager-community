@@ -31,6 +31,7 @@ function originLabel(origin: string) {
     'sc4s-inbuilt': 'SC4S built-in',
     'sc4s-inbuilt-lite': 'SC4S Lite',
     'sechub-resource': 'SC4S Library pack',
+    'sechub-resources-pack': 'SC4S Library pack',
     'community-extra': 'Community candidate',
   };
   return labels[origin] || formatTokenLabel(origin);
@@ -62,8 +63,8 @@ function reviewTone(entry: CatalogueDetailEntry) {
   return 'gray';
 }
 
-function truthyString(value: unknown) {
-  return typeof value === 'string' && value.trim() ? value : null;
+function truthyString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value : null;
 }
 
 function capabilityItems(entry: CatalogueDetailEntry) {
@@ -232,6 +233,7 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
   const presets = Array.isArray(entry.presets) ? entry.presets : [];
   const provenanceHost = provenanceHostLabel(entry.provenance?.url || entry.provenance_url);
   const showCandidateWarning = entry.source_status === 'candidate' || entry.effective_origin === 'community-extra' || candidateWarnings.length > 0;
+  const validationSummary = truthyString(entry.validation?.summary);
 
   return (
     <Stack gap="lg">
@@ -261,7 +263,7 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
           <Text className="readable-panel-text" maw={900}>{entry.summary}</Text>
 
           <Alert color="blue" title="Viewing only — not applied to SC4S" variant="light">
-            Nothing is applied to SC4S until you download and install a pack through the SC4S Library page.
+            Nothing is applied to SC4S until you import and install a pack through the SC4S Library page, validate locally, and capture runtime plus Splunk readback evidence.
           </Alert>
 
           <div className="catalogue-chip-row">
@@ -285,7 +287,7 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
               <Text size="sm">Community candidate only. Not validated for production or Splunk ingestion.</Text>
             )}
             <Text size="xs" c="dimmed">
-              Community issues, PRs, and snippets remain discovery inputs until maintainer review, local validation, and Splunk evidence support promotion.
+              Community issues, PRs, and snippets are for review only and remain discovery inputs until maintainer review, local validation, and Splunk evidence support promotion.
             </Text>
           </Stack>
         </Alert>
@@ -330,6 +332,7 @@ export function CatalogueDetail({ entryId }: { entryId: string }) {
               <EvidencePair label="Review status" value={reviewStateLabel(entry)} />
               <EvidencePair label="Primary catalogue origin" value={originLabel(entry.effective_origin)} />
             </SimpleGrid>
+            {validationSummary ? <EvidencePair label="Validation summary" value={validationSummary} /> : <EmptyEvidence title="No human-readable validation summary recorded" body="Review machine evidence paths and complete local validation before use." />}
             {provenanceHost && (entry.provenance?.url || entry.provenance_url) ? (
               <Paper withBorder p="md" radius="md">
                 <Text className="panel-overline">Provenance URL</Text>

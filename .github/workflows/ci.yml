@@ -37,9 +37,9 @@ jobs:
       - name: Build frontend
         run: scripts/build_frontend.sh
 
-      - name: Run frontend API contract tests
+      - name: Run full frontend test suite
         working-directory: frontend
-        run: npm test -- src/api
+        run: npm test
 
       - name: Run backend/package regression suite
         run: ./scripts/test.sh

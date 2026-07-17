@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiFetch } from './client';
 
 const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '');
 
@@ -51,7 +52,7 @@ export const librarySourceHealthResponseSchema = z.object({
   checked_at: z.string(),
   overall_ok: z.boolean(),
   checks: z.array(libraryHealthCheckSchema),
-  catalogue: z.object({ entry_count: z.number().int().nonnegative() }).passthrough(),
+  catalogue: z.object({ entry_count: z.number().int().nonnegative(), product_release_count: z.number().int().nonnegative().optional() }).passthrough(),
   manifest: z.object({ download_count: z.number().int().nonnegative() }).passthrough(),
   sample_entry: z.object({ ok: z.boolean(), id: z.string().nullable().optional() }).passthrough(),
   sample_bundle: libraryHealthCheckSchema.or(z.object({ ok: z.boolean() }).passthrough()),
@@ -60,6 +61,20 @@ export const librarySourceHealthResponseSchema = z.object({
     local_verification_requires_local_validation_json: z.boolean(),
     remote_metadata_can_set_local_is_verified: z.boolean(),
   }).passthrough(),
+}).passthrough();
+
+export const productReleaseSchema = z.object({
+  kind: z.literal('splunk_ta_product_release'),
+  product_id: z.string(),
+  display_name: z.string(),
+  app_id: z.string(),
+  version: z.string(),
+  filename: z.string(),
+  url: z.string().url(),
+  sha256: z.string(),
+  source_components: z.array(z.string()),
+  install_scope: z.literal('product_deployment'),
+  manager_importable: z.literal(false),
 }).passthrough();
 
 const libraryCatalogueEntrySchema = z.object({
@@ -72,6 +87,7 @@ const libraryCatalogueEntrySchema = z.object({
   source_id: z.string().optional(),
   source_type: z.string().optional(),
   is_remote: z.boolean().optional(),
+  product_releases: z.array(productReleaseSchema).optional(),
 }).passthrough();
 
 const libraryEligibilitySchema = z.object({
@@ -219,7 +235,7 @@ async function parseResponse<T>(response: Response, schema: z.ZodType<T>): Promi
 }
 
 async function postJson<T>(path: string, payload: Record<string, unknown>, schema: z.ZodType<T>): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await apiFetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -228,32 +244,32 @@ async function postJson<T>(path: string, payload: Record<string, unknown>, schem
 }
 
 export async function listLibrarySources(signal?: AbortSignal): Promise<LibrarySourcesResponse> {
-  const response = await fetch(`${API_BASE}/library/sources`, { signal });
+  const response = await apiFetch(`${API_BASE}/library/sources`, { signal });
   return parseResponse(response, librarySourcesResponseSchema);
 }
 
 export async function getLibrarySourceHealth(sourceId: string, signal?: AbortSignal): Promise<LibrarySourceHealthResponse> {
   const query = new URLSearchParams({ source_id: sourceId || 'official' });
-  const response = await fetch(`${API_BASE}/library/source-health?${query.toString()}`, { signal });
+  const response = await apiFetch(`${API_BASE}/library/source-health?${query.toString()}`, { signal });
   return parseResponse(response, librarySourceHealthResponseSchema);
 }
 
 export async function listLibraryCatalogue(params?: Record<string, string>, signal?: AbortSignal): Promise<LibraryCatalogueResponse> {
   const query = new URLSearchParams(params || {});
   const suffix = query.size ? `?${query.toString()}` : '';
-  const response = await fetch(`${API_BASE}/library/catalogue${suffix}`, { signal });
+  const response = await apiFetch(`${API_BASE}/library/catalogue${suffix}`, { signal });
   return parseResponse(response, libraryCatalogueResponseSchema);
 }
 
 export async function getLibraryEntry(sourceId: string, entryId: string, refresh = false, signal?: AbortSignal): Promise<LibraryEntryResponse> {
   const query = new URLSearchParams({ source_id: sourceId, entry_id: entryId });
   if (refresh) query.set('refresh', 'yes');
-  const response = await fetch(`${API_BASE}/library/entry?${query.toString()}`, { signal });
+  const response = await apiFetch(`${API_BASE}/library/entry?${query.toString()}`, { signal });
   return parseResponse(response, libraryEntryResponseSchema);
 }
 
 export async function listLibraryImports(signal?: AbortSignal): Promise<LibraryImportsResponse> {
-  const response = await fetch(`${API_BASE}/library/imports`, { signal });
+  const response = await apiFetch(`${API_BASE}/library/imports`, { signal });
   return parseResponse(response, libraryImportsResponseSchema);
 }
 

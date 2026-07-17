@@ -16,9 +16,11 @@ import { login } from '../api/auth';
 
 interface LoginProps {
   onLogin: () => void;
+  authError?: string | null;
+  onRetry?: () => void;
 }
 
-export function Login({ onLogin }: LoginProps) {
+export function Login({ onLogin, authError, onRetry }: LoginProps) {
   const [token, setToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -39,8 +41,8 @@ export function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <Center mih="100vh" bg="var(--mantine-color-body)">
-      <Box w={400}>
+    <Center mih="100vh" bg="var(--mantine-color-body)" p="md">
+      <Box w="100%" maw={400}>
         <Stack gap="lg">
           <Stack gap={4}>
             <Title order={2}>SC4S Manager</Title>
@@ -72,6 +74,15 @@ export function Login({ onLogin }: LoginProps) {
               </Stack>
             </form>
           </Paper>
+
+          {authError ? (
+            <Alert color="orange" title="Manager connection or session problem" role="alert">
+              <Stack gap="xs">
+                <Text size="sm">{authError}</Text>
+                {onRetry ? <Button variant="light" color="orange" onClick={onRetry}>Retry Manager connection</Button> : null}
+              </Stack>
+            </Alert>
+          ) : null}
 
           <Text c="dimmed" size="xs">
             Set <Text component="span" ff="monospace" size="xs">SC4S_MANAGER_MANUAL_LOGIN_TOKEN</Text> in{' '}
