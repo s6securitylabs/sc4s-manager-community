@@ -22,7 +22,7 @@ const { sourcesPayload, healthPayload, cataloguePayload, entryPayload, importsPa
     source_id: 'official',
     checked_at: '2026-06-14T00:00:00Z',
     overall_ok: false,
-    catalogue: { entry_count: 396 },
+    catalogue: { entry_count: 396, product_release_count: 59 },
     manifest: { download_count: 2 },
     sample_entry: { ok: true, id: 'pan_panos' },
     sample_bundle: { name: 'sample_bundle', ok: false, error_code: 'checksum_mismatch', message: 'downloaded bundle sha256 does not match entry detail', next_action: 'Do not apply the bundle.' },
@@ -49,6 +49,31 @@ const { sourcesPayload, healthPayload, cataloguePayload, entryPayload, importsPa
         product: 'PAN-OS',
         version: '1.2.3',
         download_available: true,
+        product_releases: [{
+          kind: 'splunk_ta_product_release',
+          product_id: 'pan-panos',
+          display_name: 'Palo Alto PAN-OS',
+          app_id: 'Splunk_TA_pan_panos',
+          version: '1.2.4',
+          filename: 'Splunk_TA_pan_panos-1.2.4.tgz',
+          url: 'https://sechub.s6ops.com/downloads/Splunk_TA_pan_panos-1.2.4.tgz',
+          sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          source_components: ['pan_panos'],
+          install_scope: 'product_deployment',
+          manager_importable: false,
+        }, {
+          kind: 'splunk_ta_product_release',
+          product_id: 'panorama',
+          display_name: 'Palo Alto Panorama',
+          app_id: 'Splunk_TA_panorama',
+          version: '2.0.0',
+          filename: 'Splunk_TA_panorama-2.0.0.tgz',
+          url: 'https://sechub.s6ops.com/downloads/Splunk_TA_panorama-2.0.0.tgz',
+          sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+          source_components: ['pan_panos'],
+          install_scope: 'product_deployment',
+          manager_importable: false,
+        }],
       },
     ],
   },
@@ -129,14 +154,20 @@ describe('Library route', () => {
       </MantineProvider>,
     );
 
-    expect(markup).toContain('SecHub packs');
+    expect(markup).toContain('SC4S Library');
     expect(markup).toContain('Download');
     expect(markup).toContain('Check pack');
     expect(markup).toContain('Install to SC4S');
     expect(markup).toContain('SC4S config files to install');
     expect(markup).toContain('Connection checks');
+    expect(markup).toContain('59 related product TA releases');
     expect(markup).toContain('SecHub review labels are a starting point, not proof');
     expect(markup).toContain('Nothing is installed until you approve it');
+    expect(markup).toContain('Product TA available');
+    expect(markup).toContain('separate deployment artifact');
+    expect(markup).toContain('Manager imports only this SC4S Library pack');
+    expect(markup).toContain('Open Palo Alto PAN-OS TA v1.2.4');
+    expect(markup).toContain('Open Palo Alto Panorama TA v2.0.0');
     expect(markup).toContain('checksum_mismatch');
     expect(markup).toContain('Do not apply the bundle');
   });
@@ -153,9 +184,9 @@ describe('Library route', () => {
       </MantineProvider>,
     );
 
-    expect(markup).toContain('Could not load SecHub sources');
+    expect(markup).toContain('Could not load Library sources');
     expect(markup).toContain('Manager could not load this operator view. Check the service health and retry.');
-    expect(markup).toContain('Could not load pack list from SecHub');
+    expect(markup).toContain('Could not load SC4S Library packs');
     expect(markup).not.toContain('catalogue schema mismatch');
     expect(markup).toContain('Could not load pack details');
     expect(markup).not.toContain('detail schema mismatch');

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   configureDestinationResponseSchema,
+  controlActionResponseSchema,
   deleteDestinationResponseSchema,
   deleteRouteResponseSchema,
   deleteSourceResponseSchema,
@@ -142,5 +143,21 @@ describe('routesResponseSchema and route mutations', () => {
       apply_mode: 'reloadable',
     });
     expect(removed.removed_selectors).toHaveLength(1);
+  });
+});
+
+describe('controlActionResponseSchema', () => {
+  it('requires revision-bound validation and preserves runtime post-check evidence', () => {
+    const parsed = controlActionResponseSchema.parse({
+      ok: true,
+      revision: 7,
+      apply_mode: 'reloadable',
+      validation: { ok: true, revision: 7, validation_token: 'validated-state-token' },
+      control: { ok: true, provider: 'narrow-control' },
+      post_check: { docker: { running: true }, health: { ok: true }, ports: { tcp: { listener_active: true } } },
+    });
+    expect(parsed.revision).toBe(7);
+    expect(parsed.validation?.revision).toBe(7);
+    expect(parsed.post_check?.health?.ok).toBe(true);
   });
 });

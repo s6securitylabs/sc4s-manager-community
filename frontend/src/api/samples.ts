@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { apiFetch } from './client';
 
 import { ApiError, apiErrorSchema } from './packs';
 
@@ -84,7 +85,7 @@ async function parseResponse<T>(response: Response, schema: z.ZodType<T>): Promi
 }
 
 export async function classifySample(request: ClassifyRequest, signal?: AbortSignal): Promise<ClassifyResponse> {
-  const response = await fetch(`${API_BASE}/samples/classify`, {
+  const response = await apiFetch(`${API_BASE}/samples/classify`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),
@@ -94,7 +95,7 @@ export async function classifySample(request: ClassifyRequest, signal?: AbortSig
 }
 
 export async function previewSample(request: ClassifyRequest, signal?: AbortSignal): Promise<PreviewResponse> {
-  const response = await fetch(`${API_BASE}/samples/preview`, {
+  const response = await apiFetch(`${API_BASE}/samples/preview`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),

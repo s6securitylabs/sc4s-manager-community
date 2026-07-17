@@ -3,9 +3,12 @@ import { z } from 'zod';
 const API_BASE = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '');
 
 import { ApiError, apiErrorSchema } from './library';
+import { apiFetch } from './client';
 
 const validationSchema = z.object({
   ok: z.boolean().optional(),
+  revision: z.number().int().nonnegative().optional(),
+  validation_token: z.string().min(1).optional(),
   syntax: z.record(z.string(), z.unknown()).optional(),
   tls: z.record(z.string(), z.unknown()).optional(),
   checked_at: z.string().optional(),
@@ -14,6 +17,12 @@ const validationSchema = z.object({
 const controlSchema = z.object({
   ok: z.boolean().optional(),
   skipped: z.boolean().optional(),
+}).passthrough();
+
+const postCheckSchema = z.object({
+  docker: z.record(z.string(), z.unknown()).optional(),
+  health: z.record(z.string(), z.unknown()).optional(),
+  ports: z.record(z.string(), z.unknown()).optional(),
 }).passthrough();
 
 export const sourceEntrySchema = z.object({
@@ -48,6 +57,7 @@ export const onboardSourceResponseSchema = z.object({
   service: z.record(z.string(), z.unknown()),
   validation: validationSchema,
   control: controlSchema,
+  post_check: postCheckSchema.optional(),
   test_instructions: z.record(z.string(), z.string()).optional(),
 }).passthrough();
 
@@ -69,6 +79,22 @@ export const destinationEntrySchema = z.object({
   transport: z.string().nullable().optional(),
   mode: z.string().nullable().optional(),
   tls_verify: z.string().nullable().optional(),
+  configured: z.boolean().optional(),
+}).passthrough();
+
+export const backupsResponseSchema = z.object({
+  backups: z.array(z.object({ name: z.string(), path: z.string(), size: z.number(), mtime: z.string() }).passthrough()),
+});
+export const auditResponseSchema = z.object({ lines: z.array(z.string()) });
+export const controlActionResponseSchema = z.object({
+  ok: z.boolean(),
+  revision: z.number().int().nonnegative(),
+  apply_mode: z.string().optional(),
+  validation: validationSchema.optional(),
+  control: controlSchema.optional(),
+  post_check: postCheckSchema.optional(),
+  code: z.string().optional(),
+  error: z.string().optional(),
 }).passthrough();
 
 export const destinationsResponseSchema = z.object({
@@ -86,6 +112,7 @@ export const configureDestinationResponseSchema = z.object({
   backup: z.string().nullable().optional(),
   validation: validationSchema,
   control: controlSchema,
+  post_check: postCheckSchema.optional(),
 }).passthrough();
 
 export const deleteDestinationResponseSchema = z.object({
@@ -117,6 +144,7 @@ export const upsertRouteResponseSchema = z.object({
   route: routeEntrySchema,
   validation: validationSchema,
   control: controlSchema,
+  post_check: postCheckSchema.optional(),
 }).passthrough();
 
 export const deleteRouteResponseSchema = z.object({
@@ -160,12 +188,12 @@ async function parseResponse<T>(response: Response, schema: z.ZodType<T>): Promi
 }
 
 async function getJson<T>(path: string, schema: z.ZodType<T>, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, { signal });
+  const response = await apiFetch(`${API_BASE}${path}`, { signal });
   return parseResponse(response, schema);
 }
 
 async function postJson<T>(path: string, payload: Record<string, unknown>, schema: z.ZodType<T>): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+  const response = await apiFetch(`${API_BASE}${path}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -225,4 +253,26 @@ export async function upsertRoute(payload: {
 
 export async function deleteRoute(id: string) {
   return postJson('/routes/delete', { id }, deleteRouteResponseSchema);
+}
+
+export async function validateConfiguration(signal?: AbortSignal) {
+  return getJson('/validate', validationSchema, signal);
+}
+
+export async function runControlAction(action: 'reload' | 'restart', expectedRevision: number, validationToken: string) {
+  return postJson(`/${action}`, { expected_revision: expectedRevision, validation_token: validationToken }, controlActionResponseSchema);
+}
+
+export async function listBackups(signal?: AbortSignal) {
+  return getJson('/backups', backupsResponseSchema, signal);
+}
+
+export async function listAudit(signal?: AbortSignal) {
+  return getJson('/audit', auditResponseSchema, signal);
+}
+
+export function isConfiguredDestination(destination: DestinationEntry): boolean {
+  if (destination.configured !== undefined) return destination.configured;
+  if (destination.kind === 'hec') return Boolean(destination.url && destination.token);
+  return Boolean(destination.host && destination.port);
 }

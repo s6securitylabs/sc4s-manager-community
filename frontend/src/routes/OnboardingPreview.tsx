@@ -145,14 +145,14 @@ export function OnboardingPreview() {
   return (
     <Stack gap="lg">
       <Box>
-        <Title order={1}>Parser preview</Title>
+        <Title order={1}>Source onboarding preview</Title>
         <Text c="dimmed" size="sm" mt="xs">
-          Paste a sample log event to identify the likely parser and expected Splunk fields. Nothing is stored or applied.
+          Paste a sample log event to identify the likely parser and expected Splunk fields. The sample is not stored or applied.
         </Text>
       </Box>
 
       <Alert color="yellow" variant="light" radius="md">
-        Results are estimates only and require review before use. Secret-looking strings are redacted from the output.
+        Results are heuristic estimates only and require operator validation before use. Secret-looking strings are redacted from the output.
       </Alert>
 
       <Card withBorder p="md" radius="md">
@@ -195,7 +195,7 @@ export function OnboardingPreview() {
           )}
 
           <Button onClick={() => void handlePreview()} loading={loading} disabled={!sample.trim()}>
-            Find matching parser
+            Preview parser and pack match
           </Button>
         </Stack>
       </Card>

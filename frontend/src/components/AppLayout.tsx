@@ -12,6 +12,7 @@ import {
   Text,
   TextInput,
   Title,
+  Button,
   useComputedColorScheme,
   useMantineColorScheme,
 } from '@mantine/core';
@@ -30,14 +31,15 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', to: '/', description: 'SC4S runtime health, connection status, and a summary of sources, packs, and library sync', section: 'Operate' },
-  { label: 'SC4S Library', to: '/library', description: 'Browse and download SecHub packs, then install them to SC4S', section: 'Operate' },
+  { label: 'SC4S Library', to: '/library', description: 'Browse Library packs, install SC4S configuration, and view separate product TA links', section: 'Operate' },
   { label: 'Source Catalogue', to: '/catalogue', description: 'Browse SC4S source types. Find the parser for your device and download it.', section: 'Operate' },
   { label: 'Local Packs', to: '/packs', description: 'View installed packs and export config bundles', section: 'Operate' },
   { label: 'Parser Preview', to: '/onboarding-preview', description: 'Paste a sample log event to identify the right SC4S parser before configuring a source', section: 'Operate' },
   { label: 'Sources', to: '/sources', description: 'Map IP addresses and hostnames to SC4S source types', section: 'Operate' },
   { label: 'Destinations', to: '/destinations', description: 'Configure where SC4S sends events — Splunk HEC or syslog', section: 'Operate' },
   { label: 'Routes', to: '/routes', description: 'Send specific source types to specific destinations', section: 'Operate' },
-  { label: 'Export bundles', to: '/exports', description: 'Download config files from a local pack', section: 'Evidence' },
+  { label: 'Pending changes', to: '/operations', description: 'Validate staged changes, reload/restart SC4S, and review rollback/audit evidence', section: 'Operate' },
+  { label: 'Exports', to: '/exports', description: 'Download config files from a local pack', section: 'Evidence' },
 ];
 
 const routeSearch = navItems.map((item) => ({
@@ -129,7 +131,7 @@ export function AppLayout({ children, path, onLogout }: { children: ReactNode; p
                 <Badge variant="light" color="cyan">operator console</Badge>
               </Group>
               <Text size="sm" c="dimmed">
-                Manage SC4S sources, destinations, packs, and config from one place.
+                Operator console for Library source status, local packs, staged source changes, and export evidence.
               </Text>
             </Stack>
           </Group>
@@ -190,6 +192,7 @@ export function AppLayout({ children, path, onLogout }: { children: ReactNode; p
           <Stack gap="sm">
             <RouteSearchInput />
             <ColorSchemeToggle />
+            {onLogout ? <Button variant="light" color="gray" onClick={onLogout}>Sign out</Button> : null}
           </Stack>
         </AppShell.Section>
       </AppShell.Navbar>

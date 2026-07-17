@@ -104,7 +104,7 @@ def test_expected_ui_pages_include_static_pages_and_pack_detail_pages():
     pages = expected_ui_pages([commvault_pack()])
     routes = [page["route"] for page in pages]
 
-    assert routes[:9] == ["/", "/library", "/catalogue", "/packs", "/onboarding-preview", "/sources", "/destinations", "/routes", "/exports"]
+    assert routes[:10] == ["/", "/library", "/catalogue", "/packs", "/onboarding-preview", "/sources", "/destinations", "/routes", "/operations", "/exports"]
     assert "/packs/commvault_commcell" in routes
     assert all(page["screenshot_required"] is True for page in pages)
     assert {page["kind"] for page in pages} >= {"static", "pack_detail"}

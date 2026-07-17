@@ -68,7 +68,7 @@ export function PackDetail({ packId }: { packId: string }) {
       )}
 
       <Alert color="blue" title="Export only — not applied to SC4S" variant="light">
-        Downloading this bundle creates a local export file only. SC4S is not updated until you import and apply it through Manager. After applying, reload SC4S and search Splunk for incoming events to confirm it is working.
+        Downloading this bundle creates a local export file only. SC4S is not updated until you import and apply it through Manager. After applying, reload SC4S, send a marker, and capture Splunk readback before treating the pack as live.
       </Alert>
 
       <Card withBorder>

@@ -32,7 +32,7 @@ export function Exports() {
     <Stack gap="lg">
       <div>
         <Title order={1}>Export bundles</Title>
-        <Text c="dimmed">Download SC4S and Splunk config files for a local pack. Exporting does not change anything on your instance.</Text>
+        <Text c="dimmed">Download generated SC4S/Splunk configuration and evidence artifacts for a selected local pack. Exporting does not apply changes.</Text>
       </div>
       <Card withBorder maw={640}>
         <Stack>

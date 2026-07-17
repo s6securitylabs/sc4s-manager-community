@@ -126,7 +126,7 @@ const { packsPayload, cataloguePayload, librarySourcesPayload, libraryImportsPay
       },
     ],
     facets: {
-      origins: [{ value: 'sechub-resource', label: 'SecHub Resources SC4S pack', count: 3 }],
+      origins: [{ value: 'sechub-resources-pack', label: 'SC4S Library pack', count: 3 }],
       vendors: [],
       products: [],
       relationships: [],
@@ -261,7 +261,7 @@ describe('user journey route coverage', () => {
     );
 
     expect(markup).toContain('Dashboard');
-    expect(markup).toContain('SecHub sources');
+    expect(markup).toContain('SC4S Library sources');
     expect(markup).toContain('packs checked');
     expect(markup).toContain('Manager connection');
     expect(markup).toMatch(/Checking|Connected/);
@@ -302,11 +302,11 @@ describe('user journey route coverage', () => {
 
     expect(markup).toContain('Unable to load source catalogue');
     expect(markup).toContain('Manager could not load this operator view. Check the service health and retry.');
-    expect(markup).toContain('Could not load SecHub sources');
+    expect(markup).toContain('Could not load Library sources');
     expect(markup).not.toContain('library sources contract parse failed');
     expect(markup).toContain('Could not load checked packs');
     expect(markup).not.toContain('imports contract parse failed');
-    expect(markup).toContain('SecHub connection unavailable — check source health');
+    expect(markup).toContain('Library source unavailable — check source health');
     expect(markup).not.toContain('0 packs checked');
   });
 

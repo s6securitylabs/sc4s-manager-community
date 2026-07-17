@@ -16,13 +16,14 @@ from sc4s_manager.packs import load_packs
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_UI_STATIC_PAGES = [
     {"route": "/", "label": "Dashboard", "kind": "static"},
-    {"route": "/library", "label": "SecHub Resources", "kind": "static"},
+    {"route": "/library", "label": "SC4S Library", "kind": "static"},
     {"route": "/catalogue", "label": "Source Catalogue", "kind": "static"},
     {"route": "/packs", "label": "Packs", "kind": "static"},
     {"route": "/onboarding-preview", "label": "Onboarding Preview", "kind": "static"},
     {"route": "/sources", "label": "Sources", "kind": "static"},
     {"route": "/destinations", "label": "Destinations", "kind": "static"},
     {"route": "/routes", "label": "Routes", "kind": "static"},
+    {"route": "/operations", "label": "Pending changes and operations", "kind": "static"},
     {"route": "/exports", "label": "Exports", "kind": "static"},
 ]
 SECRET_PATTERNS = [

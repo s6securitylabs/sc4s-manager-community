@@ -20,6 +20,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 const LIBRARY_PAGE_SIZE = 10;
 import { operatorSafeErrorMessage } from '../lib/displayError';
+import { safeHttpUrl } from '../lib/url';
 
 import {
   applyLibraryImport,
@@ -155,33 +156,34 @@ export function Library() {
     <Stack gap="lg">
       <div>
         <Title order={1}>SC4S Library</Title>
-        <Text c="dimmed">Browse packs from SecHub and install them into your SC4S instance. Nothing changes on your instance until you explicitly install a pack.</Text>
+        <Text c="dimmed">Browse Library packs and install their SC4S configuration into your instance. Related product Splunk TA releases remain separate deployment downloads.</Text>
       </div>
 
       <Alert color="cyan" title="Nothing is installed until you approve it" variant="light">
         Downloaded packs are stored locally but not active. Only after you check a pack and click <strong>Install to SC4S</strong> do any config files change on your instance. Only SC4S config files are installed — Splunk apps, scripts, docs, and test events are kept as reference only.
       </Alert>
+      {detailQuery.isError ? <Alert color="red" title="Could not load pack details">{operatorSafeErrorMessage(detailQuery.error)}</Alert> : null}
 
       <Card withBorder padding="lg">
         <Stack gap="md">
           <Group justify="space-between" align="start">
             <div>
-              <Text className="panel-overline">SecHub connection</Text>
+              <Text className="panel-overline">Library source connection</Text>
               <Title order={3}>Connection checks</Title>
-              <Text size="sm" c="dimmed">Verifies that Manager can reach SecHub, browse the pack list, and download a test bundle.</Text>
+              <Text size="sm" c="dimmed">Verifies that Manager can reach the configured Library source, browse the pack list, and download a test bundle.</Text>
             </div>
             <Badge color={healthQuery.data?.overall_ok ? 'green' : healthQuery.isError ? 'red' : 'gray'} variant="light">
-              {healthQuery.data?.overall_ok ? 'SecHub reachable' : healthQuery.isError ? 'Connection failed' : 'Checking'}
+              {healthQuery.data?.overall_ok ? 'Library source reachable' : healthQuery.isError ? 'Connection failed' : 'Checking'}
             </Badge>
           </Group>
           <Alert color="yellow" title="SecHub review labels are a starting point, not proof" variant="light">
             SecHub review labels tell you what S6 has checked. Your own SC4S and Splunk validation still decides whether a pack is safe to run in your environment.
           </Alert>
           {healthQuery.isLoading ? <Loader size="sm" /> : null}
-          {healthQuery.isError ? <Alert color="red" title="Could not reach SecHub">{operatorSafeErrorMessage(healthQuery.error, 'Could not reach SecHub. Check your network connection and try again.')}</Alert> : null}
+          {healthQuery.isError ? <Alert color="red" title="Could not reach Library source">{operatorSafeErrorMessage(healthQuery.error, 'Could not reach the configured Library source. Check its URL and network path, then retry.')}</Alert> : null}
           {healthQuery.data ? (
             <Stack gap="xs">
-              <Text size="sm" c="dimmed">{healthQuery.data.catalogue.entry_count} packs available · last updated: {healthQuery.data.checked_at}</Text>
+              <Text size="sm" c="dimmed">{healthQuery.data.catalogue.entry_count} packs available · {healthQuery.data.catalogue.product_release_count ?? 0} related product TA releases · last updated: {healthQuery.data.checked_at}</Text>
               {healthQuery.data.checks.map((check) => (
                 <Paper key={check.name} withBorder p="sm" radius="md">
                   <Group justify="space-between" align="start">
@@ -206,19 +208,19 @@ export function Library() {
           <Group justify="space-between" align="start">
             <div>
               <Text className="panel-overline">Pack source</Text>
-              <Title order={3}>SecHub (sechub.s6ops.com)</Title>
-              <Text size="sm" c="dimmed">Packs are fetched from SecHub. Refresh to pull the latest list.</Text>
+              <Title order={3}>Configured Library source</Title>
+              <Text size="sm" c="dimmed">The source URL is shown below. Refresh to pull its latest Library pack list.</Text>
             </div>
             <Button
               loading={busyKey === 'sync'}
-              onClick={() => runAction('sync', () => syncLibrarySource(sourceId || 'official'), 'Pack list refreshed from SecHub.')}
+              onClick={() => runAction('sync', () => syncLibrarySource(sourceId || 'official'), 'SC4S Library pack list refreshed.')}
               variant="light"
             >
               Refresh pack list
             </Button>
           </Group>
           {sourcesQuery.isLoading ? <Loader size="sm" /> : null}
-          {sourcesQuery.isError ? <Alert color="red" title="Could not load SecHub sources">{operatorSafeErrorMessage(sourcesQuery.error)}</Alert> : null}
+          {sourcesQuery.isError ? <Alert color="red" title="Could not load Library sources">{operatorSafeErrorMessage(sourcesQuery.error)}</Alert> : null}
           {sourcesQuery.data?.sources?.map((source) => (
             <Paper key={source.source_id} withBorder p="md" radius="md">
               <Stack gap={4}>
@@ -238,13 +240,13 @@ export function Library() {
           <Group justify="space-between" align="center">
             <div>
               <Text className="panel-overline">Available packs</Text>
-              <Title order={3}>Packs from SecHub</Title>
+              <Title order={3}>SC4S Library packs</Title>
             </div>
             <Checkbox label="Downloadable only" checked={downloadableOnly} onChange={(event) => setDownloadableOnly(event.currentTarget.checked)} />
           </Group>
           <TextInput placeholder="Search packs — pan, fortinet, commvault…" value={search} onChange={(event) => setSearch(event.currentTarget.value)} />
           {catalogueQuery.isLoading ? <Loader size="sm" /> : null}
-          {catalogueQuery.isError ? <Alert color="red" title="Could not load pack list from SecHub">{operatorSafeErrorMessage(catalogueQuery.error)}</Alert> : null}
+          {catalogueQuery.isError ? <Alert color="red" title="Could not load SC4S Library packs">{operatorSafeErrorMessage(catalogueQuery.error)}</Alert> : null}
           {allEntries.length > 0 && (
             <Group justify="space-between" align="center">
               <Text size="xs" c="dimmed">
@@ -264,6 +266,20 @@ export function Library() {
                     </Badge>
                   </Group>
                   {entry.version && <Text size="xs" c="dimmed">Version {entry.version}</Text>}
+                  {entry.product_releases?.length ? (
+                    <Stack gap={4}>
+                      <Badge size="xs" color="violet" variant="light" w="fit-content">Product TA available</Badge>
+                      <Text size="xs" c="dimmed">Each product Splunk TA is a separate deployment artifact. Manager imports only this SC4S Library pack.</Text>
+                      {entry.product_releases.map((release) => {
+                        const href = safeHttpUrl(release.url);
+                        return href ? (
+                          <Button key={release.product_id} component="a" href={href} target="_blank" rel="noreferrer" size="xs" variant="subtle" color="violet">
+                            Open {release.display_name} TA v{release.version}
+                          </Button>
+                        ) : null;
+                      })}
+                    </Stack>
+                  ) : null}
                   <Group gap="xs" mt="auto" pt="xs">
                     <Button size="xs" variant={selectedEntryId === entry.id ? 'filled' : 'light'} onClick={() => setSelectedEntryId(selectedEntryId === entry.id ? null : entry.id)}>
                       {selectedEntryId === entry.id ? 'Hide details' : 'View details'}
