@@ -66,6 +66,7 @@ services:
         published: ${SC4S_MANAGER_PORT:-8090}
         protocol: tcp
     volumes:
+      - /opt/sc4s/env_file:/opt/sc4s/env_file:z
       - /opt/sc4s/local:/opt/sc4s/local:z
       - /opt/sc4s/tls:/opt/sc4s/tls:z
       - /opt/sc4s/manager:/opt/sc4s-manager:z

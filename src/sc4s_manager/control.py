@@ -30,7 +30,8 @@ def _redact_log_line(line: str) -> str:
 
 SOCKET_PATH = Path(os.environ.get("SC4S_CONTROL_SOCKET", "/run/sc4s-manager/control.sock"))
 SC4S_CONTAINER = os.environ.get("SC4S_CONTAINER", "SC4S")
-COMPOSE_FILE = Path(os.environ.get("SC4S_COMPOSE_FILE", "/opt/sc4s/docker-compose.yml"))
+COMPOSE_FILE_DEFAULT = "/opt/sc4s/compose.yaml" if Path("/opt/sc4s/compose.yaml").exists() else "/opt/sc4s/docker-compose.yml"
+COMPOSE_FILE = Path(os.environ.get("SC4S_COMPOSE_FILE", COMPOSE_FILE_DEFAULT))
 COMPOSE_CWD = Path(os.environ.get("SC4S_COMPOSE_CWD", "/opt/sc4s"))
 AUDIT_LOG = Path(os.environ.get("SC4S_CONTROL_AUDIT", "/opt/sc4s-manager/state/control-audit.jsonl"))
 SOCKET_GROUP = os.environ.get("SC4S_CONTROL_GROUP", "sc4s-manager")
@@ -54,7 +55,9 @@ def audit(action: str, ok: bool, detail: dict[str, Any] | None = None) -> None:
 
 
 def ensure_fixed_runtime() -> None:
-    if not COMPOSE_FILE.exists() or COMPOSE_FILE.resolve() != Path("/opt/sc4s/docker-compose.yml"):
+    resolved = COMPOSE_FILE.resolve()
+    allowed_paths = {Path("/opt/sc4s/docker-compose.yml"), Path("/opt/sc4s/compose.yaml")}
+    if not COMPOSE_FILE.exists() or resolved not in allowed_paths:
         raise RuntimeError("invalid fixed compose file")
     if COMPOSE_CWD.resolve() != Path("/opt/sc4s"):
         raise RuntimeError("invalid fixed compose cwd")

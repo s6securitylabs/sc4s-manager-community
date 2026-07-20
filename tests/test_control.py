@@ -164,6 +164,24 @@ class ControlDaemonTests(unittest.TestCase):
             self.assertEqual(calls[0][0], ["docker", "compose", "-f", str(compose), "up", "-d"])
             self.assertEqual(calls[0][1]["cwd"], fixed_root)
 
+    def test_restart_runs_docker_compose_only_for_fixed_runtime_with_compose_yaml(self):
+        with tempfile.TemporaryDirectory() as d:
+            control = load_control(Path(d))
+            fixed_root = Path(d) / "fixed" / "opt" / "sc4s"
+            fixed_root.mkdir(parents=True)
+            compose = fixed_root / "compose.yaml"
+            compose.write_text("services: {}\n")
+            control.COMPOSE_CWD = fixed_root
+            control.COMPOSE_FILE = compose
+            calls = []
+            control.run = lambda cmd, **kwargs: calls.append((cmd, kwargs)) or {"ok": True, "code": 0, "stdout": "started", "stderr": ""}
+            with patch.object(Path, "resolve", lambda self: Path("/opt/sc4s/compose.yaml") if self == compose else (Path("/opt/sc4s") if self == fixed_root else self)):
+                result = control.action_restart({})
+
+            self.assertTrue(result["ok"])
+            self.assertEqual(calls[0][0], ["docker", "compose", "-f", str(compose), "up", "-d"])
+            self.assertEqual(calls[0][1]["cwd"], fixed_root)
+
 
 class ControlDaemonBoundaryTests(unittest.TestCase):
     """Tests that enforce the fixed-allowlist and new actions invariants."""

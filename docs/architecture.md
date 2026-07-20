@@ -9,6 +9,22 @@
 - Secrets are redacted in API responses, diffs, audit logs, exports, and error messages.
 - File writes are atomic (write to temp, rename) to prevent corruption on failure.
 
+### Reverse Proxy Integration & Auth Headers
+
+SC4S Manager is designed to run behind a trusted reverse proxy or identity provider (e.g., Authentik, Authelia, NGINX, Traefik). When integrated with a proxy, mutating actions and admin endpoints use standard headers for authorization and auditing:
+
+1. **Proxy Authentication Challenge**:
+   - **Header**: `X-SC4S-Manager-Proxy`
+   - **Constraint**: Must match the value of the host environment variable `SC4S_MANAGER_PROXY_SECRET`.
+   
+2. **Operator Auditing**:
+   - **Header**: `X-Forwarded-User` or `X-Authentik-Username`
+   - **Constraint**: Supplies the user's username for audit logs and change tracking. If missing, auditing defaults to the caller's IP address.
+
+3. **Group-Based Access Control**:
+   - **Header**: `X-Authentik-Groups`
+   - **Constraint**: Supplies a list of the user's groups (comma, semicolon, or pipe delimited). If the host environment variable `SC4S_MANAGER_ADMIN_GROUPS` is defined (e.g., `SC4S_MANAGER_ADMIN_GROUPS=syslog-admin,platform-eng`), the proxy user must be in at least one of those groups to access admin endpoints.
+
 ## Apply workflow
 
 Every configuration change follows this sequence:
