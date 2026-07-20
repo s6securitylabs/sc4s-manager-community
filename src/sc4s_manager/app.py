@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlencode, urlparse, unquote
 
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 SUPPORTED_SC4S_VERSION = "3.43.0"
 SC4S_DOCS_BASE = "https://splunk.github.io/splunk-connect-for-syslog/3.43.0"
 ROOT = Path(os.environ.get("SC4S_ROOT", "/opt/sc4s"))
