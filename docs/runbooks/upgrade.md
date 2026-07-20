@@ -37,7 +37,7 @@ Expected: the backup directory contains the listed mutable inputs, both services
 
 ## 2. Pin, pull, and recreate only Manager
 
-Edit `SC4S_MANAGER_VERSION` in `/opt/sc4s/.env` to the approved target tag or digest. Do not change `SC4S_IMAGE` in this procedure.
+Edit `SC4S_MANAGER_IMAGE` in `/opt/sc4s/.env` to the complete approved target tag or digest reference. Do not change `SC4S_IMAGE` in this procedure.
 
 ```bash
 cd /opt/sc4s

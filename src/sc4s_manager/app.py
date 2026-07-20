@@ -35,7 +35,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlencode, urlparse, unquote
 
-APP_VERSION = "1.0.2"
+APP_VERSION = "1.0.3"
 SUPPORTED_SC4S_VERSION = "3.43.0"
 SC4S_DOCS_BASE = "https://splunk.github.io/splunk-connect-for-syslog/3.43.0"
 ROOT = Path(os.environ.get("SC4S_ROOT", "/opt/sc4s"))
@@ -287,11 +287,20 @@ def backup(path: Path, actor: str) -> Path:
 def atomic_write(path: Path, content: str) -> None:
     path = resolved_under(path, (ROOT, MANAGER_ROOT), label="write target")
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = path.stat().st_mode & 0o777 if path.exists() else 0o640
     fd, tmp = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
     try:
+        os.fchmod(fd, existing_mode)
         with os.fdopen(fd, "w") as f:
             f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
         os.replace(tmp, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)
@@ -300,11 +309,20 @@ def atomic_write(path: Path, content: str) -> None:
 def atomic_write_bytes(path: Path, content: bytes) -> None:
     path = resolved_under(path, (ROOT, MANAGER_ROOT), label="write target")
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = path.stat().st_mode & 0o777 if path.exists() else 0o640
     fd, tmp = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
     try:
+        os.fchmod(fd, existing_mode)
         with os.fdopen(fd, "wb") as f:
             f.write(content)
+            f.flush()
+            os.fsync(f.fileno())
         os.replace(tmp, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)
@@ -1678,7 +1696,15 @@ def actor_from(handler: BaseHTTPRequestHandler) -> str:
 
 
 def parse_groups(header: str) -> set[str]:
-    return {g.strip() for g in re.split(r"[,;|]", header or "") if g.strip()}
+    return {item.strip() for item in re.split(r"[,;|]", header or "") if item.strip()}
+
+
+def payload_bool(payload: dict[str, Any], key: str, default: bool) -> bool:
+    """Return an explicit JSON boolean; never treat strings as apply consent."""
+    value = payload.get(key, default)
+    if not isinstance(value, bool):
+        raise ValueError(f"{key} must be a JSON boolean")
+    return value
 
 
 def proxy_authorized(handler: BaseHTTPRequestHandler) -> bool:
@@ -2314,15 +2340,15 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/sources/onboard":
                 return json_response(self, 200, onboard_source(payload, actor))
             if parsed.path == "/api/sources/delete":
-                return json_response(self, 200, delete_source(str(payload.get("name") or payload.get("filter") or ""), actor, bool(payload.get("apply", False))))
+                return json_response(self, 200, delete_source(str(payload.get("name") or payload.get("filter") or ""), actor, payload_bool(payload, "apply", False)))
             if parsed.path == "/api/destinations":
                 return json_response(self, 200, configure_destination(payload, actor))
             if parsed.path == "/api/destinations/delete":
-                return json_response(self, 200, delete_destination(str(payload.get("kind", "")), str(payload.get("id", "")), actor, bool(payload.get("apply", False))))
+                return json_response(self, 200, delete_destination(str(payload.get("kind", "")), str(payload.get("id", "")), actor, payload_bool(payload, "apply", False)))
             if parsed.path == "/api/routes":
                 return json_response(self, 200, upsert_route(payload, actor))
             if parsed.path == "/api/routes/delete":
-                return json_response(self, 200, delete_route(str(payload.get("id", "")), actor, bool(payload.get("apply", False))))
+                return json_response(self, 200, delete_route(str(payload.get("id", "")), actor, payload_bool(payload, "apply", False)))
             if parsed.path == "/api/config/file":
                 return json_response(self, 200, save_config_file(str(payload.get("path", "")), str(payload.get("content", "")), actor))
             if parsed.path in ["/api/templates/export", "/api/products/export"]:
@@ -2359,8 +2385,9 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception as e:
                     return json_response(self, 502, library_error_payload(e))
             if parsed.path == "/api/library/import/apply":
+                apply_requested = payload_bool(payload, "apply", True)
                 try:
-                    return json_response(self, 200, apply_library_import(str(payload.get("import_id", "")), actor, bool(payload.get("apply", True))))
+                    return json_response(self, 200, apply_library_import(str(payload.get("import_id", "")), actor, apply_requested))
                 except Exception as e:
                     return json_response(self, 502, library_error_payload(e))
             if parsed.path.startswith("/api/packs/"):

@@ -25,7 +25,7 @@ Do not continue if the rollback image reference is unknown. Escalate or restore 
 
 ## 1. Revert the Manager image
 
-Edit only `SC4S_MANAGER_VERSION` in `/opt/sc4s/.env` to the recorded known-good tag/digest. Keep `SC4S_IMAGE` unchanged unless the incident commander explicitly authorizes an SC4S rollback.
+Edit only `SC4S_MANAGER_IMAGE` in `/opt/sc4s/.env` to the complete recorded known-good tag/digest reference. Keep `SC4S_IMAGE` unchanged unless the incident commander explicitly authorizes an SC4S rollback.
 
 ```bash
 cd /opt/sc4s

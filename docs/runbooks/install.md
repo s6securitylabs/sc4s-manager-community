@@ -18,7 +18,7 @@ You need:
 
 - Linux with Docker Engine and Docker Compose v2 approved for the environment.
 - A pinned SC4S image. The current template uses `ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0`; changing it is a separate SC4S compatibility review.
-- A fixed Manager release tag or digest. **Do not start a production-like host with `SC4S_MANAGER_VERSION=latest`.**
+- A fixed Manager image using a release tag or digest. **Do not start a production-like host with `SC4S_MANAGER_IMAGE` ending in `:latest`.**
 - HEC URL/token and Manager authentication material held in an approved secret store.
 - Firewall/DNS approval for the syslog listeners and, if required, Manager's port 8090.
 - Enough persistent disk for `/opt/sc4s/archive`, the `splunk-sc4s-var` volume, and `/opt/sc4s/manager` state/backups.
@@ -65,9 +65,9 @@ sudo editor /opt/sc4s/.env /opt/sc4s/env/env_file /opt/sc4s/manager.env
 sudo stat -c '%a %U:%G %n' /opt/sc4s/env/env_file /opt/sc4s/manager.env
 ```
 
-Set `SC4S_MANAGER_VERSION` to a release tag or immutable digest and retain the previous value for rollback. Supply the real Splunk HEC endpoint/token in `env/env_file` (which SC4S reads via the `env_file` symlink). Generate `SC4S_MANAGER_PROXY_SECRET` and `SC4S_MANAGER_API_TOKEN` from the approved secret store; do not leave `change-me-with-random-value` in place.
+Set `SC4S_MANAGER_IMAGE` to the complete approved image reference, for example `ghcr.io/s6securitylabs/sc4s-manager-community:1.0.3` or `ghcr.io/s6securitylabs/sc4s-manager-community@sha256:<digest>`, and retain the previous value for rollback. Supply the real Splunk HEC endpoint/token in `env/env_file` (which SC4S reads via the `env_file` symlink). Generate `SC4S_MANAGER_PROXY_SECRET` and `SC4S_MANAGER_API_TOKEN` from the approved secret store; do not leave `change-me-with-random-value` in place.
 
-Expected: both secret files report mode `640` (or stricter) and group `10001`/the approved Manager group. Treat `.env` as deployment configuration too: it selects published ports and image references.
+Expected: both secret files report mode `640` (or stricter) and group `10001`/the approved Manager group. After Manager atomically replaces `env/env_file`, its owner may become UID `10001`; its restrictive mode and GID `10001` remain the access boundary. Treat `.env` as deployment configuration too: it selects published ports and image references.
 
 ## Authentication and reverse proxy
 

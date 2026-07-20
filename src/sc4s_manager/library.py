@@ -185,7 +185,20 @@ def _post_check_failed(post_check: dict[str, Any]) -> bool:
     if post_check.get("ok") is False:
         return True
     health = post_check.get("health")
-    return isinstance(health, dict) and health.get("ok") is False
+    if isinstance(health, dict) and health.get("ok") is False:
+        return True
+    docker = post_check.get("docker")
+    if isinstance(docker, dict) and docker.get("running") is False:
+        return True
+    provider = post_check.get("control_provider")
+    if isinstance(provider, dict) and provider.get("ok") is False:
+        return True
+    ports = post_check.get("ports")
+    if isinstance(ports, dict):
+        for state in ports.values():
+            if isinstance(state, dict) and state.get("enabled") is True and state.get("listener_active") is False:
+                return True
+    return False
 
 
 class LibraryManager:

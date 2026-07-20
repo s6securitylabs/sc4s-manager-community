@@ -10,7 +10,7 @@ RUN npm run build
 FROM python:3.11-slim-bookworm AS runtime
 LABEL org.opencontainers.image.title="SC4S Manager" \
       org.opencontainers.image.description="Private operator control plane for SC4S-compatible ingestion environments" \
-      org.opencontainers.image.source="https://github.com/s6securitylabs/sc4s-manager" \
+      org.opencontainers.image.source="https://github.com/s6securitylabs/sc4s-manager-community" \
       org.opencontainers.image.licenses="Proprietary"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

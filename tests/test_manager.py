@@ -605,6 +605,23 @@ class ManagerUnitTests(unittest.TestCase):
             handler.headers["Origin"] = "https://sc4s-manager.example"
             self.assertTrue(app.authorized(handler, unsafe=True))
 
+    def test_apply_consent_requires_a_json_boolean(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            self.assertFalse(app.payload_bool({"apply": False}, "apply", True))
+            self.assertTrue(app.payload_bool({}, "apply", True))
+            with self.assertRaisesRegex(ValueError, "apply must be a JSON boolean"):
+                app.payload_bool({"apply": "false"}, "apply", True)
+
+    def test_atomic_write_preserves_mode_and_replaces_content(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            target = app.ENV_FILE
+            target.chmod(0o640)
+            app.atomic_write(target, "SC4S_TEST=yes\n")
+            self.assertEqual(target.read_text(), "SC4S_TEST=yes\n")
+            self.assertEqual(target.stat().st_mode & 0o777, 0o640)
+
     def test_template_upload_import_restores_zip_content(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))

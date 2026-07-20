@@ -25,11 +25,18 @@ def test_compose_template_does_not_grant_docker_socket_access():
 def test_compose_defaults_pin_manager_and_sc4s_images():
     compose = read("deploy/compose/compose.yaml")
     defaults = read("deploy/compose/.env.example")
+    app = read("src/sc4s_manager/app.py")
+    release = read(".github/workflows/release.yml")
 
-    assert "SC4S_MANAGER_VERSION:-latest" not in compose
-    assert "SC4S_MANAGER_VERSION=latest" not in defaults
-    assert "SC4S_MANAGER_VERSION:-1.0.2" in compose
-    assert "SC4S_MANAGER_VERSION=1.0.2" in defaults
+    assert "SC4S_MANAGER_IMAGE:-ghcr.io/s6securitylabs/sc4s-manager-community:latest" not in compose
+    assert "SC4S_MANAGER_IMAGE=ghcr.io/s6securitylabs/sc4s-manager-community:latest" not in defaults
+    version_match = re.search(r'^APP_VERSION = "([^"]+)"$', app, re.MULTILINE)
+    assert version_match is not None
+    version = version_match.group(1)
+    expected_image = f"ghcr.io/s6securitylabs/sc4s-manager-community:{version}"
+    assert f"${{SC4S_MANAGER_IMAGE:-{expected_image}}}" in compose
+    assert f"SC4S_MANAGER_IMAGE={expected_image}" in defaults
+    assert "ghcr.io/${{ github.repository }}" in release
 
 
 def test_dockerfile_packages_frontend_and_runs_non_root():

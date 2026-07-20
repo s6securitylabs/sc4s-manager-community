@@ -571,6 +571,14 @@ class LibraryTests(unittest.TestCase):
             self.assertEqual(last_apply["rollback_runtime"], applied["rollback_runtime"])
             self.assertEqual(last_apply["live_state"], "not_live")
 
+    def test_post_check_failure_detects_explicit_negative_runtime_evidence(self):
+        mod = load_library()
+        self.assertTrue(mod._post_check_failed({"docker": {"running": False}, "health": {"ok": True}}))
+        self.assertTrue(mod._post_check_failed({"control_provider": {"ok": False}, "health": {"ok": True}}))
+        self.assertTrue(mod._post_check_failed({"ports": {"tcp": {"enabled": True, "listener_active": False}}}))
+        self.assertFalse(mod._post_check_failed({"ports": {"tls": {"enabled": False, "listener_active": False}}}))
+        self.assertFalse(mod._post_check_failed({"docker": {"running": True}, "health": {"ok": True}}))
+
     def test_source_health_checks_catalogue_manifest_entry_bundle_and_sidecars(self):
         mod = load_library()
         detail = {
