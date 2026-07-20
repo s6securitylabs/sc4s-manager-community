@@ -1,4 +1,5 @@
-# SC4S runtime configuration. Copy to /opt/sc4s/env_file.
+# SC4S runtime configuration. Copy to /opt/sc4s/env/env_file and make
+# /opt/sc4s/env_file a symlink to env/env_file for the SC4S Compose contract.
 # Keep this file out of git once populated with real tokens.
 SC4S_DEST_SPLUNK_HEC_DEFAULT_URL=https://your.splunk.instance:8088
 SC4S_DEST_SPLUNK_HEC_DEFAULT_TOKEN=xxxxxx...xxxx

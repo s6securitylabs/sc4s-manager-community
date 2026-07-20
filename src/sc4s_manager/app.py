@@ -40,7 +40,11 @@ SUPPORTED_SC4S_VERSION = "3.43.0"
 SC4S_DOCS_BASE = "https://splunk.github.io/splunk-connect-for-syslog/3.43.0"
 ROOT = Path(os.environ.get("SC4S_ROOT", "/opt/sc4s"))
 LOCAL_ROOT = ROOT / "local"
-ENV_FILE = ROOT / "env_file"
+# The Docker-first deployment keeps the conventional /opt/sc4s/env_file path
+# as a symlink to this file.  Manager writes the directory-mounted target, not
+# the single-file bind mount/symlink, so os.replace stays atomic and does not
+# replace the host-facing symlink inode.
+ENV_FILE = Path(os.environ.get("SC4S_ENV_FILE", str(ROOT / "env_file")))
 MANAGER_ROOT = Path(os.environ.get("SC4S_MANAGER_ROOT", "/opt/sc4s-manager"))
 STATE_DIR = MANAGER_ROOT / "state"
 BACKUP_DIR = MANAGER_ROOT / "backups"
@@ -625,6 +629,18 @@ def apply_change(payload: dict[str, Any], actor: str) -> dict[str, Any]:
     control = {"ok": True, "skipped": True}
     if payload.get("apply", True):
         control = reload_sc4s(actor) if change["apply_mode"] == "reloadable" else restart_sc4s(actor)
+    if not control.get("ok", True):
+        # The failed control action may have read the staged file before it
+        # returned an error. Restore the filesystem *and* re-issue the fixed
+        # action so the running SC4S process is reconciled with the rollback.
+        if b:
+            atomic_write(target, b.read_text())
+        elif change["type"] == "file":
+            target.unlink(missing_ok=True)
+        rollback_control = reload_sc4s(actor) if change["apply_mode"] == "reloadable" else restart_sc4s(actor)
+        rollback_runtime = {"attempted": True, "ok": bool(rollback_control.get("ok")), "control": rollback_control}
+        audit("apply_change_control_failed", actor, {"target": str(target), "type": change["type"], "control": control, "rollback_runtime": rollback_runtime})
+        return {"ok": False, "target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "diff": diff, "backup": str(b) if b else None, "validation": validation, "control": control, "rolled_back": True, "rollback_runtime": rollback_runtime}
     post = {"docker": docker_status(), "health": health_probe(), "ports": port_summary(parse_env())}
     ok = bool(validation.get("ok") and control.get("ok", True))
     audit("apply_change", actor, {"target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "ok": ok, "backup": str(b) if b else None, "control": control})
@@ -1124,6 +1140,33 @@ def rollback_if_invalid(validation: dict[str, Any], snapshot: dict[str, Any], ac
     return True
 
 
+def finish_snapshot_transaction(
+    validation: dict[str, Any], snapshot: dict[str, Any], actor: str, action: str,
+    *, apply: bool, control_action: Callable[[str], dict[str, Any]],
+) -> tuple[bool, dict[str, Any], dict[str, Any] | None]:
+    """Finalize a CRUD mutation without leaving staged config live on control failure."""
+    if not validation.get("ok"):
+        restore_mutation_snapshot(snapshot)
+        cleanup_mutation_snapshot(snapshot)
+        audit(f"{action}_rollback", actor, {"validation": validation, "rolled_back": True})
+        return True, {"ok": True, "skipped": True}, None
+    if not apply:
+        cleanup_mutation_snapshot(snapshot)
+        return False, {"ok": True, "skipped": True}, None
+    control = control_action(actor)
+    if control.get("ok"):
+        cleanup_mutation_snapshot(snapshot)
+        return False, control, None
+    # A failed daemon response can occur after SC4S has consumed the changed
+    # file. Restore both desired state and runtime, just as direct apply does.
+    restore_mutation_snapshot(snapshot)
+    rollback_control = control_action(actor)
+    cleanup_mutation_snapshot(snapshot)
+    rollback_runtime = {"attempted": True, "ok": bool(rollback_control.get("ok")), "control": rollback_control}
+    audit(f"{action}_control_rollback", actor, {"control": control, "rollback_runtime": rollback_runtime, "rolled_back": True})
+    return True, control, rollback_runtime
+
+
 def validate_filter(filter_name: str) -> str:
     if not FILTER_RE.match(filter_name):
         raise ValueError("filter name must match ^[A-Za-z0-9_]{1,64}$")
@@ -1364,7 +1407,7 @@ def onboard_source(payload: dict[str, Any], actor: str) -> dict[str, Any]:
     return out
 
 
-def delete_source(name: str, actor: str) -> dict[str, Any]:
+def delete_source(name: str, actor: str, apply: bool = False) -> dict[str, Any]:
     filter_name = validate_filter(name.removeprefix("f_"))
     filter_id = f"f_{filter_name}"
     filt_file = LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf"
@@ -1384,13 +1427,13 @@ def delete_source(name: str, actor: str) -> dict[str, Any]:
         "compliance_meta_by_source": remove_filter_conf(LOCAL_ROOT / "context" / "compliance_meta_by_source.conf", filter_id, actor),
     }
     validation = validate_config()
-    rollback_if_invalid(validation, snapshot, actor, "delete_source")
-    out = {"ok": bool(validation.get("ok")), "filter": filter_id, "removed_paths": removed_paths, "removed_rows": removed_rows, "removed_filters": removed_filters, "validation": validation, "apply_mode": "reloadable"}
+    rolled_back, control, rollback_runtime = finish_snapshot_transaction(validation, snapshot, actor, "delete_source", apply=apply, control_action=reload_sc4s)
+    out = {"ok": bool(validation.get("ok") and control.get("ok", True) and not rolled_back), "filter": filter_id, "removed_paths": removed_paths, "removed_rows": removed_rows, "removed_filters": removed_filters, "validation": validation, "apply_mode": "reloadable", "control": control, "apply_requested": apply, "rolled_back": rolled_back, "rollback_runtime": rollback_runtime}
     audit("delete_source", actor, out)
     return out
 
 
-def delete_destination(kind: str, dest_id: str, actor: str) -> dict[str, Any]:
+def delete_destination(kind: str, dest_id: str, actor: str, apply: bool = False) -> dict[str, Any]:
     dest_kind = str(kind).lower()
     if dest_kind not in {"hec", "syslog", "bsd"}:
         raise ValueError("destination kind must be hec, syslog, or bsd")
@@ -1422,8 +1465,8 @@ def delete_destination(kind: str, dest_id: str, actor: str) -> dict[str, Any]:
         state["routes"] = routes
         save_state(state)
     validation = validate_config()
-    rollback_if_invalid(validation, snapshot, actor, "delete_destination")
-    out = {"ok": bool(validation.get("ok")), "kind": dest_kind, "id": did, "removed_env_keys": sorted(updates), "removed_selectors": removed_selectors, "backup": str(b) if b else None, "validation": validation, "apply_mode": "restart_required"}
+    rolled_back, control, rollback_runtime = finish_snapshot_transaction(validation, snapshot, actor, "delete_destination", apply=apply, control_action=restart_sc4s)
+    out = {"ok": bool(validation.get("ok") and control.get("ok", True) and not rolled_back), "kind": dest_kind, "id": did, "removed_env_keys": sorted(updates), "removed_selectors": removed_selectors, "backup": str(b) if b else None, "validation": validation, "apply_mode": "restart_required", "control": control, "apply_requested": apply, "rolled_back": rolled_back, "rollback_runtime": rollback_runtime}
     audit("delete_destination", actor, out)
     return out
 
@@ -1477,7 +1520,7 @@ def upsert_route(payload: dict[str, Any], actor: str) -> dict[str, Any]:
     return out
 
 
-def delete_route(route_id: str, actor: str) -> dict[str, Any]:
+def delete_route(route_id: str, actor: str, apply: bool = False) -> dict[str, Any]:
     rid = validate_filter(route_id)
     state = load_state()
     routes = state.get("routes", []) if isinstance(state.get("routes"), list) else []
@@ -1496,8 +1539,8 @@ def delete_route(route_id: str, actor: str) -> dict[str, Any]:
     state["routes"] = [route for route in routes if not (isinstance(route, dict) and route.get("id") == rid)]
     save_state(state)
     validation = validate_config()
-    rollback_if_invalid(validation, snapshot, actor, "delete_route")
-    out = {"ok": bool(validation.get("ok")), "id": rid, "removed_selectors": removed_selectors, "validation": validation, "apply_mode": "reloadable"}
+    rolled_back, control, rollback_runtime = finish_snapshot_transaction(validation, snapshot, actor, "delete_route", apply=apply, control_action=reload_sc4s)
+    out = {"ok": bool(validation.get("ok") and control.get("ok", True) and not rolled_back), "id": rid, "removed_selectors": removed_selectors, "validation": validation, "apply_mode": "reloadable", "control": control, "apply_requested": apply, "rolled_back": rolled_back, "rollback_runtime": rollback_runtime}
     audit("delete_route", actor, out)
     return out
 
@@ -1619,12 +1662,19 @@ def products() -> dict[str, Any]:
 
 
 def actor_from(handler: BaseHTTPRequestHandler) -> str:
-    proxy_actor = handler.headers.get("X-Authentik-Username") or handler.headers.get("X-Forwarded-User")
-    if proxy_actor:
-        return proxy_actor
+    # Identity headers are evidence only after the proxy shared-secret check.
+    # A direct/manual-token caller can otherwise forge a username and corrupt
+    # the audit trail by attaching X-Authentik-Username to its own request.
+    if proxy_authorized(handler):
+        proxy_actor = handler.headers.get("X-Authentik-Username") or handler.headers.get("X-Forwarded-User")
+        if proxy_actor:
+            return re.sub(r"[\r\n\x00]", "_", proxy_actor).strip()[:128] or "proxy-unknown"
+        return "proxy-unknown"
     if manual_token_authorized(handler):
-        return "admin"
-    return handler.client_address[0]
+        return "manual-token"
+    if API_TOKEN and _token_matches(handler.headers.get("X-SC4S-Manager-Token", ""), API_TOKEN):
+        return "local-api-token"
+    return str(handler.client_address[0])[:128]
 
 
 def parse_groups(header: str) -> set[str]:
@@ -1632,7 +1682,7 @@ def parse_groups(header: str) -> set[str]:
 
 
 def proxy_authorized(handler: BaseHTTPRequestHandler) -> bool:
-    if not (PROXY_SECRET and handler.headers.get("X-SC4S-Manager-Proxy") == PROXY_SECRET):
+    if not (PROXY_SECRET and _token_matches(handler.headers.get("X-SC4S-Manager-Proxy", ""), PROXY_SECRET)):
         return False
     required = {g.strip() for g in os.environ.get("SC4S_MANAGER_ADMIN_GROUPS", "").split(",") if g.strip()}
     if not required:
@@ -1640,10 +1690,10 @@ def proxy_authorized(handler: BaseHTTPRequestHandler) -> bool:
     return bool(required & parse_groups(handler.headers.get("X-Authentik-Groups", "")))
 
 
-def origin_allowed(handler: BaseHTTPRequestHandler) -> bool:
+def origin_allowed(handler: BaseHTTPRequestHandler, *, require_origin: bool = False) -> bool:
     origin = handler.headers.get("Origin")
     if not origin:
-        return True
+        return not require_origin
     host = handler.headers.get("Host", "")
     return origin in {f"https://{host}", f"http://{host}"}
 
@@ -1670,6 +1720,13 @@ def _cookie_value(cookie_header: str, name: str) -> str:
     return ""
 
 
+def manual_session_authorized(handler: BaseHTTPRequestHandler) -> bool:
+    return bool(
+        MANUAL_LOGIN_TOKEN
+        and _token_matches(_cookie_value(handler.headers.get("Cookie", ""), "sc4s_manual_session"), _manual_session_token())
+    )
+
+
 def manual_token_authorized(handler: BaseHTTPRequestHandler) -> bool:
     if not MANUAL_LOGIN_TOKEN:
         return False
@@ -1678,7 +1735,7 @@ def manual_token_authorized(handler: BaseHTTPRequestHandler) -> bool:
         return True
     if _token_matches(handler.headers.get("X-SC4S-Manual-Token", ""), MANUAL_LOGIN_TOKEN):
         return True
-    if _token_matches(_cookie_value(handler.headers.get("Cookie", ""), "sc4s_manual_session"), _manual_session_token()):
+    if manual_session_authorized(handler):
         return True
     qs = parse_qs(urlparse(handler.path).query)
     for key in ("token", "login_token"):
@@ -1725,9 +1782,14 @@ def redact_request_log_message(message: str) -> str:
 def authorized(handler: BaseHTTPRequestHandler, unsafe: bool) -> bool:
     if handler.path.startswith("/health") or handler.path.startswith("/api/health"):
         return True
+    if manual_session_authorized(handler):
+        # Cookie credentials are sent automatically by browsers. Require an
+        # explicit same-origin Origin header for mutation requests so an absent
+        # Origin cannot turn a cross-site form POST into a state change.
+        return (not unsafe) or origin_allowed(handler, require_origin=True)
     if manual_token_authorized(handler):
         return (not unsafe) or origin_allowed(handler)
-    if API_TOKEN and handler.headers.get("X-SC4S-Manager-Token") == API_TOKEN and handler.client_address[0] in {"127.0.0.1", "::1"}:
+    if API_TOKEN and _token_matches(handler.headers.get("X-SC4S-Manager-Token", ""), API_TOKEN) and handler.client_address[0] in {"127.0.0.1", "::1"}:
         return True
     if proxy_authorized(handler):
         return (not unsafe) or origin_allowed(handler)
@@ -2252,15 +2314,15 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/sources/onboard":
                 return json_response(self, 200, onboard_source(payload, actor))
             if parsed.path == "/api/sources/delete":
-                return json_response(self, 200, delete_source(str(payload.get("name") or payload.get("filter") or ""), actor))
+                return json_response(self, 200, delete_source(str(payload.get("name") or payload.get("filter") or ""), actor, bool(payload.get("apply", False))))
             if parsed.path == "/api/destinations":
                 return json_response(self, 200, configure_destination(payload, actor))
             if parsed.path == "/api/destinations/delete":
-                return json_response(self, 200, delete_destination(str(payload.get("kind", "")), str(payload.get("id", "")), actor))
+                return json_response(self, 200, delete_destination(str(payload.get("kind", "")), str(payload.get("id", "")), actor, bool(payload.get("apply", False))))
             if parsed.path == "/api/routes":
                 return json_response(self, 200, upsert_route(payload, actor))
             if parsed.path == "/api/routes/delete":
-                return json_response(self, 200, delete_route(str(payload.get("id", "")), actor))
+                return json_response(self, 200, delete_route(str(payload.get("id", "")), actor, bool(payload.get("apply", False))))
             if parsed.path == "/api/config/file":
                 return json_response(self, 200, save_config_file(str(payload.get("path", "")), str(payload.get("content", "")), actor))
             if parsed.path in ["/api/templates/export", "/api/products/export"]:

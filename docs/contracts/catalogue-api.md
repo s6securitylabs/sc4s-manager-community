@@ -305,7 +305,7 @@ Safety contract:
 - `env_file.d/`, `splunk_app/`, `test-events/`, `scripts/`, and docs remain reference-only staged artifacts
 - import/apply is explicit two-step operator flow: validate first, then apply
 - backups are taken before overwriting existing runtime files
-- failed validation triggers rollback and an audit trail rather than partial activation
+- failed validation, reload, or explicit negative post-check triggers rollback and an audit trail rather than partial activation; after a control action has run, Manager re-issues reload for restored files and returns separate rollback runtime evidence
 
 Example validate response skeleton:
 

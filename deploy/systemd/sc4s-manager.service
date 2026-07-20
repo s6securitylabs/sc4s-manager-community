@@ -14,6 +14,7 @@ EnvironmentFile=-/etc/sc4s-manager/manager.env
 Environment=SC4S_ROOT=/opt/sc4s
 Environment=SC4S_MANAGER_ROOT=/opt/sc4s-manager
 Environment=SC4S_CONTROL_SOCKET=/run/sc4s-manager/control.sock
+Environment=SC4S_ENV_FILE=/opt/sc4s/env/env_file
 Environment=PYTHONPATH=/opt/sc4s-manager/src
 ExecStart=/usr/bin/python3 /opt/sc4s-manager/src/sc4s_manager/app.py
 Restart=on-failure

@@ -1,132 +1,70 @@
 # SC4S Manager Release Artifact
 
-## What is the release artifact?
+## Purpose and limits
 
-A SC4S Manager release is a `sc4s-manager-<version>.tar.gz` tarball with a `manifest.json` placed beside it. The tarball extracts under a deterministic root directory `sc4s-manager/`.
+A release tarball is `sc4s-manager-<version>.tar.gz` with a sibling `manifest.json`. It extracts beneath the deterministic `sc4s-manager/` root. The manifest records the version, source commit, creation time, per-file SHA-256/size, frontend presence, and missing required paths.
 
-The manifest records the artifact version, git commit, creation timestamp, the SHA-256 and size of each included file, whether the frontend dist was present at package time, and any required paths that were absent.
+A successful build or dry-run artifact validator proves artifact shape only. It does **not** prove Docker image availability, host permissions, Compose startup, authentication, SC4S health, upgrade, rollback, or Splunk indexing.
 
-## Required contents
+## Required release surface
 
-The manifest contract (`src/sc4s_manager/packaging.py:REQUIRED_ARTIFACT_PATHS`) requires release/install paths that support three operator distribution modes:
+The packaging contract includes application code, Dockerfile, Compose template/examples, dry-run planner scripts, frontend distribution, and systemd unit files. Systemd files are packaged because they are part of the artifact contract, but the current control daemon does not support systemd socket activation; do not describe their presence as a supported systemd installation path.
 
-1. GitHub release tarball for systemd/manual installs.
-2. Docker image plus Compose template.
-3. Single-file Linux binary for operators who do not want a Python checkout.
+The operator-supported deployment surface is:
 
-Required paths inside the tarball include:
+- `deploy/compose/compose.yaml`
+- `deploy/compose/.env.example`
+- `deploy/compose/env_file.example`
+- `deploy/compose/manager.env.example`
+- `frontend/dist/index.html` and `frontend/dist/assets/`
 
-```
-sc4s-manager/src/sc4s_manager/app.py
-sc4s-manager/src/sc4s_manager/control.py
-sc4s-manager/src/sc4s_manager/standalone.py
-sc4s-manager/Dockerfile
-sc4s-manager/deploy/compose/compose.yaml
-sc4s-manager/deploy/compose/.env.example
-sc4s-manager/deploy/compose/env_file.example
-sc4s-manager/deploy/compose/manager.env.example
-sc4s-manager/scripts/build_binary.py
-sc4s-manager/.github/workflows/release.yml
-sc4s-manager/deploy/systemd/sc4s-manager.service
-sc4s-manager/deploy/systemd/sc4s-manager-control.service
-sc4s-manager/deploy/systemd/sc4s-manager-control.socket
-sc4s-manager/deploy/install/install.sh
-sc4s-manager/deploy/upgrade/upgrade.sh
-sc4s-manager/frontend/dist/index.html
-```
+## Build and inspect
 
-## Building a release artifact
-
-1. Build the frontend first (required; never run from install/upgrade scripts):
-
-   ```bash
-   scripts/build_frontend.sh
-   ```
-
-2. Build the release tarball:
-
-   ```bash
-   python3 scripts/build_release_artifact.py --version 0.9.0 --output-dir dist/
-   ```
-
-   This writes `dist/sc4s-manager-0.9.0.tar.gz` and `dist/manifest.json`.
-
-3. Build the standalone Linux binary from a Python environment with PyInstaller:
-
-   ```bash
-   python3 -m venv /tmp/sc4s-manager-build
-   . /tmp/sc4s-manager-build/bin/activate
-   pip install --upgrade pip pyinstaller
-   python3 scripts/build_binary.py --version 0.9.0 --output-dir dist/
-   ```
-
-   This writes `dist/sc4s-manager-0.9.0-linux-x86_64`. The binary embeds the
-   Manager app, built frontend assets, and built-in packs. On first start it
-   seeds those assets into `SC4S_MANAGER_ROOT` only when they are absent.
-
-4. Inspect the manifest to confirm no required paths are missing:
-
-   ```bash
-   python3 -c "import json; m=json.load(open('dist/manifest.json')); print(m['missing_required_paths'])"
-   ```
-
-5. Generate checksums before uploading release assets:
-
-   ```bash
-   (cd dist && sha256sum * > SHA256SUMS)
-   ```
-
-## Docker image and Compose
-
-The release workflow publishes:
-
-```text
-ghcr.io/s6securitylabs/sc4s-manager:<version>
-ghcr.io/s6securitylabs/sc4s-manager:latest
-```
-
-Operators deploy from `/opt/sc4s`, following the same directory and environment
-file pattern as upstream SC4S:
+From the repository root:
 
 ```bash
-sudo mkdir -p /opt/sc4s/{local,archive,tls,manager}
-sudo docker volume create splunk-sc4s-var
-sudo cp deploy/compose/compose.yaml /opt/sc4s/compose.yaml
-sudo cp deploy/compose/.env.example /opt/sc4s/.env
-sudo cp deploy/compose/env_file.example /opt/sc4s/env_file
-sudo cp deploy/compose/manager.env.example /opt/sc4s/manager.env
-# edit /opt/sc4s/.env, /opt/sc4s/env_file, and /opt/sc4s/manager.env using values from the approved secret store
-cd /opt/sc4s
-sudo docker compose -f compose.yaml up -d
+scripts/build_frontend.sh
+python3 scripts/build_release_artifact.py --version <version> --output-dir dist/
+python3 -c "import json; m=json.load(open('dist/manifest.json')); print(m['missing_required_paths'])"
+(cd dist && sha256sum sc4s-manager-<version>.tar.gz manifest.json > SHA256SUMS)
+sha256sum -c dist/SHA256SUMS
 ```
 
-The Compose bundle keeps SC4S settings in `/opt/sc4s/env_file`, Manager settings
-in `/opt/sc4s/manager.env`, local parser/config material in `/opt/sc4s/local`,
-archive/TLS material in `/opt/sc4s/archive` and `/opt/sc4s/tls`, and syslog-ng
-state in the `splunk-sc4s-var` Docker volume.
+Expected: the missing-path list is `[]`; checksum verification reports `OK`. Do not use `--allow-missing-frontend` for an operator release. That flag exists for controlled CI tests only.
 
-The Compose template deliberately does **not** mount `/var/run/docker.sock`.
-Without a host-provided narrow control socket, Manager runtime restart/reload
-control is unavailable and should be reported as unknown/unavailable rather than
-faked. This keeps the web-adjacent Manager container away from host-root Docker
-control.
-
-## Dry-run / CI-only builds
-
-For CI pipelines where the frontend has not been pre-built, pass `--allow-missing-frontend`. This is for test use only and must not be used for release candidates distributed to operators:
+Validate the actual generated tarball, not merely the checkout:
 
 ```bash
-python3 scripts/build_release_artifact.py --version 0.0.1-ci --output-dir /tmp/test-artifact --allow-missing-frontend
+python3 scripts/validate_package_install.py \
+  --dry-run \
+  --artifact dist/sc4s-manager-<version>.tar.gz \
+  --workdir /tmp/sc4s-manager-artifact-check \
+  --evidence-out /tmp/sc4s-manager-artifact-dry-run.json
 ```
 
-## What the artifact does NOT do
+Expected: exit 0 with redacted dry-run JSON. Abort publication if required paths or frontend assets are missing, checksum verification fails, or the validator fails.
 
-- Does not run `npm`, `npm ci`, `npm run build`, or any frontend build step.
-- Does not contain secrets, tokens, or unredacted credentials.
-- Does not contain the full git history or development toolchain.
+## Image and Compose handoff
 
-## Install and upgrade
+A release image should be published with an immutable version tag and preferably recorded digest. The Compose example defaults Manager to `latest` for development convenience; an operator must replace it with the approved version/digest in `/opt/sc4s/.env` before `up -d`.
 
-- See `docs/runbooks/install.md` for clean install steps.
-- See `docs/runbooks/upgrade.md` for upgrade steps.
-- See `docs/runbooks/install-upgrade-rollback-drill.md` for the full drill procedure.
+The Compose layout is fixed:
+
+- SC4S environment: `/opt/sc4s/env/env_file`, with `/opt/sc4s/env_file` as the Compose-compatible symlink
+- Manager environment: `/opt/sc4s/manager.env`
+- Local SC4S configuration: `/opt/sc4s/local`
+- Archive/TLS: `/opt/sc4s/archive`, `/opt/sc4s/tls`
+- Manager state/backups: `/opt/sc4s/manager`
+- syslog-ng disk buffer: `splunk-sc4s-var` Docker volume
+
+The Manager runs as UID/GID `10001`; release notes must link to the ownership and SELinux preparation in [install.md](install.md#1-prepare-the-host-layout-and-permissions). The template has no Docker-socket mount and no host control daemon. Runtime control unavailable in Compose is an honest expected state, not a release defect to bypass.
+
+## Release evidence required before claiming installable lifecycle support
+
+1. Build/frontend/package validation passes for the final archive.
+2. Intended operators can retrieve the archive, checksum, and pinned image reference.
+3. A disposable Docker host follows [install.md](install.md) literally with correct bind-mount ownership and, where relevant, SELinux labels.
+4. The same host completes the Compose upgrade and rollback drill with redacted evidence.
+5. The evidence distinguishes Manager health, SC4S health, runtime-control availability, and downstream Splunk readback.
+
+See [install.md](install.md), [upgrade.md](upgrade.md), [rollback.md](rollback.md), and the [disposable-host drill](install-upgrade-rollback-drill.md).

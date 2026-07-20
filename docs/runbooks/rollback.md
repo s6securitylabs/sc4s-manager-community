@@ -2,32 +2,65 @@
 
 ## Scope
 
-Rollback restores the last known-good sc4s-manager application release and service
-configuration. It must not discard SC4S local configuration changes unless the
-incident commander explicitly approves restoring those files from backup.
+This procedure reverts a failed **Manager Compose image upgrade** while preserving current SC4S configuration and ingestion. It does not automatically restore SC4S `local` configuration or HEC settings. Restore those only with incident approval and a known-good backup.
+
+The repository installer has no rollback mode; its dry-run planner rejects lifecycle flags. Use the explicit Compose steps below or restore the host snapshot.
 
 ## Preconditions
 
-- A named backup from the corresponding install or upgrade.
-- Recorded previous application version and systemd unit checksums.
-- Access to service logs and health endpoints.
+- Freeze normal Manager changes and record the incident/change reference.
+- Identify the previous Manager tag/digest from the pre-upgrade `docker compose images` output or approved change record.
+- Locate the timestamped backup made by the upgrade runbook.
+- Capture current evidence before changing anything:
 
-## Rollback Steps
+```bash
+cd /opt/sc4s
+sudo docker compose -f compose.yaml ps
+sudo docker compose -f compose.yaml logs --tail=200 manager sc4s
+curl -fsS http://127.0.0.1:8090/health || true
+curl -fsS http://127.0.0.1:8080/health || true
+```
 
-1. Declare rollback and freeze non-emergency changes.
-2. Capture current service status, logs, health output, and config validation
-   result for incident evidence.
-3. Stop the manager service.
-4. Restore the previous application release under `/opt/sc4s-manager`.
-5. Restore previous systemd unit files if they changed in the failed upgrade.
-6. Reload systemd and restart `sc4s-manager-control.socket`,
-   `sc4s-manager-control.service`, and `sc4s-manager.service`.
-7. Run `/health`, `/api/health`, config validation, version drift, and redaction
-   smoke tests.
-8. Confirm SC4S remains healthy and ingestion counters continue moving.
-9. Record the rollback decision, commands, timestamps, and sanitized evidence.
+Do not continue if the rollback image reference is unknown. Escalate or restore the host snapshot instead of guessing an older `latest` image.
 
-## Validation
+## 1. Revert the Manager image
 
-Rollback is complete only when the manager is healthy, the control socket
-responds, SC4S status is healthy, and no secrets appear in reports or logs.
+Edit only `SC4S_MANAGER_VERSION` in `/opt/sc4s/.env` to the recorded known-good tag/digest. Keep `SC4S_IMAGE` unchanged unless the incident commander explicitly authorizes an SC4S rollback.
+
+```bash
+cd /opt/sc4s
+sudo cp -a .env /opt/sc4s/manager/backups/pre-rollback-env-$(date -u +%Y%m%dT%H%M%SZ)
+sudo editor .env
+sudo docker compose -f compose.yaml config -q
+sudo docker compose -f compose.yaml pull manager
+sudo docker compose -f compose.yaml up -d --no-deps manager
+sudo docker compose -f compose.yaml ps
+sudo docker compose -f compose.yaml images
+```
+
+Expected: `config -q` is silent; only Manager is recreated; SC4S remains running; images show the recorded Manager reference. Abort and restore the saved `.env` if the rendered configuration, image reference, or bind mounts differ from the known-good deployment.
+
+## 2. Rollback verification
+
+```bash
+curl -fsS http://127.0.0.1:8090/health | python3 -m json.tool
+curl -fsS http://127.0.0.1:8080/health
+cd /opt/sc4s && sudo docker compose -f compose.yaml logs --tail=100 manager sc4s
+sudo test -d /opt/sc4s/manager && sudo find /opt/sc4s/manager -maxdepth 2 -type d -print | sort
+```
+
+Rollback is complete only when all conditions hold:
+
+1. `docker compose ps` shows both services running and Manager healthy.
+2. Manager `/health` is HTTP 200 with `status: ok` **and** nested `sc4s.ok: true`.
+3. SC4S `/health` is HTTP 200 on the configured status port.
+4. Manager logs show no repeating startup/permission errors; SC4S logs show no new configuration or destination failure.
+5. `docker compose images` shows the intended prior Manager reference, not `latest` or an unrecorded image.
+6. Expected Manager state under `/opt/sc4s/manager` is present. Authenticate through the approved path and read back a non-destructive inventory.
+7. For an ingestion-affecting incident, send/locate an approved marker and prove it in Splunk. Container health and Manager health do not prove indexing.
+
+If any condition fails, retain logs, the failed and known-good image references, health output, and backup path; then escalate. Do not claim rollback success merely because Docker accepted `up -d`.
+
+## Optional configuration restore
+
+Only if the incident scope includes Manager/SC4S configuration corruption, compare the named backup before restoring. Stop and obtain approval before replacing `env/` and its `env_file` symlink, `manager.env`, `.env`, or `local/`; these files can contain current production routing and secrets. After an approved restore, run `docker compose config -q`, recreate the affected service deliberately, and repeat every verification item above.

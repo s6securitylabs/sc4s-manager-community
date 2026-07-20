@@ -1,74 +1,55 @@
 # SC4S Manager
 
-A local web UI and control plane for [Splunk Connect for Syslog (SC4S)](https://splunk.github.io/splunk-connect-for-syslog/) operators.
+A local web UI for [Splunk Connect for Syslog (SC4S)](https://splunk.github.io/splunk-connect-for-syslog/) operators. Manager can stage sources, destinations, routes and Library packs, validate proposed configuration, and report runtime evidence. A saved configuration is **not** proof that SC4S is ingesting events: verify listeners, SC4S health, counters, and Splunk readback separately.
 
-SC4S Manager runs alongside SC4S on your host. It lets you browse and install reviewed packs from [SecHub](https://sechub.s6ops.com), manage SC4S sources, destinations and routes, validate configuration changes before applying them, and monitor SC4S runtime health — all without giving a web process direct access to your Docker socket.
+## Deployment boundary
 
-## Quick start
+The supported operator path is the Docker Compose bundle in `/opt/sc4s`, beside a pinned SC4S image. It deliberately does **not** mount `/var/run/docker.sock` and it does **not** run the host control daemon. Therefore a Compose-only deployment can manage desired configuration but cannot use Manager's control-socket actions (validate through the daemon, reload, restart, Docker status, logs, metrics, or listener inspection). Those controls must show unavailable; do not add a Docker-socket mount to bypass this boundary.
 
-SC4S Manager deploys with SC4S using Docker Compose.
+The shipped systemd control units are not an alternative supported deployment at this revision: the Python control daemon binds its own socket and does not implement systemd socket activation. See the install runbook before attempting them.
 
-**Prerequisites:** Docker Engine, `/opt/sc4s` directory, Splunk HEC URL and token.
+## Quick start (Compose, configuration management only)
+
+Read the [install runbook](docs/runbooks/install.md) first. In particular, set a fixed Manager release tag or digest before starting; the example's `latest` value is not release-safe.
 
 ```bash
-# 1. Create the SC4S directory layout
-sudo mkdir -p /opt/sc4s/{local,archive,tls,manager}
-
-# 2. Copy the Compose bundle
-sudo cp deploy/compose/compose.yaml /opt/sc4s/compose.yaml
-sudo cp deploy/compose/.env.example /opt/sc4s/.env
-sudo cp deploy/compose/env_file.example /opt/sc4s/env_file
-sudo cp deploy/compose/manager.env.example /opt/sc4s/manager.env
-
-# 3. Fill in your Splunk HEC URL/token and generate secret values
-#    (edit /opt/sc4s/env_file and /opt/sc4s/manager.env)
-sudo editor /opt/sc4s/env_file /opt/sc4s/manager.env
-
-# 4. Start the stack
-cd /opt/sc4s && sudo docker compose up -d
+# Run from a checkout or extracted release that contains deploy/compose/.
+sudo install -d -o root -g 10001 -m 0770 /opt/sc4s/{env,local,archive,tls,manager}
+sudo docker volume create splunk-sc4s-var
+sudo install -m 0640 -o root -g 10001 deploy/compose/env_file.example /opt/sc4s/env/env_file
+sudo ln -sfn env/env_file /opt/sc4s/env_file
+sudo install -m 0640 -o root -g 10001 deploy/compose/manager.env.example /opt/sc4s/manager.env
+sudo install -m 0644 deploy/compose/.env.example /opt/sc4s/.env
+sudo install -m 0644 deploy/compose/compose.yaml /opt/sc4s/compose.yaml
+sudo editor /opt/sc4s/.env /opt/sc4s/env/env_file /opt/sc4s/manager.env
+cd /opt/sc4s
+sudo docker compose -f compose.yaml config -q
+sudo docker compose -f compose.yaml up -d
+sudo docker compose -f compose.yaml ps
+curl -fsS http://127.0.0.1:8090/health
 ```
 
-Manager is available at `http://<host>:8090` once the stack is up.
+Expected: `config -q` is silent with exit code 0; both `sc4s` and `manager` are running; `/health` is JSON with `"status": "ok"`. The nested `sc4s.ok` result must also be true before treating SC4S as ready. Stop and investigate if a container restarts, the health request fails, or either image is unpinned.
 
-See [docs/runbooks/install.md](docs/runbooks/install.md) for the full install guide including secret handling, proxy setup, and post-install checks.
+The published Manager port is not an authentication boundary. Put it behind an approved reverse proxy or restrict it with a host firewall before exposing it beyond the administrator network. See [authentication and proxy setup](docs/runbooks/install.md#authentication-and-reverse-proxy).
 
 ## What it does
 
-- **Browse SecHub packs** — search the curated source catalogue, download reviewed packs, validate them locally before installing
-- **Manage SC4S config** — add and remove sources, destinations, and routes through the UI; preview generated config before any change is applied
-- **Validate before apply** — schema checks, parser syntax, fixture semantics, and a post-apply readback gate before config is considered live
-- **Monitor runtime** — SC4S process status, listener health, syslog-ng counters, destination write/drop counts, parser warnings
-- **Safe apply path** — backup before every change, rollback on validation failure, full audit log of all mutations
-- **Export evidence** — download a bundle of applied config and validation evidence for handoff or review
+- **Browse SC4S Library packs** — download packs, verify their checksum, validate them locally, and stage them before explicit apply.
+- **Manage SC4S configuration** — preview changes to sources, destinations, and routes before applying them.
+- **Preserve evidence** — retain validation, backup, audit and export material subject to the configured storage and retention policy.
+- **Report state honestly** — distinguish desired configuration from unavailable, observed, and verified runtime state.
 
-## Packs
+## Operator documentation
 
-Packs are configuration bundles for a specific log source. They include SC4S parser config, Splunk props/transforms, test event fixtures, and CIM/OCSF field mappings.
-
-The `packs/` directory in this repo contains built-in packs. Community pack submissions: see [CONTRIBUTING.md](CONTRIBUTING.md) and the [pack submission guide](docs/contributing/pack-submission-guide.md).
-
-## Documentation
-
-| Doc | What it covers |
-|-----|----------------|
-| [docs/runbooks/install.md](docs/runbooks/install.md) | Full install guide, secret handling, proxy setup |
-| [docs/runbooks/upgrade.md](docs/runbooks/upgrade.md) | Upgrading SC4S Manager |
-| [docs/runbooks/rollback.md](docs/runbooks/rollback.md) | Rolling back a failed change |
-| [docs/contributing/pack-submission-guide.md](docs/contributing/pack-submission-guide.md) | How to submit a pack |
-| [docs/contracts/packs-api.md](docs/contracts/packs-api.md) | Pack API contract |
-| [docs/architecture.md](docs/architecture.md) | Security model, design principles, workflow detail |
-
-## Repository layout
-
-```
-src/sc4s_manager/   Python backend — API, control logic, pack/library code
-frontend/           React operator UI
-packs/              Built-in packs (PAN-OS, Commvault, ...)
-deploy/             Docker Compose bundle, systemd unit, install scripts
-docs/               Runbooks, API contracts, contributing guides
-scripts/            Validation and test tooling
-tests/              Backend test suite
-```
+| Document | Use it for |
+|---|---|
+| [Install runbook](docs/runbooks/install.md) | host preparation, Compose start, authentication, verification, and common failures |
+| [Upgrade runbook](docs/runbooks/upgrade.md) | safe Compose image upgrade and abort criteria |
+| [Rollback runbook](docs/runbooks/rollback.md) | reverting a Manager image and proving the rollback |
+| [Install/upgrade/rollback drill](docs/runbooks/install-upgrade-rollback-drill.md) | disposable-host release evidence; not a production procedure |
+| [Release artifact](docs/runbooks/release-artifact.md) | building and checking a distributable artifact |
+| [Architecture](docs/architecture.md) | security, proxy-header and control-boundary contract |
 
 ## Development
 
@@ -77,8 +58,6 @@ git clone https://github.com/s6securitylabs/sc4s-manager-community.git
 cd sc4s-manager-community
 ./scripts/test.sh
 ```
-
-The test script sets up a virtualenv and runs the full backend + frontend test suite.
 
 ## Licence
 

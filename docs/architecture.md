@@ -1,103 +1,89 @@
 # SC4S Manager — Architecture
 
-## Security model
+## Deployment and security boundary
 
-- The web/API process runs as a non-root user.
-- The web/API process has no access to the Docker socket.
-- SC4S restart and reload go through a narrow Unix socket to a local control service — the web process cannot issue arbitrary host commands.
-- All mutating operations require authentication. The `/health` endpoint is the only open route.
-- Secrets are redacted in API responses, diffs, audit logs, exports, and error messages.
-- File writes are atomic (write to temp, rename) to prevent corruption on failure.
+- The Manager web/API process runs as non-root (UID/GID `10001` in the image).
+- The supported Docker Compose deployment has **no** `/var/run/docker.sock` mount. Docker socket access is host-root equivalent and must not be added for convenience.
+- Compose and host control are separate deployment modes. The shipped Compose stack does not include the narrow host control daemon or mount a host control socket; it does not make control daemon functionality exist inside the Docker-only deployment and must report runtime-control actions as unavailable.
+- A narrow control daemon, when supported in a future host deployment, must accept only fixed SC4S actions over `/run/sc4s-manager/control.sock`: status, bounded logs, metrics, config validation, reload, restart, listeners, and warnings. It must not accept caller-selected shells, Docker commands, compose files, paths, or container names.
+- The currently packaged systemd socket/service pair is not operationally supported: `control.py` binds its own Unix socket and does not use systemd socket activation. Starting both can produce `Address already in use`. Do not turn this into a Docker-socket or world-writable-socket workaround.
+- All mutation routes require authorization. `/health` and `/api/health` are intentionally open liveness endpoints only.
+- Secrets are redacted in API responses, diffs, audit logs, exports, and error messages. Operators must still avoid putting tokens in URLs, shell history, tickets, screenshots, or browser developer tools.
+- File writes are atomic where supported; operators must retain external backups and prove post-change state.
 
-### Reverse Proxy Integration & Auth Headers
+## Authentication and trusted proxy contract
 
-SC4S Manager is designed to run behind a trusted reverse proxy or identity provider (e.g., Authentik, Authelia, NGINX, Traefik). When integrated with a proxy, mutating actions and admin endpoints use standard headers for authorization and auditing:
+Manager does not require a named identity provider. It can sit behind any trusted reverse proxy that authenticates the request, removes client-supplied identity headers, and injects the exact headers Manager checks.
 
-1. **Proxy Authentication Challenge**:
-   - **Header**: `X-SC4S-Manager-Proxy`
-   - **Constraint**: Must match the value of the host environment variable `SC4S_MANAGER_PROXY_SECRET`.
-   
-2. **Operator Auditing**:
-   - **Header**: `X-Forwarded-User` or `X-Authentik-Username`
-   - **Constraint**: Supplies the user's username for audit logs and change tracking. If missing, auditing defaults to the caller's IP address.
+| Purpose | Header/configuration | Enforcement |
+|---|---|---|
+| Proxy trust | `X-SC4S-Manager-Proxy` equals `SC4S_MANAGER_PROXY_SECRET` | Required for proxy authorization. The proxy secret is shared infrastructure material, never a browser credential. |
+| Audit identity | `X-Forwarded-User` or `X-Authentik-Username` | Used as the actor after proxy authorization. If absent, the peer address is recorded. |
+| Admin groups (optional) | `SC4S_MANAGER_ADMIN_GROUPS` plus `X-Authentik-Groups` | Exact intersection after comma/semicolon/pipe parsing. Map another IdP's group claim to the implemented header name at the proxy. |
+| Local automation | `X-SC4S-Manager-Token` equals `SC4S_MANAGER_API_TOKEN` | Accepted only from `127.0.0.1`/`::1`; not browser authentication. |
+| Isolated temporary access | `SC4S_MANAGER_MANUAL_LOGIN_TOKEN` | Grants access for controlled temporary use. It is not a replacement for proxy auth, TLS, network restriction, or identity-aware audit. |
 
-3. **Group-Based Access Control**:
-   - **Header**: `X-Authentik-Groups`
-   - **Constraint**: Supplies a list of the user's groups (comma, semicolon, or pipe delimited). If the host environment variable `SC4S_MANAGER_ADMIN_GROUPS` is defined (e.g., `SC4S_MANAGER_ADMIN_GROUPS=syslog-admin,platform-eng`), the proxy user must be in at least one of those groups to access admin endpoints.
+A reverse proxy must overwrite/remove all of the listed incoming headers before forwarding a verified identity. Do not accept these values directly from untrusted clients. Health endpoints remaining open is not proof that the proxy correctly protects authenticated UI/API routes.
+
+## Apply-state model
+
+Keep these states distinct:
+
+1. **Desired/staged**: Manager has saved a proposed configuration or staged a Library pack.
+2. **Validated**: syntax/config validation succeeded in the available validation environment.
+3. **Applied**: files were written and an apply transaction records its result.
+4. **Observed runtime**: SC4S process/container, listener, health, log, or counter data was actually read back.
+5. **Verified downstream**: an approved event/marker was found at the intended Splunk destination.
+
+Compose-only installations cannot honestly progress control-socket actions beyond unavailable. A Manager HTTP response or a saved file never substitutes for SC4S health or downstream readback.
 
 ## Apply workflow
 
-Every configuration change follows this sequence:
+For a deployment that has a working, narrow control boundary, a configuration change follows:
 
 ```
-preview → validate → backup → apply → post-check → rollback-ready
+preview → validate → backup → apply → control action → post-check → rollback-ready
 ```
 
-1. **Preview** — show the operator exactly what config files will change before touching anything
-2. **Validate** — run SC4S config validation (syslog-ng `--syntax-only` equivalent) against the proposed state
-3. **Backup** — copy current runtime files to a timestamped backup before any write
-4. **Apply** — write new config through the control path
-5. **Post-check** — validate config again in the live process; check counters and listener state
-6. **Rollback** — if post-check fails, restore from the backup automatically
+1. **Preview** — show files and values that would change.
+2. **Validate** — syntax/config validation against the proposed state.
+3. **Backup** — preserve current runtime files before writes.
+4. **Apply** — atomically write approved configuration.
+5. **Control/post-check** — execute only the required allowlisted reload/restart and read back health/listeners/counters.
+6. **Rollback** — on validation, control, or post-check failure, restore the backup and restore the known-good runtime where a control action has already run.
 
-Desired configuration and live runtime state are always displayed separately. Saved config is not proof that SC4S is processing events — use Splunk readback to confirm.
+Stop rather than claiming success if validation, control, or post-check evidence is absent. Use Splunk readback for ingestion proof.
 
-## Pack import workflow
+## Library pack workflow
 
-Packs are downloaded from a Library source (default: [SecHub](https://sechub.s6ops.com)) and treated as untrusted until locally verified:
+Packs are fetched from a configured SC4S Library source (default: [SecHub](https://sechub.s6ops.com)) and remain untrusted until local validation and explicit operator approval:
 
-1. Fetch the remote catalogue JSON from the configured Library source
-2. Operator selects a pack and clicks Download
-3. Manager downloads the bundle ZIP and verifies its SHA256 checksum against the catalogue manifest
-4. Operator clicks Check pack — Manager validates schema, parser artifacts, fixture semantics, and path safety
-5. Validated pack is staged as a draft import; nothing is applied yet
-6. Operator clicks Install to SC4S — Manager applies only the SC4S config files (`local/config/`, `local/context/` targets), following the full apply workflow above
-7. Reference-only files (Splunk apps, test events, scripts, docs) are kept in the import staging area but never applied automatically
+1. Fetch catalogue/entry metadata from the configured source.
+2. Download a selected bundle and verify its SHA-256 against catalogue metadata.
+3. Validate schema, parser artifacts, fixtures, path safety, and archive limits.
+4. Stage a draft import; do not apply it automatically.
+5. On explicit install/apply, write only eligible SC4S runtime files through the full apply workflow.
+6. Retain reference-only artifacts for review; do not automatically apply Splunk apps, scripts, documentation, or test events.
+
+Remote review/trust labels are advisory. A downloaded pack is not local deployment approval and a local validation result is not downstream Splunk proof.
 
 ### Library source configuration
 
-By default, Manager connects to `https://sechub.s6ops.com` as its Library source. To use a private or alternative source, set `SC4S_LIBRARY_SOURCE_URL` in `manager.env`:
-
-```
-# Use a private pack hub
-SC4S_LIBRARY_SOURCE_URL=https://your-internal-hub.example.com
-
-# Disable the pre-configured source entirely
-SC4S_LIBRARY_SOURCE_URL=none
-```
+Set `SC4S_LIBRARY_SOURCE_URL` in `manager.env` to use an approved alternative source, or `none` to start with no preconfigured source. Validate the source's catalogue, manifest, representative entry, and bundle from the real Manager client before relying on it.
 
 ### Bundle safety checks
 
-Before any pack content is staged, Manager verifies:
+Before staging pack content, Manager checks that ZIP members are relative/non-traversing, are not symlinks or duplicates, are within compressed/uncompressed and member-size limits, and match the advertised checksum.
 
-- ZIP member paths are relative, contain no traversal (`../`), and are not absolute
-- No symlinks in the archive
-- No duplicate member paths
-- Total uncompressed size and per-member size within configured limits
-- SHA256 of the downloaded ZIP matches the entry manifest
+## State layout
 
-### State layout
-
-Manager persists Library state under `MANAGER_ROOT/state/library/`:
-
-```
-state/library/
-  sources.json                          source registry and last-sync metadata
-  catalogue/<source_id>.json           cached remote catalogue
-  entries/<source_id>/<entry_id>.json  cached remote entry detail
-  downloads/<source_id>/<filename>     verified bundle ZIP cache
-  imports/<import_id>/
-    bundle/                            extracted bundle (never applied directly)
-    reference/                         non-runtime files for review only
-    runtime-plan.json                  which files are eligible for apply
-    record.json                        import record, provenance, apply status
-```
+Manager state is rooted at `SC4S_MANAGER_ROOT` (Compose: `/opt/sc4s/manager`), including Library cache/imports, backups, audit records, templates, and frontend assets. This is mutable operational data: back it up before upgrade, give UID/GID `10001` appropriate access, and do not expose it as a public static directory.
 
 ## What Manager does not do
 
-- Does not host the public pack catalogue.
-- Does not let Library trust labels or review status bypass local validation.
-- Does not grant the web UI unrestricted host or Docker control.
-- Does not store secrets in generated pack exports.
-- Does not silently drop or reduce events.
-- Does not apply unreviewed content without explicit operator confirmation at each step.
+- It does not host the public pack catalogue.
+- It does not let Library trust labels bypass local validation.
+- It does not grant unrestricted host/Docker control to the web UI.
+- It does not make control daemon functionality exist inside the Docker-only deployment.
+- It does not silently treat saved configuration, HTTP liveness, or container health as Splunk indexing proof.
+- It does not store secrets in generated pack exports by design; operators still must protect runtime environment files and evidence.

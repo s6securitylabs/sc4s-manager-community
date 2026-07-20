@@ -180,6 +180,14 @@ def apply_live_state(validation: dict[str, Any], control: dict[str, Any], post_c
     }
 
 
+def _post_check_failed(post_check: dict[str, Any]) -> bool:
+    """Only explicit negative live evidence triggers automatic rollback."""
+    if post_check.get("ok") is False:
+        return True
+    health = post_check.get("health")
+    return isinstance(health, dict) and health.get("ok") is False
+
+
 class LibraryManager:
     def __init__(
         self,
@@ -511,6 +519,7 @@ class LibraryManager:
 
         backups: list[tuple[Path, Path | None]] = []
         changed_targets: list[str] = []
+        validation: dict[str, Any] = {}
         lock_context = self._apply_lock if self._apply_lock is not None else contextlib.nullcontext()
         try:
             with lock_context:
@@ -532,6 +541,14 @@ class LibraryManager:
                     raise ValidationFailure(validation)
                 control = self._reload_sc4s(actor)
                 post_check = self._post_check()
+                if not control.get("ok", True) or _post_check_failed(post_check):
+                    restore_backups(backups)
+                    # A failed control action may have partially changed the
+                    # runtime. Re-issue the fixed reload after restoring files
+                    # so disk and running SC4S configuration converge.
+                    rollback_runtime = self._reload_sc4s(actor)
+                    rollback_post_check = self._post_check()
+                    raise RuntimeApplyFailure(control, post_check, rollback_runtime, rollback_post_check)
             state = apply_live_state(validation, control, post_check)
             applied_at = now()
             record["last_apply"] = {
@@ -571,6 +588,44 @@ class LibraryManager:
                 "control": {"ok": True, "skipped": True},
                 "post_check": {},
                 "rolled_back": True,
+            }
+        except RuntimeApplyFailure as failure:
+            state = {
+                "apply_state": "applied_reload_failed" if not failure.control.get("ok", True) else "applied",
+                "live_state": "not_live",
+            }
+            record["last_apply"] = {
+                "actor": actor,
+                "applied_at": now(),
+                "changed_targets": changed_targets,
+                "rolled_back": True,
+                "validation": validation,
+                "control": failure.control,
+                "post_check": failure.post_check,
+                "rollback_runtime": failure.rollback_runtime,
+                "rollback_post_check": failure.rollback_post_check,
+                **state,
+            }
+            atomic_write_json(self.imports_dir / import_id / "record.json", record)
+            self._audit("library_apply_import", actor, {
+                "import_id": import_id,
+                "changed_targets": changed_targets,
+                "rolled_back": True,
+                "rollback_runtime": failure.rollback_runtime,
+            })
+            return {
+                "ok": False,
+                "import_id": import_id,
+                "apply": True,
+                "apply_allowed": True,
+                "changed_targets": changed_targets,
+                "validation": validation,
+                "control": failure.control,
+                "post_check": failure.post_check,
+                "rolled_back": True,
+                "rollback_runtime": failure.rollback_runtime,
+                "rollback_post_check": failure.rollback_post_check,
+                **state,
             }
         except Exception:
             restore_backups(backups)
@@ -1026,3 +1081,18 @@ class ValidationFailure(Exception):
     def __init__(self, validation: dict[str, Any]) -> None:
         super().__init__("validation failed")
         self.validation = validation
+
+
+class RuntimeApplyFailure(Exception):
+    def __init__(
+        self,
+        control: dict[str, Any],
+        post_check: dict[str, Any],
+        rollback_runtime: dict[str, Any],
+        rollback_post_check: dict[str, Any],
+    ) -> None:
+        super().__init__("runtime apply failed")
+        self.control = control
+        self.post_check = post_check
+        self.rollback_runtime = rollback_runtime
+        self.rollback_post_check = rollback_post_check

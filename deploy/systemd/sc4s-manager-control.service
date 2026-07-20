@@ -11,6 +11,7 @@ Group=sc4s-manager
 WorkingDirectory=/opt/sc4s-manager
 EnvironmentFile=-/etc/sc4s-manager/control.env
 Environment=SC4S_ROOT=/opt/sc4s
+Environment=SC4S_ENV_FILE=/opt/sc4s/env/env_file
 Environment=SC4S_CONTAINER=SC4S
 Environment=SC4S_CONTROL_SOCKET=/run/sc4s-manager/control.sock
 Environment=SC4S_CONTROL_AUDIT=/opt/sc4s-manager/state/control-audit.jsonl

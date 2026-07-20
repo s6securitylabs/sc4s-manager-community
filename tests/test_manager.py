@@ -552,21 +552,20 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertIn(("header", "Location", "/"), calls)
 
 
-    def test_actor_from_uses_authentik_identity_when_present(self):
+    def test_actor_from_uses_proxy_identity_only_after_proxy_authentication(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
-            app.MANUAL_LOGIN_TOKEN = "manual-secret"
             handler = type("Handler", (), {})()
             handler.path = "/api/stats"
             handler.client_address = ("203.0.113.10", 55555)
             handler.headers = {
-                "Authorization": "Bearer manual-secret",
+                "X-SC4S-Manager-Proxy": "test-secret",
                 "X-Authentik-Username": "operator",
                 "X-Forwarded-User": "forwarded-user",
             }
             self.assertEqual(app.actor_from(handler), "operator")
 
-    def test_actor_from_falls_back_to_admin_for_manual_token(self):
+    def test_actor_from_labels_manual_token_actor_without_claiming_a_user_identity(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
@@ -574,7 +573,37 @@ class ManagerUnitTests(unittest.TestCase):
             handler.path = "/api/stats"
             handler.client_address = ("203.0.113.10", 55555)
             handler.headers = {"Authorization": "Bearer manual-secret"}
-            self.assertEqual(app.actor_from(handler), "admin")
+            self.assertEqual(app.actor_from(handler), "manual-token")
+
+    def test_actor_from_does_not_trust_proxy_identity_without_proxy_authentication(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            handler = type("Handler", (), {})()
+            handler.path = "/api/env"
+            handler.client_address = ("203.0.113.10", 55555)
+            handler.headers = {
+                "Authorization": "Bearer manual-secret",
+                "X-Authentik-Username": "forged-admin",
+                "X-Forwarded-User": "forged-forwarded-admin",
+            }
+            self.assertTrue(app.authorized(handler, unsafe=True))
+            self.assertEqual(app.actor_from(handler), "manual-token")
+
+    def test_cookie_authenticated_mutation_requires_present_matching_origin(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            handler = type("Handler", (), {})()
+            handler.path = "/api/env"
+            handler.client_address = ("203.0.113.10", 55555)
+            handler.headers = {
+                "Cookie": f"sc4s_manual_session={app._manual_session_token()}",
+                "Host": "sc4s-manager.example",
+            }
+            self.assertFalse(app.authorized(handler, unsafe=True))
+            handler.headers["Origin"] = "https://sc4s-manager.example"
+            self.assertTrue(app.authorized(handler, unsafe=True))
 
     def test_template_upload_import_restores_zip_content(self):
         with tempfile.TemporaryDirectory() as d:
@@ -812,6 +841,37 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertIn("validate", actions)
             self.assertIn("restart", actions)
             self.assertEqual(result["post_check"]["docker"]["health"], "healthy")
+
+    def test_failed_apply_control_restores_file_and_retries_restored_runtime(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            actions = []
+            app.validate_config = lambda: {"ok": True}
+            app.restart_sc4s = lambda actor: actions.append(actor) or ({"ok": False, "error": "first failed"} if len(actions) == 1 else {"ok": True})
+            before = app.ENV_FILE.read_text()
+
+            out = app.apply_change({"type": "env", "key": "SC4S_USE_REVERSE_DNS", "value": "yes", "apply": True}, "tester")
+
+            self.assertFalse(out["ok"])
+            self.assertTrue(out["rolled_back"])
+            self.assertEqual(actions, ["tester", "tester"])
+            self.assertTrue(out["rollback_runtime"]["ok"])
+            self.assertEqual(app.ENV_FILE.read_text(), before)
+
+    def test_delete_source_apply_honors_intent_and_rolls_back_after_reload_failure(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.add_service({"filter": "asa_lab", "source": "10.10.2.0/24", "vendor_product": "cisco_asa"}, "tester")
+            app.validate_config = lambda: {"ok": True}
+            calls = []
+            app.reload_sc4s = lambda actor: calls.append(actor) or ({"ok": False} if len(calls) == 1 else {"ok": True})
+
+            out = app.delete_source("asa_lab", "tester", apply=True)
+
+            self.assertFalse(out["ok"])
+            self.assertTrue(out["rolled_back"])
+            self.assertEqual(calls, ["tester", "tester"])
+            self.assertTrue((app.LOCAL_ROOT / "config" / "filters" / "asa_lab.conf").exists())
 
 
     def test_rollback_restore_preserves_local_root_inode_for_bind_mounts(self):

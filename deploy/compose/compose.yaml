@@ -8,12 +8,14 @@
 #   - keep syslog-ng disk-buffer state in the splunk-sc4s-var Docker volume
 #
 # Quick start:
-#   sudo mkdir -p /opt/sc4s/{local,archive,tls,manager}
+#   sudo mkdir -p /opt/sc4s/{env,local,archive,tls,manager}
 #   sudo cp deploy/compose/compose.yaml /opt/sc4s/compose.yaml
-#   sudo cp deploy/compose/env_file.example /opt/sc4s/env_file
+#   sudo cp deploy/compose/env_file.example /opt/sc4s/env/env_file
+#   sudo ln -s env/env_file /opt/sc4s/env_file
 #   sudo cp deploy/compose/manager.env.example /opt/sc4s/manager.env
 #   sudo cp deploy/compose/.env.example /opt/sc4s/.env
-#   sudo editor /opt/sc4s/env_file /opt/sc4s/manager.env /opt/sc4s/.env
+#   sudo chown -R 10001:10001 /opt/sc4s/{env,local,tls,manager}
+#   sudo editor /opt/sc4s/env/env_file /opt/sc4s/manager.env /opt/sc4s/.env
 #   cd /opt/sc4s && sudo docker compose -f compose.yaml up -d
 #
 # This template deliberately does NOT mount /var/run/docker.sock. Without a
@@ -50,7 +52,7 @@ services:
       - /opt/sc4s/tls:/etc/syslog-ng/tls:ro,z
 
   manager:
-    image: ghcr.io/s6securitylabs/sc4s-manager:${SC4S_MANAGER_VERSION:-latest}
+    image: ghcr.io/s6securitylabs/sc4s-manager:${SC4S_MANAGER_VERSION:-1.0.2}
     container_name: sc4s-manager
     restart: unless-stopped
     depends_on:
@@ -59,18 +61,18 @@ services:
       - /opt/sc4s/manager.env
     environment:
       SC4S_ROOT: /opt/sc4s
+      SC4S_ENV_FILE: /opt/sc4s/env/env_file
       SC4S_MANAGER_ROOT: /opt/sc4s-manager
-      SC4S_CONTROL_SOCKET: /run/sc4s-manager/control.sock
     ports:
       - target: 8090
         published: ${SC4S_MANAGER_PORT:-8090}
         protocol: tcp
     volumes:
-      - /opt/sc4s/env_file:/opt/sc4s/env_file:z
+      - /opt/sc4s/env:/opt/sc4s/env:z
       - /opt/sc4s/local:/opt/sc4s/local:z
       - /opt/sc4s/tls:/opt/sc4s/tls:z
       - /opt/sc4s/manager:/opt/sc4s-manager:z
-      - sc4s-manager-run:/run/sc4s-manager
+
     read_only: true
     tmpfs:
       - /tmp
@@ -86,4 +88,3 @@ services:
 
 volumes:
   splunk-sc4s-var:
-  sc4s-manager-run:

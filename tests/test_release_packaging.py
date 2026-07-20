@@ -61,6 +61,9 @@ def test_release_compose_matches_sc4s_docker_first_layout():
     compose_text = (ROOT / "deploy" / "compose" / "compose.yaml").read_text(encoding="utf-8")
 
     assert "/opt/sc4s/env_file" in compose_text
+    assert "/opt/sc4s/env:/opt/sc4s/env" in compose_text
+    assert "SC4S_ENV_FILE: /opt/sc4s/env/env_file" in compose_text
+    assert "sc4s-manager-run" not in compose_text
     assert "/opt/sc4s/local:/etc/syslog-ng/conf.d/local" in compose_text
     assert "/opt/sc4s/archive:/var/lib/syslog-ng/archive" in compose_text
     assert "/opt/sc4s/tls:/etc/syslog-ng/tls" in compose_text
@@ -71,6 +74,9 @@ def test_release_compose_matches_sc4s_docker_first_layout():
     assert "container3:3.43.0" in compose_text
     assert (ROOT / "deploy" / "compose" / "env_file.example").exists()
     assert (ROOT / "deploy" / "compose" / "manager.env.example").exists()
+    install_runbook = (ROOT / "docs" / "runbooks" / "install.md").read_text(encoding="utf-8")
+    assert "/opt/sc4s/env/env_file" in install_runbook
+    assert "ln -sfn env/env_file /opt/sc4s/env_file" in install_runbook
 
 
 def test_release_manifest_does_not_include_secret_values(tmp_path):

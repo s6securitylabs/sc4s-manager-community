@@ -514,7 +514,7 @@ class LibraryTests(unittest.TestCase):
             self.assertEqual(imports[0]["last_apply"]["apply_state"], "applied")
             self.assertEqual(imports[0]["last_apply"]["live_state"], "live")
 
-    def test_apply_import_records_reload_failure_as_explicit_non_live_state(self):
+    def test_apply_import_restores_files_and_runtime_when_reload_fails(self):
         mod = load_library()
         detail = {
             "id": "pan_panos",
@@ -541,14 +541,19 @@ class LibraryTests(unittest.TestCase):
                 return detail
             raise AssertionError(url)
 
+        reload_calls: list[str] = []
         with tempfile.TemporaryDirectory() as d:
+            root = Path(d) / "sc4s"
+            target = root / "local" / "config" / "app_parsers" / "panos.conf"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("before\n")
             manager = mod.LibraryManager(
-                root=Path(d) / "sc4s",
+                root=root,
                 manager_root=Path(d) / "manager",
                 fetch_json=fetch_json,
                 fetch_bytes=lambda url, source, max_bytes: bundle,
                 validate_config=lambda: {"ok": True},
-                reload_sc4s=lambda actor: {"ok": False, "error": "reload failed"},
+                reload_sc4s=lambda actor: reload_calls.append(actor) or ({"ok": False, "error": "reload failed"} if len(reload_calls) == 1 else {"ok": True, "reloaded": True}),
                 post_check=lambda: {"health": {"ok": True}},
             )
             manager.sync_source("official")
@@ -556,11 +561,14 @@ class LibraryTests(unittest.TestCase):
             applied = manager.apply_import(validated["import_id"], actor="tester", apply=True)
             self.assertFalse(applied["ok"])
             self.assertEqual(applied["control"], {"ok": False, "error": "reload failed"})
-            self.assertEqual(applied["apply_state"], "applied_reload_failed")
+            self.assertTrue(applied["rolled_back"])
+            self.assertEqual(target.read_text(), "before\n")
+            self.assertEqual(reload_calls, ["tester", "tester"])
+            self.assertEqual(applied["rollback_runtime"], {"ok": True, "reloaded": True})
             self.assertEqual(applied["live_state"], "not_live")
             last_apply = manager.list_imports()["imports"][0]["last_apply"]
             self.assertEqual(last_apply["control"], applied["control"])
-            self.assertEqual(last_apply["post_check"], applied["post_check"])
+            self.assertEqual(last_apply["rollback_runtime"], applied["rollback_runtime"])
             self.assertEqual(last_apply["live_state"], "not_live")
 
     def test_source_health_checks_catalogue_manifest_entry_bundle_and_sidecars(self):

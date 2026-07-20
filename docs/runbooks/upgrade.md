@@ -2,64 +2,67 @@
 
 ## Scope
 
-This runbook defines the upgrade path for SC4S Manager application packaging,
-systemd units, and templates. SC4S image changes require separate version drift
-review before changing the pinned `3.43.0` runtime.
+This runbook upgrades the **Manager container only** in the supported `/opt/sc4s` Docker Compose deployment. It does not upgrade SC4S, change HEC settings, or make unavailable control-socket functions available. Review SC4S image changes separately.
 
-## Dry Run
+`deploy/upgrade/upgrade.sh --dry-run` checks archive shape and prints a plan only. It rejects `--execute` and does not perform this upgrade. Do not present planner output as lifecycle evidence.
 
-```bash
-deploy/upgrade/upgrade.sh --artifact ./dist/sc4s-manager-VERSION.tar.gz --dry-run
-```
+## Preconditions and abort criteria
 
-The script validates that the artifact exists and prints the plan. It must not
-change files, units, symlinks, users, containers, or services.
+Before changing anything, have all of the following:
 
-## Frontend Build and Static Routing
+- A verified target Manager image tag/digest and the exact current image reference.
+- A rollback reference that has been pulled or is known available in the approved registry.
+- A current backup of `/opt/sc4s/manager`, `/opt/sc4s/local`, `/opt/sc4s/env/` (including the `env_file` symlink), `/opt/sc4s/manager.env`, `/opt/sc4s/.env`, and `/opt/sc4s/compose.yaml`.
+- A maintenance window if the proxy or Manager UI is operator-critical.
+- Current Manager and SC4S health/readback evidence.
 
-The dry-run upgrade planner is non-mutating. It validates the artifact and
-reports whether the working tree already has `frontend/dist/index.html`, but it
-must not run `npm`, create `node_modules/`, or write `frontend/dist/`.
+Abort and roll back immediately if Compose rendering fails, the target image cannot be pulled/verified, either container restarts repeatedly, Manager `/health` is not HTTP 200, `sc4s.ok` is false, expected Manager state is missing, or secrets appear in output. Do not upgrade while an SC4S configuration incident is unresolved.
 
-Build the optional static frontend as an explicit packaging step before creating
-the upgrade artifact:
+## 1. Capture baseline and back up mutable state
 
 ```bash
-scripts/build_frontend.sh
+set -euo pipefail
+cd /opt/sc4s
+UTC=$(date -u +%Y%m%dT%H%M%SZ)
+sudo install -d -m 0700 /opt/sc4s/manager/backups/upgrade-${UTC}
+sudo cp -a env env_file manager.env .env compose.yaml local \
+  /opt/sc4s/manager/backups/upgrade-${UTC}/
+sudo docker compose -f compose.yaml ps
+sudo docker compose -f compose.yaml images
+curl -fsS http://127.0.0.1:8090/health | python3 -m json.tool
+curl -fsS http://127.0.0.1:8080/health
 ```
 
-That build script runs dependency installation (`npm ci` with a lockfile,
-otherwise `npm install`) and `npm run build`. A release that includes the static
-frontend should carry `frontend/dist/index.html` and `frontend/dist/assets/*` in
-the artifact.
+Expected: the backup directory contains the listed mutable inputs, both services are running, and Manager health is JSON `status: ok` with `sc4s.ok: true`. Record the exact Manager image reference shown by `docker compose images`; it is the rollback target.
 
-After upgrade, the manager service serves `/assets/*` from
-`frontend/dist/assets/*`, returns `frontend/dist/index.html` for unknown non-API
-GET routes, and keeps unknown `/api/*` routes as JSON 404 responses. If
-`frontend/dist/index.html` is absent, only `/` and `/index.html` use the inline
-fallback UI.
+## 2. Pin, pull, and recreate only Manager
 
-## Upgrade Steps
+Edit `SC4S_MANAGER_VERSION` in `/opt/sc4s/.env` to the approved target tag or digest. Do not change `SC4S_IMAGE` in this procedure.
 
-1. Capture current service status, application version, SC4S image ID, and
-   health responses.
-2. Back up `/opt/sc4s-manager`, `/etc/sc4s-manager`, systemd unit files, and manager
-   state metadata to `/opt/sc4s-manager/backups`.
-3. Stage the new artifact in a temporary release directory.
-4. Run shell syntax checks and unit tests from the staged release.
-5. Validate config through the manager/control path.
-6. Stop only the manager after recording control socket health.
-7. Switch `/opt/sc4s-manager` to the staged release.
-8. Reload systemd and restart the control socket, control daemon, and manager.
-9. Run post-checks: `/health`, `/api/health`, config validation, version drift,
-   metrics endpoint, and redaction smoke.
-10. Save upgrade evidence without secrets.
+```bash
+cd /opt/sc4s
+sudo editor .env
+sudo docker compose -f compose.yaml config -q
+sudo docker compose -f compose.yaml pull manager
+sudo docker compose -f compose.yaml up -d --no-deps manager
+sudo docker compose -f compose.yaml ps
+sudo docker compose -f compose.yaml images
+```
 
-## Abort Criteria
+Expected: Compose is silent for `config -q`; only `manager` is recreated; `sc4s` remains running with the original image. If Docker selects an unintended image, stop here and restore the saved `.env` before proceeding.
 
-- Artifact checksum mismatch.
-- Unit syntax failure.
-- Test failure in staged release.
-- Config validation failure.
-- Post-check failure after restart.
-- Any secret value appears in logs, reports, diffs, or API output.
+## 3. Verify the upgrade
+
+```bash
+curl -fsS http://127.0.0.1:8090/health | python3 -m json.tool
+curl -fsS http://127.0.0.1:8080/health
+cd /opt/sc4s && sudo docker compose -f compose.yaml logs --tail=100 manager sc4s
+```
+
+Expected: Manager returns HTTP 200 and `status: ok`; the nested SC4S check remains `ok: true`; logs have no new repeating errors; `docker compose images` shows the approved Manager reference. Authenticate through the normal proxy/manual path and confirm a non-destructive inventory/readback works. In this Compose bundle, control-socket runtime actions remain unavailable by design both before and after upgrade.
+
+Finally, verify that `/opt/sc4s/manager` state is still present and run the approved downstream marker/Splunk readback if the maintenance window includes ingestion assurance. Saved Manager state, Manager liveness, SC4S health, and Splunk indexing are separate checks.
+
+## Recovery
+
+If any post-check fails, use [Rollback Runbook](rollback.md) immediately. Preserve the failed container logs and do not retry repeatedly against a modified `.env`; each retry can obscure the known-good reference.

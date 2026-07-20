@@ -22,6 +22,16 @@ def test_compose_template_does_not_grant_docker_socket_access():
     assert "host-root Docker control" in compose
 
 
+def test_compose_defaults_pin_manager_and_sc4s_images():
+    compose = read("deploy/compose/compose.yaml")
+    defaults = read("deploy/compose/.env.example")
+
+    assert "SC4S_MANAGER_VERSION:-latest" not in compose
+    assert "SC4S_MANAGER_VERSION=latest" not in defaults
+    assert "SC4S_MANAGER_VERSION:-1.0.2" in compose
+    assert "SC4S_MANAGER_VERSION=1.0.2" in defaults
+
+
 def test_dockerfile_packages_frontend_and_runs_non_root():
     dockerfile = read("Dockerfile")
 
