@@ -19,7 +19,8 @@ def test_operator_runbooks_state_real_compose_and_lifecycle_boundaries():
         assert "dry-run" in text
     assert "planners only" in install
     assert "does **not** provide a control daemon" in install
-    assert "does not consume systemd's passed socket" in install
+    assert "consumes that listener without unlinking or rebinding it" in install
+    assert "systemd socket activation" in install
     assert "--execute`, `--apply`, and `--rollback` are rejected" in install
     assert "does not perform this upgrade" in upgrade
     assert "has no rollback mode" in rollback

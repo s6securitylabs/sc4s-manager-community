@@ -221,27 +221,70 @@ class UnixServer(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
     daemon_threads = True
 
 
+class ActivatedUnixServer(socketserver.ThreadingMixIn, socketserver.UnixStreamServer):
+    """A Unix server backed by the listener passed by systemd (fd 3)."""
+
+    daemon_threads = True
+
+    def __init__(self, listener: socket.socket):
+        socketserver.BaseServer.__init__(self, listener.getsockname(), Handler)
+        self.socket = listener
+        self.server_address = listener.getsockname()
+
+
+def take_systemd_socket() -> socket.socket | None:
+    """Consume exactly one systemd-passed AF_UNIX stream listener, if present.
+
+    The service deliberately fails closed for malformed activation metadata instead
+    of falling back to unlinking/rebinding a socket systemd owns.
+    """
+    listen_pid = os.environ.get("LISTEN_PID")
+    listen_fds = os.environ.get("LISTEN_FDS")
+    if listen_pid is None and listen_fds is None:
+        return None
+    if listen_pid != str(os.getpid()) or listen_fds != "1":
+        raise RuntimeError("invalid systemd socket activation metadata")
+
+    listener = socket.socket(fileno=3)
+    os.environ.pop("LISTEN_PID", None)
+    os.environ.pop("LISTEN_FDS", None)
+    if listener.family != socket.AF_UNIX or (listener.type & 0xF) != socket.SOCK_STREAM:
+        listener.close()
+        raise RuntimeError("systemd activation socket must be an AF_UNIX stream listener")
+    if not listener.getsockopt(socket.SOL_SOCKET, socket.SO_ACCEPTCONN):
+        listener.close()
+        raise RuntimeError("systemd activation socket is not listening")
+    return listener
+
+
 def main() -> None:
-    SOCKET_PATH.parent.mkdir(parents=True, exist_ok=True)
-    if SOCKET_PATH.exists():
-        SOCKET_PATH.unlink()
-    server = UnixServer(str(SOCKET_PATH), Handler)
-    os.chmod(SOCKET_PATH, 0o660)
-    try:
-        import grp
-        gid = grp.getgrnam(SOCKET_GROUP).gr_gid
-        os.chown(SOCKET_PATH, 0, gid)
-    except Exception:
-        pass
-    print(f"sc4s-control listening on {SOCKET_PATH}", flush=True)
+    activated_listener = take_systemd_socket()
+    activated = activated_listener is not None
+    if activated:
+        server = ActivatedUnixServer(activated_listener)
+        print(f"sc4s-control listening on {SOCKET_PATH} (systemd socket activation)", flush=True)
+    else:
+        SOCKET_PATH.parent.mkdir(parents=True, exist_ok=True)
+        if SOCKET_PATH.exists():
+            SOCKET_PATH.unlink()
+        server = UnixServer(str(SOCKET_PATH), Handler)
+        os.chmod(SOCKET_PATH, 0o660)
+        try:
+            import grp
+            gid = grp.getgrnam(SOCKET_GROUP).gr_gid
+            os.chown(SOCKET_PATH, 0, gid)
+        except Exception:
+            pass
+        print(f"sc4s-control listening on {SOCKET_PATH}", flush=True)
     try:
         server.serve_forever()
     finally:
         server.server_close()
-        try:
-            SOCKET_PATH.unlink()
-        except FileNotFoundError:
-            pass
+        if not activated:
+            try:
+                SOCKET_PATH.unlink()
+            except FileNotFoundError:
+                pass
 
 
 if __name__ == "__main__":

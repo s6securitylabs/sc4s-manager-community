@@ -6,7 +6,7 @@ A local web UI for [Splunk Connect for Syslog (SC4S)](https://splunk.github.io/s
 
 The supported operator path is the Docker Compose bundle in `/opt/sc4s`, beside a pinned SC4S image. It deliberately does **not** mount `/var/run/docker.sock` and it does **not** run the host control daemon. Therefore a Compose-only deployment can manage desired configuration but cannot use Manager's control-socket actions (validate through the daemon, reload, restart, Docker status, logs, metrics, or listener inspection). Those controls must show unavailable; do not add a Docker-socket mount to bypass this boundary.
 
-The shipped systemd control units are not an alternative supported deployment at this revision: the Python control daemon binds its own socket and does not implement systemd socket activation. See the install runbook before attempting them.
+The packaged systemd control units provide an optional narrow host-control boundary. The socket unit owns `/run/sc4s-manager/control.sock` with mode `0660`; the root-only daemon consumes that listener through systemd socket activation and retains the fixed action allowlist. This is a separate topology from Compose: enabling it does not add host control to a Compose-only Manager container unless a separately reviewed deployment mounts that narrow socket. See the install runbook before enabling it.
 
 ## Quick start (Compose, configuration management only)
 

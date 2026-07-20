@@ -2,7 +2,7 @@
 Description=SC4S Manager local SC4S control daemon
 Documentation=https://github.com/splunk/splunk-connect-for-syslog
 Requires=sc4s-manager-control.socket
-After=docker.service podman.service
+After=sc4s-manager-control.socket docker.service podman.service
 
 [Service]
 Type=simple
@@ -26,6 +26,3 @@ ProtectSystem=strict
 ReadWritePaths=/opt/sc4s /opt/sc4s-manager /run/sc4s-manager
 RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 SystemCallArchitectures=native
-
-[Install]
-WantedBy=multi-user.target

@@ -1,7 +1,9 @@
 import importlib.util
 import json
 import os
+import socket
 import tempfile
+import threading
 import unittest
 from pathlib import Path
 from typing import Any
@@ -25,6 +27,55 @@ def load_control(tmp: Path) -> Any:
 
 
 class ControlDaemonTests(unittest.TestCase):
+    def test_systemd_activation_uses_passed_listener_without_rebinding_or_unlinking(self):
+        with tempfile.TemporaryDirectory() as d:
+            control = load_control(Path(d))
+            socket_path = Path(d) / "run" / "activated.sock"
+            socket_path.parent.mkdir()
+            listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            listener.bind(str(socket_path))
+            listener.listen()
+            saved_fd: int | None = None
+            try:
+                try:
+                    saved_fd = os.dup(3)
+                except OSError:
+                    saved_fd = None
+                os.dup2(listener.fileno(), 3)
+                with patch.dict(os.environ, {"LISTEN_PID": str(os.getpid()), "LISTEN_FDS": "1"}):
+                    activated_listener = control.take_systemd_socket()
+                    self.assertIsNotNone(activated_listener)
+                    server = control.ActivatedUnixServer(activated_listener)
+                    thread = threading.Thread(target=server.handle_request)
+                    thread.start()
+                    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+                        client.connect(str(socket_path))
+                        client.sendall(b'{"action":"not-allowed"}\n')
+                        response = json.loads(client.recv(65536).decode("utf-8"))
+                    thread.join(timeout=2)
+                    self.assertFalse(thread.is_alive())
+                    self.assertFalse(response["ok"])
+                    self.assertTrue(socket_path.exists(), "activated listener must remain systemd-owned")
+                    server.server_close()
+                    self.assertTrue(socket_path.exists(), "server shutdown must not unlink systemd socket")
+            finally:
+                listener.close()
+                if saved_fd is None:
+                    try:
+                        os.close(3)
+                    except OSError:
+                        pass
+                else:
+                    os.dup2(saved_fd, 3)
+                    os.close(saved_fd)
+
+    def test_systemd_activation_rejects_invalid_metadata(self):
+        with tempfile.TemporaryDirectory() as d:
+            control = load_control(Path(d))
+            with patch.dict(os.environ, {"LISTEN_PID": "0", "LISTEN_FDS": "1"}):
+                with self.assertRaisesRegex(RuntimeError, "invalid systemd socket activation metadata"):
+                    control.take_systemd_socket()
+
     def test_run_truncates_stdout_and_stderr_but_preserves_return_code(self):
         with tempfile.TemporaryDirectory() as d:
             control = load_control(Path(d))

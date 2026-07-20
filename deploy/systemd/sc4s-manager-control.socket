@@ -3,6 +3,7 @@ Description=SC4S Manager local control socket
 
 [Socket]
 ListenStream=/run/sc4s-manager/control.sock
+Service=sc4s-manager-control.service
 SocketUser=sc4s-manager
 SocketGroup=sc4s-manager
 SocketMode=0660

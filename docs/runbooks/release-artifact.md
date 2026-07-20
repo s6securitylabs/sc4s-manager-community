@@ -8,7 +8,7 @@ A successful build or dry-run artifact validator proves artifact shape only. It 
 
 ## Required release surface
 
-The packaging contract includes application code, Dockerfile, Compose template/examples, dry-run planner scripts, frontend distribution, and systemd unit files. Systemd files are packaged because they are part of the artifact contract, but the current control daemon does not support systemd socket activation; do not describe their presence as a supported systemd installation path.
+The packaging contract includes application code, Dockerfile, Compose template/examples, dry-run planner scripts, frontend distribution, and systemd unit files. The systemd control socket/service pair is an optional host-control deployment surface: its socket unit owns the `0660` local socket and the root control service consumes it through systemd socket activation. It does not change the Compose-only support boundary or add a Docker-socket mount.
 
 The operator-supported deployment surface is:
 

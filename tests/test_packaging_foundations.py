@@ -63,9 +63,15 @@ def test_templates_do_not_contain_literal_secret_values():
 
 def test_systemd_units_reference_packaged_unit_names():
     manager_unit = read("deploy/systemd/sc4s-manager.service")
+    control_unit = read("deploy/systemd/sc4s-manager-control.service")
+    socket_unit = read("deploy/systemd/sc4s-manager-control.socket")
 
     assert "sc4s-manager-control.service" in manager_unit
     assert "sc4s-control.service" not in manager_unit
+    assert "Requires=sc4s-manager-control.socket" in control_unit
+    assert "WantedBy=multi-user.target" not in control_unit
+    assert "Service=sc4s-manager-control.service" in socket_unit
+    assert "SocketMode=0660" in socket_unit
 
 
 def test_control_audit_path_is_inside_packaged_state_root():

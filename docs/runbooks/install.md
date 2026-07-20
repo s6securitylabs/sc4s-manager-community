@@ -6,7 +6,7 @@ This is the supported **Docker Compose** procedure for a host that runs SC4S in 
 
 At this revision, the Compose bundle does **not** provide a control daemon or a mounted host control socket. Do not expect Manager-triggered validate, reload, restart, Docker status/logs, metrics, or listener inspection to work in a Compose-only deployment. This is intentional; use the explicit host-side Compose commands in this runbook for lifecycle operations.
 
-The supplied systemd control service/socket files are packaged for development work, but are **not supported for operator installation** yet. `control.py` opens and owns its Unix socket itself; it does not consume systemd's passed socket and does not implement systemd socket activation. Enabling `sc4s-manager-control.socket` and its daemon together can fail with `Address already in use`. Do not work around this by deleting socket permissions, making the socket world-writable, or mounting `/var/run/docker.sock`.
+The supplied systemd control service/socket pair is an **optional host-control deployment**. It is not part of the Compose bundle and does not make controls available inside the Compose-only Manager container. In this mode, `sc4s-manager-control.socket` owns `/run/sc4s-manager/control.sock` (user/group `sc4s-manager`, mode `0660`) and starts the root-owned daemon with its listener on fd 3. The daemon consumes that listener without unlinking or rebinding it. Enable the socket unit, not the service unit; systemd starts the service on demand or when `sc4s-manager.service` requires it. Do not work around access failures by deleting socket permissions, making the socket world-writable, or mounting `/var/run/docker.sock`.
 
 The install and upgrade scripts are planners only. `--execute`, `--apply`, and `--rollback` are rejected; they do not install, upgrade, or roll back a host.
 
@@ -130,6 +130,35 @@ unset SC4S_MANAGER_API_TOKEN
 
 Expected: the response includes Manager health plus control/runtime fields. In Compose-only mode, control-related fields may be unavailable/`ok: false`; that is expected and must not be reported as live SC4S control. Prove event delivery separately with an approved marker event and Splunk search/readback for the configured destination.
 
+## Optional: enable the systemd host control boundary
+
+Use this only for a reviewed host-systemd Manager deployment where the Manager process runs as `sc4s-manager` and can access the socket group. It is **not** a step for the Compose procedure above. Confirm `/opt/sc4s/compose.yaml` (or the approved fixed `/opt/sc4s/docker-compose.yml`) and the fixed `SC4S` container identity are the intended runtime before enabling the root daemon.
+
+```bash
+sudo install -m 0644 deploy/systemd/sc4s-manager-control.socket /etc/systemd/system/sc4s-manager-control.socket
+sudo install -m 0644 deploy/systemd/sc4s-manager-control.service /etc/systemd/system/sc4s-manager-control.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now sc4s-manager-control.socket
+sudo systemctl start sc4s-manager-control.service
+sudo systemctl status --no-pager sc4s-manager-control.socket sc4s-manager-control.service
+sudo stat -c '%a %U:%G %F %n' /run/sc4s-manager/control.sock
+```
+
+Expected: both units are active, the socket reports `660 sc4s-manager:sc4s-manager socket`, and the control-service journal contains `systemd socket activation`, not `Address already in use`. Do not enable the service separately: it has no `[Install]` section because the socket unit owns lifecycle activation. To exercise the protocol without Docker-side mutation, send an unsupported action and expect a controlled rejection:
+
+```bash
+python3 - <<'PY'
+import json, socket
+with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+    client.connect('/run/sc4s-manager/control.sock')
+    client.sendall(b'{"action":"not-allowed"}\n')
+    print(json.loads(client.recv(65536)))
+PY
+sudo journalctl -u sc4s-manager-control.service -b --no-pager
+```
+
+Expected: the response is `{"ok": false, ...}` and the journal still reports systemd activation. An accepted status/reload/restart request remains constrained to the fixed allowlist and fixed SC4S identity; it is not arbitrary host control.
+
 ## Troubleshooting and safe recovery
 
 | Symptom | Check | Safe recovery / abort point |
@@ -139,7 +168,7 @@ Expected: the response includes Manager health plus control/runtime fields. In C
 | `docker compose config -q` fails | Read the reported variable/YAML line | Restore the last known-good `.env`, `env_file`, or `manager.env`; do not start a partially rendered stack. |
 | UI/API is 401/403 | Confirm the proxy strips/injects headers; confirm proxy secret and exact group mapping; or confirm isolated manual-token setup | Do not weaken authorization or send shared secrets from client browsers. Fix proxy configuration or keep the service private. |
 | Runtime controls say socket missing/refused | `docker compose exec manager sh -c 'ls -l /run/sc4s-manager || true'` | Expected for this Compose bundle. Use host-side `docker compose` lifecycle commands. Do not add a Docker-socket mount. |
-| `sc4s-manager-control.service` logs `Address already in use` | `journalctl -u sc4s-manager-control.socket -u sc4s-manager-control.service -b --no-pager` | Stop/disable those experimental units and return to the supported Compose boundary. This is the known socket-activation mismatch, not a permission problem. |
+| `sc4s-manager-control.service` logs `Address already in use` | `journalctl -u sc4s-manager-control.socket -u sc4s-manager-control.service -b --no-pager`; `systemctl cat sc4s-manager-control.socket sc4s-manager-control.service` | The installed units or daemon are stale. Restore the matching packaged pair, run `daemon-reload`, restart the socket then the service, and confirm the journal says `systemd socket activation`. Do not delete the socket or change it to world-writable. |
 
 ## Evidence to retain
 
