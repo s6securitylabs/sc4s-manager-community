@@ -605,13 +605,22 @@ class ManagerUnitTests(unittest.TestCase):
             handler.headers["Origin"] = "https://sc4s-manager.example"
             self.assertTrue(app.authorized(handler, unsafe=True))
 
-    def test_apply_consent_requires_a_json_boolean(self):
+    def test_apply_consent_requires_a_json_boolean_before_mutation(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             self.assertFalse(app.payload_bool({"apply": False}, "apply", True))
             self.assertTrue(app.payload_bool({}, "apply", True))
-            with self.assertRaisesRegex(ValueError, "apply must be a JSON boolean"):
-                app.payload_bool({"apply": "false"}, "apply", True)
+            before = app.ENV_FILE.read_text()
+            invalid_calls = (
+                (app.apply_change, {"type": "env", "key": "SC4S_TEST", "value": "changed", "apply": "false"}),
+                (app.configure_destination, {"apply": "false"}),
+                (app.onboard_source, {"apply": "false"}),
+                (app.upsert_route, {"apply": "false"}),
+            )
+            for operation, payload in invalid_calls:
+                with self.assertRaisesRegex(ValueError, "apply must be a JSON boolean"):
+                    operation(payload, "tester")
+            self.assertEqual(app.ENV_FILE.read_text(), before)
 
     def test_atomic_write_preserves_mode_and_replaces_content(self):
         with tempfile.TemporaryDirectory() as d:

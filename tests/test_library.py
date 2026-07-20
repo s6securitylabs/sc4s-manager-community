@@ -579,6 +579,16 @@ class LibraryTests(unittest.TestCase):
         self.assertFalse(mod._post_check_failed({"ports": {"tls": {"enabled": False, "listener_active": False}}}))
         self.assertFalse(mod._post_check_failed({"docker": {"running": True}, "health": {"ok": True}}))
 
+    def test_atomic_json_write_preserves_mode_and_replaces_content(self):
+        mod = load_library()
+        with tempfile.TemporaryDirectory() as d:
+            target = Path(d) / "state.json"
+            target.write_text('{"before": true}\n')
+            target.chmod(0o640)
+            mod.atomic_write_json(target, {"after": True})
+            self.assertEqual(target.stat().st_mode & 0o777, 0o640)
+            self.assertEqual(json.loads(target.read_text()), {"after": True})
+
     def test_source_health_checks_catalogue_manifest_entry_bundle_and_sidecars(self):
         mod = load_library()
         detail = {

@@ -1004,12 +1004,21 @@ def now() -> str:
 
 def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = path.stat().st_mode & 0o777 if path.exists() else 0o600
     fd, tmp_path = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
     try:
+        os.fchmod(fd, existing_mode)
         with os.fdopen(fd, "w") as handle:
             json.dump(payload, handle, indent=2, sort_keys=True)
             handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
         os.replace(tmp_path, path)
+        directory_fd = os.open(path.parent, os.O_RDONLY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     finally:
         if os.path.exists(tmp_path):
             os.unlink(tmp_path)

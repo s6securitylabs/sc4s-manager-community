@@ -625,6 +625,7 @@ def preview_change(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def apply_change(payload: dict[str, Any], actor: str) -> dict[str, Any]:
+    apply_requested = payload_bool(payload, "apply", True)
     change = proposed_change(payload)
     diff = redacted_unified_diff(change["current"], change["content"], "current", "proposed")
     target = Path(change["target"])
@@ -645,7 +646,7 @@ def apply_change(payload: dict[str, Any], actor: str) -> dict[str, Any]:
         audit("apply_change_failed", actor, {"target": str(target), "type": change["type"], "validation": validation, "backup": str(b) if b else None, "rolled_back": rolled_back})
         return {"ok": False, "target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "diff": diff, "backup": str(b) if b else None, "validation": validation, "rolled_back": rolled_back}
     control = {"ok": True, "skipped": True}
-    if payload.get("apply", True):
+    if apply_requested:
         control = reload_sc4s(actor) if change["apply_mode"] == "reloadable" else restart_sc4s(actor)
     if not control.get("ok", True):
         # The failed control action may have read the staged file before it
@@ -1288,6 +1289,7 @@ def selector_content(vendor_product: str, dest_ref: str) -> str:
 
 
 def configure_destination(payload: dict[str, Any], actor: str) -> dict[str, Any]:
+    apply_requested = payload_bool(payload, "apply", False)
     kind = str(payload.get("kind", "")).lower()
     did = normalize_dest_id(str(payload.get("id", "DEFAULT")))
     updates: dict[str, str] = {}
@@ -1346,7 +1348,7 @@ def configure_destination(payload: dict[str, Any], actor: str) -> dict[str, Any]
     validation = validate_config()
     rolled_back = rollback_if_invalid(validation, snapshot, actor, "configure_destination")
     control = {"ok": True, "skipped": True}
-    if payload.get("apply", False) and not rolled_back:
+    if apply_requested and not rolled_back:
         control = restart_sc4s(actor)
     audit("configure_destination", actor, {"kind": kind, "id": did, "updates": redact(updates), "selector": str(selector_file) if selector_file else None, "ok": bool(validation.get("ok"))})
     safe_updates = {k: ("[REDACTED]" if SECRET_KEY_RE.search(k) else v) for k, v in updates.items()}
@@ -1402,6 +1404,7 @@ def source_test_instructions(source: str, host: str = "<sc4s-host>", tls_port: s
 
 
 def onboard_source(payload: dict[str, Any], actor: str) -> dict[str, Any]:
+    apply_requested = payload_bool(payload, "apply", False)
     name = validate_filter(str(payload.get("name") or payload.get("filter") or ""))
     vendor_product = str(payload.get("vendor_product", "")).strip()
     known = {s["vendor_product"] for s in SOURCE_CATALOG}
@@ -1418,10 +1421,10 @@ def onboard_source(payload: dict[str, Any], actor: str) -> dict[str, Any]:
     validation = validate_config()
     rolled_back = rollback_if_invalid(validation, snapshot, actor, "onboard_source")
     control = {"ok": True, "skipped": True}
-    if payload.get("apply", False) and not rolled_back:
+    if apply_requested and not rolled_back:
         control = reload_sc4s(actor)
     out = {"ok": bool(validation.get("ok") and control.get("ok", True)), "apply_mode": "reloadable", "service": result, "validation": validation, "control": control, "test_instructions": source_test_instructions(vendor_product or name)}
-    audit("onboard_source", actor, {"filter": name, "vendor_product": vendor_product, "index": payload.get("index", ""), "apply": bool(payload.get("apply", False)), "ok": out["ok"]})
+    audit("onboard_source", actor, {"filter": name, "vendor_product": vendor_product, "index": payload.get("index", ""), "apply": apply_requested, "ok": out["ok"]})
     return out
 
 
@@ -1495,6 +1498,7 @@ def route_inventory() -> dict[str, Any]:
 
 
 def upsert_route(payload: dict[str, Any], actor: str) -> dict[str, Any]:
+    apply_requested = payload_bool(payload, "apply", False)
     route_id = validate_filter(str(payload.get("id", "")))
     source = validate_filter(str(payload.get("source", "")))
     pack = str(payload.get("pack") or payload.get("vendor_product") or "").strip()
@@ -1531,7 +1535,7 @@ def upsert_route(payload: dict[str, Any], actor: str) -> dict[str, Any]:
     validation = validate_config()
     rolled_back = rollback_if_invalid(validation, snapshot, actor, "upsert_route")
     control = {"ok": True, "skipped": True}
-    if payload.get("apply", False) and not rolled_back:
+    if apply_requested and not rolled_back:
         control = reload_sc4s(actor)
     out = {"ok": bool(validation.get("ok") and control.get("ok", True)), "route": route, "validation": validation, "control": control}
     audit("upsert_route", actor, out)
