@@ -10,7 +10,7 @@ The shipped systemd control units are not an alternative supported deployment at
 
 ## Quick start (Compose, configuration management only)
 
-Read the [install runbook](docs/runbooks/install.md) first. In particular, set a fixed Manager release tag or digest before starting; the example's `latest` value is not release-safe.
+Read the [install runbook](docs/runbooks/install.md) first. In particular, set and record a fixed Manager release tag or digest before starting; do not substitute `latest` for the reviewed release reference.
 
 ```bash
 # Run from a checkout or extracted release that contains deploy/compose/.

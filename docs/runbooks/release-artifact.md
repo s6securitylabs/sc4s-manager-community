@@ -46,7 +46,7 @@ Expected: exit 0 with redacted dry-run JSON. Abort publication if required paths
 
 ## Image and Compose handoff
 
-A release image should be published with an immutable version tag and preferably recorded digest. The Compose example defaults Manager to `latest` for development convenience; an operator must replace it with the approved version/digest in `/opt/sc4s/.env` before `up -d`.
+A release image should be published with an immutable version tag and preferably recorded digest. Before `up -d`, an operator must set and record the approved version/digest in `/opt/sc4s/.env`; never replace the reviewed reference with `latest`.
 
 The Compose layout is fixed:
 
