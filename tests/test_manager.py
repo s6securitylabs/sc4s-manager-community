@@ -631,6 +631,79 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertEqual(target.read_text(), "SC4S_TEST=yes\n")
             self.assertEqual(target.stat().st_mode & 0o777, 0o640)
 
+    def test_resolved_under_accepts_in_root_path(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            candidate = app.ROOT / "local" / "context" / "host.csv"
+            resolved = app.resolved_under(candidate, (app.ROOT,))
+            self.assertEqual(resolved, candidate.resolve())
+
+    def test_resolved_under_rejects_dotdot_escape(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            outside = app.ROOT / "local" / ".." / ".." / "etc_passwd"
+            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
+                app.resolved_under(outside, (app.ROOT,))
+
+    def test_resolved_under_rejects_sibling_prefix_root(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            sibling = Path(str(app.ROOT) + "_evil") / "host.csv"
+            sibling.parent.mkdir(parents=True)
+            sibling.write_text("evil\n")
+            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
+                app.resolved_under(sibling, (app.ROOT,))
+
+    def test_resolved_under_rejects_symlink_escape(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            outside = Path(d) / "outside.conf"
+            outside.write_text("evil\n")
+            link = app.LOCAL_ROOT / "context" / "linked.conf"
+            link.symlink_to(outside)
+            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
+                app.resolved_under(link, tuple(app.EDITABLE_ROOTS))
+
+    def test_atomic_write_rejects_outside_root_target(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
+                app.atomic_write(Path(d) / "evil.txt", "oops\n")
+            self.assertFalse((Path(d) / "evil.txt").exists())
+
+    def test_atomic_write_bytes_rejects_outside_root_target(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
+                app.atomic_write_bytes(Path(d) / "evil.bin", b"oops")
+            self.assertFalse((Path(d) / "evil.bin").exists())
+
+    def test_backup_rejects_outside_root_source(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            outside = Path(d) / "outside.conf"
+            outside.write_text("evil\n")
+            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
+                app.backup(outside, "tester")
+            self.assertEqual(list(app.BACKUP_DIR.glob("*.bak")), [])
+
+    def test_apply_change_rejects_traversal_file_target(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            with self.assertRaises(ValueError):
+                app.apply_change({"type": "file", "path": "../../etc/sc4s/evil.conf", "content": "evil\n", "apply": False}, "tester")
+
+    def test_apply_change_rejects_symlinked_editable_path(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            outside = Path(d) / "outside.conf"
+            outside.write_text("original\n")
+            link = app.LOCAL_ROOT / "config" / "filters" / "linked.conf"
+            link.symlink_to(outside)
+            with self.assertRaises(ValueError):
+                app.apply_change({"type": "file", "path": "local/config/filters/linked.conf", "content": "evil\n", "apply": False}, "tester")
+            self.assertEqual(outside.read_text(), "original\n")
+
     def test_template_upload_import_restores_zip_content(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
