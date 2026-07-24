@@ -263,13 +263,18 @@ def safe_actor(actor: str) -> str:
 
 
 def resolved_under(path: Path, roots: tuple[Path, ...], *, label: str = "path") -> Path:
-    candidate = path.resolve(strict=False)
+    # Canonical realpath normalization of the candidate and each root, then a
+    # separator-terminated prefix guard. Both steps are deliberately inline so
+    # the full trust boundary is visible to reviewers and static analysis.
+    candidate = os.path.realpath(path)
     for root in roots:
-        try:
-            candidate.relative_to(root.resolve(strict=False))
-            return candidate
-        except ValueError:
-            continue
+        root_real = os.path.realpath(root)
+        if candidate.startswith(root_real + os.sep):
+            # Defense in depth: re-verify containment with canonical
+            # relative_to() semantics on the resolved paths.
+            resolved = Path(candidate)
+            resolved.relative_to(Path(root_real))
+            return resolved
     raise ValueError(f"{label} is outside the allowed roots")
 
 
@@ -278,7 +283,7 @@ def backup(path: Path, actor: str) -> Path:
     path = resolved_under(path, (ROOT,), label="backup source")
     rel = path.relative_to(ROOT.resolve(strict=False))
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-    target = BACKUP_DIR / f"{str(rel).replace('/', '__')}.{stamp}.{safe_actor(actor)}.bak"
+    target = resolved_under(BACKUP_DIR / f"{str(rel).replace('/', '__')}.{stamp}.{safe_actor(actor)}.bak", (BACKUP_DIR,), label="backup file")
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(path, target)
     return target
@@ -554,7 +559,7 @@ def backup_diff(name: str) -> dict[str, Any]:
     src = resolved_under(BACKUP_DIR / safe, (BACKUP_DIR,), label="backup name")
     if not src.exists() or src.suffix != ".bak":
         raise ValueError("backup not found")
-    dest = backup_target_from_name(safe)
+    dest = resolved_under(backup_target_from_name(safe), (ROOT,), label="backup target")
     old_raw = src.read_text(errors="replace").splitlines()
     new_raw = dest.read_text(errors="replace").splitlines() if dest.exists() else []
     old = [redact_line(x) for x in old_raw]
@@ -947,7 +952,7 @@ def restore_backup(name: str, actor: str) -> dict[str, Any]:
     if not src.exists() or src.suffix != ".bak":
         raise ValueError("backup not found")
     # Backup filenames are relpath.timestamp.actor.bak where / became __.
-    dest = backup_target_from_name(safe)
+    dest = resolved_under(backup_target_from_name(safe), (ROOT,), label="backup target")
     if dest.exists():
         backup(dest, actor)
     atomic_write(dest, src.read_text())
@@ -1218,7 +1223,7 @@ def add_service(payload: dict[str, Any], actor: str) -> dict[str, Any]:
         raise ValueError("vendor_product contains unsafe characters")
     if index and not SAFE_NAME_RE.match(index):
         raise ValueError("index contains unsafe characters")
-    filt_file = LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf"
+    filt_file = resolved_under(LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf", (LOCAL_ROOT / "config" / "filters",), label="filter path")
     filter_id = f"f_{filter_name}"
     expr = f"netmask(\"{source_match}\")" if re.match(r"^[0-9a-fA-F:.]+(/\d+)?$", source_match) else f"host(\"{source_match}\" type(glob))"
     conf = f"filter {filter_id} {{ {expr}; }};\n"
@@ -1431,7 +1436,7 @@ def onboard_source(payload: dict[str, Any], actor: str) -> dict[str, Any]:
 def delete_source(name: str, actor: str, apply: bool = False) -> dict[str, Any]:
     filter_name = validate_filter(name.removeprefix("f_"))
     filter_id = f"f_{filter_name}"
-    filt_file = LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf"
+    filt_file = resolved_under(LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf", (LOCAL_ROOT / "config" / "filters",), label="filter path")
     removed_paths: list[str] = []
     snapshot = mutation_snapshot()
     with _lock:
@@ -1516,11 +1521,11 @@ def upsert_route(payload: dict[str, Any], actor: str) -> dict[str, Any]:
     prefix = f"SC4S_DEST_SPLUNK_HEC_{did}_" if dest_kind == "hec" else f"SC4S_DEST_{dest_kind.upper()}_{did}_"
     if not any(key.startswith(prefix) for key in env):
         raise ValueError("destination is not configured")
-    if not (LOCAL_ROOT / "config" / "filters" / f"{source}.conf").exists():
+    if not resolved_under(LOCAL_ROOT / "config" / "filters" / f"{source}.conf", (LOCAL_ROOT / "config" / "filters",), label="source filter").exists():
         raise ValueError("source is not configured")
     selector_dir = LOCAL_ROOT / "config" / "app_parsers" / "selectors"
     selector_dir.mkdir(parents=True, exist_ok=True)
-    selector_file = selector_dir / f"sc4s-lp-{pack}_{dest_ref}.conf"
+    selector_file = resolved_under(selector_dir / f"sc4s-lp-{pack}_{dest_ref}.conf", (selector_dir,), label="route selector")
     snapshot = mutation_snapshot()
     with _lock:
         if selector_file.exists():
@@ -1602,7 +1607,7 @@ def list_config_files() -> list[dict[str, Any]]:
 def export_template(name: str, actor: str) -> dict[str, Any]:
     ensure_dirs()
     safe = re.sub(r"[^A-Za-z0-9_.-]", "_", name or "sc4s-template")[:80]
-    target = TEMPLATE_DIR / f"{safe}-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.zip"
+    target = resolved_under(TEMPLATE_DIR / f"{safe}-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.zip", (TEMPLATE_DIR,), label="template export")
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as z:
         for root in EDITABLE_ROOTS:
             if root.exists():
