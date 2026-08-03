@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from sc4s_manager.packaging import REQUIRED_ARTIFACT_PATHS, build_archive_manifest  # noqa: E402
 
 ARTIFACT_TREES = [
-    "src/sc4s_manager", "frontend/dist", "packs", "docs/runbooks",
+    "src/sc4s_manager", "frontend/dist", "packs", "embedded_library", "docs/runbooks",
     "docs/contracts", "docs/contributing",
 ]
 ARTIFACT_FILES = ["README.md", "LICENSE", "pyproject.toml"]

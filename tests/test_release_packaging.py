@@ -190,8 +190,16 @@ def test_build_release_artifact_produces_tarball_with_root_dir(tmp_path):
     assert "sc4s-manager/frontend/dist/index.html" in members
     assert any(m.startswith("sc4s-manager/frontend/dist/assets/") for m in members)
     assert any(m.startswith("sc4s-manager/packs/pan_panos/") for m in members)
+    assert "sc4s-manager/embedded_library/SNAPSHOT.json" in members, "release tarball must ship the offline embedded Library snapshot"
+    assert any(m.startswith("sc4s-manager/embedded_library/packs/") for m in members), "release tarball must ship embedded Library pack data"
     assert not any("frontend/dist/dist/" in m for m in members)
     assert not any("packs/packs/" in m for m in members)
+
+
+def test_dockerfile_ships_embedded_library():
+    """The runtime image must include the offline embedded Library tree."""
+    dockerfile = (ROOT / "Dockerfile").read_text()
+    assert "COPY embedded_library/ /opt/sc4s-manager/embedded_library/" in dockerfile
 
 
 def test_build_release_artifact_does_not_invoke_npm(tmp_path):

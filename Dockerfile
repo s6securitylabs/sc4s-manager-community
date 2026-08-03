@@ -30,6 +30,7 @@ RUN addgroup --system --gid 10001 sc4s-manager \
 WORKDIR /app
 COPY src/ /app/src/
 COPY packs/ /opt/sc4s-manager/packs/
+COPY embedded_library/ /opt/sc4s-manager/embedded_library/
 COPY --from=frontend-builder /build/frontend/dist/ /opt/sc4s-manager/frontend/dist/
 COPY README.md LICENSE ./
 

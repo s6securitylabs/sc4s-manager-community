@@ -15,6 +15,7 @@ REQUIRED_ARTIFACT_PATHS = [
     "src/sc4s_manager/app.py",
     "src/sc4s_manager/control.py",
     "src/sc4s_manager/standalone.py",
+    "embedded_library/SNAPSHOT.json",
     "Dockerfile",
     "deploy/compose/compose.yaml",
     "deploy/compose/.env.example",

@@ -1,0 +1,146 @@
+{
+  "ok": true,
+  "version": "3.46.0-beta",
+  "artifact_sha256": "d7a0d93773a208587e2b47997c6d2892388954b510259a8e24b85fbe4e41d573",
+  "evidence_mode": "live_disposable_host",
+  "host": "disposable validation VM (Ubuntu/Docker, snapshot-restored between runs)",
+  "install": {
+    "started_at": "2026-08-03T20:19:56Z",
+    "finished_at": "2026-08-03T20:20:56Z",
+    "ok": true,
+    "notes": "Fresh install of the packaged release compose bundle (with documented parallel-stack overrides: container/volume names, ports, /opt/sc4s-drill root). SC4S-drill healthy on 3.46.0; manager /ready = ready, version 3.46.0-beta, env_file ok, SC4S health 200."
+  },
+  "upgrade": {
+    "started_at": "2026-08-03T20:21:15Z",
+    "finished_at": "2026-08-03T20:22:00Z",
+    "ok": true,
+    "notes": "Upgraded the existing disposable /opt/sc4s deployment from manager 1.0.1 to 3.46.0-beta by repinning SC4S_MANAGER_VERSION and recreating the manager container. Pre-upgrade state backup taken. /ready = ready at 3.46.0-beta with env_file and state preserved; embedded offline Library live with 67 packs (snapshot sha256 0475e920a2ab...)."
+  },
+  "rollback": {
+    "started_at": "2026-08-03T20:24:51Z",
+    "finished_at": "2026-08-03T20:25:24Z",
+    "ok": true,
+    "notes": "Rolled back to manager 1.0.1 by restoring the .env pin and recreating the container. Pre-rollback backup taken. /ready = ready at 1.0.1 with env_file intact."
+  },
+  "service_state": {
+    "manager": {
+      "mode": "docker-compose",
+      "systemd": false,
+      "ready_after_install": true,
+      "ready_after_upgrade": true,
+      "ready_after_rollback": true
+    },
+    "control_daemon": {
+      "installed": false,
+      "mode": "observe_only",
+      "required": false
+    }
+  },
+  "redaction": {
+    "findings": []
+  },
+  "commands": [
+    {
+      "argv": [
+        "sha256sum",
+        "sc4s-manager-3.46.0-beta.tar.gz"
+      ],
+      "note": "matched manifest archive_sha256"
+    },
+    {
+      "argv": [
+        "tar",
+        "-xzf",
+        "sc4s-manager-3.46.0-beta.tar.gz"
+      ],
+      "note": "packaged bundle extracted; embedded_library/SNAPSHOT.json present"
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "-p",
+        "drill",
+        "up",
+        "-d"
+      ],
+      "note": "install: drill stack, manager /ready ready at 3.46.0-beta"
+    },
+    {
+      "argv": [
+        "tar",
+        "czf",
+        "/root/sc4s-pre-upgrade-<timestamp>.tar.gz",
+        "/opt/sc4s"
+      ],
+      "note": "state backup before upgrade"
+    },
+    {
+      "argv": [
+        "sed",
+        "-i",
+        "s/^SC4S_MANAGER_VERSION=.*/SC4S_MANAGER_VERSION=3.46.0-beta/",
+        "/opt/sc4s/.env"
+      ],
+      "note": "upgrade pin"
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "up",
+        "-d",
+        "manager"
+      ],
+      "note": "upgrade: /ready ready at 3.46.0-beta, state preserved"
+    },
+    {
+      "argv": [
+        "curl",
+        "-s",
+        "http://127.0.0.1:8090/ready"
+      ],
+      "note": "readiness probes for install/upgrade/rollback"
+    },
+    {
+      "argv": [
+        "docker",
+        "exec",
+        "sc4s-manager",
+        "python",
+        "-c",
+        "<library sources probe>"
+      ],
+      "note": "embedded Library: 67 packs, snapshot hash verified"
+    },
+    {
+      "argv": [
+        "tar",
+        "czf",
+        "/root/sc4s-pre-rollback-<timestamp>.tar.gz",
+        "/opt/sc4s"
+      ],
+      "note": "state backup before rollback"
+    },
+    {
+      "argv": [
+        "sed",
+        "-i",
+        "s/^SC4S_MANAGER_VERSION=.*/SC4S_MANAGER_VERSION=1.0.1/",
+        "/opt/sc4s/.env"
+      ],
+      "note": "rollback pin"
+    },
+    {
+      "argv": [
+        "docker",
+        "compose",
+        "up",
+        "-d",
+        "manager"
+      ],
+      "note": "rollback: /ready ready at 1.0.1"
+    }
+  ],
+  "git_commit": "1d34db9"
+}
