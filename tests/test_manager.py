@@ -471,6 +471,14 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertIs(redacted["contains_secrets"], False)
             self.assertEqual(redacted["api_token"], "[REDACTED]")
 
+    def test_redaction_keeps_secrets_present_boolean_flag(self):
+        """runtime state redaction.secrets_present is a presence flag, not a credential."""
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            value = {"redaction": {"secrets_present": True}}
+            redacted = app.redact(value)
+            self.assertIs(redacted["redaction"]["secrets_present"], True)
+
     def test_redaction_redacts_credential_values_but_preserves_option_metadata(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))

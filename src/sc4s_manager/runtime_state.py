@@ -187,6 +187,8 @@ def build_runtime_state(
     app_version: str,
     supported_sc4s_version: str,
     generated_at: str,
+    control_required: bool = True,
+    sc4s_health_probe: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Assemble /api/runtime/state from raw control daemon responses.
 
@@ -201,6 +203,7 @@ def build_runtime_state(
     control_daemon: dict[str, Any] = {
         "ok": daemon_ok,
         "provider": "unix_socket",
+        "required": control_required,
     }
     if not daemon_ok:
         err = (
@@ -223,6 +226,25 @@ def build_runtime_state(
         "supported_version": supported_sc4s_version,
         "version_drift": version_drift,
     }
+
+    # Observe-only fallback: without a control daemon there is no container
+    # inspect, so use the HTTP health probe (the same signal /ready uses)
+    # instead of reporting SC4S as an unknown black box.
+    if not daemon_ok and sc4s_health_probe is not None:
+        if sc4s_health_probe.get("ok"):
+            sc4s["running"] = True
+            sc4s["status"] = "running"
+            sc4s["health"] = "healthy"
+            sc4s["observed_via"] = "http_health_probe"
+        else:
+            sc4s["status"] = "unreachable"
+            sc4s["health"] = "unhealthy"
+            sc4s["observed_via"] = "http_health_probe"
+            warnings.append({
+                "severity": "error",
+                "code": "sc4s_unreachable",
+                "message": f"SC4S health probe failed: {sc4s_health_probe.get('error') or sc4s_health_probe.get('status')}",
+            })
 
     if version_drift:
         warnings.append({
@@ -285,7 +307,7 @@ def build_runtime_state(
     redaction = redact_secrets_check(env)
 
     overall_ok = bool(
-        daemon_ok
+        (daemon_ok or not control_required)
         and sc4s["running"]
         and not any(w["severity"] == "error" for w in warnings)
     )

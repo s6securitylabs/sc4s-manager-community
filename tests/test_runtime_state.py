@@ -366,6 +366,41 @@ class TestBuildRuntimeState(unittest.TestCase):
         self.assertFalse(tcp_9999["desired"])
         self.assertTrue(tcp_9999["live"])
 
+    def _observe_only_kwargs(self, probe):
+        return dict(
+            control_status={"ok": False, "error": "[Errno 2] No such file or directory"},
+            control_metrics={"ok": False, "error": "unavailable"},
+            control_listeners={"ok": False, "error": "unavailable"},
+            control_warnings={"ok": False, "error": "unavailable"},
+            control_required=False,
+            sc4s_health_probe=probe,
+        )
+
+    def test_observe_only_healthy_probe_reports_sc4s_running(self):
+        state = self._build(**self._observe_only_kwargs({"ok": True, "status": 200, "body": '{"status":"healthy"}'}))
+        self.assertTrue(state["sc4s"]["running"])
+        self.assertEqual(state["sc4s"]["status"], "running")
+        self.assertEqual(state["sc4s"]["health"], "healthy")
+        self.assertEqual(state["sc4s"]["observed_via"], "http_health_probe")
+        self.assertFalse(state["control_daemon"]["required"])
+        self.assertFalse(any(w["severity"] == "error" for w in state["warnings"]))
+        self.assertTrue(state["ok"], "observe_only deployment with healthy SC4S must be overall ok")
+
+    def test_observe_only_failed_probe_reports_unreachable(self):
+        state = self._build(**self._observe_only_kwargs({"ok": False, "error": "connection refused"}))
+        self.assertFalse(state["sc4s"]["running"])
+        self.assertEqual(state["sc4s"]["status"], "unreachable")
+        self.assertEqual(state["sc4s"]["health"], "unhealthy")
+        self.assertTrue(any(w["code"] == "sc4s_unreachable" and w["severity"] == "error" for w in state["warnings"]))
+        self.assertFalse(state["ok"])
+
+    def test_required_control_daemon_missing_is_not_ok_even_with_probe(self):
+        kwargs = self._observe_only_kwargs({"ok": True, "status": 200, "body": "{}"})
+        kwargs["control_required"] = True
+        state = self._build(**kwargs)
+        self.assertTrue(state["control_daemon"]["required"])
+        self.assertFalse(state["ok"], "a required-but-absent control daemon must keep overall ok false")
+
 
 if __name__ == "__main__":
     unittest.main()

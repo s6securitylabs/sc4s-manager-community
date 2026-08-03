@@ -279,7 +279,7 @@ def redact(value: Any) -> Any:
             # Redact actual credential-bearing fields only.
             # removed_env_keys carries env var *names* (never values) so API
             # consumers can verify credential cleanup after a destination delete.
-            sensitive = SECRET_KEY_RE.search(ks) and ks.lower() not in {"key", "listen_key", "secret", "contains_secrets", "removed_env_keys", "authenticated"}
+            sensitive = SECRET_KEY_RE.search(ks) and ks.lower() not in {"key", "listen_key", "secret", "contains_secrets", "removed_env_keys", "authenticated", "secrets_present"}
             out[k] = "[REDACTED]" if sensitive else redact(v)
         return out
     if isinstance(value, list):
@@ -2065,6 +2065,7 @@ def runtime_state_snapshot() -> dict[str, Any]:
     listeners = control_request("listeners")
     warnings_resp = control_request("warnings")
     env = parse_env()
+    probe = health_probe() if not (status.get("ok") or metrics.get("ok")) else None
     return mod.build_runtime_state(
         control_status=status,
         control_metrics=metrics,
@@ -2074,6 +2075,8 @@ def runtime_state_snapshot() -> dict[str, Any]:
         app_version=APP_VERSION,
         supported_sc4s_version=SUPPORTED_SC4S_VERSION,
         generated_at=now(),
+        control_required=REQUIRE_CONTROL,
+        sc4s_health_probe=probe,
     )
 
 

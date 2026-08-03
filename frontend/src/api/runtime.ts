@@ -46,6 +46,7 @@ export const runtimeStateSchema = z.object({
       ok: z.boolean(),
       provider: z.string(),
       error: z.string().optional(),
+      required: z.boolean().optional(),
     })
     .passthrough(),
   sc4s: z

@@ -82,11 +82,11 @@ function RuntimeHealthSection() {
           <Text fw={500}>{rt.manager.version}</Text>
           <Text size="xs" c="dimmed" mt={4}>
             SC4S control bridge:{' '}
-            <Badge color={rt.control_daemon.ok ? 'green' : 'red'} size="xs">
-              {rt.control_daemon.ok ? 'connected' : 'not connected'}
+            <Badge color={rt.control_daemon.ok ? 'green' : rt.control_daemon.required === false ? 'gray' : 'red'} size="xs">
+              {rt.control_daemon.ok ? 'connected' : rt.control_daemon.required === false ? 'observe only' : 'not connected'}
             </Badge>
           </Text>
-          {rt.control_daemon.error && (
+          {rt.control_daemon.error && rt.control_daemon.required !== false && (
             <Text size="xs" c="red" mt={2}>{rt.control_daemon.error}</Text>
           )}
         </Card>

@@ -1,26 +1,26 @@
 {
   "ok": true,
   "version": "3.46.0-beta",
-  "artifact_sha256": "d7a0d93773a208587e2b47997c6d2892388954b510259a8e24b85fbe4e41d573",
+  "artifact_sha256": "2c96b69a6b3d4a4a790f2612f2b52f766dc178a6f14fb5d39749e2de1dfac2ca",
   "evidence_mode": "live_disposable_host",
   "host": "disposable validation VM (Ubuntu/Docker, snapshot-restored between runs)",
   "install": {
-    "started_at": "2026-08-03T20:19:56Z",
-    "finished_at": "2026-08-03T20:20:56Z",
+    "started_at": "2026-08-03T21:39:56Z",
+    "finished_at": "2026-08-03T21:40:44Z",
     "ok": true,
-    "notes": "Fresh install of the packaged release compose bundle (with documented parallel-stack overrides: container/volume names, ports, /opt/sc4s-drill root). SC4S-drill healthy on 3.46.0; manager /ready = ready, version 3.46.0-beta, env_file ok, SC4S health 200."
+    "notes": "Fresh install of the final packaged release compose bundle (documented parallel-stack overrides: container/volume names, ports, /opt/sc4s-drill root). SC4S-drill healthy on 3.46.0; manager /ready = ready at 3.46.0-beta, env_file ok, SC4S health 200."
   },
   "upgrade": {
-    "started_at": "2026-08-03T20:21:15Z",
-    "finished_at": "2026-08-03T20:22:00Z",
+    "started_at": "2026-08-03T21:36:19Z",
+    "finished_at": "2026-08-03T21:36:53Z",
     "ok": true,
-    "notes": "Upgraded the existing disposable /opt/sc4s deployment from manager 1.0.1 to 3.46.0-beta by repinning SC4S_MANAGER_VERSION and recreating the manager container. Pre-upgrade state backup taken. /ready = ready at 3.46.0-beta with env_file and state preserved; embedded offline Library live with 67 packs (snapshot sha256 0475e920a2ab...)."
+    "notes": "Upgraded the disposable /opt/sc4s deployment from manager 1.0.1 to 3.46.0-beta (image built from the release commit, GHCR publish gated behind this evidence). /ready = ready at 3.46.0-beta with env_file and state preserved; runtime state reports SC4S running/healthy via HTTP probe; embedded offline Library live with 67 packs."
   },
   "rollback": {
-    "started_at": "2026-08-03T20:24:51Z",
-    "finished_at": "2026-08-03T20:25:24Z",
+    "started_at": "2026-08-03T21:35:43Z",
+    "finished_at": "2026-08-03T21:36:19Z",
     "ok": true,
-    "notes": "Rolled back to manager 1.0.1 by restoring the .env pin and recreating the container. Pre-rollback backup taken. /ready = ready at 1.0.1 with env_file intact."
+    "notes": "Rolled back to manager 1.0.1 by restoring the .env pin and recreating the container. /ready = ready at 1.0.1 with env_file intact."
   },
   "service_state": {
     "manager": {
@@ -53,7 +53,7 @@
         "-xzf",
         "sc4s-manager-3.46.0-beta.tar.gz"
       ],
-      "note": "packaged bundle extracted; embedded_library/SNAPSHOT.json present"
+      "note": "final bundle extracted; embedded_library/SNAPSHOT.json present"
     },
     {
       "argv": [
@@ -64,16 +64,7 @@
         "up",
         "-d"
       ],
-      "note": "install: drill stack, manager /ready ready at 3.46.0-beta"
-    },
-    {
-      "argv": [
-        "tar",
-        "czf",
-        "/root/sc4s-pre-upgrade-<timestamp>.tar.gz",
-        "/opt/sc4s"
-      ],
-      "note": "state backup before upgrade"
+      "note": "install: drill stack ready at 3.46.0-beta, SC4S health 200"
     },
     {
       "argv": [
@@ -104,23 +95,11 @@
     },
     {
       "argv": [
-        "docker",
-        "exec",
-        "sc4s-manager",
-        "python",
-        "-c",
-        "<library sources probe>"
+        "curl",
+        "-s",
+        "http://127.0.0.1:8090/api/runtime/state"
       ],
-      "note": "embedded Library: 67 packs, snapshot hash verified"
-    },
-    {
-      "argv": [
-        "tar",
-        "czf",
-        "/root/sc4s-pre-rollback-<timestamp>.tar.gz",
-        "/opt/sc4s"
-      ],
-      "note": "state backup before rollback"
+      "note": "runtime state ok=true, SC4S running/healthy, no error warnings"
     },
     {
       "argv": [
@@ -141,6 +120,5 @@
       ],
       "note": "rollback: /ready ready at 1.0.1"
     }
-  ],
-  "git_commit": "1d34db9"
+  ]
 }
