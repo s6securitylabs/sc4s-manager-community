@@ -11,7 +11,7 @@ SC4S Manager does not replace that work. It makes SC4S easier to operate, easier
 The practical difference:
 
 - SC4S often gives a basic source path and expects the customer to complete the heavy lifting.
-- SecHub Resources aims to ship curated packs that are turnkey: parser, filters, optional reduction, Splunk props/transforms, SOC field expectations, fixtures, validation evidence, and operational docs.
+- SecHub Resources product bundles own deployment identity, dependencies, runbooks, and Product TA releases. Separate SC4S Library packs carry parser, filter, optional reduction, Splunk reference knowledge, fixtures, validation evidence, and operational compatibility metadata for Manager inspection and selective SC4S apply.
 
 ## What SC4S Manager adds
 
@@ -20,7 +20,7 @@ The practical difference:
 SC4S Manager catalogues both:
 
 - upstream SC4S built-ins (`sc4s-inbuilt`, `sc4s-inbuilt-lite`)
-- curated SecHub Resources SC4S packs (`sechub-resource`)
+- curated SecHub Resources SC4S packs (`sechub-resources-pack`)
 
 The operator sees one searchable catalogue, but provenance is always visible. If upstream provides basic Cisco support and SC4S Manager provides a richer Cisco pack, the UI should show that relationship explicitly.
 

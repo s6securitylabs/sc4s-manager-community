@@ -69,5 +69,5 @@ Response `200`:
 - `test_event_sets`: explicit event boundary, uniqueness, delimiter/multiline, timestamp policy, and field delimiting metadata.
 - `event_families`: regex engine plus expected output sourcetype.
 - `export_artifacts`: source path, target path, kind, rendered/static flag, secret policy, required flag.
-- `provenance`: `origin` and `pack_class` use the source classes from `docs/contracts/catalogue-api.md`; curated Library packs use `sechub-resource`.
+- `provenance`: `origin` and `pack_class` use the source classes from `docs/contracts/catalogue-api.md`; curated Library packs use `sechub-resources-pack`.
 - `relationship_to_upstream`: includes `new_pack` for packs with no upstream SC4S equivalent.

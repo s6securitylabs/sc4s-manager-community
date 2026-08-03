@@ -10,9 +10,9 @@ const validRuntimeState = {
     running: true,
     status: 'running',
     health: 'healthy',
-    image: 'ghcr.io/splunk/sc4s:3.43.0',
-    image_version: '3.43.0',
-    supported_version: '3.43.0',
+    image: 'ghcr.io/splunk/sc4s:3.46.0',
+    image_version: '3.46.0',
+    supported_version: '3.46.0',
     version_drift: false,
   },
   listeners: [
@@ -75,7 +75,7 @@ describe('runtimeStateSchema', () => {
         {
           severity: 'warning',
           code: 'version_drift',
-          message: 'Running SC4S 3.40.0 differs from Manager-supported SC4S 3.43.0',
+          message: 'Running SC4S 3.40.0 differs from Manager-supported SC4S 3.46.0',
         },
       ],
     };

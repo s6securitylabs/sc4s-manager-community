@@ -1,0 +1,1135 @@
+{
+  "schema_version": "0.1",
+  "id": "microsoft_defender_for_cloud",
+  "version": "0.1.3",
+  "url": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/",
+  "description": "Curated SecHub Resources SC4S pack for Microsoft Defender for Cloud / Azure security posture and alerts JSON relays, covering fixture-backed security alert, recommendation, assessment, secure-score-control, and regulatory-compliance-control records.",
+  "display_name": "Microsoft Defender for Cloud",
+  "vendor": "microsoft",
+  "product": "defender_for_cloud",
+  "default_index": "epintel",
+  "default_source": "microsoft_defender_for_cloud",
+  "listener": {
+    "source_id": "MICROSOFT_DEFENDER_FOR_CLOUD",
+    "transport": "tcp",
+    "port": 20095,
+    "env": {
+      "SC4S_LISTEN_MICROSOFT_DEFENDER_FOR_CLOUD_TCP_PORT": "20095",
+      "SOURCE_ALL_SET_APPEND": "MICROSOFT_DEFENDER_FOR_CLOUD"
+    }
+  },
+  "sourcetypes": {
+    "security_alert": "microsoft:defender:cloud:security_alert",
+    "recommendation": "microsoft:defender:cloud:recommendation",
+    "assessment": "microsoft:defender:cloud:assessment",
+    "secure_score_control": "microsoft:defender:cloud:secure_score_control",
+    "regulatory_compliance": "microsoft:defender:cloud:regulatory_compliance"
+  },
+  "event_families": [
+    {
+      "id": "security_alert",
+      "label": "Defender for Cloud security alerts",
+      "match_engine": "pcre",
+      "match": "\"resourceType\"\\s*:\\s*\"Microsoft.Security/alerts\"",
+      "expected_sourcetype": "microsoft:defender:cloud:security_alert",
+      "primary_id_field": "id",
+      "required_fields": [
+        "timeGenerated",
+        "resourceType",
+        "subscriptionId",
+        "resourceId",
+        "alertDisplayName",
+        "severity",
+        "status"
+      ],
+      "timestamp_fields": [
+        "timeGenerated"
+      ]
+    },
+    {
+      "id": "recommendation",
+      "label": "Defender for Cloud recommendations",
+      "match_engine": "pcre",
+      "match": "\"resourceType\"\\s*:\\s*\"Microsoft.Security/recommendations\"",
+      "expected_sourcetype": "microsoft:defender:cloud:recommendation",
+      "primary_id_field": "id",
+      "required_fields": [
+        "timeGenerated",
+        "resourceType",
+        "subscriptionId",
+        "resourceId",
+        "recommendationDisplayName",
+        "recommendationSeverity",
+        "state"
+      ],
+      "timestamp_fields": [
+        "timeGenerated"
+      ]
+    },
+    {
+      "id": "assessment",
+      "label": "Defender for Cloud assessments",
+      "match_engine": "pcre",
+      "match": "\"resourceType\"\\s*:\\s*\"Microsoft.Security/assessments\"",
+      "expected_sourcetype": "microsoft:defender:cloud:assessment",
+      "primary_id_field": "id",
+      "required_fields": [
+        "timeGenerated",
+        "resourceType",
+        "subscriptionId",
+        "resourceId",
+        "assessmentKey",
+        "displayName",
+        "status"
+      ],
+      "timestamp_fields": [
+        "timeGenerated"
+      ]
+    },
+    {
+      "id": "secure_score_control",
+      "label": "Defender for Cloud secure score controls",
+      "match_engine": "pcre",
+      "match": "\"resourceType\"\\s*:\\s*\"Microsoft.Security/secureScoreControls\"|SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_SECURE_SCORE_",
+      "expected_sourcetype": "microsoft:defender:cloud:secure_score_control",
+      "primary_id_field": "id",
+      "required_fields": [
+        "timeGenerated",
+        "resourceType",
+        "subscriptionId",
+        "id",
+        "properties.displayName",
+        "properties.score.current",
+        "properties.score.max",
+        "properties.healthyResourceCount",
+        "properties.unhealthyResourceCount"
+      ],
+      "timestamp_fields": [
+        "timeGenerated"
+      ]
+    },
+    {
+      "id": "regulatory_compliance",
+      "label": "Defender for Cloud regulatory compliance controls",
+      "match_engine": "pcre",
+      "match": "\"resourceType\"\\s*:\\s*\"Microsoft.Security/regulatoryComplianceControls\"|SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_REGULATORY_",
+      "expected_sourcetype": "microsoft:defender:cloud:regulatory_compliance",
+      "primary_id_field": "id",
+      "required_fields": [
+        "timeGenerated",
+        "resourceType",
+        "subscriptionId",
+        "id",
+        "name",
+        "properties.state",
+        "properties.passedAssessments",
+        "properties.failedAssessments",
+        "properties.skippedAssessments"
+      ],
+      "timestamp_fields": [
+        "timeGenerated"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Microsoft",
+    "product": "defender_for_cloud",
+    "vendor_product": "microsoft:defender_for_cloud",
+    "subscription_id": "Azure subscriptionId",
+    "resource_group": "Azure resourceGroup",
+    "resource_id": "Azure resourceId",
+    "resource_type": "Microsoft.Security resource type",
+    "severity": "Alert/recommendation/assessment severity",
+    "status": "Alert/posture status",
+    "signature": "Alert/recommendation/assessment title",
+    "tactics": "MITRE tactics when alert-backed",
+    "techniques": "MITRE techniques when alert-backed",
+    "marker": "Synthetic fixture marker only",
+    "action": "Derived from alert/posture status, state, or family-specific posture context",
+    "secure_score_control": "Secure score control display/name context for Microsoft.Security secureScoreControls records",
+    "secure_score_current": "Current secure score for a secure score control when present",
+    "secure_score_max": "Maximum secure score for a secure score control when present",
+    "secure_score_percentage": "Secure score percentage when present",
+    "healthy_resource_count": "Secure score control healthy resource count",
+    "unhealthy_resource_count": "Secure score control unhealthy resource count",
+    "not_applicable_resource_count": "Secure score control not-applicable resource count",
+    "weight": "Secure score control weight",
+    "compliance_standard": "Regulatory compliance standard parsed from the ARM resource path when present",
+    "compliance_control": "Regulatory compliance or recommendation control identifier/name",
+    "compliance_state": "Regulatory compliance state",
+    "passed_assessments": "Regulatory compliance passed assessment count",
+    "failed_assessments": "Regulatory compliance failed assessment count",
+    "skipped_assessments": "Regulatory compliance skipped assessment count"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-microsoft_defender_for_cloud.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/microsoft_defender_for_cloud_overview.xml"
+    ],
+    "test_events": [
+      "test-events/microsoft_defender_for_cloud_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20095.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/microsoft_defender_for_cloud_reduction_candidates.csv",
+      "validation/preflight-2026-06-14.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Defender for Cloud JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20095,
+      "notes": "Dedicated TCP listener for one Defender for Cloud JSON record per line from Event Hub/API/Cribl relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20095,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Microsoft Defender for Cloud / Microsoft.Security alert, recommendation, and assessment JSON resources",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in public Microsoft Defender for Cloud and Microsoft.Security alert/recommendation/assessment/secure-score/regulatory-compliance schema/resource naming with synthetic-equivalent fixtures; collector wrapping and timestamp mapping must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated/hardened 2026-06-19",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Microsoft Defender for Cloud public documentation/API specs and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository JSON/XML/fixture checks exercise synthetic-equivalent records only, including secure-score and regulatory-compliance posture rows. Compliance standard read-back is derived from the fixture-backed regulatoryComplianceStandards ARM path for auditability. No live Defender for Cloud relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Microsoft Defender for Cloud JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "microsoft_defender_for_cloud_json"
+      ],
+      "event_count": 5,
+      "marker_prefix": "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20095.sh"
+    },
+    "readback": {
+      "spl": "index=epintel sourcetype=microsoft:defender:cloud:* marker=\"SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_*\" | table _time index sourcetype source host vendor product vendor_product marker subscription_id resource_id resource_type action severity status secure_score_control secure_score_current secure_score_max secure_score_percentage healthy_resource_count unhealthy_resource_count not_applicable_resource_count weight compliance_standard compliance_control compliance_state passed_assessments failed_assessments skipped_assessments signature _raw",
+      "expected_count": 5,
+      "must_verify": [
+        "index",
+        "sourcetype",
+        "source",
+        "host",
+        "_time",
+        "marker",
+        "subscription_id",
+        "resource_id",
+        "severity",
+        "status",
+        "action",
+        "secure_score_control",
+        "secure_score_current",
+        "secure_score_max",
+        "secure_score_percentage",
+        "healthy_resource_count",
+        "unhealthy_resource_count",
+        "compliance_control",
+        "compliance_state",
+        "passed_assessments",
+        "failed_assessments",
+        "not_applicable_resource_count",
+        "weight",
+        "compliance_standard",
+        "skipped_assessments"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "no_testbed",
+      "date": "2026-06-14",
+      "summary": "No SC4S/Splunk testbed or live Defender for Cloud relay available in this workspace.",
+      "evidence_path": "validation/preflight-2026-06-14.md"
+    },
+    "evidence": [
+      "validation/preflight-2026-06-14.md"
+    ],
+    "e2e_docker_harness": {
+      "id": "microsoft_defender_for_cloud_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/microsoft_defender_for_cloud/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/microsoft_defender_for_cloud/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/microsoft_defender_for_cloud/compose.yaml",
+      "compose_project": "sechub-microsoft-defender-for-cloud-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "epintel index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/microsoft_defender_for_cloud/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/microsoft_defender_for_cloud/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/microsoft_defender_for_cloud/scripts/send_tcp_20095.sh 127.0.0.1 20095",
+        "splunk_summary_readback": "index=epintel sechub_fixture_marker=\"SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_*\" earliest=-2h | stats count by sourcetype source host | sort sourcetype",
+        "splunk_detail_readback": "index=epintel sourcetype=microsoft:defender:cloud:* sechub_fixture_marker=\"SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product vendor_product marker subscription_id resource_id resource_type action severity status secure_score_control secure_score_current secure_score_max secure_score_percentage healthy_resource_count unhealthy_resource_count not_applicable_resource_count weight compliance_standard compliance_control compliance_state passed_assessments failed_assessments skipped_assessments signature _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_indexes": [
+          "epintel"
+        ],
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/microsoft_defender_for_cloud/splunk -> /opt/splunk/etc/apps/sechub_microsoft_defender_for_cloud:ro",
+        "required_index": "epintel"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20095,
+          "host_port_env": "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_PORT",
+          "source_id": "MICROSOFT_DEFENDER_FOR_CLOUD"
+        },
+        "parser_mount": "packs/microsoft_defender_for_cloud/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "microsoft_defender_for_cloud",
+          "source_shape": "json_relay",
+          "event_family": "security_alert",
+          "sourcetype": "microsoft:defender:cloud:security_alert",
+          "data_structures": [
+            "Microsoft.Security/alerts JSON resource record"
+          ],
+          "markers": [
+            "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_ALERT_001"
+          ]
+        },
+        {
+          "source": "microsoft_defender_for_cloud",
+          "source_shape": "json_relay",
+          "event_family": "recommendation",
+          "sourcetype": "microsoft:defender:cloud:recommendation",
+          "data_structures": [
+            "Microsoft.Security/recommendations JSON resource record"
+          ],
+          "markers": [
+            "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_RECOMMENDATION_002"
+          ]
+        },
+        {
+          "source": "microsoft_defender_for_cloud",
+          "source_shape": "json_relay",
+          "event_family": "assessment",
+          "sourcetype": "microsoft:defender:cloud:assessment",
+          "data_structures": [
+            "Microsoft.Security/assessments JSON resource record"
+          ],
+          "markers": [
+            "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_ASSESSMENT_003"
+          ]
+        },
+        {
+          "source": "microsoft_defender_for_cloud",
+          "source_shape": "json_relay",
+          "event_family": "secure_score_control",
+          "sourcetype": "microsoft:defender:cloud:secure_score_control",
+          "data_structures": [
+            "Microsoft.Security/secureScoreControls JSON resource record"
+          ],
+          "markers": [
+            "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_SECURE_SCORE_004"
+          ]
+        },
+        {
+          "source": "microsoft_defender_for_cloud",
+          "source_shape": "json_relay",
+          "event_family": "regulatory_compliance",
+          "sourcetype": "microsoft:defender:cloud:regulatory_compliance",
+          "data_structures": [
+            "Microsoft.Security/regulatoryComplianceControls JSON resource record"
+          ],
+          "markers": [
+            "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_REGULATORY_005"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live Defender for Cloud tenant/source-version replay/read-back.",
+        "No Event Hub, Diagnostic Settings, API export, or Cribl/native collector envelope proof.",
+        "No collector credential custody, pagination/checkpoint behavior, or timestamp-wrapper validation.",
+        "No attack-path graph, incident-style record, or complete Microsoft.Security resource-family coverage.",
+        "No production or field validation; synthetic-equivalent documentation/API-schema-derived fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for the declared Defender for Cloud JSON relay shape, not live Azure tenant validation or field validation."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "microsoft_defender_for_cloud_json",
+      "label": "Microsoft Defender for Cloud synthetic-equivalent JSON records",
+      "path": "test-events/microsoft_defender_for_cloud_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 5,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_ALERT_001",
+        "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_RECOMMENDATION_002",
+        "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_ASSESSMENT_003",
+        "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_SECURE_SCORE_004",
+        "SC4S_MICROSOFT_DEFENDER_FOR_CLOUD_TEST_REGULATORY_005"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "timeGenerated",
+        "primary_timezone": "UTC when ISO-8601 Z suffix is present",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Defender for Cloud collector timestamp normalization policy"
+        ],
+        "notes": "Fixtures use UTC ISO-8601 timeGenerated values. Production collectors must preserve or map this field."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping; fixtures use documentation subscription/resource identifiers and RFC5737 IPs",
+        "notes": "Alert entities, tactics, remediation, secure-score, and regulatory-compliance posture metadata are retained for review. timeGenerated is a relay timestamp used by these fixtures and must be mapped from the local API/Event Hub collection path when the native resource shape lacks it."
+      },
+      "expected_families": [
+        "security_alert",
+        "recommendation",
+        "assessment",
+        "secure_score_control",
+        "regulatory_compliance"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-microsoft_defender_for_cloud.conf",
+      "target_path": "local/config/app_parsers/syslog/app-microsoft_defender_for_cloud.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/microsoft_defender_for_cloud.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/microsoft_defender_for_cloud_overview.xml",
+      "target_path": "splunk/default/data/ui/views/microsoft_defender_for_cloud_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/microsoft_defender_for_cloud_test_events.txt",
+      "target_path": "test-events/microsoft_defender_for_cloud_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20095.sh",
+      "target_path": "scripts/send_tcp_20095.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/microsoft_defender_for_cloud_reduction_candidates.csv",
+      "target_path": "docs/microsoft_defender_for_cloud_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_14",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-14.md",
+      "target_path": "validation/preflight-2026-06-14.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "validation_harness_script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Microsoft Learn Defender for Cloud and Microsoft.Security alert/recommendation/assessment/secure-score/regulatory-compliance documentation plus Azure REST API specs; fixtures are synthetic-equivalent examples shaped to public field names.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use documentation subscription GUIDs, example resource names, example.test-style semantics, and RFC5737 IPs; no customer or tenant data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-19",
+      "notes": "Hardened the regulatory-compliance read-back requirements by deriving the fixture-backed compliance standard from the ARM path and requiring score/compliance counter fields in the harness without changing trust."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "dest": {
+          "source_fields": [
+            "compromisedEntity",
+            "resourceId"
+          ],
+          "status": "partial",
+          "notes": "Affected resource/host for alerts and posture records."
+        },
+        "signature": {
+          "source_fields": [
+            "alertDisplayName",
+            "recommendationDisplayName",
+            "displayName",
+            "properties.displayName",
+            "properties.description"
+          ],
+          "status": "partial",
+          "notes": "Native alert/recommendation/assessment title."
+        },
+        "severity": {
+          "source_fields": [
+            "severity",
+            "recommendationSeverity",
+            "metadata.severity",
+            "properties.score.percentage",
+            "properties.state"
+          ],
+          "status": "partial",
+          "notes": "Native severity tokens; not vendor-normalized."
+        },
+        "action": {
+          "source_fields": [
+            "status",
+            "state",
+            "status.code",
+            "properties.state",
+            "resourceType"
+          ],
+          "status": "partial",
+          "notes": "Status/state used for conservative triage."
+        },
+        "tag": {
+          "source_fields": [
+            "tactics",
+            "techniques"
+          ],
+          "status": "partial",
+          "notes": "MITRE tactics/techniques when present on alerts."
+        },
+        "compliance_control": {
+          "source_fields": [
+            "complianceControl",
+            "secureScoreControl",
+            "properties.displayName",
+            "name",
+            "compliance_standard",
+            "compliance_control"
+          ],
+          "status": "partial",
+          "notes": "Posture/compliance control context for recommendations, secure score controls, and regulatory compliance controls."
+        },
+        "compliance_standard": {
+          "source_fields": [
+            "id",
+            "name",
+            "compliance_standard"
+          ],
+          "status": "partial",
+          "notes": "Regulatory compliance standard parsed from the ARM regulatoryComplianceStandards path for posture triage; not a complete compliance taxonomy."
+        }
+      },
+      "notes": "Partial Alerts/Change/Compliance-oriented CIM guidance only; not full Microsoft/Splunk TA parity."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "resource.uid": {
+          "source_fields": [
+            "resourceId"
+          ],
+          "status": "partial",
+          "notes": "Azure resource identifier."
+        },
+        "cloud.account.uid": {
+          "source_fields": [
+            "subscriptionId"
+          ],
+          "status": "partial",
+          "notes": "Azure subscription identifier."
+        },
+        "finding.title": {
+          "source_fields": [
+            "alertDisplayName",
+            "recommendationDisplayName",
+            "displayName",
+            "properties.displayName",
+            "properties.description"
+          ],
+          "status": "partial",
+          "notes": "Finding or posture item title."
+        },
+        "finding.severity": {
+          "source_fields": [
+            "severity",
+            "recommendationSeverity",
+            "metadata.severity"
+          ],
+          "status": "partial",
+          "notes": "Native severity."
+        },
+        "finding.status": {
+          "source_fields": [
+            "status",
+            "state",
+            "status.code",
+            "properties.state"
+          ],
+          "status": "partial",
+          "notes": "Native status/state."
+        },
+        "compliance.control": {
+          "source_fields": [
+            "complianceControl",
+            "secureScoreControl",
+            "properties.displayName",
+            "name",
+            "compliance_standard",
+            "compliance_control"
+          ],
+          "status": "partial",
+          "notes": "Compliance/control name or display context; helper mapping only."
+        },
+        "finding.score": {
+          "source_fields": [
+            "properties.score.current",
+            "properties.score.max",
+            "properties.score.percentage",
+            "scoreImpact"
+          ],
+          "status": "partial",
+          "notes": "Secure score values and recommendation score impact when present."
+        },
+        "compliance.standard": {
+          "source_fields": [
+            "id",
+            "name",
+            "compliance_standard"
+          ],
+          "status": "partial",
+          "notes": "Helper mapping for the regulatory compliance standard parsed from the ARM path."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "cloud.account.id": {
+          "source_fields": [
+            "subscriptionId"
+          ],
+          "status": "partial",
+          "notes": "Azure subscription ID."
+        },
+        "cloud.provider": {
+          "source_fields": [
+            "vendorName"
+          ],
+          "status": "partial",
+          "notes": "Microsoft/Azure provider context where present."
+        },
+        "rule.name": {
+          "source_fields": [
+            "alertDisplayName",
+            "recommendationDisplayName",
+            "displayName",
+            "properties.displayName",
+            "properties.description"
+          ],
+          "status": "partial",
+          "notes": "Alert/recommendation/assessment title."
+        },
+        "event.severity": {
+          "source_fields": [
+            "severity",
+            "recommendationSeverity",
+            "metadata.severity",
+            "properties.state",
+            "properties.score.percentage"
+          ],
+          "status": "partial",
+          "notes": "Native severity token."
+        },
+        "related.hosts": {
+          "source_fields": [
+            "compromisedEntity"
+          ],
+          "status": "partial",
+          "notes": "Affected host/resource name when alert-backed."
+        },
+        "event.action": {
+          "source_fields": [
+            "status",
+            "state",
+            "status.code",
+            "properties.state",
+            "resourceType"
+          ],
+          "status": "partial",
+          "notes": "Derived posture/status action context."
+        },
+        "rule.ruleset": {
+          "source_fields": [
+            "complianceControl",
+            "secureScoreControl",
+            "properties.displayName",
+            "name",
+            "compliance_standard",
+            "compliance_control"
+          ],
+          "status": "partial",
+          "notes": "Compliance or secure score control grouping."
+        }
+      },
+      "notes": "ECS mapping is partial field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/microsoft_defender_for_cloud/sc4s/app_parsers/syslog/app-microsoft_defender_for_cloud.conf": "sha256:47d6789b011d3014b022dc1baf3543226a794519f593b2bed698f4f7202c3ee2",
+      "packs/microsoft_defender_for_cloud/sc4s/env.example": "sha256:9a14febf4c190f9981f1af764f8c8a7d8b7f5dc4059a52c27371e25bf514866b",
+      "packs/microsoft_defender_for_cloud/splunk/default/props.conf": "sha256:123910d6ad141f93c287999edeb12849f58e5eeada96677523480b92325df565",
+      "packs/microsoft_defender_for_cloud/splunk/default/transforms.conf": "sha256:e28aaeeb9cc209aa0675d0e11b13a85a8ea5e3c61e1b6ead72fd5adc4575ed88",
+      "packs/microsoft_defender_for_cloud/splunk/default/eventtypes.conf": "sha256:e37ec3e552dc2aca995d614343464f018b137a9ece572762de79989160417301",
+      "packs/microsoft_defender_for_cloud/splunk/default/tags.conf": "sha256:e1b776ad42b7588a385751b71ffd52cb57d1d47afb5c88b0671262989b25e6b3",
+      "packs/microsoft_defender_for_cloud/splunk/default/data/ui/views/microsoft_defender_for_cloud_overview.xml": "sha256:44ebc192a21ee076de8a5d69e1383a1385e523e907ec0bfa3d243408175b7546",
+      "packs/microsoft_defender_for_cloud/test-events/microsoft_defender_for_cloud_test_events.txt": "sha256:d79a1213043deab2268cd76a9d0a06b1e7b84158c78a709aac3b80edbb1f2460",
+      "packs/microsoft_defender_for_cloud/scripts/send_tcp_20095.sh": "sha256:fd866a25223dfde5b860348d912ffe816c7d5dd5caf4a2593a0f74f375c400ed",
+      "packs/microsoft_defender_for_cloud/docs/microsoft_defender_for_cloud_reduction_candidates.csv": "sha256:5165042ac6d1a518943653aad8ab2868866a6480c845cc40fdb6a69f05c44b97",
+      "packs/microsoft_defender_for_cloud/validation/preflight-2026-06-14.md": "sha256:ebbe6a6bbbc25acc5a83113553166c2949330e009a2f874f9e6e8d097ae263e4",
+      "packs/microsoft_defender_for_cloud/README.md": "sha256:80968d883618165b4a2d409859319d87955c06fe9896bb8a8f61fb27cf68f31b",
+      "packs/microsoft_defender_for_cloud/scripts/e2e_docker_compose.sh": "sha256:12930e7536faf589794197caf92c959c9dcbe53176318841ec51156b1c12c381"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "cloud",
+    "security",
+    "alert",
+    "posture",
+    "microsoft"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "json_relay",
+      "label": "Defender for Cloud JSON relay",
+      "description": "Default variant for Defender for Cloud Event Hub/API/Cribl relays that preserve one JSON object per event and Microsoft.Security alert/posture resource context.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "event_hub",
+        "api_export",
+        "diagnostic_settings",
+        "cribl_relay",
+        "syslog_tcp_json_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "security_alert",
+        "recommendation",
+        "assessment",
+        "secure_score_control",
+        "regulatory_compliance"
+      ],
+      "test_event_sets": [
+        "microsoft_defender_for_cloud_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Defender for Cloud replay/read-back captured.",
+        "Collector wrappers may rename, nest, or omit fields and must be compared locally.",
+        "Secure score and regulatory compliance fixtures are API/schema-grounded posture records; local export wrappers may add timestamps or nesting.",
+        "Attack paths and incident-style records remain deferred until exact schema/sample evidence is sufficient."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/microsoft_defender_for_cloud_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "resourceType",
+        "eventSource",
+        "subscriptionId",
+        "resourceId",
+        "alertDisplayName",
+        "recommendationDisplayName",
+        "assessmentKey",
+        "secureScoreControl",
+        "properties.displayName",
+        "properties.score.current",
+        "properties.state"
+      ],
+      "notes": "Use after sampling the local Defender for Cloud feed. Do not drop entities, remediation, resource, policy, secure-score, compliance, tactic/technique, or assessment context by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Defender for Cloud relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real tenant records; secure-score and regulatory-compliance rows are grounded in public API schemas and may require collector timestamp/wrapper mapping locally.",
+    "SC4S emits pack-defined family sourcetypes; exact collector wrapping/source names need local comparison.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included.",
+    "Attack path graph internals and Defender for Cloud incident-style records remain deferred until exact public schema or sanitized source evidence is available."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Defender for Cloud intake",
+      "description": "Dedicated listener, parser, fixtures, and JSON Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-microsoft_defender_for_cloud.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Defender for Cloud analyst knowledge",
+      "description": "Adds eventtypes/tags and SOC overview dashboard. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Defender for Cloud reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/microsoft_defender_for_cloud_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "api_eventhub_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Defender for Cloud alert/recommendation/assessment/secure-score/regulatory-compliance records require API/Event Hub/collector relay; resource shapes and timestamp wrappers must be compared locally.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "microsoft_defender_for_cloud_overview_splunk_test",
+      "title": "Microsoft Defender for Cloud — dashboard example",
+      "source_path": "dashboards/screenshots/microsoft-defender-for-cloud-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Microsoft Defender for Cloud dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

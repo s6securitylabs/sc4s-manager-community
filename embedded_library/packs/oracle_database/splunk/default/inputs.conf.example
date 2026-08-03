@@ -1,0 +1,128 @@
+# Oracle Database Server conservative Splunk file/table onboarding examples
+#
+# Status: example-only, disabled by default. These are NOT validated SecHub/S6
+# runtime inputs and do not copy or replace the Splunk Add-on for Oracle Database.
+# Enable only after confirming the exact Oracle version, path layout, record
+# boundaries, timezone policy, and destination sourcetype with local replay/read-back.
+#
+# Prefer the Splunk Add-on for Oracle Database (Splunkbase app 1910) when it is
+# installed and compatible with the deployment. Its public metadata covers Oracle
+# standard/FGA audit trails, trace, incident, alert, listener and other OS logs;
+# Splunk DB Connect + the Oracle JDBC add-on are the better path for table/view
+# polling such as UNIFIED_AUDIT_TRAIL, DBA_AUDIT_TRAIL and DBA_FGA_AUDIT_TRAIL.
+#
+# Replace /u01/app/oracle and /u01/app/grid placeholders with site-specific
+# ORACLE_BASE/Grid Infrastructure paths. Avoid broad recursive monitors for trace
+# directories until volume and multiline behavior are tested.
+
+# --- Traditional audit OS files (.aud) --------------------------------------
+# Oracle AUDIT_TRAIL can write audit records to the database, OS, XML, XML+EXTENDED,
+# DB+EXTENDED, or none depending version/configuration. AUDIT_FILE_DEST identifies
+# the OS directory for audit files. Monitor only after confirming AUDIT_TRAIL=OS/XML
+# or equivalent and the file format produced by the target version.
+[monitor:///u01/app/oracle/admin/*/adump/*.aud]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:audit:file
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# If the site exports traditional audit rows from DBA_AUDIT_TRAIL to line-delimited
+# JSON/CSV files, collect the export drop, not the live database files. Set
+# sourcetype to a site-specific value or oracle:database:traditional_audit after
+# parser/read-back validation.
+[monitor:///var/spool/sechub/oracle_database/dba_audit_trail/*.json]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:traditional_audit
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- Unified Audit table/view exports ---------------------------------------
+# Recommended collection path is Splunk DB Connect or a site-owned collector that
+# checkpoints UNIFIED_AUDIT_TRAIL and emits one row per event. inputs.conf cannot
+# define DB Connect SQL inputs; this file-drop stanza is only for a collector that
+# has already produced line-delimited JSON/CSV with stable checkpoints.
+[monitor:///var/spool/sechub/oracle_database/unified_audit_trail/*.json]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:unified_audit
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- Fine-grained audit table/view exports ----------------------------------
+# FGA data is exposed through DBA_FGA_AUDIT_TRAIL. Use DB Connect or a site-owned
+# exporter with explicit handling for SQL text/binds and policy context. Do not
+# redact or drop SQL context by default; any masking must be opt-in and evidenced.
+[monitor:///var/spool/sechub/oracle_database/dba_fga_audit_trail/*.json]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:fga
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- Oracle Net listener / ADR listener logs --------------------------------
+# Common ADR listener text path pattern. Include listener, SCAN listener, and TCPS
+# listeners only after confirming each local ADR home and multiline boundaries.
+[monitor:///u01/app/oracle/diag/tnslsnr/*/*/trace/listener.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:listener
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# Listener XML logs may exist under ADR alert/log.xml for listener homes. Keep a
+# separate source stanza until XML line-breaking is validated locally.
+[monitor:///u01/app/oracle/diag/tnslsnr/*/*/alert/log.xml]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:listener
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- Database ADR alert logs -------------------------------------------------
+# Text alert logs are often in rdbms/*/*/trace/alert_<SID>.log. XML alert records
+# are under rdbms/*/*/alert/log.xml. Treat text and XML as separate validation
+# candidates even if routed to the same SecHub source family.
+[monitor:///u01/app/oracle/diag/rdbms/*/*/trace/alert_*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:adr:alert
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+[monitor:///u01/app/oracle/diag/rdbms/*/*/alert/log.xml]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:adr:alert
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- RAC / Grid Infrastructure / ASM candidates -----------------------------
+# Grid Infrastructure logs are product/version/layout dependent. Start with a
+# narrow path per component (crsd, cssd, ohasd, asm, scan listener) and validate
+# boundaries before widening. The examples below are intentionally disabled.
+[monitor:///u01/app/grid/diag/asm/*/*/trace/alert_*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:rac_grid_asm
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+[monitor:///u01/app/grid/diag/tnslsnr/*/*/trace/listener*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:rac_grid_asm
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+[monitor:///u01/app/grid/diag/crs/*/crs/trace/*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:database:rac_grid_asm
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# Validation SPL template after enabling any stanza:
+# index=oracle sourcetype="oracle:database:*" source="<enabled path>" earliest=-15m
+# | stats count min(_time) as first max(_time) as last values(host) as host by sourcetype source

@@ -19,11 +19,11 @@ const { sourcesPayload, sourceCatalogPayload, destinationsPayload, routesPayload
     ],
   },
   sourceCatalogPayload: {
-    supported_sc4s_version: '3.43.0',
+    supported_sc4s_version: '3.46.0',
     sources: [{ vendor_product: 'cisco_asa', label: 'Cisco ASA', default_index: 'netfw' }],
   },
   destinationsPayload: {
-    supported_sc4s_version: '3.43.0',
+    supported_sc4s_version: '3.46.0',
     destinations: [
       { kind: 'hec', id: 'DEFAULT', url: 'https://splunk:8088', token: '[REDACTED]', tls_verify: 'yes' },
       { kind: 'hec', id: 'V1CRUDHEC', url: 'https://splunk2:8088', token: '[REDACTED]', mode: 'SELECT' },

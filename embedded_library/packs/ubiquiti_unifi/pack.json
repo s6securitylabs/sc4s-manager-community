@@ -1,0 +1,1053 @@
+{
+  "schema_version": "0.1",
+  "id": "ubiquiti_unifi",
+  "version": "0.1.4",
+  "url": "https://help.ui.com/hc/en-us/categories/6583256751383-UniFi",
+  "description": "Curated SecHub Resources SC4S pack for Ubiquiti UniFi network telemetry telemetry with operator dashboard.",
+  "display_name": "Ubiquiti UniFi network telemetry",
+  "vendor": "ubiquiti",
+  "product": "unifi",
+  "default_index": "netops",
+  "default_source": "ubiquiti_unifi",
+  "listener": {
+    "source_id": "UBIQUITI_UNIFI",
+    "transport": "tcp",
+    "port": 20086,
+    "env": {
+      "SC4S_LISTEN_UBIQUITI_UNIFI_TCP_PORT": "20086",
+      "SOURCE_ALL_SET_APPEND": "UBIQUITI_UNIFI"
+    }
+  },
+  "sourcetypes": {
+    "firewall": "ubiquiti:unifi:firewall",
+    "client": "ubiquiti:unifi:client",
+    "admin": "ubiquiti:unifi:admin",
+    "device": "ubiquiti:unifi:device",
+    "threat": "ubiquiti:unifi:threat",
+    "vpn": "ubiquiti:unifi:vpn"
+  },
+  "event_families": [
+    {
+      "id": "firewall",
+      "label": "UniFi firewall/security rule events",
+      "match_engine": "pcre",
+      "match": "firewall event|SC4S_UNIFI_TEST_FIREWALL_",
+      "expected_sourcetype": "ubiquiti:unifi:firewall",
+      "primary_id_field": "rule",
+      "required_fields": [
+        "action",
+        "src",
+        "dst",
+        "proto"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "client",
+      "label": "UniFi client association events",
+      "match_engine": "pcre",
+      "match": "client (connected|disconnected)|SC4S_UNIFI_TEST_CLIENT_",
+      "expected_sourcetype": "ubiquiti:unifi:client",
+      "primary_id_field": "mac",
+      "required_fields": [
+        "client",
+        "mac",
+        "ap",
+        "ssid"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "admin",
+      "label": "UniFi admin authentication and control-plane events",
+      "match_engine": "pcre",
+      "match": "admin login|SC4S_UNIFI_TEST_ADMIN_",
+      "expected_sourcetype": "ubiquiti:unifi:admin",
+      "primary_id_field": "user",
+      "required_fields": [
+        "user",
+        "src",
+        "result"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "device",
+      "label": "UniFi device inventory and lifecycle events",
+      "match_engine": "pcre",
+      "match": "device (adopted|disconnected|provisioned)|SC4S_UNIFI_TEST_DEVICE_",
+      "expected_sourcetype": "ubiquiti:unifi:device",
+      "primary_id_field": "device",
+      "required_fields": [
+        "device",
+        "mac",
+        "ip"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "threat",
+      "label": "UniFi threat/security detections",
+      "match_engine": "pcre",
+      "match": "threat detected|SC4S_UNIFI_TEST_THREAT_",
+      "expected_sourcetype": "ubiquiti:unifi:threat",
+      "primary_id_field": "signature",
+      "required_fields": [
+        "signature",
+        "severity",
+        "src",
+        "dst"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "vpn",
+      "label": "UniFi VPN/session events",
+      "match_engine": "pcre",
+      "match": "vpn session|SC4S_UNIFI_TEST_VPN_",
+      "expected_sourcetype": "ubiquiti:unifi:vpn",
+      "primary_id_field": "user",
+      "required_fields": [
+        "user",
+        "src"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "ubiquiti",
+    "product": "unifi",
+    "src": "source IP/client",
+    "dst": "destination IP",
+    "user": "administrator or VPN user",
+    "device": "UniFi device/client object",
+    "action": "derived action",
+    "result": "result/status",
+    "marker": "synthetic fixture marker only"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-ubiquiti_unifi.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/unifi_overview.xml"
+    ],
+    "test_events": [
+      "test-events/unifi_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20086.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/unifi_reduction_candidates.csv",
+      "validation/preflight-2026-06-14.md",
+      "validation/replay-readback-2026-06-14.md",
+      "validation/e2e-lab-2026-06-26.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / collector relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20086,
+      "notes": "Dedicated TCP listener for one event per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Ubiquiti UniFi network telemetry operational/security logs",
+    "min": "public documentation and source-corpus curation through 2026-06-14",
+    "max": null,
+    "notes": "Synthetic-equivalent fixtures only; local product version and envelope must be validated."
+  },
+  "validation": {
+    "date_validated": "2026-06-14",
+    "validated_by": "S6 Security Labs / Hermes SC4S TEST replay-readback",
+    "source_log_version": "Synthetic-equivalent fixture set; real product source-version evidence still required for field validation",
+    "sc4s_version": "ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0 / axosyslog 4.25.0",
+    "splunk_version": "Splunk 10.2.3 build 4d61cf8a5c0c",
+    "evidence": "SC4S TEST replay to dedicated TCP 20086 listener and Splunk TEST read-back captured 6/6 UniFi fixture events across firewall, client, admin, device, threat, and vpn sourcetypes in netops. Dashboard XML read-back succeeded in Splunk TEST."
+  },
+  "validation_harness": {
+    "status": "passed",
+    "required_for_quality_promotion": false,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Ubiquiti UniFi network telemetry",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "unifi_syslog"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_UNIFI_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20086.sh"
+    },
+    "readback": {
+      "spl": "index=netops sechub_fixture_marker=\"SC4S_UNIFI_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product host action result status marker _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "host/device",
+        "action/result/status",
+        "timestamp",
+        "eventtypes/tags",
+        "dashboard searches",
+        "raw preservation"
+      ]
+    },
+    "last_attempt": {
+      "status": "passed",
+      "date": "2026-06-14",
+      "summary": "2026-06-14 SC4S TEST -> Splunk TEST replay/read-back passed: 6/6 UniFi fixture events indexed in netops with expected sourcetypes; dashboard XML read-back succeeded.",
+      "evidence_path": "validation/replay-readback-2026-06-14.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-14.md",
+        "summary": "Local preflight blocker; not replay/read-back validation."
+      },
+      {
+        "type": "sc4s_splunk_replay_readback",
+        "path": "validation/replay-readback-2026-06-14.md",
+        "summary": "2026-06-14 SC4S TEST -> Splunk TEST replay/read-back passed: 6/6 UniFi fixture events indexed in netops with expected sourcetypes; dashboard XML read-back succeeded."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20086,
+          "protocol": "line_delimited_syslog_raw",
+          "purpose": "Ubiquiti UniFi network telemetry relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netops"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netops",
+        "Search role can read netops"
+      ]
+    },
+    "testbed": {
+      "sc4s_host": "sc4s-test / 10.10.1.183",
+      "splunk_host": "splunk-test / 10.10.1.251",
+      "sc4s_version": "ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0 / axosyslog 4.25.0",
+      "splunk_version": "Splunk 10.2.3 build 4d61cf8a5c0c",
+      "validation_run": "SC4S_REAL_VALIDATE_20260614T005539Z"
+    },
+    "e2e_docker_harness": {
+      "id": "ubiquiti_unifi_compose_e2e",
+      "status": "blocked_lab_preflight",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/ubiquiti_unifi/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/ubiquiti_unifi/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/ubiquiti_unifi/compose.yaml",
+      "compose_project": "sechub-ubiquiti-unifi-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netops index preflight/create"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/ubiquiti_unifi/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/ubiquiti_unifi/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/ubiquiti_unifi/scripts/send_tcp_20086.sh 127.0.0.1 20086",
+        "splunk_summary_readback": "index=netops sechub_fixture_marker=\"SC4S_UNIFI_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netops sechub_fixture_marker=\"SC4S_UNIFI_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product host action result status marker user src dst device signature rule proto _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netops",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/ubiquiti_unifi/splunk -> /opt/splunk/etc/apps/sechub_ubiquiti_unifi"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20086,
+          "host_port_env": "SC4S_UBIQUITI_UNIFI_PORT",
+          "source_id": "UBIQUITI_UNIFI"
+        },
+        "parser_mount": "packs/ubiquiti_unifi/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "ubiquiti_unifi",
+          "source_shape": "firewall_syslog",
+          "event_family": "firewall",
+          "sourcetype": "ubiquiti:unifi:firewall",
+          "data_structures": [
+            "firewall/security rule event"
+          ],
+          "markers": [
+            "SC4S_UNIFI_TEST_FIREWALL_BLOCK_001"
+          ]
+        },
+        {
+          "source": "ubiquiti_unifi",
+          "source_shape": "client_association_syslog",
+          "event_family": "client",
+          "sourcetype": "ubiquiti:unifi:client",
+          "data_structures": [
+            "client association event"
+          ],
+          "markers": [
+            "SC4S_UNIFI_TEST_CLIENT_CONNECT_002"
+          ]
+        },
+        {
+          "source": "ubiquiti_unifi",
+          "source_shape": "admin_login_syslog",
+          "event_family": "admin",
+          "sourcetype": "ubiquiti:unifi:admin",
+          "data_structures": [
+            "admin authentication/control-plane event"
+          ],
+          "markers": [
+            "SC4S_UNIFI_TEST_ADMIN_LOGIN_003"
+          ]
+        },
+        {
+          "source": "ubiquiti_unifi",
+          "source_shape": "device_lifecycle_syslog",
+          "event_family": "device",
+          "sourcetype": "ubiquiti:unifi:device",
+          "data_structures": [
+            "device adoption/lifecycle event"
+          ],
+          "markers": [
+            "SC4S_UNIFI_TEST_DEVICE_ADOPT_004"
+          ]
+        },
+        {
+          "source": "ubiquiti_unifi",
+          "source_shape": "threat_detection_syslog",
+          "event_family": "threat",
+          "sourcetype": "ubiquiti:unifi:threat",
+          "data_structures": [
+            "threat/security detection event"
+          ],
+          "markers": [
+            "SC4S_UNIFI_TEST_THREAT_005"
+          ]
+        },
+        {
+          "source": "ubiquiti_unifi",
+          "source_shape": "vpn_session_syslog",
+          "event_family": "vpn",
+          "sourcetype": "ubiquiti:unifi:vpn",
+          "data_structures": [
+            "VPN/session event"
+          ],
+          "markers": [
+            "SC4S_UNIFI_TEST_VPN_006"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Real UniFi controller/appliance product-version telemetry or vendor-certified examples remain required for field validation",
+        "API/export/archive paths and collector-envelope transformations are not covered by this fixture harness",
+        "UniFi OS/controller version-specific message breadth and production source-local timezone behavior require additional source-shape evidence"
+      ],
+      "last_attempt": {
+        "status": "blocked",
+        "blocked_layer": "splunk_test_ready",
+        "date": "2026-06-26",
+        "summary": "Dedicated lab run failed closed at host-port preflight because the cisco_duo_audit disposable Splunk TEST stack owned ports 18000, 18089, and 18088. UniFi fixture replay, SC4S movement, HEC delivery, and indexed read-back did not run.",
+        "evidence_path": "validation/e2e-lab-2026-06-26.md"
+      },
+      "evidence": [
+        {
+          "type": "blocked_lab_preflight",
+          "path": "validation/e2e-lab-2026-06-26.md",
+          "summary": "Remote lab host-port contention blocked the disposable Ubiquiti UniFi E2E harness before replay/read-back."
+        }
+      ],
+      "evidence_boundary": "Passing this harness is SC4S TEST -> Splunk TEST fixture replay/read-back evidence only; it is not field validation or production readiness."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "unifi_syslog",
+      "label": "Ubiquiti UniFi network telemetry synthetic-equivalent events",
+      "path": "test-events/unifi_test_events.txt",
+      "format": "raw",
+      "wire_format": "syslog_or_collector_payload",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_UNIFI_TEST_FIREWALL_BLOCK_001",
+        "SC4S_UNIFI_TEST_CLIENT_CONNECT_002",
+        "SC4S_UNIFI_TEST_ADMIN_LOGIN_003",
+        "SC4S_UNIFI_TEST_DEVICE_ADOPT_004",
+        "SC4S_UNIFI_TEST_THREAT_005",
+        "SC4S_UNIFI_TEST_VPN_006"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "leading timestamp or syslog header",
+        "primary_timezone": "UTC in fixtures",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or collector timezone policy"
+        ],
+        "notes": "Fixtures use UTC; production relays must preserve or document timezone behavior."
+      },
+      "field_delimiting": {
+        "style": "syslog_text_kv_mixed",
+        "field_separator": "spaces plus key-value/text tokens",
+        "quote_character": "double quote or product-native quoting where present",
+        "escape_policy": "Synthetic fixtures avoid unsafe embedded delimiters.",
+        "notes": "One physical line per event."
+      },
+      "expected_families": [
+        "firewall",
+        "client",
+        "admin",
+        "device",
+        "threat",
+        "vpn"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-ubiquiti_unifi.conf",
+      "target_path": "local/config/app_parsers/syslog/app-ubiquiti_unifi.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/ubiquiti_unifi.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/unifi_overview.xml",
+      "target_path": "splunk/default/data/ui/views/unifi_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/unifi_test_events.txt",
+      "target_path": "test-events/unifi_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20086.sh",
+      "target_path": "scripts/send_tcp_20086.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/unifi_reduction_candidates.csv",
+      "target_path": "docs/unifi_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_14",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-14.md",
+      "target_path": "validation/preflight-2026-06-14.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "replay_readback_2026_06_14",
+      "group": "docs",
+      "source_path": "validation/replay-readback-2026-06-14.md",
+      "target_path": "validation/replay-readback-2026-06-14.md",
+      "kind": "validation_replay_readback_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_lab_2026_06_26",
+      "group": "docs",
+      "source_path": "validation/e2e-lab-2026-06-26.md",
+      "target_path": "validation/e2e-lab-2026-06-26.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Upstream SC4S Ubiquiti UniFi parser/source documentation inventory plus public UniFi documentation; fixtures are synthetic-equivalent and conservative.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are synthetic-equivalent with documentation-range IPs and example host/user values."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-14",
+      "notes": "Created in response to request for comprehensive dashboard and pack coverage."
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "s6_verified",
+  "quality_status": "validated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src",
+            "client_ip"
+          ],
+          "status": "partial",
+          "notes": "Network/client source."
+        },
+        "dest": {
+          "source_fields": [
+            "dst",
+            "device",
+            "ap"
+          ],
+          "status": "partial",
+          "notes": "Destination or infrastructure endpoint."
+        },
+        "user": {
+          "source_fields": [
+            "user",
+            "client"
+          ],
+          "status": "partial",
+          "notes": "Admin/VPN/client identity where present."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived action."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Threat signature or firewall rule."
+        }
+      }
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src",
+            "client_ip"
+          ],
+          "status": "partial",
+          "notes": "Network/client source."
+        },
+        "dest": {
+          "source_fields": [
+            "dst",
+            "device",
+            "ap"
+          ],
+          "status": "partial",
+          "notes": "Destination or infrastructure endpoint."
+        },
+        "user": {
+          "source_fields": [
+            "user",
+            "client"
+          ],
+          "status": "partial",
+          "notes": "Admin/VPN/client identity where present."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived action."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Threat signature or firewall rule."
+        }
+      }
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src",
+            "client_ip"
+          ],
+          "status": "partial",
+          "notes": "Network/client source."
+        },
+        "dest": {
+          "source_fields": [
+            "dst",
+            "device",
+            "ap"
+          ],
+          "status": "partial",
+          "notes": "Destination or infrastructure endpoint."
+        },
+        "user": {
+          "source_fields": [
+            "user",
+            "client"
+          ],
+          "status": "partial",
+          "notes": "Admin/VPN/client identity where present."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived action."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Threat signature or firewall rule."
+        }
+      }
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "network",
+    "wireless",
+    "firewall",
+    "security",
+    "infrastructure"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "unifi_syslog",
+      "label": "Ubiquiti UniFi network telemetry syslog/collector relay",
+      "description": "UniFi network/application syslog-style events for firewall, clients, admin activity, devices, threat/security detections, and VPN/session context",
+      "default": true,
+      "evidence_status": "validated",
+      "source_modes": [
+        "syslog",
+        "journald_relay",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "firewall",
+        "client",
+        "admin",
+        "device",
+        "threat",
+        "vpn"
+      ],
+      "test_event_sets": [
+        "unifi_syslog"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "splunk_dashboard_overview"
+      ],
+      "known_limitations": [
+        "S6 lab replay/read-back covers the synthetic-equivalent fixture set only; field validation requires real UniFi product/source-version telemetry or vendor-certified equivalent."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/unifi_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "host",
+        "source",
+        "sourcetype",
+        "action",
+        "result",
+        "status",
+        "marker"
+      ],
+      "notes": "No default lossy filtering; validate local sampling before reduction."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "Validation is S6 lab replay/read-back using synthetic-equivalent fixtures; field_validated/field_verified promotion still requires real product/source-version telemetry or vendor-certified equivalent with retained read-back evidence.",
+    "Synthetic-equivalent fixtures only; product version and collector wrapper coverage requires local validation.",
+    "Dashboard searches are operator starting points and need local tuning after real data observation."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Ubiquiti UniFi network telemetry intake",
+      "description": "Dedicated listener, parser, fixtures, and props; preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-ubiquiti_unifi.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Ubiquiti UniFi network telemetry analyst knowledge",
+      "description": "Adds eventtypes/tags and dashboard. No drops.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Ubiquiti UniFi network telemetry reduction candidates",
+      "description": "Review-only reduction candidates; not enabled by default.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/unifi_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Requires local readback validation."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling."
+    }
+  ],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/ubiquiti_unifi/README.md": "sha256:6cba8e01ebebf42ed1ddfcf4d1dee0d0606f52e76a9499c0152db3f725db6237",
+      "packs/ubiquiti_unifi/docs/unifi_reduction_candidates.csv": "sha256:7cf3a23c14715c57955b8873762b4acce7ad74f06d1ac5fa83c3aacac09e99ff",
+      "packs/ubiquiti_unifi/sc4s/app_parsers/syslog/app-ubiquiti_unifi.conf": "sha256:b0106ba188c43eb9f5a1bf7550d5d5432cc4c027e2cf3790f71863634273d509",
+      "packs/ubiquiti_unifi/sc4s/env.example": "sha256:beb6e911b6f073f94932241f565d6bfc9d2edaa7efc5791148bced78ca659daa",
+      "packs/ubiquiti_unifi/scripts/send_tcp_20086.sh": "sha256:e1063c45591a916345767c66220b10e88eaff8d8c9e3adf401f6e4740769c56f",
+      "packs/ubiquiti_unifi/splunk/default/eventtypes.conf": "sha256:ea71e8a53a7a19b3cc1e8c3e9782b761a32bedc16c54270172032ca8e59c5aed",
+      "packs/ubiquiti_unifi/splunk/default/props.conf": "sha256:bb615e8b06bcbbef9dbc6ffc32b8bd71d8f826c98360d99106434cd427c9a22f",
+      "packs/ubiquiti_unifi/splunk/default/tags.conf": "sha256:119245461b5872c025330e8992d51e52d3ee39b822dbdf7c64310195f5e332b5",
+      "packs/ubiquiti_unifi/splunk/default/transforms.conf": "sha256:644f15113db59fab5f21a74baa4a445267b2dcbeb19cdd7b1d5fc27cdbf544e0",
+      "packs/ubiquiti_unifi/splunk/default/data/ui/views/unifi_overview.xml": "sha256:bfdba72a90c3cfaad8e60f049c47dfbe77e1bcd1bfc5e3e48fbb71ae049f9ca7",
+      "packs/ubiquiti_unifi/test-events/unifi_test_events.txt": "sha256:e68c275284976016d51fedd261d0ee56259aafef78ffd1e94547c4287e93b669",
+      "packs/ubiquiti_unifi/validation/preflight-2026-06-14.md": "sha256:68759816c2dda3205014bad53fd4ad02c30a47d154c047c44717c7902368f4ae",
+      "packs/ubiquiti_unifi/validation/replay-readback-2026-06-14.md": "sha256:3d31c7d9ec6f7e49f770fb8b83122635672242c5806826e11eb3eb73016a9609",
+      "packs/ubiquiti_unifi/scripts/e2e_docker_compose.sh": "sha256:a352701edb64d5fe09c7568fb43d404522f8b6cf3e49c5a591d5ec3005042005",
+      "packs/ubiquiti_unifi/validation/e2e-lab-2026-06-26.md": "sha256:27afda10821d30b52c593300b7eef8eaf8547c1b1e4d4202d4570d452d6876c7"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-27",
+    "last_tested": "2026-06-26"
+  },
+  "source_delivery": {
+    "mode": "syslog_controller_relay",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "raw",
+    "supported_transport_refs": [
+      "tcp_syslog"
+    ],
+    "notes": "UniFi operational path is syslog-style one-line records; API/export paths should be separate relay metadata if used. The default syslog relay route has S6 lab replay/read-back for the synthetic-equivalent fixture set only; real product/source-version telemetry is still required for field validation.",
+    "validation_status": "s6_lab_replay_readback_passed; synthetic-equivalent fixtures only; field validation requires real product/source-version evidence"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "unifi_overview_splunk_test",
+      "title": "Ubiquiti UniFi network telemetry — dashboard example",
+      "source_path": "dashboards/screenshots/unifi-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Ubiquiti UniFi network telemetry dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

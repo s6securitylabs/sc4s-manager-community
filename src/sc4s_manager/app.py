@@ -19,6 +19,7 @@ import json
 import mimetypes
 import os
 import re
+import secrets
 import shutil
 import socket
 import subprocess
@@ -33,17 +34,13 @@ from http import HTTPStatus
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 from typing import Any, Callable
-from urllib.parse import parse_qs, urlencode, urlparse, unquote
+from urllib.parse import parse_qs, urlparse, unquote
 
-APP_VERSION = "1.0.3"
-SUPPORTED_SC4S_VERSION = "3.43.0"
-SC4S_DOCS_BASE = "https://splunk.github.io/splunk-connect-for-syslog/3.43.0"
+APP_VERSION = "3.46.0-beta"
+SUPPORTED_SC4S_VERSION = "3.46.0"
+SC4S_DOCS_BASE = "https://splunk.github.io/splunk-connect-for-syslog/3.46.0"
 ROOT = Path(os.environ.get("SC4S_ROOT", "/opt/sc4s"))
 LOCAL_ROOT = ROOT / "local"
-# The Docker-first deployment keeps the conventional /opt/sc4s/env_file path
-# as a symlink to this file.  Manager writes the directory-mounted target, not
-# the single-file bind mount/symlink, so os.replace stays atomic and does not
-# replace the host-facing symlink inode.
 ENV_FILE = Path(os.environ.get("SC4S_ENV_FILE", str(ROOT / "env_file")))
 MANAGER_ROOT = Path(os.environ.get("SC4S_MANAGER_ROOT", "/opt/sc4s-manager"))
 STATE_DIR = MANAGER_ROOT / "state"
@@ -61,25 +58,10 @@ API_TOKEN = os.environ.get("SC4S_MANAGER_API_TOKEN", "")
 MANUAL_LOGIN_TOKEN = os.environ.get("SC4S_MANAGER_MANUAL_LOGIN_TOKEN", "")
 SC4S_CONTAINER = os.environ.get("SC4S_CONTAINER", "SC4S")
 CONTROL_SOCKET = os.environ.get("SC4S_CONTROL_SOCKET", "/run/sc4s-manager/control.sock")
-
-INDEX_HTML = """<!doctype html>
-<html lang=\"en\">
-<head>
-  <meta charset=\"utf-8\">
-  <title>SC4S Manager</title>
-</head>
-<body>
-  <main>
-    <h1>SC4S Manager</h1>
-    <p>Static frontend bundle not found. Build the frontend or install a release package with frontend assets.</p>
-    <h2>Operations</h2>
-    <p>Use the packaged UI or API to validate, stage, apply, and verify SC4S changes.</p>
-    <h2>Metrics Explorer</h2>
-    <p>Runtime counters are available from /api/metrics/syslog-ng when authenticated.</p>
-  </main>
-</body>
-</html>
-"""
+SC4S_HEALTH_URL = os.environ.get("SC4S_HEALTH_URL", "http://127.0.0.1:8080/health")
+AUTH_MODE = os.environ.get("SC4S_MANAGER_AUTH_MODE", "").strip().lower()
+REQUIRE_CONTROL = os.environ.get("SC4S_MANAGER_REQUIRE_CONTROL", "no").strip().lower() in {"1", "yes", "true"}
+SESSION_TTL_SECONDS = int(os.environ.get("SC4S_MANAGER_SESSION_TTL_SECONDS", "28800"))
 
 SAFE_NAME_RE = re.compile(r"^[A-Za-z0-9_.:-]{1,80}$")
 FILTER_RE = re.compile(r"^[A-Za-z0-9_]{1,64}$")
@@ -112,7 +94,7 @@ OPTION_REGISTRY = [
     {"key":"SC4S_GLOBAL_OPTIONS_STATS_LEVEL","label":"Stats level","category":"metrics","type":"integer","default":"1","description":"syslog-ng statistics verbosity level.","restart_required":True,"secret":False},
 ]
 
-# V1 docs-backed common option catalog for supported SC4S 3.43.0. This is
+# V1 docs-backed common option catalog for supported SC4S 3.46.0. This is
 # intentionally static for the pinned release; future upgrade flow regenerates it
 # from the matching upstream SC4S docs/tag before changing SUPPORTED_SC4S_VERSION.
 OPTION_REGISTRY.extend([
@@ -168,6 +150,54 @@ SOURCE_CATALOG = [
     {"vendor_product":"linux_messages_syslog","label":"Linux syslog/messages","default_index":"osnix","docs":"sources/simple/","notes":"Generic/simple syslog source."},
 ]
 _lock = threading.RLock()
+# Serializes the complete snapshot -> write -> validate -> control -> post-check
+# -> rollback lifecycle, not merely individual filesystem writes.
+_mutation_lock = threading.RLock()
+_mutation_revision = 0
+
+
+def revision_conflict(expected: Any, *, required: bool = False) -> dict[str, Any] | None:
+    if expected is None:
+        if required:
+            return {"ok": False, "error": "a validation revision is required", "code": "validation_revision_required", "revision": _mutation_revision}
+        return None
+    if isinstance(expected, bool) or not isinstance(expected, int):
+        raise ValueError("expected_revision must be an integer")
+    if expected != _mutation_revision:
+        return {"ok": False, "error": "mutation revision conflict", "code": "revision_conflict", "expected_revision": expected, "revision": _mutation_revision}
+    return None
+
+
+def configuration_fingerprint() -> str:
+    """Digest desired configuration so out-of-band file changes invalidate validation."""
+    digest = hashlib.sha256()
+    paths = [path for path in [ENV_FILE, STATE_FILE] if path.is_file()]
+    if LOCAL_ROOT.exists():
+        paths.extend(path for path in LOCAL_ROOT.rglob("*") if path.is_file())
+    for path in sorted(paths, key=lambda item: str(item)):
+        try:
+            label = str(path.relative_to(ROOT))
+        except ValueError:
+            label = str(path)
+        digest.update(label.encode("utf-8", errors="surrogateescape"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def coordinated_mutation(payload: dict[str, Any], operation: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    """Run one public mutation with optimistic process-local revision control."""
+    global _mutation_revision
+    with _mutation_lock:
+        conflict = revision_conflict(payload.get("expected_revision"))
+        if conflict:
+            return conflict
+        result = operation()
+        if result.get("ok"):
+            _mutation_revision += 1
+        result["revision"] = _mutation_revision
+        return result
 
 
 def now() -> str:
@@ -262,72 +292,23 @@ def safe_actor(actor: str) -> str:
     return cleaned or "unknown"
 
 
-def resolved_under(path: Path, roots: tuple[Path, ...], *, label: str = "path") -> Path:
-    # Canonical realpath normalization of the candidate and each root, then a
-    # separator-terminated prefix guard. Both steps are deliberately inline so
-    # the full trust boundary is visible to reviewers and static analysis.
-    candidate = os.path.realpath(path)
-    for root in roots:
-        root_real = os.path.realpath(root)
-        if candidate.startswith(root_real + os.sep):
-            # Defense in depth: re-verify containment with canonical
-            # relative_to() semantics on the resolved paths.
-            resolved = Path(candidate)
-            resolved.relative_to(Path(root_real))
-            return resolved
-    raise ValueError(f"{label} is outside the allowed roots")
-
-
 def backup(path: Path, actor: str) -> Path:
     ensure_dirs()
-    path = resolved_under(path, (ROOT,), label="backup source")
-    rel = path.relative_to(ROOT.resolve(strict=False))
+    rel = path.relative_to(ROOT) if str(path).startswith(str(ROOT)) else path.name
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-    target = resolved_under(BACKUP_DIR / f"{str(rel).replace('/', '__')}.{stamp}.{safe_actor(actor)}.bak", (BACKUP_DIR,), label="backup file")
+    target = BACKUP_DIR / f"{str(rel).replace('/', '__')}.{stamp}.{safe_actor(actor)}.bak"
     target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(path, target)
     return target
 
 
 def atomic_write(path: Path, content: str) -> None:
-    path = resolved_under(path, (ROOT, MANAGER_ROOT), label="write target")
     path.parent.mkdir(parents=True, exist_ok=True)
-    existing_mode = path.stat().st_mode & 0o777 if path.exists() else 0o640
     fd, tmp = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
     try:
-        os.fchmod(fd, existing_mode)
         with os.fdopen(fd, "w") as f:
             f.write(content)
-            f.flush()
-            os.fsync(f.fileno())
         os.replace(tmp, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
-    finally:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
-
-
-def atomic_write_bytes(path: Path, content: bytes) -> None:
-    path = resolved_under(path, (ROOT, MANAGER_ROOT), label="write target")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    existing_mode = path.stat().st_mode & 0o777 if path.exists() else 0o640
-    fd, tmp = tempfile.mkstemp(prefix=path.name + ".", dir=str(path.parent))
-    try:
-        os.fchmod(fd, existing_mode)
-        with os.fdopen(fd, "wb") as f:
-            f.write(content)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
     finally:
         if os.path.exists(tmp):
             os.unlink(tmp)
@@ -452,11 +433,51 @@ def docker_status() -> dict[str, Any]:
 
 def health_probe() -> dict[str, Any]:
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8080/health", timeout=3) as r:
+        with urllib.request.urlopen(SC4S_HEALTH_URL, timeout=3) as r:
             body = r.read(4096).decode(errors="replace")
-            return {"ok": r.status == 200, "status": r.status, "body": body}
+            return {"ok": r.status == 200, "status": r.status, "body": body, "url": SC4S_HEALTH_URL}
     except Exception as e:
-        return {"ok": False, "error": str(e)}
+        return {"ok": False, "error": str(e), "url": SC4S_HEALTH_URL}
+
+
+def liveness_status() -> dict[str, Any]:
+    """Process-only status for supervisors; it deliberately ignores dependencies."""
+    return {"status": "ok", "version": APP_VERSION}
+
+
+def readiness_status() -> dict[str, Any]:
+    """Dependency/capability status used for traffic and operator readiness."""
+    sc4s = health_probe()
+    env_file = {"ok": ENV_FILE.is_file(), "path": str(ENV_FILE)}
+    control_available = Path(CONTROL_SOCKET).is_socket()
+    control = {
+        "ok": control_available or not REQUIRE_CONTROL,
+        "available": control_available,
+        "required": REQUIRE_CONTROL,
+        "mode": "connected" if control_available else "observe_only",
+    }
+    ready = bool(sc4s.get("ok")) and env_file["ok"] and control["ok"]
+    return {
+        "status": "ready" if ready else "not_ready",
+        "version": APP_VERSION,
+        "checks": {"sc4s": sc4s, "env_file": env_file, "control": control},
+    }
+
+
+def validate_auth_configuration() -> None:
+    """Refuse an ambiguous or unusable browser authentication configuration."""
+    placeholders = {"change-me", "changeme", "change-me-with-random-value", "password", "secret"}
+    if AUTH_MODE not in {"standalone", "proxy"}:
+        raise ValueError("SC4S_MANAGER_AUTH_MODE must be explicitly set to standalone or proxy")
+    selected = {"standalone": MANUAL_LOGIN_TOKEN, "proxy": PROXY_SECRET}[AUTH_MODE]
+    if len(selected) < 32 or selected.strip().lower() in placeholders:
+        key = {"standalone": "SC4S_MANAGER_MANUAL_LOGIN_TOKEN", "proxy": "SC4S_MANAGER_PROXY_SECRET"}[AUTH_MODE]
+        raise ValueError(f"{key} must be a strong generated value of at least 32 characters")
+    incompatible = (AUTH_MODE, bool(PROXY_SECRET), bool(MANUAL_LOGIN_TOKEN))
+    if incompatible in {("standalone", True, True), ("standalone", True, False)}:
+        raise ValueError("SC4S_MANAGER_PROXY_SECRET must be empty in standalone mode")
+    if incompatible in {("proxy", True, True), ("proxy", False, True)}:
+        raise ValueError("SC4S_MANAGER_MANUAL_LOGIN_TOKEN must be empty in proxy mode")
 
 
 
@@ -536,14 +557,11 @@ def backup_target_from_name(name: str) -> Path:
     rel_token = match.group("rel") if match else safe.split(".", 1)[0]
     if rel_token == "env_file":
         return ENV_FILE
-    if rel_token.startswith("local__"):
-        dest = resolved_under(ROOT / rel_token.replace("__", "/"), tuple(EDITABLE_ROOTS), label="backup target")
-        if dest.suffix not in EDITABLE_SUFFIXES:
-            raise ValueError("invalid backup target")
-        return dest
-    if rel_token.startswith("tls__"):
-        dest = resolved_under(ROOT / rel_token.replace("__", "/"), (TLS_DIR,), label="backup target")
-        if dest.name not in {"server.pem", "server.key", "ca.pem"}:
+    if rel_token.startswith(("local__", "tls__")):
+        dest = (ROOT / rel_token.replace("__", "/")).resolve()
+        try:
+            dest.relative_to(ROOT.resolve())
+        except ValueError:
             raise ValueError("invalid backup target")
         return dest
     # Backward compatibility for legacy backup names created before backups used
@@ -556,10 +574,14 @@ def backup_target_from_name(name: str) -> Path:
 def backup_diff(name: str) -> dict[str, Any]:
     ensure_dirs()
     safe = Path(name).name
-    src = resolved_under(BACKUP_DIR / safe, (BACKUP_DIR,), label="backup name")
+    src = (BACKUP_DIR / safe).resolve()
+    try:
+        src.relative_to(BACKUP_DIR.resolve())
+    except ValueError:
+        raise ValueError("invalid backup name")
     if not src.exists() or src.suffix != ".bak":
         raise ValueError("backup not found")
-    dest = resolved_under(backup_target_from_name(safe), (ROOT,), label="backup target")
+    dest = backup_target_from_name(safe)
     old_raw = src.read_text(errors="replace").splitlines()
     new_raw = dest.read_text(errors="replace").splitlines() if dest.exists() else []
     old = [redact_line(x) for x in old_raw]
@@ -629,46 +651,68 @@ def preview_change(payload: dict[str, Any]) -> dict[str, Any]:
     return {"ok": True, "type": change["type"], "target": change["target"], "apply_mode": change["apply_mode"], "diff": diff, "validation": {"skipped": True, "reason": "preview only; apply performs validation before reload/restart"}}
 
 
+def post_check_succeeded(post: dict[str, Any]) -> bool:
+    """Fail closed when a performed runtime check explicitly reports failure."""
+    if post.get("ok") is False:
+        return False
+    health = post.get("health")
+    if isinstance(health, dict) and health.get("ok") is False:
+        return False
+    docker = post.get("docker")
+    if isinstance(docker, dict) and (docker.get("running") is False or docker.get("ok") is False):
+        return False
+    return True
+
+
+def runtime_restore_control(actor: str, apply_mode: str) -> dict[str, Any]:
+    """Reload/restart SC4S after filesystem restore so runtime matches restored config."""
+    control = reload_sc4s(actor) if apply_mode == "reloadable" else restart_sc4s(actor)
+    post: dict[str, Any] = {}
+    if control.get("ok"):
+        post = {"docker": docker_status(), "health": health_probe(), "ports": port_summary(parse_env())}
+    return {
+        "ok": bool(control.get("ok") and post_check_succeeded(post)),
+        "control": control,
+        "post_check": post,
+    }
+
+
 def apply_change(payload: dict[str, Any], actor: str) -> dict[str, Any]:
-    apply_requested = payload_bool(payload, "apply", True)
-    change = proposed_change(payload)
-    diff = redacted_unified_diff(change["current"], change["content"], "current", "proposed")
-    target = Path(change["target"])
-    with _lock:
-        b = backup(target, actor) if target.exists() else None
+    with _mutation_lock:
+        change = proposed_change(payload)
+        diff = redacted_unified_diff(change["current"], change["content"], "current", "proposed")
+        target = Path(change["target"])
+        existed = target.exists()
+        old_content = target.read_bytes() if existed else None
+        b = backup(target, actor) if existed else None
         atomic_write(target, change["content"])
-    validation = validate_config()
-    if not validation.get("ok"):
+        validation = validate_config()
+        control = {"ok": True, "skipped": True}
+        post: dict[str, Any] = {}
+        apply_runtime = bool(payload.get("apply", True))
+        if validation.get("ok") and apply_runtime:
+            control = reload_sc4s(actor) if change["apply_mode"] == "reloadable" else restart_sc4s(actor)
+            if control.get("ok"):
+                post = {"docker": docker_status(), "health": health_probe(), "ports": port_summary(parse_env())}
+        failed = not validation.get("ok") or not control.get("ok", True) or (apply_runtime and not post_check_succeeded(post))
         rolled_back = False
-        if b:
-            shutil.copy2(b, target)
+        rollback_validation: dict[str, Any] | None = None
+        rollback_runtime: dict[str, Any] = {"ok": True, "skipped": True, "control": {"ok": True, "skipped": True}, "post_check": {}}
+        if failed:
+            if existed and old_content is not None:
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(old_content)
+            else:
+                target.unlink(missing_ok=True)
             rolled_back = True
-        elif change["type"] == "file":
-            # New file with no prior backup: remove it so a failed apply cannot
-            # leave broken config behind for the next restart.
-            target.unlink(missing_ok=True)
-            rolled_back = True
-        audit("apply_change_failed", actor, {"target": str(target), "type": change["type"], "validation": validation, "backup": str(b) if b else None, "rolled_back": rolled_back})
-        return {"ok": False, "target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "diff": diff, "backup": str(b) if b else None, "validation": validation, "rolled_back": rolled_back}
-    control = {"ok": True, "skipped": True}
-    if apply_requested:
-        control = reload_sc4s(actor) if change["apply_mode"] == "reloadable" else restart_sc4s(actor)
-    if not control.get("ok", True):
-        # The failed control action may have read the staged file before it
-        # returned an error. Restore the filesystem *and* re-issue the fixed
-        # action so the running SC4S process is reconciled with the rollback.
-        if b:
-            atomic_write(target, b.read_text())
-        elif change["type"] == "file":
-            target.unlink(missing_ok=True)
-        rollback_control = reload_sc4s(actor) if change["apply_mode"] == "reloadable" else restart_sc4s(actor)
-        rollback_runtime = {"attempted": True, "ok": bool(rollback_control.get("ok")), "control": rollback_control}
-        audit("apply_change_control_failed", actor, {"target": str(target), "type": change["type"], "control": control, "rollback_runtime": rollback_runtime})
-        return {"ok": False, "target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "diff": diff, "backup": str(b) if b else None, "validation": validation, "control": control, "rolled_back": True, "rollback_runtime": rollback_runtime}
-    post = {"docker": docker_status(), "health": health_probe(), "ports": port_summary(parse_env())}
-    ok = bool(validation.get("ok") and control.get("ok", True))
-    audit("apply_change", actor, {"target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "ok": ok, "backup": str(b) if b else None, "control": control})
-    return {"ok": ok, "target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "diff": diff, "backup": str(b) if b else None, "validation": validation, "control": control, "post_check": post}
+            rollback_validation = validate_config()
+            # If a control action already ran, runtime may still hold the failed config.
+            if apply_runtime and validation.get("ok") and not control.get("skipped", False):
+                rollback_runtime = runtime_restore_control(actor, change["apply_mode"])
+        ok = not failed
+        audit("apply_change" if ok else "apply_change_failed", actor, {"target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "ok": ok, "backup": str(b) if b else None, "control": control, "post_check": post, "rolled_back": rolled_back, "rollback_runtime": rollback_runtime})
+        return {"ok": ok, "target": str(target), "type": change["type"], "apply_mode": change["apply_mode"], "diff": diff, "backup": str(b) if b else None, "validation": validation, "control": control, "post_check": post, "rolled_back": rolled_back, "rollback_validation": rollback_validation, "rollback_runtime": rollback_runtime}
+
 
 def prom_escape(value: str) -> str:
     return str(value).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
@@ -940,6 +984,47 @@ def validate_config() -> dict[str, Any]:
     return {"ok": ok, "syntax": {"ok": bool(syntax.get("ok")), "stdout": syntax.get("stdout", ""), "stderr": syntax.get("stderr", ""), "code": syntax.get("code", 0 if syntax.get("ok") else 1)}, "tls": tls, "checked_at": now()}
 
 
+def validate_config_at_revision() -> dict[str, Any]:
+    """Validate while holding the mutation lock and bind evidence to desired state."""
+    with _mutation_lock:
+        result = validate_config()
+        result["revision"] = _mutation_revision
+        result["validation_token"] = configuration_fingerprint()
+        return result
+
+
+def validated_control_action(payload: dict[str, Any], actor: str, action: str) -> dict[str, Any]:
+    """Revalidate and apply one control action against the exact validated revision."""
+    if action not in {"reload", "restart"}:
+        raise ValueError("unsupported control action")
+    with _mutation_lock:
+        conflict = revision_conflict(payload.get("expected_revision"), required=True)
+        if conflict:
+            return conflict
+        validation_token = payload.get("validation_token")
+        if not isinstance(validation_token, str) or not validation_token:
+            return {"ok": False, "error": "a validation token is required", "code": "validation_token_required", "revision": _mutation_revision}
+        current_token = configuration_fingerprint()
+        if not hmac.compare_digest(validation_token, current_token):
+            return {"ok": False, "error": "configuration changed after validation", "code": "validation_state_changed", "revision": _mutation_revision}
+        validation = validate_config()
+        after_validation_token = configuration_fingerprint()
+        if not hmac.compare_digest(validation_token, after_validation_token):
+            return {"ok": False, "error": "configuration changed during validation", "code": "validation_state_changed", "revision": _mutation_revision}
+        validation["revision"] = _mutation_revision
+        validation["validation_token"] = validation_token
+        control: dict[str, Any] = {"ok": False, "skipped": True, "error": "control skipped because validation failed"}
+        post: dict[str, Any] = {}
+        if validation.get("ok"):
+            control = reload_sc4s(actor) if action == "reload" else restart_sc4s(actor)
+            if control.get("ok"):
+                post = {"docker": docker_status(), "health": health_probe(), "ports": port_summary(parse_env())}
+        ok = bool(validation.get("ok") and control.get("ok") and post_check_succeeded(post))
+        result = {"ok": ok, "revision": _mutation_revision, "apply_mode": "reloadable" if action == "reload" else "restart_required", "validation": validation, "control": control, "post_check": post}
+        audit(f"validated_{action}", actor, result)
+        return result
+
+
 def backups() -> list[dict[str, Any]]:
     ensure_dirs()
     return [{"name": p.name, "path": str(p), "size": p.stat().st_size, "mtime": dt.datetime.fromtimestamp(p.stat().st_mtime, dt.timezone.utc).isoformat()} for p in sorted(BACKUP_DIR.glob("*.bak"), key=lambda x: x.stat().st_mtime, reverse=True)]
@@ -948,11 +1033,15 @@ def backups() -> list[dict[str, Any]]:
 def restore_backup(name: str, actor: str) -> dict[str, Any]:
     ensure_dirs()
     safe = Path(name).name
-    src = resolved_under(BACKUP_DIR / safe, (BACKUP_DIR,), label="backup name")
+    src = (BACKUP_DIR / safe).resolve()
+    try:
+        src.relative_to(BACKUP_DIR.resolve())
+    except ValueError:
+        raise ValueError("invalid backup name")
     if not src.exists() or src.suffix != ".bak":
         raise ValueError("backup not found")
     # Backup filenames are relpath.timestamp.actor.bak where / became __.
-    dest = resolved_under(backup_target_from_name(safe), (ROOT,), label="backup target")
+    dest = backup_target_from_name(safe)
     if dest.exists():
         backup(dest, actor)
     atomic_write(dest, src.read_text())
@@ -1164,31 +1253,23 @@ def rollback_if_invalid(validation: dict[str, Any], snapshot: dict[str, Any], ac
     return True
 
 
-def finish_snapshot_transaction(
-    validation: dict[str, Any], snapshot: dict[str, Any], actor: str, action: str,
-    *, apply: bool, control_action: Callable[[str], dict[str, Any]],
-) -> tuple[bool, dict[str, Any], dict[str, Any] | None]:
-    """Finalize a CRUD mutation without leaving staged config live on control failure."""
-    if not validation.get("ok"):
-        restore_mutation_snapshot(snapshot)
+def finish_snapshot_transaction(snapshot: dict[str, Any], actor: str, action: str,
+                                validation: dict[str, Any], control: dict[str, Any],
+                                post_check: dict[str, Any], applied: bool,
+                                apply_mode: str = "reloadable") -> tuple[bool, bool, dict[str, Any] | None, dict[str, Any]]:
+    failed = not validation.get("ok") or not control.get("ok", True) or (applied and not post_check_succeeded(post_check))
+    rollback_runtime: dict[str, Any] = {"ok": True, "skipped": True, "control": {"ok": True, "skipped": True}, "post_check": {}}
+    if not failed:
         cleanup_mutation_snapshot(snapshot)
-        audit(f"{action}_rollback", actor, {"validation": validation, "rolled_back": True})
-        return True, {"ok": True, "skipped": True}, None
-    if not apply:
-        cleanup_mutation_snapshot(snapshot)
-        return False, {"ok": True, "skipped": True}, None
-    control = control_action(actor)
-    if control.get("ok"):
-        cleanup_mutation_snapshot(snapshot)
-        return False, control, None
-    # A failed daemon response can occur after SC4S has consumed the changed
-    # file. Restore both desired state and runtime, just as direct apply does.
+        return True, False, None, rollback_runtime
     restore_mutation_snapshot(snapshot)
-    rollback_control = control_action(actor)
     cleanup_mutation_snapshot(snapshot)
-    rollback_runtime = {"attempted": True, "ok": bool(rollback_control.get("ok")), "control": rollback_control}
-    audit(f"{action}_control_rollback", actor, {"control": control, "rollback_runtime": rollback_runtime, "rolled_back": True})
-    return True, control, rollback_runtime
+    restored = validate_config()
+    # Control already ran against the failed config; re-apply restored files to SC4S.
+    if applied and not control.get("skipped", False):
+        rollback_runtime = runtime_restore_control(actor, apply_mode)
+    audit(f"{action}_rollback", actor, {"validation": validation, "control": control, "post_check": post_check, "rolled_back": True, "rollback_validation": restored, "rollback_runtime": rollback_runtime})
+    return False, True, restored, rollback_runtime
 
 
 def validate_filter(filter_name: str) -> str:
@@ -1223,7 +1304,7 @@ def add_service(payload: dict[str, Any], actor: str) -> dict[str, Any]:
         raise ValueError("vendor_product contains unsafe characters")
     if index and not SAFE_NAME_RE.match(index):
         raise ValueError("index contains unsafe characters")
-    filt_file = resolved_under(LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf", (LOCAL_ROOT / "config" / "filters",), label="filter path")
+    filt_file = LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf"
     filter_id = f"f_{filter_name}"
     expr = f"netmask(\"{source_match}\")" if re.match(r"^[0-9a-fA-F:.]+(/\d+)?$", source_match) else f"host(\"{source_match}\" type(glob))"
     conf = f"filter {filter_id} {{ {expr}; }};\n"
@@ -1294,7 +1375,6 @@ def selector_content(vendor_product: str, dest_ref: str) -> str:
 
 
 def configure_destination(payload: dict[str, Any], actor: str) -> dict[str, Any]:
-    apply_requested = payload_bool(payload, "apply", False)
     kind = str(payload.get("kind", "")).lower()
     did = normalize_dest_id(str(payload.get("id", "DEFAULT")))
     updates: dict[str, str] = {}
@@ -1351,13 +1431,17 @@ def configure_destination(payload: dict[str, Any], actor: str) -> dict[str, Any]
         b = backup(ENV_FILE, actor) if ENV_FILE.exists() else None
         atomic_write(ENV_FILE, render_env(updates))
     validation = validate_config()
-    rolled_back = rollback_if_invalid(validation, snapshot, actor, "configure_destination")
     control = {"ok": True, "skipped": True}
-    if apply_requested and not rolled_back:
+    post: dict[str, Any] = {}
+    apply_runtime = bool(payload.get("apply", False))
+    if apply_runtime and validation.get("ok"):
         control = restart_sc4s(actor)
-    audit("configure_destination", actor, {"kind": kind, "id": did, "updates": redact(updates), "selector": str(selector_file) if selector_file else None, "ok": bool(validation.get("ok"))})
+        if control.get("ok"):
+            post = {"docker": docker_status(), "health": health_probe(), "ports": port_summary(parse_env())}
+    ok, rolled_back, rollback_validation, rollback_runtime = finish_snapshot_transaction(snapshot, actor, "configure_destination", validation, control, post, apply_runtime, "restart_required")
+    audit("configure_destination", actor, {"kind": kind, "id": did, "updates": redact(updates), "selector": str(selector_file) if selector_file else None, "ok": ok, "rolled_back": rolled_back})
     safe_updates = {k: ("[REDACTED]" if SECRET_KEY_RE.search(k) else v) for k, v in updates.items()}
-    return {"ok": bool(validation.get("ok") and control.get("ok", True)), "kind": kind, "id": did, "apply_mode": "restart_required", "updates": safe_updates, "selector": str(selector_file) if selector_file else None, "backup": str(b) if b else None, "validation": validation, "control": control}
+    return {"ok": ok, "kind": kind, "id": did, "apply_mode": "restart_required", "updates": safe_updates, "selector": str(selector_file) if selector_file else None, "backup": str(b) if b else None, "validation": validation, "control": control, "post_check": post, "rolled_back": rolled_back, "rollback_validation": rollback_validation, "rollback_runtime": rollback_runtime}
 
 def source_catalog() -> dict[str, Any]:
     sources = []
@@ -1409,7 +1493,6 @@ def source_test_instructions(source: str, host: str = "<sc4s-host>", tls_port: s
 
 
 def onboard_source(payload: dict[str, Any], actor: str) -> dict[str, Any]:
-    apply_requested = payload_bool(payload, "apply", False)
     name = validate_filter(str(payload.get("name") or payload.get("filter") or ""))
     vendor_product = str(payload.get("vendor_product", "")).strip()
     known = {s["vendor_product"] for s in SOURCE_CATALOG}
@@ -1424,19 +1507,44 @@ def onboard_source(payload: dict[str, Any], actor: str) -> dict[str, Any]:
         "compliance": payload.get("compliance", ""),
     }, actor)
     validation = validate_config()
-    rolled_back = rollback_if_invalid(validation, snapshot, actor, "onboard_source")
     control = {"ok": True, "skipped": True}
-    if apply_requested and not rolled_back:
+    post: dict[str, Any] = {}
+    apply_runtime = bool(payload.get("apply", False))
+    if apply_runtime and validation.get("ok"):
         control = reload_sc4s(actor)
-    out = {"ok": bool(validation.get("ok") and control.get("ok", True)), "apply_mode": "reloadable", "service": result, "validation": validation, "control": control, "test_instructions": source_test_instructions(vendor_product or name)}
-    audit("onboard_source", actor, {"filter": name, "vendor_product": vendor_product, "index": payload.get("index", ""), "apply": apply_requested, "ok": out["ok"]})
+        if control.get("ok"):
+            post = {"docker": docker_status(), "health": health_probe(), "ports": port_summary(parse_env())}
+    ok, rolled_back, rollback_validation, rollback_runtime = finish_snapshot_transaction(snapshot, actor, "onboard_source", validation, control, post, apply_runtime, "reloadable")
+    out = {"ok": ok, "apply_mode": "reloadable", "service": result, "validation": validation, "control": control, "post_check": post, "rolled_back": rolled_back, "rollback_validation": rollback_validation, "rollback_runtime": rollback_runtime, "test_instructions": source_test_instructions(vendor_product or name)}
+    audit("onboard_source", actor, {"filter": name, "vendor_product": vendor_product, "index": payload.get("index", ""), "apply": bool(payload.get("apply", False)), "ok": out["ok"]})
     return out
 
 
-def delete_source(name: str, actor: str, apply: bool = False) -> dict[str, Any]:
+def dependent_route_ids(*, source: str | None = None, destination_kind: str | None = None, destination_id: str | None = None) -> list[str]:
+    routes = load_state().get("routes", [])
+    if not isinstance(routes, list):
+        return []
+    matches: list[str] = []
+    for route in routes:
+        if not isinstance(route, dict):
+            continue
+        if source is not None and str(route.get("source", "")).removeprefix("f_") != source.removeprefix("f_"):
+            continue
+        if destination_kind is not None and str(route.get("destination_kind", "")).lower() != destination_kind.lower():
+            continue
+        if destination_id is not None and str(route.get("destination_id", "")).upper() != destination_id.upper():
+            continue
+        matches.append(str(route.get("id") or "unnamed-route"))
+    return sorted(matches)
+
+
+def delete_source(name: str, actor: str) -> dict[str, Any]:
     filter_name = validate_filter(name.removeprefix("f_"))
+    dependencies = dependent_route_ids(source=filter_name)
+    if dependencies:
+        raise ValueError(f"source is referenced by routes: {', '.join(dependencies)}; remove those routes first")
     filter_id = f"f_{filter_name}"
-    filt_file = resolved_under(LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf", (LOCAL_ROOT / "config" / "filters",), label="filter path")
+    filt_file = LOCAL_ROOT / "config" / "filters" / f"{filter_name}.conf"
     removed_paths: list[str] = []
     snapshot = mutation_snapshot()
     with _lock:
@@ -1453,13 +1561,13 @@ def delete_source(name: str, actor: str, apply: bool = False) -> dict[str, Any]:
         "compliance_meta_by_source": remove_filter_conf(LOCAL_ROOT / "context" / "compliance_meta_by_source.conf", filter_id, actor),
     }
     validation = validate_config()
-    rolled_back, control, rollback_runtime = finish_snapshot_transaction(validation, snapshot, actor, "delete_source", apply=apply, control_action=reload_sc4s)
-    out = {"ok": bool(validation.get("ok") and control.get("ok", True) and not rolled_back), "filter": filter_id, "removed_paths": removed_paths, "removed_rows": removed_rows, "removed_filters": removed_filters, "validation": validation, "apply_mode": "reloadable", "control": control, "apply_requested": apply, "rolled_back": rolled_back, "rollback_runtime": rollback_runtime}
+    rollback_if_invalid(validation, snapshot, actor, "delete_source")
+    out = {"ok": bool(validation.get("ok")), "filter": filter_id, "removed_paths": removed_paths, "removed_rows": removed_rows, "removed_filters": removed_filters, "validation": validation, "apply_mode": "reloadable"}
     audit("delete_source", actor, out)
     return out
 
 
-def delete_destination(kind: str, dest_id: str, actor: str, apply: bool = False) -> dict[str, Any]:
+def delete_destination(kind: str, dest_id: str, actor: str) -> dict[str, Any]:
     dest_kind = str(kind).lower()
     if dest_kind not in {"hec", "syslog", "bsd"}:
         raise ValueError("destination kind must be hec, syslog, or bsd")
@@ -1470,6 +1578,9 @@ def delete_destination(kind: str, dest_id: str, actor: str, apply: bool = False)
     else:
         prefix = f"SC4S_DEST_{dest_kind.upper()}_{did}_"
         dest_ref = f"d_{dest_kind}_{did.lower()}"
+    dependencies = dependent_route_ids(destination_kind=dest_kind, destination_id=did)
+    if dependencies:
+        raise ValueError(f"destination is referenced by routes: {', '.join(dependencies)}; remove those routes first")
     env = parse_env()
     updates: dict[str, str | None] = {key: None for key in env if key.startswith(prefix)}
     selector_dir = LOCAL_ROOT / "config" / "app_parsers" / "selectors"
@@ -1484,15 +1595,9 @@ def delete_destination(kind: str, dest_id: str, actor: str, apply: bool = False)
                 backup(selector, actor)
                 selector.unlink()
                 removed_selectors.append(str(selector))
-    # Routes referencing this destination are no longer valid.
-    state = load_state()
-    routes = [route for route in state.get("routes", []) if not (route.get("destination_kind") == dest_kind and route.get("destination_id") == did)]
-    if routes != state.get("routes", []):
-        state["routes"] = routes
-        save_state(state)
     validation = validate_config()
-    rolled_back, control, rollback_runtime = finish_snapshot_transaction(validation, snapshot, actor, "delete_destination", apply=apply, control_action=restart_sc4s)
-    out = {"ok": bool(validation.get("ok") and control.get("ok", True) and not rolled_back), "kind": dest_kind, "id": did, "removed_env_keys": sorted(updates), "removed_selectors": removed_selectors, "backup": str(b) if b else None, "validation": validation, "apply_mode": "restart_required", "control": control, "apply_requested": apply, "rolled_back": rolled_back, "rollback_runtime": rollback_runtime}
+    rollback_if_invalid(validation, snapshot, actor, "delete_destination")
+    out = {"ok": bool(validation.get("ok")), "kind": dest_kind, "id": did, "removed_env_keys": sorted(updates), "removed_selectors": removed_selectors, "backup": str(b) if b else None, "validation": validation, "apply_mode": "restart_required"}
     audit("delete_destination", actor, out)
     return out
 
@@ -1503,7 +1608,6 @@ def route_inventory() -> dict[str, Any]:
 
 
 def upsert_route(payload: dict[str, Any], actor: str) -> dict[str, Any]:
-    apply_requested = payload_bool(payload, "apply", False)
     route_id = validate_filter(str(payload.get("id", "")))
     source = validate_filter(str(payload.get("source", "")))
     pack = str(payload.get("pack") or payload.get("vendor_product") or "").strip()
@@ -1521,11 +1625,11 @@ def upsert_route(payload: dict[str, Any], actor: str) -> dict[str, Any]:
     prefix = f"SC4S_DEST_SPLUNK_HEC_{did}_" if dest_kind == "hec" else f"SC4S_DEST_{dest_kind.upper()}_{did}_"
     if not any(key.startswith(prefix) for key in env):
         raise ValueError("destination is not configured")
-    if not resolved_under(LOCAL_ROOT / "config" / "filters" / f"{source}.conf", (LOCAL_ROOT / "config" / "filters",), label="source filter").exists():
+    if not (LOCAL_ROOT / "config" / "filters" / f"{source}.conf").exists():
         raise ValueError("source is not configured")
     selector_dir = LOCAL_ROOT / "config" / "app_parsers" / "selectors"
     selector_dir.mkdir(parents=True, exist_ok=True)
-    selector_file = resolved_under(selector_dir / f"sc4s-lp-{pack}_{dest_ref}.conf", (selector_dir,), label="route selector")
+    selector_file = selector_dir / f"sc4s-lp-{pack}_{dest_ref}.conf"
     snapshot = mutation_snapshot()
     with _lock:
         if selector_file.exists():
@@ -1538,24 +1642,27 @@ def upsert_route(payload: dict[str, Any], actor: str) -> dict[str, Any]:
     state["routes"] = sorted(routes, key=lambda item: item.get("id", ""))
     save_state(state)
     validation = validate_config()
-    rolled_back = rollback_if_invalid(validation, snapshot, actor, "upsert_route")
     control = {"ok": True, "skipped": True}
-    if apply_requested and not rolled_back:
+    post: dict[str, Any] = {}
+    apply_runtime = bool(payload.get("apply", False))
+    if apply_runtime and validation.get("ok"):
         control = reload_sc4s(actor)
-    out = {"ok": bool(validation.get("ok") and control.get("ok", True)), "route": route, "validation": validation, "control": control}
+        if control.get("ok"):
+            post = {"docker": docker_status(), "health": health_probe(), "ports": port_summary(parse_env())}
+    ok, rolled_back, rollback_validation, rollback_runtime = finish_snapshot_transaction(snapshot, actor, "upsert_route", validation, control, post, apply_runtime, "reloadable")
+    out = {"ok": ok, "route": route, "validation": validation, "control": control, "post_check": post, "rolled_back": rolled_back, "rollback_validation": rollback_validation, "rollback_runtime": rollback_runtime}
     audit("upsert_route", actor, out)
     return out
 
 
-def delete_route(route_id: str, actor: str, apply: bool = False) -> dict[str, Any]:
+def delete_route(route_id: str, actor: str) -> dict[str, Any]:
     rid = validate_filter(route_id)
     state = load_state()
     routes = state.get("routes", []) if isinstance(state.get("routes"), list) else []
     target = next((route for route in routes if isinstance(route, dict) and route.get("id") == rid), None)
     if not target:
         raise ValueError("route not found")
-    selector_dir = LOCAL_ROOT / "config" / "app_parsers" / "selectors"
-    selector = resolved_under(Path(str(target.get("selector", ""))), (selector_dir,), label="route selector")
+    selector = Path(str(target.get("selector", "")))
     removed_selectors: list[str] = []
     snapshot = mutation_snapshot()
     with _lock:
@@ -1566,16 +1673,16 @@ def delete_route(route_id: str, actor: str, apply: bool = False) -> dict[str, An
     state["routes"] = [route for route in routes if not (isinstance(route, dict) and route.get("id") == rid)]
     save_state(state)
     validation = validate_config()
-    rolled_back, control, rollback_runtime = finish_snapshot_transaction(validation, snapshot, actor, "delete_route", apply=apply, control_action=reload_sc4s)
-    out = {"ok": bool(validation.get("ok") and control.get("ok", True) and not rolled_back), "id": rid, "removed_selectors": removed_selectors, "validation": validation, "apply_mode": "reloadable", "control": control, "apply_requested": apply, "rolled_back": rolled_back, "rollback_runtime": rollback_runtime}
+    rollback_if_invalid(validation, snapshot, actor, "delete_route")
+    out = {"ok": bool(validation.get("ok")), "id": rid, "removed_selectors": removed_selectors, "validation": validation, "apply_mode": "reloadable"}
     audit("delete_route", actor, out)
     return out
 
 def safe_editable_path(rel: str) -> Path:
     rel = unquote(rel).lstrip("/")
-    candidate = LOCAL_ROOT / rel if not rel.startswith("local/") else ROOT / rel
-    path = resolved_under(candidate, tuple(EDITABLE_ROOTS), label="editable path")
-    if path.suffix not in EDITABLE_SUFFIXES:
+    path = (LOCAL_ROOT / rel).resolve() if not rel.startswith("local/") else (ROOT / rel).resolve()
+    allowed = any(str(path).startswith(str(root.resolve()) + os.sep) or path == root.resolve() for root in EDITABLE_ROOTS)
+    if not allowed or path.suffix not in EDITABLE_SUFFIXES:
         raise ValueError("file is not in an editable SC4S config path")
     return path
 
@@ -1607,7 +1714,7 @@ def list_config_files() -> list[dict[str, Any]]:
 def export_template(name: str, actor: str) -> dict[str, Any]:
     ensure_dirs()
     safe = re.sub(r"[^A-Za-z0-9_.-]", "_", name or "sc4s-template")[:80]
-    target = resolved_under(TEMPLATE_DIR / f"{safe}-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.zip", (TEMPLATE_DIR,), label="template export")
+    target = TEMPLATE_DIR / f"{safe}-{dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.zip"
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as z:
         for root in EDITABLE_ROOTS:
             if root.exists():
@@ -1621,7 +1728,11 @@ def export_template(name: str, actor: str) -> dict[str, Any]:
 
 def import_template(path: str, actor: str) -> dict[str, Any]:
     ensure_dirs()
-    src = resolved_under(Path(path), (TEMPLATE_DIR,), label="template")
+    src = Path(path).resolve()
+    try:
+        src.relative_to(TEMPLATE_DIR.resolve())
+    except ValueError:
+        raise ValueError("template must be an existing zip in the template directory")
     if src.suffix != ".zip" or not src.exists():
         raise ValueError("template must be an existing zip in the template directory")
     if src.stat().st_size > 10_000_000:
@@ -1638,14 +1749,15 @@ def import_template(path: str, actor: str) -> dict[str, Any]:
             member = info.filename
             if member == "manifest.json" or member.endswith("/"):
                 continue
-            dest = resolved_under(ROOT / member, tuple(EDITABLE_ROOTS), label="template member")
-            if dest.suffix not in EDITABLE_SUFFIXES:
+            dest = (ROOT / member).resolve()
+            allowed = any(str(dest).startswith(str(root.resolve()) + os.sep) for root in EDITABLE_ROOTS)
+            if not allowed or dest.suffix not in EDITABLE_SUFFIXES:
                 raise ValueError(f"unsafe template member: {member}")
         for info in infos:
             member = info.filename
             if member == "manifest.json" or member.endswith("/"):
                 continue
-            dest = resolved_under(ROOT / member, tuple(EDITABLE_ROOTS), label="template member")
+            dest = (ROOT / member).resolve()
             if dest.exists():
                 backup(dest, actor)
             dest.parent.mkdir(parents=True, exist_ok=True)
@@ -1664,7 +1776,11 @@ def templates() -> list[dict[str, Any]]:
 def template_path_by_name(name: str) -> Path:
     ensure_dirs()
     safe = Path(name).name
-    path = resolved_under(TEMPLATE_DIR / safe, (TEMPLATE_DIR,), label="template name")
+    path = (TEMPLATE_DIR / safe).resolve()
+    try:
+        path.relative_to(TEMPLATE_DIR.resolve())
+    except ValueError:
+        raise ValueError("invalid template name")
     if path.suffix != ".zip" or not path.exists():
         raise ValueError("template not found")
     return path
@@ -1675,49 +1791,89 @@ def import_template_upload(name: str, content_b64: str, actor: str) -> dict[str,
     safe = re.sub(r"[^A-Za-z0-9_.-]", "_", Path(name or "upload.zip").name)[:80]
     if not safe.endswith(".zip"):
         safe += ".zip"
-    target = resolved_under(TEMPLATE_DIR / safe, (TEMPLATE_DIR,), label="template name")
+    target = (TEMPLATE_DIR / safe).resolve()
+    try:
+        target.relative_to(TEMPLATE_DIR.resolve())
+    except ValueError:
+        raise ValueError("invalid template name")
     raw = base64.b64decode(content_b64, validate=True)
     if len(raw) > 10_000_000:
         raise ValueError("template upload too large")
-    atomic_write_bytes(target, raw)
+    atomic_write(target, raw.decode("latin1"))
+    # Re-write bytes exactly because atomic_write is text-oriented.
+    target.write_bytes(raw)
     audit("upload_template", actor, {"template": str(target), "size": len(raw)})
     return import_template(str(target), actor)
 
 
-def products() -> dict[str, Any]:
+def transactional_template_import(operation: Callable[[], dict[str, Any]], actor: str) -> dict[str, Any]:
+    snapshot = mutation_snapshot()
+    try:
+        result = operation()
+        validation = validate_config()
+        ok, rolled_back, rollback_validation, rollback_runtime = finish_snapshot_transaction(
+            snapshot, actor, "import_template", validation,
+            {"ok": True, "skipped": True}, {}, False, "reloadable",
+        )
+        return {"ok": ok, **result, "validation": validation, "rolled_back": rolled_back, "rollback_validation": rollback_validation, "rollback_runtime": rollback_runtime}
+    except Exception:
+        restore_mutation_snapshot(snapshot)
+        cleanup_mutation_snapshot(snapshot)
+        raise
+
+
+def context_mappings() -> dict[str, Any]:
     return {"vendor_products": read_csv(CSV_FILES["vendor_product"]), "splunk_metadata": read_csv(CSV_FILES["splunk_metadata"]), "compliance_meta": read_csv(CSV_FILES["compliance_meta"]), "host": read_csv(CSV_FILES["host"])}
 
 
-def actor_from(handler: BaseHTTPRequestHandler) -> str:
-    # Identity headers are evidence only after the proxy shared-secret check.
-    # A direct/manual-token caller can otherwise forge a username and corrupt
-    # the audit trail by attaching X-Authentik-Username to its own request.
-    if proxy_authorized(handler):
-        proxy_actor = handler.headers.get("X-Authentik-Username") or handler.headers.get("X-Forwarded-User")
-        if proxy_actor:
-            return re.sub(r"[\r\n\x00]", "_", proxy_actor).strip()[:128] or "proxy-unknown"
-        return "proxy-unknown"
-    if manual_token_authorized(handler):
-        return "manual-token"
-    if API_TOKEN and _token_matches(handler.headers.get("X-SC4S-Manager-Token", ""), API_TOKEN):
-        return "local-api-token"
-    return str(handler.client_address[0])[:128]
+class Principal:
+    __slots__ = ("actor", "auth_mode", "trusted_hop")
+
+    def __init__(self, actor: str, auth_mode: str, trusted_hop: bool = False) -> None:
+        self.actor = actor
+        self.auth_mode = auth_mode
+        self.trusted_hop = trusted_hop
+
+
+_sessions: dict[str, float] = {}
+_session_lock = threading.Lock()
+
+
+def create_session() -> str:
+    token = secrets.token_urlsafe(32)
+    with _session_lock:
+        _sessions[token] = time.time() + SESSION_TTL_SECONDS
+    return token
+
+
+def revoke_session(token: str) -> None:
+    with _session_lock:
+        _sessions.pop(token, None)
+
+
+def session_authorized(handler: BaseHTTPRequestHandler) -> bool:
+    token = _cookie_value(handler.headers.get("Cookie", ""), "sc4s_manual_session")
+    if not token:
+        return False
+    with _session_lock:
+        expires = _sessions.get(token)
+        if not expires or expires <= time.time():
+            _sessions.pop(token, None)
+            return False
+        return True
+
+
+def actor_from(handler: BaseHTTPRequestHandler, principal: Principal | None = None) -> str:
+    principal = principal or authenticate(handler)
+    return principal.actor if principal else handler.client_address[0]
 
 
 def parse_groups(header: str) -> set[str]:
-    return {item.strip() for item in re.split(r"[,;|]", header or "") if item.strip()}
-
-
-def payload_bool(payload: dict[str, Any], key: str, default: bool) -> bool:
-    """Return an explicit JSON boolean; never treat strings as apply consent."""
-    value = payload.get(key, default)
-    if not isinstance(value, bool):
-        raise ValueError(f"{key} must be a JSON boolean")
-    return value
+    return {g.strip() for g in re.split(r"[,;|]", header or "") if g.strip()}
 
 
 def proxy_authorized(handler: BaseHTTPRequestHandler) -> bool:
-    if not (PROXY_SECRET and _token_matches(handler.headers.get("X-SC4S-Manager-Proxy", ""), PROXY_SECRET)):
+    if not (PROXY_SECRET and handler.headers.get("X-SC4S-Manager-Proxy") == PROXY_SECRET):
         return False
     required = {g.strip() for g in os.environ.get("SC4S_MANAGER_ADMIN_GROUPS", "").split(",") if g.strip()}
     if not required:
@@ -1725,26 +1881,16 @@ def proxy_authorized(handler: BaseHTTPRequestHandler) -> bool:
     return bool(required & parse_groups(handler.headers.get("X-Authentik-Groups", "")))
 
 
-def origin_allowed(handler: BaseHTTPRequestHandler, *, require_origin: bool = False) -> bool:
+def origin_allowed(handler: BaseHTTPRequestHandler) -> bool:
     origin = handler.headers.get("Origin")
     if not origin:
-        return not require_origin
+        return True
     host = handler.headers.get("Host", "")
     return origin in {f"https://{host}", f"http://{host}"}
 
 
 def _token_matches(candidate: str, expected: str) -> bool:
     return bool(candidate and expected and hmac.compare_digest(candidate, expected))
-
-
-def _manual_session_token() -> str:
-    if not MANUAL_LOGIN_TOKEN:
-        return ""
-    return hmac.new(
-        MANUAL_LOGIN_TOKEN.encode("utf-8"),
-        b"sc4s-manager-manual-session-v1",
-        hashlib.sha256,
-    ).hexdigest()
 
 
 def _cookie_value(cookie_header: str, name: str) -> str:
@@ -1755,80 +1901,36 @@ def _cookie_value(cookie_header: str, name: str) -> str:
     return ""
 
 
-def manual_session_authorized(handler: BaseHTTPRequestHandler) -> bool:
-    return bool(
-        MANUAL_LOGIN_TOKEN
-        and _token_matches(_cookie_value(handler.headers.get("Cookie", ""), "sc4s_manual_session"), _manual_session_token())
-    )
-
-
 def manual_token_authorized(handler: BaseHTTPRequestHandler) -> bool:
-    if not MANUAL_LOGIN_TOKEN:
-        return False
-    auth = handler.headers.get("Authorization", "")
-    if auth.lower().startswith("bearer ") and _token_matches(auth[7:].strip(), MANUAL_LOGIN_TOKEN):
-        return True
-    if _token_matches(handler.headers.get("X-SC4S-Manual-Token", ""), MANUAL_LOGIN_TOKEN):
-        return True
-    if manual_session_authorized(handler):
-        return True
-    qs = parse_qs(urlparse(handler.path).query)
-    for key in ("token", "login_token"):
-        if any(_token_matches(value, MANUAL_LOGIN_TOKEN) for value in qs.get(key, [])):
-            return True
-    return False
+    """Compatibility name: browser authorization now accepts sessions only."""
+    return session_authorized(handler)
 
 
 def manual_login_redirect(handler: BaseHTTPRequestHandler) -> bool:
-    if not MANUAL_LOGIN_TOKEN:
-        return False
-    raw_target_has_controls = "\r" in handler.path or "\n" in handler.path
-    parsed = urlparse(handler.path)
-    qs = parse_qs(parsed.query)
-    token = next((value for key in ("token", "login_token") for value in qs.get(key, [])), "")
-    if not _token_matches(token, MANUAL_LOGIN_TOKEN):
-        return False
-    clean_items = [
-        (key, value)
-        for key, values in qs.items()
-        if key not in {"token", "login_token"}
-        for value in values
-    ]
-    target = parsed.path or "/"
-    if clean_items:
-        target = f"{target}?{urlencode(clean_items)}"
-    if raw_target_has_controls or "\r" in target or "\n" in target:
-        target = "/"
-    handler.send_response(HTTPStatus.SEE_OTHER)
-    handler.send_header("Location", target)
-    handler.send_header(
-        "Set-Cookie",
-        "sc4s_manual_session=%s; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax" % _manual_session_token(),
-    )
-    handler.send_header("Cache-Control", "no-store")
-    handler.end_headers()
-    return True
+    # Credentials in URLs leak through history, referrers and proxy logs.
+    return False
 
 
 def redact_request_log_message(message: str) -> str:
     return re.sub(r"([?&](?:token|login_token)=)[^&\s]+", r"\1[REDACTED]", message)
 
 
-def authorized(handler: BaseHTTPRequestHandler, unsafe: bool) -> bool:
+def authenticate(handler: BaseHTTPRequestHandler) -> Principal | None:
     if handler.path.startswith("/health") or handler.path.startswith("/api/health"):
-        return True
-    if manual_session_authorized(handler):
-        # Cookie credentials are sent automatically by browsers. Require an
-        # explicit same-origin Origin header for mutation requests so an absent
-        # Origin cannot turn a cross-site form POST into a state change.
-        return (not unsafe) or origin_allowed(handler, require_origin=True)
-    if manual_token_authorized(handler):
-        return (not unsafe) or origin_allowed(handler)
+        return Principal("health", "public")
+    if session_authorized(handler):
+        return Principal("admin", "manual_session")
     if API_TOKEN and _token_matches(handler.headers.get("X-SC4S-Manager-Token", ""), API_TOKEN) and handler.client_address[0] in {"127.0.0.1", "::1"}:
-        return True
+        return Principal("local-api", "local_api")
     if proxy_authorized(handler):
-        return (not unsafe) or origin_allowed(handler)
-    return False
+        actor = handler.headers.get("X-Authentik-Username") or handler.headers.get("X-Forwarded-User") or "proxy-admin"
+        return Principal(actor, "trusted_proxy", True)
+    return None
+
+
+def authorized(handler: BaseHTTPRequestHandler, unsafe: bool) -> bool:
+    principal = authenticate(handler)
+    return bool(principal and ((not unsafe) or principal.auth_mode == "local_api" or origin_allowed(handler)))
 
 
 def frontend_index_path() -> Path:
@@ -1890,12 +1992,12 @@ def _catalogue_module():
     return mod
 
 
-def _library_module():
+def _embedded_library_module():
     import importlib.util
-    module_path = Path(__file__).resolve().parent / "library.py"
-    spec = importlib.util.spec_from_file_location("sc4s_manager_library_runtime", module_path)
+    module_path = Path(__file__).resolve().parent / "embedded_library.py"
+    spec = importlib.util.spec_from_file_location("sc4s_manager_embedded_library_runtime", module_path)
     if spec is None or spec.loader is None:
-        raise RuntimeError("unable to load library module")
+        raise RuntimeError("unable to load embedded library module")
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
@@ -1928,15 +2030,15 @@ def _library_post_check() -> dict[str, Any]:
 def library_manager() -> Any:
     global _library_manager
     if _library_manager is None:
-        mod = _library_module()
-        _library_manager = mod.LibraryManager(
+        mod = _embedded_library_module()
+        _library_manager = mod.EmbeddedLibraryManager(
             root=ROOT,
             manager_root=MANAGER_ROOT,
             validate_config=validate_config,
             reload_sc4s=reload_sc4s,
             post_check=_library_post_check,
             audit=audit,
-            apply_lock=_lock,
+            apply_lock=_mutation_lock,
         )
     return _library_manager
 
@@ -2019,38 +2121,21 @@ def library_sources() -> dict[str, Any]:
     return library_manager().sources()
 
 
-def library_source_health(source_id: str = "official") -> dict[str, Any]:
+def library_source_health(source_id: str = "embedded") -> dict[str, Any]:
     return library_manager().source_health(source_id)
 
 
 def library_error_payload(exc: Exception) -> dict[str, Any]:
-    mod = _library_module()
-    classified = mod.classify_library_exception(exc)
+    classified = _embedded_library_module().classify_embedded_library_exception(exc)
     return {"error": classified["message"], "code": classified["code"], "next_action": classified["next_action"]}
 
 
-def sync_library_source(source_id: str) -> dict[str, Any]:
-    return library_manager().sync_source(source_id)
-
-
-def library_catalogue(source_id: str = "official", filters: dict[str, Any] | None = None) -> dict[str, Any]:
+def library_catalogue(source_id: str = "embedded", filters: dict[str, Any] | None = None) -> dict[str, Any]:
     return library_manager().catalogue(source_id, filters)
 
 
 def library_entry(source_id: str, entry_id: str, refresh: bool = False) -> dict[str, Any]:
     return library_manager().entry(source_id, entry_id, refresh=refresh)
-
-
-def download_library_bundle(source_id: str, entry_id: str) -> dict[str, Any]:
-    result = library_manager().download_bundle(source_id, entry_id, refresh=True)
-    return {
-        "ok": result.get("ok", True),
-        "source_id": source_id,
-        "entry_id": entry_id,
-        "detail": result.get("detail"),
-        "download": result.get("download"),
-        "verification": result.get("verification"),
-    }
 
 
 def validate_library_import(source_id: str, entry_id: str, actor: str = "manager") -> dict[str, Any]:
@@ -2105,7 +2190,7 @@ def binary_response(h: BaseHTTPRequestHandler, status: int, data: bytes, filenam
     h.send_response(status)
     h.send_header("Content-Type", ctype)
     h.send_header("Content-Length", str(len(data)))
-    h.send_header("Content-Disposition", 'attachment; filename="download.zip"')
+    h.send_header("Content-Disposition", f'attachment; filename="{Path(filename).name}"')
     h.send_header("Cache-Control", "no-store")
     h.end_headers()
     h.wfile.write(data)
@@ -2139,17 +2224,10 @@ def static_asset_response(h: BaseHTTPRequestHandler, request_path: str) -> bool:
 
 def frontend_response(h: BaseHTTPRequestHandler, request_path: str) -> bool:
     index = frontend_index_path()
-    if index.is_file() and (request_path in ["/", "/index.html"] or frontend_dist_available()):
+    if not index.is_file():
+        return False
+    if request_path in ["/", "/index.html"] or frontend_dist_available():
         file_response(h, 200, index, "text/html; charset=utf-8", "no-store")
-        return True
-    if request_path in ["/", "/index.html"]:
-        data = INDEX_HTML.encode("utf-8")
-        h.send_response(200)
-        h.send_header("Content-Type", "text/html; charset=utf-8")
-        h.send_header("Content-Length", str(len(data)))
-        h.send_header("Cache-Control", "no-store")
-        h.end_headers()
-        h.wfile.write(data)
         return True
     return False
 
@@ -2185,6 +2263,11 @@ class Handler(BaseHTTPRequestHandler):
             parsed = urlparse(self.path)
             if parsed.path == "/api/auth/status":
                 return json_response(self, 200, {"authenticated": authorized(self, unsafe=False)})
+            if parsed.path in ["/health", "/live"]:
+                return json_response(self, 200, liveness_status())
+            if parsed.path in ["/ready", "/api/health"]:
+                readiness = readiness_status()
+                return json_response(self, 200 if readiness["status"] == "ready" else 503, readiness)
             # Serve the frontend app and its assets without auth so the login page can render.
             # API routes below this block still require authentication.
             if static_asset_response(self, parsed.path):
@@ -2194,8 +2277,6 @@ class Handler(BaseHTTPRequestHandler):
                     return
             if not authorized(self, unsafe=False):
                 return self.deny()
-            if parsed.path in ["/health", "/api/health"]:
-                return json_response(self, 200, {"status": "ok", "version": APP_VERSION, "sc4s": health_probe()})
             if parsed.path == "/api/stats":
                 return json_response(self, 200, service_stats())
             if parsed.path == "/api/runtime/state":
@@ -2209,8 +2290,8 @@ class Handler(BaseHTTPRequestHandler):
                 return json_response(self, 200, {"path": str(p), "content": p.read_text() if p.exists() else ""})
             if parsed.path == "/api/templates":
                 return json_response(self, 200, {"templates": templates()})
-            if parsed.path == "/api/products":
-                return json_response(self, 200, products())
+            if parsed.path == "/api/context-mappings":
+                return json_response(self, 200, context_mappings())
             if parsed.path == "/api/source-catalog":
                 return json_response(self, 200, source_catalog())
             if parsed.path == "/api/sources":
@@ -2245,19 +2326,19 @@ class Handler(BaseHTTPRequestHandler):
                 return json_response(self, 200, library_sources())
             if parsed.path == "/api/library/source-health":
                 q = parse_qs(parsed.query)
-                source_id = q.get("source_id", ["official"])[-1] or "official"
+                source_id = q.get("source_id", ["embedded"])[-1] or "embedded"
                 try:
                     return json_response(self, 200, library_source_health(source_id))
                 except Exception as e:
                     return json_response(self, 502, library_error_payload(e))
             if parsed.path == "/api/library/catalogue":
                 q = parse_qs(parsed.query)
-                source_id = q.get("source_id", ["official"])[-1] or "official"
+                source_id = q.get("source_id", ["embedded"])[-1] or "embedded"
                 filters = {k: v[-1] for k, v in q.items() if k in {"downloadable_only", "search"}}
                 return json_response(self, 200, library_catalogue(source_id, filters))
             if parsed.path == "/api/library/entry":
                 q = parse_qs(parsed.query)
-                source_id = q.get("source_id", ["official"])[-1] or "official"
+                source_id = q.get("source_id", ["embedded"])[-1] or "embedded"
                 entry_id = q.get("entry_id", [""])[-1]
                 if not entry_id:
                     raise ValueError("entry_id is required")
@@ -2280,13 +2361,13 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path == "/api/tls":
                 return json_response(self, 200, tls_inventory())
             if parsed.path == "/api/validate":
-                return json_response(self, 200, validate_config())
+                return json_response(self, 200, validate_config_at_revision())
             if parsed.path == "/api/backups":
                 return json_response(self, 200, {"backups": backups()})
             if parsed.path == "/api/backups/diff":
                 name = parse_qs(parsed.query).get("name", [""])[0]
                 return json_response(self, 200, backup_diff(name))
-            if parsed.path in ["/api/templates/download", "/api/products/download"]:
+            if parsed.path == "/api/templates/download":
                 name = parse_qs(parsed.query).get("name", [""])[0]
                 tp = template_path_by_name(name)
                 return binary_response(self, 200, tp.read_bytes(), tp.name, "application/zip")
@@ -2312,19 +2393,21 @@ class Handler(BaseHTTPRequestHandler):
                     token = payload.get("token", "")
                     if not isinstance(token, str) or not _token_matches(token, MANUAL_LOGIN_TOKEN):
                         return json_response(self, 401, {"error": "invalid token"})
+                    session = create_session()
                     body = json.dumps({"ok": True}).encode()
                     self.send_response(200)
                     self.send_header("Content-Type", "application/json; charset=utf-8")
-                    self.send_header("Set-Cookie", "sc4s_manual_session=%s; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax" % _manual_session_token())
+                    self.send_header("Set-Cookie", "sc4s_manual_session=%s; Path=/; Max-Age=%d; HttpOnly; Secure; SameSite=Strict" % (session, SESSION_TTL_SECONDS))
                     self.send_header("Cache-Control", "no-store")
                     self.send_header("Content-Length", str(len(body)))
                     self.end_headers()
                     self.wfile.write(body)
                     return
+                revoke_session(_cookie_value(self.headers.get("Cookie", ""), "sc4s_manual_session"))
                 body = json.dumps({"ok": True}).encode()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.send_header("Set-Cookie", "sc4s_manual_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax")
+                self.send_header("Set-Cookie", "sc4s_manual_session=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict")
                 self.send_header("Cache-Control", "no-store")
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
@@ -2332,71 +2415,70 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if not authorized(self, unsafe=True):
                 return self.deny()
-            actor = actor_from(self)
+            principal = authenticate(self)
+            if principal is None:
+                return self.deny()
+            actor = actor_from(self, principal)
             payload = read_body(self)
             if parsed.path == "/api/preview":
                 return json_response(self, 200, preview_change(payload))
             if parsed.path == "/api/apply":
-                return json_response(self, 200, apply_change(payload, actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: apply_change(payload, actor)))
             if parsed.path == "/api/ports":
-                return json_response(self, 200, set_port(payload.get("kind", ""), bool(payload.get("enabled")), payload.get("port"), actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: {"ok": True, **set_port(payload.get("kind", ""), bool(payload.get("enabled")), payload.get("port"), actor)}))
             if parsed.path == "/api/env":
-                return json_response(self, 200, set_env_value(str(payload.get("key", "")), str(payload.get("value", "")), actor))
+                key = str(payload.get("key", ""))
+                if SECRET_KEY_RE.search(key):
+                    raise ValueError("secret keys require a typed credential workflow")
+                change = {"type": "env", "key": key, "value": str(payload.get("value", "")), "apply": bool(payload.get("apply", False))}
+                return json_response(self, 200, coordinated_mutation(payload, lambda: apply_change(change, actor)))
             if parsed.path == "/api/env/secret":
-                return json_response(self, 200, set_secret_env_value(str(payload.get("key", "")), str(payload.get("value", "")), actor))
+                return json_response(self, 410, {"error": "raw secret mutation retired; use a typed credential workflow", "code": "raw_mutation_retired"})
             if parsed.path == "/api/services":
-                return json_response(self, 200, add_service(payload, actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: {"ok": True, **add_service(payload, actor)}))
             if parsed.path == "/api/sources/onboard":
-                return json_response(self, 200, onboard_source(payload, actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: onboard_source(payload, actor)))
             if parsed.path == "/api/sources/delete":
-                return json_response(self, 200, delete_source(str(payload.get("name") or payload.get("filter") or ""), actor, payload_bool(payload, "apply", False)))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: delete_source(str(payload.get("name") or payload.get("filter") or ""), actor)))
             if parsed.path == "/api/destinations":
-                return json_response(self, 200, configure_destination(payload, actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: configure_destination(payload, actor)))
             if parsed.path == "/api/destinations/delete":
-                return json_response(self, 200, delete_destination(str(payload.get("kind", "")), str(payload.get("id", "")), actor, payload_bool(payload, "apply", False)))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: delete_destination(str(payload.get("kind", "")), str(payload.get("id", "")), actor)))
             if parsed.path == "/api/routes":
-                return json_response(self, 200, upsert_route(payload, actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: upsert_route(payload, actor)))
             if parsed.path == "/api/routes/delete":
-                return json_response(self, 200, delete_route(str(payload.get("id", "")), actor, payload_bool(payload, "apply", False)))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: delete_route(str(payload.get("id", "")), actor)))
             if parsed.path == "/api/config/file":
-                return json_response(self, 200, save_config_file(str(payload.get("path", "")), str(payload.get("content", "")), actor))
-            if parsed.path in ["/api/templates/export", "/api/products/export"]:
-                return json_response(self, 200, export_template(str(payload.get("name", "sc4s-template")), actor))
-            if parsed.path in ["/api/templates/import", "/api/products/import"]:
+                change = {"type": "file", "path": str(payload.get("path", "")), "content": str(payload.get("content", "")), "apply": bool(payload.get("apply", False))}
+                return json_response(self, 200, coordinated_mutation(payload, lambda: apply_change(change, actor)))
+            if parsed.path == "/api/templates/export":
+                return json_response(self, 200, coordinated_mutation(payload, lambda: {"ok": True, **export_template(str(payload.get("name", "sc4s-template")), actor)}))
+            if parsed.path == "/api/templates/import":
                 if payload.get("content_base64"):
-                    return json_response(self, 200, import_template_upload(str(payload.get("name", "upload.zip")), str(payload.get("content_base64", "")), actor))
-                return json_response(self, 200, import_template(str(payload.get("path", "")), actor))
+                    operation = lambda: import_template_upload(str(payload.get("name", "upload.zip")), str(payload.get("content_base64", "")), actor)
+                else:
+                    operation = lambda: import_template(str(payload.get("path", "")), actor)
+                return json_response(self, 200, coordinated_mutation(payload, lambda: transactional_template_import(operation, actor)))
             if parsed.path == "/api/tls":
-                return json_response(self, 200, install_tls_bundle(str(payload.get("cert", "")), str(payload.get("key", "")), str(payload.get("ca", "")), actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: {"ok": True, **install_tls_bundle(str(payload.get("cert", "")), str(payload.get("key", "")), str(payload.get("ca", "")), actor)}))
             if parsed.path == "/api/tls/delete":
-                return json_response(self, 200, delete_tls_bundle(actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: {"ok": True, **delete_tls_bundle(actor)}))
             if parsed.path == "/api/backups/restore":
-                return json_response(self, 200, restore_backup(str(payload.get("name", "")), actor))
+                return json_response(self, 200, coordinated_mutation(payload, lambda: {"ok": True, **restore_backup(str(payload.get("name", "")), actor)}))
             if parsed.path == "/api/validate":
-                return json_response(self, 200, validate_config())
+                return json_response(self, 200, validate_config_at_revision())
             if parsed.path == "/api/reload":
-                return json_response(self, 200, reload_sc4s(actor))
+                return json_response(self, 200, validated_control_action(payload, actor, "reload"))
             if parsed.path == "/api/restart":
-                return json_response(self, 200, restart_sc4s(actor))
-            if parsed.path == "/api/library/sync":
-                try:
-                    return json_response(self, 200, sync_library_source(str(payload.get("source_id", "official")) or "official"))
-                except Exception as e:
-                    return json_response(self, 502, library_error_payload(e))
-            if parsed.path == "/api/library/download":
-                try:
-                    return json_response(self, 200, download_library_bundle(str(payload.get("source_id", "official")) or "official", str(payload.get("entry_id", ""))))
-                except Exception as e:
-                    return json_response(self, 502, library_error_payload(e))
+                return json_response(self, 200, validated_control_action(payload, actor, "restart"))
             if parsed.path == "/api/library/import/validate":
                 try:
-                    return json_response(self, 200, validate_library_import(str(payload.get("source_id", "official")) or "official", str(payload.get("entry_id", "")), actor))
+                    return json_response(self, 200, coordinated_mutation(payload, lambda: validate_library_import(str(payload.get("source_id", "embedded")) or "embedded", str(payload.get("entry_id", "")), actor)))
                 except Exception as e:
                     return json_response(self, 502, library_error_payload(e))
             if parsed.path == "/api/library/import/apply":
-                apply_requested = payload_bool(payload, "apply", True)
                 try:
-                    return json_response(self, 200, apply_library_import(str(payload.get("import_id", "")), actor, apply_requested))
+                    return json_response(self, 200, coordinated_mutation(payload, lambda: apply_library_import(str(payload.get("import_id", "")), actor, bool(payload.get("apply", True)))))
                 except Exception as e:
                     return json_response(self, 502, library_error_payload(e))
             if parsed.path.startswith("/api/packs/"):
@@ -2433,6 +2515,11 @@ def main() -> None:
         ensure_dirs()
     except PermissionError as e:
         print(startup_permission_error_message(e), file=sys.stderr)
+        raise SystemExit(78) from None
+    try:
+        validate_auth_configuration()
+    except ValueError as e:
+        print(f"SC4S Manager authentication configuration error: {e}", file=sys.stderr)
         raise SystemExit(78) from None
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"SC4S Manager {APP_VERSION} listening on {HOST}:{PORT}")

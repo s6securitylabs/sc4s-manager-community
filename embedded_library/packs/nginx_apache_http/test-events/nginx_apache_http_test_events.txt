@@ -1,0 +1,5 @@
+198.51.100.10 - alice [08/Jun/2026:06:10:01 +0000] "GET /login?next=%2Fadmin HTTP/1.1" 200 5321 "https://www.example.test/start" "Mozilla/5.0 (X11; Linux x86_64) SC4SFixture/1.0" marker=SC4S_NGINX_APACHE_HTTP_TEST_NGINX_COMBINED_001
+203.0.113.25 - - [08/Jun/2026:06:10:02 +0000] "POST /api/v1/session HTTP/1.1" 401 742 marker=SC4S_NGINX_APACHE_HTTP_TEST_APACHE_COMMON_002
+192.0.2.44 - bob [08/Jun/2026:06:10:03 +0000] "GET /reports/index.html HTTP/1.1" 404 1209 "-" "curl/8.0 SC4SFixture/1.0" marker=SC4S_NGINX_APACHE_HTTP_TEST_APACHE_COMBINED_003
+2026/06/08 06:10:04 [error] 12345#12345: *17 open() "/usr/share/nginx/html/missing.html" failed (2: No such file or directory), client: 198.51.100.77, server: www.example.test, request: "GET /missing.html HTTP/1.1", host: "www.example.test", referrer: "https://www.example.test/start" marker=SC4S_NGINX_APACHE_HTTP_TEST_NGINX_ERROR_004
+[Mon Jun 08 06:10:05.123456 2026] [core:error] [pid 2345:tid 140000000000000] [client 203.0.113.88:51515] AH00128: File does not exist: /var/www/html/admin, referer: https://www.example.test/start marker=SC4S_NGINX_APACHE_HTTP_TEST_APACHE_ERROR_005

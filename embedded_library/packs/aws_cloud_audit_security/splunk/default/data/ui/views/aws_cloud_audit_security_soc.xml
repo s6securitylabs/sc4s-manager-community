@@ -1,0 +1,154 @@
+<form version="1.1" theme="dark">
+  <label>AWS Cloud Audit and Security SOC</label>
+  <description>CloudTrail/GuardDuty/VPC Flow hunts for exposed-credential cloud intrusion patterns: fixture-backed STS discovery, IAM privilege escalation, Lambda/EC2 staging, S3 object access/deletion/ransom-note writes, and suspicious source/user-agent context. Review results before treating them as malicious.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="field_time">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index_filter">
+      <label>Index filter</label>
+      <default>index=main</default>
+    </input>
+    <input type="text" token="account_filter">
+      <label>AWS account filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>CloudTrail / GuardDuty / VPC source coverage</title>
+      <chart>
+        <search>
+          <query><![CDATA[$index_filter$ (sourcetype=aws:cloud:cloudtrail OR sourcetype=aws:cloud:guardduty OR sourcetype=aws:cloud:vpcflow) (aws_account_id=$account_filter$ OR recipientAccountId=$account_filter$ OR accountId=$account_filter$)
+| eval family=coalesce(aws_family, case(sourcetype="aws:cloud:cloudtrail","cloudtrail", sourcetype="aws:cloud:guardduty","guardduty", sourcetype="aws:cloud:vpcflow","vpc_flow"))
+| timechart span=1h count by family limit=10]]></query>
+          <earliest>$field_time.earliest$</earliest>
+          <latest>$field_time.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>High-risk Unit 42 cloud-extortion sequence events</title>
+      <chart>
+        <search>
+          <query><![CDATA[$index_filter$ sourcetype=aws:cloud:cloudtrail (aws_account_id=$account_filter$ OR recipientAccountId=$account_filter$ OR accountId=$account_filter$)
+| eval hunt_stage=case(eventName IN ("GetCallerIdentity","ListUsers","ListBuckets","GetSendQuota","ListVerifiedEmailAddresses","GetAccountSendingEnabled","GetAccount","ListIdentities"),"01 discovery", eventName IN ("CreateRole","AttachRolePolicy"),"02 IAM privilege escalation", eventName IN ("CreateSecurityGroup","AuthorizeSecurityGroupIngress","CreateKeyPair","RunInstances"),"03 EC2 staging", eventName IN ("CreateFunction20150331","CreateFunction","CreateLogGroup","CreateLogStream"),"04 Lambda staging", eventName IN ("GetObject","DeleteObject","PutObject"),"05 S3 object access/delete/write")
+| where isnotnull(hunt_stage)
+| timechart span=1h count by hunt_stage limit=10]]></query>
+          <earliest>$field_time.earliest$</earliest>
+          <latest>$field_time.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>IAM discovery and SES reconnaissance</title>
+      <table>
+        <search>
+          <query><![CDATA[$index_filter$ sourcetype=aws:cloud:cloudtrail eventName IN ("GetCallerIdentity","ListUsers","ListBuckets","GetSendQuota","ListVerifiedEmailAddresses","GetAccountSendingEnabled","GetAccount","ListIdentities") (aws_account_id=$account_filter$ OR recipientAccountId=$account_filter$ OR accountId=$account_filter$)
+| eval actor=coalesce('userIdentity.arn', src_user, user, 'userIdentity.userName')
+| stats count min(_time) as first_seen max(_time) as last_seen values(eventSource) as event_sources values(eventName) as event_names values(src_ip) as src_ips values(userAgent) as user_agents by aws_account_id actor
+| convert ctime(first_seen) ctime(last_seen)
+| sort - count]]></query>
+          <earliest>$field_time.earliest$</earliest>
+          <latest>$field_time.latest$</latest>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>IAM privilege escalation: role creation and policy attach</title>
+      <table>
+        <search>
+          <query><![CDATA[$index_filter$ sourcetype=aws:cloud:cloudtrail eventSource=iam.amazonaws.com eventName IN ("CreateRole","AttachRolePolicy") (aws_account_id=$account_filter$ OR recipientAccountId=$account_filter$ OR accountId=$account_filter$)
+| eval actor=coalesce('userIdentity.arn', src_user, user, 'userIdentity.userName')
+| eval role_name=coalesce('requestParameters.roleName', 'requestParameters.roleArn')
+| eval policy_arn='requestParameters.policyArn'
+| eval admin_policy=if(match(policy_arn,"AdministratorAccess"),"yes","no")
+| table _time aws_account_id aws_region actor src_ip userAgent eventName role_name policy_arn admin_policy errorCode marker
+| sort - _time]]></query>
+          <earliest>$field_time.earliest$</earliest>
+          <latest>$field_time.latest$</latest>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Lambda and EC2 execution staging</title>
+      <table>
+        <search>
+          <query><![CDATA[$index_filter$ sourcetype=aws:cloud:cloudtrail eventName IN ("CreateSecurityGroup","AuthorizeSecurityGroupIngress","CreateKeyPair","RunInstances","CreateFunction20150331","CreateFunction","CreateLogGroup","CreateLogStream") (aws_account_id=$account_filter$ OR recipientAccountId=$account_filter$ OR accountId=$account_filter$)
+| eval actor=coalesce('userIdentity.arn', src_user, user, 'userIdentity.userName')
+| eval function_or_group=coalesce('requestParameters.functionName', 'requestParameters.logGroupName', 'requestParameters.groupName', 'requestParameters.keyName')
+| eval instance_type='requestParameters.instanceType'
+| table _time aws_account_id aws_region actor src_ip userAgent eventName eventSource function_or_group instance_type errorCode marker
+| sort - _time]]></query>
+          <earliest>$field_time.earliest$</earliest>
+          <latest>$field_time.latest$</latest>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>S3 object access, deletion, and ransom-note style writes</title>
+      <table>
+        <search>
+          <query><![CDATA[$index_filter$ sourcetype=aws:cloud:cloudtrail eventSource=s3.amazonaws.com eventName IN ("GetObject","DeleteObject","PutObject") (aws_account_id=$account_filter$ OR recipientAccountId=$account_filter$ OR accountId=$account_filter$)
+| eval actor=coalesce('userIdentity.arn', src_user, user, 'userIdentity.userName')
+| eval bucket=coalesce('requestParameters.bucketName', mvindex(resources{}.ARN,0))
+| eval object_key='requestParameters.key'
+| eval possible_ransom_note=if(eventName="PutObject" AND match(lower(coalesce(object_key,"")),"(ransom|readme|urgent|recover|decrypt)"),"review","")
+| stats count earliest(_time) as first_seen latest(_time) as last_seen values(eventName) as actions values(object_key) as sample_keys values(src_ip) as src_ips values(userAgent) as user_agents values(possible_ransom_note) as ransom_note_flag by aws_account_id actor bucket
+| convert ctime(first_seen) ctime(last_seen)
+| sort - count]]></query>
+          <earliest>$field_time.earliest$</earliest>
+          <latest>$field_time.latest$</latest>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Source IP and user-agent pivots for CloudTrail hunts</title>
+      <table>
+        <search>
+          <query><![CDATA[$index_filter$ sourcetype=aws:cloud:cloudtrail (aws_account_id=$account_filter$ OR recipientAccountId=$account_filter$ OR accountId=$account_filter$)
+| eval actor=coalesce('userIdentity.arn', src_user, user, 'userIdentity.userName')
+| stats count dc(eventName) as distinct_api values(eventName) as event_names values(userAgent) as user_agents values(aws_region) as regions values(actor) as actors by aws_account_id src_ip
+| where count>=3 OR distinct_api>=3
+| sort - distinct_api - count]]></query>
+          <earliest>$field_time.earliest$</earliest>
+          <latest>$field_time.latest$</latest>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>GuardDuty findings and VPC flow context for the same window</title>
+      <table>
+        <search>
+          <query><![CDATA[$index_filter$ (sourcetype=aws:cloud:guardduty OR sourcetype=aws:cloud:vpcflow) (aws_account_id=$account_filter$ OR accountId=$account_filter$)
+| eval signal=coalesce(signature, type, action, "vpc_flow")
+| eval endpoint=coalesce(src_ip, dest_ip)
+| stats count values(severity) as severity values(signal) as signals values(src_ip) as src_ips values(dest_ip) as dest_ips values(action) as actions values(log_status) as log_status by aws_account_id sourcetype endpoint
+| sort - count]]></query>
+          <earliest>$field_time.earliest$</earliest>
+          <latest>$field_time.latest$</latest>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+</form>

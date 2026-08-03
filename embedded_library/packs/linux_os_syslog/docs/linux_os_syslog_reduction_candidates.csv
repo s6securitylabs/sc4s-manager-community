@@ -1,0 +1,5 @@
+candidate_id,field_or_event,default_action,risk_if_dropped,pre_enable_validation,rollback
+linux_os_auth_session_noise,PAM/session-open-close messages,retain,Can hide lateral movement and privilege/session chronology,Sample local auth logs and replay/read-back before suppressing any PAM/session class,Disable collector rule or remove enhanced postfilter
+linux_os_cron_success_noise,High-volume successful cron commands,retain,Can hide persistence or attacker scheduled tasks,Prove job allowlist and replay/read-back expected detections before suppression,Remove allowlist/suppression rule
+linux_os_command_line,Command and arguments from sudo/cron,retain,Often contains sensitive strings but is core incident evidence,Review privacy policy and redaction tooling before any trimming,Disable redaction and replay retained fixture set
+linux_os_kernel_packet_context,Kernel firewall packet fields,retain,Needed for host firewall triage and correlation,Validate alternate network telemetry covers the same incident context before trimming,Disable trimming rule and replay marker set

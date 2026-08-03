@@ -1,0 +1,2 @@
+<134>Jun  5 09:40:01 ontap-cluster-a.example.test node-a: 80000001.0000001a 1 Notice Jun 05 2026 09:40:01 +00:00 wafl.vol.online: Volume vol_example is online marker=SC4S_NETAPP_ONTAP_TEST_EMS_NOTICE_001
+<131>Jun  5 09:40:02 ontap-cluster-a.example.test node-a: 80000002.0000002b 2 Error Jun 05 2026 09:40:02 +00:00 raid.disk.failed: Disk 1.0.1 failed marker=SC4S_NETAPP_ONTAP_TEST_EMS_ERROR_002

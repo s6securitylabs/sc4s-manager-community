@@ -1,0 +1,17 @@
+<dashboard version="1.1" theme="light">
+  <label>Netskope SASE / Security Cloud Overview</label>
+  <description>Operator triage dashboard for synthetic-equivalent Netskope JSON relay fixtures. Example only; not validation evidence.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_range">
+      <label>Time range</label>
+      <default><earliest>-24h</earliest><latest>now</latest></default>
+    </input>
+  </fieldset>
+  <row>
+    <panel><title>Events by family</title><chart><search><query>index=* vendor="netskope" product="security_cloud" | stats count by netskope_event_family</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search><option name="charting.chart">column</option></chart></panel>
+    <panel><title>Policy/action summary</title><table><search><query>index=* vendor="netskope" product="security_cloud" | stats count by action policy signature severity</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+  <row>
+    <panel><title>Recent Netskope records</title><table><search><query>index=* vendor="netskope" product="security_cloud" | table _time index sourcetype netskope_event_family user src_ip dest_ip app site action policy severity event_id marker _raw</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+</dashboard>

@@ -1,0 +1,1028 @@
+{
+  "schema_version": "0.1",
+  "id": "oracle_database",
+  "version": "0.2.2",
+  "url": "https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/UNIFIED_AUDIT_TRAIL.html",
+  "description": "Curated fixture-backed alpha slice for Oracle Database audit-file relay records, plus conservative disabled Splunk onboarding examples for audit table/file, listener, ADR alert, and RAC/Grid/ASM candidates. Synthetic-equivalent fixtures are source-shape-derived from public ecosystem evidence; no live Oracle DB, SC4S replay, HEC delivery, or Splunk read-back has passed.",
+  "display_name": "Oracle Database audit, listener, and diagnostic logs",
+  "vendor": "oracle",
+  "product": "database",
+  "default_index": "infraops",
+  "default_source": "oracle_database",
+  "listener": {
+    "source_id": "ORACLE_DATABASE",
+    "transport": "tcp",
+    "port": 20100,
+    "env": {
+      "SC4S_LISTEN_ORACLE_DATABASE_TCP_PORT": "20100",
+      "SOURCE_ALL_SET_APPEND": "ORACLE_DATABASE"
+    }
+  },
+  "sourcetypes": {
+    "oracle_database_unified_audit": "oracle:database:unified_audit",
+    "oracle_database_traditional_audit": "oracle:database:audit:file",
+    "oracle_database_fga": "oracle:database:fga",
+    "oracle_database_listener": "oracle:database:listener",
+    "oracle_database_alert_adr": "oracle:database:adr:alert",
+    "oracle_database_rac_grid_asm": "oracle:database:rac_grid_asm"
+  },
+  "event_families": [
+    {
+      "id": "oracle_database_unified_audit",
+      "label": "Unified Audit Trail row/export events",
+      "match_engine": "pcre",
+      "match": "SC4S_ORACLE_DATABASE_TEST_UNIFIED_AUDIT_",
+      "expected_sourcetype": "oracle:database:unified_audit",
+      "primary_id_field": "clientid",
+      "required_fields": [
+        "dbuser",
+        "action",
+        "retcode",
+        "clientid"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "oracle_database_traditional_audit",
+      "label": "Traditional audit / SYS.AUD$ / DBA_AUDIT_TRAIL",
+      "match_engine": "pcre",
+      "match": "SC4S_ORACLE_DATABASE_TEST_AUDIT_",
+      "expected_sourcetype": "oracle:database:audit:file",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "db_user",
+        "db_action",
+        "status_code",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "audit file timestamp"
+      ]
+    },
+    {
+      "id": "oracle_database_fga",
+      "label": "Fine-Grained Auditing",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_DATABASE_ORACLE_DATABASE_FGA_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:database:fga",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_database_listener",
+      "label": "Oracle Net listener / ADR listener logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_DATABASE_ORACLE_DATABASE_LISTENER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:database:listener",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_database_alert_adr",
+      "label": "ADR alert / V$DIAG_ALERT_EXT diagnostics",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_DATABASE_ORACLE_DATABASE_ALERT_ADR_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:database:adr:alert",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_database_rac_grid_asm",
+      "label": "RAC / Grid Infrastructure / ASM logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_DATABASE_ORACLE_DATABASE_RAC_GRID_ASM_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:database:rac_grid_asm",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "event_timestamp": "Preserve event_timestamp when present in the exact source shape; do not invent or derive without evidence.",
+    "db_user": "Preserve db_user when present in the exact source shape; do not invent or derive without evidence.",
+    "proxy_user": "Preserve proxy_user when present in the exact source shape; do not invent or derive without evidence.",
+    "os_user": "Preserve os_user when present in the exact source shape; do not invent or derive without evidence.",
+    "action_name": "Preserve action_name when present in the exact source shape; do not invent or derive without evidence.",
+    "return_code": "Preserve return_code when present in the exact source shape; do not invent or derive without evidence.",
+    "object_schema": "Preserve object_schema when present in the exact source shape; do not invent or derive without evidence.",
+    "object_name": "Preserve object_name when present in the exact source shape; do not invent or derive without evidence.",
+    "src_ip": "Preserve src_ip when present in the exact source shape; do not invent or derive without evidence.",
+    "client_program": "Preserve client_program when present in the exact source shape; do not invent or derive without evidence.",
+    "module": "Preserve module when present in the exact source shape; do not invent or derive without evidence.",
+    "service_name": "Preserve service_name when present in the exact source shape; do not invent or derive without evidence.",
+    "pdb_name": "Preserve pdb_name when present in the exact source shape; do not invent or derive without evidence.",
+    "severity": "Preserve severity when present in the exact source shape; do not invent or derive without evidence.",
+    "ora_error": "Preserve ora_error when present in the exact source shape; do not invent or derive without evidence.",
+    "message": "Preserve message when present in the exact source shape; do not invent or derive without evidence.",
+    "sql_text": "Preserve sql_text when present in the exact source shape; do not invent or derive without evidence.",
+    "sql_binds": "Preserve sql_binds when present in the exact source shape; do not invent or derive without evidence."
+  },
+  "artifacts": {
+    "test_events": [
+      "test-events/oracle_database_audit_file.txt",
+      "test-events/oracle_database_unified_audit_syslog.txt",
+      "test-events/source_shape_required.txt"
+    ],
+    "docs": [
+      "README.md",
+      "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "docs/research/elastic-oracle-database-audit-source-shape-20260701.md",
+      "validation/fixture-ivv-2026-07-01.md",
+      "docs/research/unified-audit-source-shape-20260701.md",
+      "validation/demo-lab-data-acquisition-plan-2026-07-02.md",
+      "docs/collection/oracle_database_splunk_onboarding.md",
+      "validation/preflight-2026-06-08.md"
+    ],
+    "splunk": [
+      "splunk/default/inputs.conf.example"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "collector_definition_only",
+      "label": "Collector/source-definition only; no runtime listener reserved",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20100,
+      "notes": "Source-shape fixture only; do not deploy as an SC4S listener until promoted to a source pack.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "collector_definition_only",
+  "source_log_version": {
+    "name": "Oracle Database audit, listener, and diagnostic logs",
+    "min": "public Oracle evidence scan 2026-06-08",
+    "max": null,
+    "notes": "Exact product version/source mode required before parser fixtures or deployment routing."
+  },
+  "validation": {
+    "date_validated": "not validated; fixture-backed alpha curated 2026-07-01",
+    "validated_by": "Hermes local fixture/artifact checks only; no validated/verified status stated",
+    "source_log_version": "Synthetic-equivalent fixtures derived from public source-shape evidence",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "No parser artifacts are exported while this remains a generic source-definition record. Local synthetic-equivalent fixture/source-shape notes exist only for future curation; no live source, SC4S replay, HEC delivery, Splunk read-back, Manager collector read-back, or production-equivalent validation captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "Source-shape then replay/readback gate for Oracle Database audit, listener, and diagnostic logs",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "oracle_database_audit_file"
+      ],
+      "event_count": 3,
+      "marker_prefix": "SC4S_ORACLE_DATABASE_TEST_AUDIT_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited_syslog_raw",
+      "script": "scripts/send_tcp_20100.sh"
+    },
+    "readback": {
+      "spl": "index=infraops sourcetype=\"oracle:database:audit:file\" sechub_fixture_marker=\"SC4S_ORACLE_DATABASE_TEST_AUDIT_*\" earliest=-2h | table _time index sourcetype source host db_user db_action status status_code src_ip db_host session_id action_number sechub_fixture_marker _raw",
+      "expected_count": 3,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "host",
+        "timestamp",
+        "marker fields",
+        "raw preservation",
+        "no sensitive values exposed"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "source_mapping",
+      "date": "2026-07-01",
+      "summary": "No parser artifacts are exported and no replay/read-back is claimed while this remains a generic source definition; source mapping/promotion evidence is still required.",
+      "evidence_path": "validation/fixture-ivv-2026-07-01.md"
+    },
+    "evidence": [
+      {
+        "type": "source_shape_acquisition_plan",
+        "path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+        "summary": "Blocker/acquisition plan retained; fixtures do not promote trust."
+      },
+      {
+        "type": "fixture_ivv",
+        "path": "validation/fixture-ivv-2026-07-01.md",
+        "summary": "Local fixture/artifact evidence only; not replay/read-back validation."
+      },
+      {
+        "type": "source_shape_reference",
+        "path": "docs/research/elastic-oracle-database-audit-source-shape-20260701.md",
+        "summary": "Public source-shape reference; raw third-party logs not copied."
+      },
+      {
+        "type": "source_shape_reference",
+        "path": "docs/research/unified-audit-source-shape-20260701.md",
+        "summary": "MIT oralunk + Oracle docs source-shape reference for synthetic Unified Audit syslog fixture; no trust promotion."
+      },
+      {
+        "type": "demo_lab_data_acquisition_plan",
+        "path": "validation/demo-lab-data-acquisition-plan-2026-07-02.md",
+        "summary": "Free/developer lab-data acquisition route identified; not validation evidence and no trust promotion."
+      },
+      {
+        "type": "collection_guidance",
+        "path": "docs/collection/oracle_database_splunk_onboarding.md",
+        "summary": "Conservative official/community Splunk TA coverage and disabled inputs.conf example guidance; not replay/read-back validation."
+      }
+    ]
+  },
+  "test_event_sets": [
+    {
+      "id": "oracle_database_audit_file",
+      "label": "Synthetic-equivalent fixture-backed relay events",
+      "path": "test-events/oracle_database_audit_file.txt",
+      "format": "raw",
+      "wire_format": "tcp_syslog_payload",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "serialization": "raw_text",
+      "event_count": 3,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ORACLE_DATABASE_TEST_AUDIT_LOGON_001",
+        "SC4S_ORACLE_DATABASE_TEST_AUDIT_LOGON_DENIED_001",
+        "SC4S_ORACLE_DATABASE_TEST_AUDIT_SELECT_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "source record timestamp",
+        "primary_timezone": "explicit_in_record",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "UTC",
+        "notes": "Synthetic-equivalent fixtures only; verify with live replay/read-back before promotion.",
+        "requires_source_timezone_when_fields_missing": []
+      },
+      "field_delimiting": {
+        "style": "flattened_oracle_audit_text_labels",
+        "field_separator": " | ",
+        "quote_character": "source_specific",
+        "escape_policy": "preserve raw source text",
+        "notes": "Source-shape-derived fixture, not real customer/product output."
+      },
+      "expected_families": [
+        "oracle_database_traditional_audit"
+      ]
+    },
+    {
+      "id": "oracle_database_unified_audit_syslog",
+      "label": "Synthetic-equivalent Unified Audit syslog source-shape events",
+      "path": "test-events/oracle_database_unified_audit_syslog.txt",
+      "format": "raw",
+      "wire_format": "syslog_message_body",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "serialization": "raw_text",
+      "event_count": 3,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ORACLE_DATABASE_TEST_UNIFIED_AUDIT_LOGON_001",
+        "SC4S_ORACLE_DATABASE_TEST_UNIFIED_AUDIT_DENIED_001",
+        "SC4S_ORACLE_DATABASE_TEST_UNIFIED_AUDIT_OBJECT_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "syslog_header_timezone",
+        "primary_field": "syslog timestamp",
+        "primary_timezone": "source/syslog collector timezone required",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "UTC",
+        "requires_source_timezone_when_fields_missing": [],
+        "notes": "Synthetic-equivalent fixture only; verify timezone handling during future replay/read-back."
+      },
+      "field_delimiting": {
+        "style": "oracle_unified_audit_key_value_text",
+        "field_separator": "space_delimited_key_value",
+        "quote_character": "double_quote",
+        "escape_policy": "preserve raw source text",
+        "notes": "Source-shape-derived fixture, not real customer/product output."
+      },
+      "expected_families": [
+        "oracle_database_unified_audit"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "oracle_database_audit_file",
+      "group": "test_events",
+      "source_path": "test-events/oracle_database_audit_file.txt",
+      "target_path": "test-events/oracle_database_audit_file.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "23a166066f2f5b0581763d2a9e8a48f6b075626c6f3727a438c6e62d8b93c769"
+    },
+    {
+      "id": "README",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "9068d8ce8a19fdef00950820d6336172c59896421c9cd1d72b24bad423f48921"
+    },
+    {
+      "id": "source_shape_acquisition_plan_2026_06_20",
+      "group": "docs",
+      "source_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "target_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "kind": "validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "65ba4299eaae4c80d4c76653ba44d9eb9e66651b3bc6d00b3a1cd3f0432681f4"
+    },
+    {
+      "id": "elastic_oracle_database_audit_source_shape_20260701",
+      "group": "docs",
+      "source_path": "docs/research/elastic-oracle-database-audit-source-shape-20260701.md",
+      "target_path": "docs/research/elastic-oracle-database-audit-source-shape-20260701.md",
+      "kind": "research_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "5eac4e0d92109759424d24906bb8656cd381a4f7ad7ca5a71e2e86892814e125"
+    },
+    {
+      "id": "fixture_ivv_2026_07_01",
+      "group": "docs",
+      "source_path": "validation/fixture-ivv-2026-07-01.md",
+      "target_path": "validation/fixture-ivv-2026-07-01.md",
+      "kind": "validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "82d58ca5bde9ca3a94d17cb69238f363d2f7c85608da06d12eaff6b6c99999e9"
+    },
+    {
+      "id": "oracle_database_unified_audit_syslog",
+      "group": "test_events",
+      "source_path": "test-events/oracle_database_unified_audit_syslog.txt",
+      "target_path": "test-events/oracle_database_unified_audit_syslog.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "3bd7fddf44361482d3329723c73864a1f83a04280692f08b38320f947de45d74"
+    },
+    {
+      "id": "unified_audit_source_shape_20260701",
+      "group": "docs",
+      "source_path": "docs/research/unified-audit-source-shape-20260701.md",
+      "target_path": "docs/research/unified-audit-source-shape-20260701.md",
+      "kind": "research_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "6f1b285d658205d4d3d78aaccb7115f3987e8af89de408842a2cb9969d4e4fd1"
+    },
+    {
+      "id": "demo_lab_data_acquisition_plan_2026_07_02",
+      "group": "docs",
+      "source_path": "validation/demo-lab-data-acquisition-plan-2026-07-02.md",
+      "target_path": "validation/demo-lab-data-acquisition-plan-2026-07-02.md",
+      "kind": "validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "fab1dd3f72d3bb17d7a22a2cd1851ba9a7e11b64e74d9aefdb8e3e9d17ecc0e9"
+    },
+    {
+      "id": "oracle_database_splunk_onboarding_2026_07_06",
+      "group": "docs",
+      "source_path": "docs/collection/oracle_database_splunk_onboarding.md",
+      "target_path": "docs/collection/oracle_database_splunk_onboarding.md",
+      "kind": "collection_guidance",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "bd456f106d5a0adde800404ae6fe52bd3d32020196ae5193a9a4e7a46ea1b61e"
+    },
+    {
+      "id": "splunk_inputs_conf_example",
+      "group": "splunk",
+      "source_path": "splunk/default/inputs.conf.example",
+      "target_path": "splunk/default/inputs.conf.example",
+      "kind": "splunk_inputs_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "202b26b5083dc0e53dc6edce30e469beab107cb477ba62aa48a315a235570b5e"
+    },
+    {
+      "id": "preflight_20260608",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "a083bcba91801c6abf77b18ebca33bd68e2c0db38fc30089b8c0a1a3fec3a209"
+    },
+    {
+      "id": "source_shape_required_placeholder",
+      "group": "test_events",
+      "source_path": "test-events/source_shape_required.txt",
+      "target_path": "test-events/source_shape_required.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "18d896921beadc679687c5b21bfc8a3de6c36e5a9a524ce2cf96d3486bb00740"
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "docs/evidence/oracle-platform-evidence-scan-20260608.md plus Oracle public product documentation listed there.",
+      "redistribution": "unknown",
+      "sanitisation_status": "unknown",
+      "notes": "No source samples are redistributed; pack definitions record source-shape requirements only."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent with subagent planning",
+      "reviewed_at": "2026-06-08",
+      "notes": "Created from Oracle platform backlog/subagent plan as catalogue-first definitions for Manager/SecHub; routing disabled until source evidence exists."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "catalogued",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "signature": {
+          "source_fields": [
+            "signature"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "status": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        }
+      },
+      "notes": "Planning note only; no parser/read-back evidence."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "unknown",
+          "notes": "Raw event retention required once source exists."
+        }
+      },
+      "notes": "Source-family planning only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires evidence."
+        }
+      },
+      "notes": "Optional helper mapping only."
+    }
+  },
+  "source_pack_kind": "generic_log_source_definition",
+  "source_categories": [
+    "database",
+    "security",
+    "infrastructure"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "oracle_database_unified_audit",
+      "label": "Unified Audit Trail row/export events",
+      "description": "Unified Audit Trail row/export events: database_table_query, collector JSON/CSV row export; SC4S only when relayed one row per event.",
+      "default": false,
+      "evidence_status": "curated",
+      "implementation_status": "source_shape_fixture_alpha_only",
+      "source_modes": [
+        "database_table_query",
+        "collector JSON/CSV row export; SC4S only when relayed one row per event"
+      ],
+      "payload_formats": [
+        "oracle_unified_audit_syslog_text"
+      ],
+      "envelopes": [
+        "syslog_message_body"
+      ],
+      "event_families": [
+        "oracle_database_unified_audit"
+      ],
+      "test_event_sets": [
+        "oracle_database_unified_audit_syslog"
+      ],
+      "supported_targets": [
+        "vector",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "source_shape_acquisition_plan_2026_06_20",
+        "oracle_database_unified_audit_syslog",
+        "unified_audit_source_shape_20260701",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "oracle_database_splunk_onboarding_2026_07_06",
+        "splunk_inputs_conf_example"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent Unified Audit syslog fixture only; not a deployable source pack and no read-back evidence.",
+        "Conservative Splunk inputs.conf.example stanzas are disabled placeholders and require local source-shape/replay/read-back validation before enablement."
+      ],
+      "event_boundary": "line (one unified-audit syslog record per line in fixtures)",
+      "events_per_file_or_message": "multiple syslog records per stream/file",
+      "uniqueness_or_multiline": "single-line fixture events with unique CLIENTID markers; no multiline",
+      "field_delimiting_or_escaping": "space-separated NAME:\"value\" attribute pairs in the syslog message",
+      "timestamp_timezone": "syslog header timestamp; source/collector timezone must be confirmed locally"
+    },
+    {
+      "id": "oracle_database_traditional_audit",
+      "label": "Traditional audit / SYS.AUD$ / DBA_AUDIT_TRAIL",
+      "description": "Traditional audit / SYS.AUD$ / DBA_AUDIT_TRAIL: database table/export rows or OS audit files.",
+      "default": true,
+      "evidence_status": "curated",
+      "implementation_status": "source_shape_fixture_alpha_only",
+      "source_modes": [
+        "database table/export rows or OS audit files"
+      ],
+      "payload_formats": [
+        "oracle_audit_file_text"
+      ],
+      "envelopes": [
+        "tcp_syslog_relay_one_complete_record_per_message"
+      ],
+      "event_families": [
+        "oracle_database_traditional_audit"
+      ],
+      "test_event_sets": [
+        "oracle_database_audit_file"
+      ],
+      "supported_targets": [
+        "vector",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "source_shape_acquisition_plan_2026_06_20",
+        "oracle_database_audit_file",
+        "elastic_oracle_database_audit_source_shape_20260701",
+        "fixture_ivv_2026_07_01",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "oracle_database_splunk_onboarding_2026_07_06",
+        "splunk_inputs_conf_example"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent audit-file fixtures only; not a deployable source pack and no read-back evidence.",
+        "Conservative Splunk inputs.conf.example stanzas are disabled placeholders and require local source-shape/replay/read-back validation before enablement."
+      ],
+      "event_boundary": "line in fixtures; native .aud files can be multiline and require local proof",
+      "events_per_file_or_message": "multiple records per audit file",
+      "uniqueness_or_multiline": "single-line fixture events with unique CLIENT TERMINAL markers; native multiline behavior unproven",
+      "field_delimiting_or_escaping": "pipe-delimited NAME:[len] 'value' attribute pairs",
+      "timestamp_timezone": "leading record timestamp with explicit UTC offset (+00:00) in fixtures"
+    },
+    {
+      "id": "oracle_database_fga",
+      "label": "Fine-Grained Auditing",
+      "description": "Fine-Grained Auditing: FGA table/view/export rows.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "source_shape_required",
+      "source_modes": [
+        "FGA table/view/export rows"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_database_fga"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "source_shape_acquisition_plan_2026_06_20",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "oracle_database_splunk_onboarding_2026_07_06",
+        "splunk_inputs_conf_example"
+      ],
+      "known_limitations": [
+        "Blocked until exact FGA row/export shape and safe SQL/context handling exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured.",
+        "Conservative Splunk inputs.conf.example stanzas are disabled placeholders and require local source-shape/replay/read-back validation before enablement."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_database_listener",
+      "label": "Oracle Net listener / ADR listener logs",
+      "description": "Oracle Net listener / ADR listener logs: listener.log, ADR listener text/XML, RAC/SCAN variants.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "source_shape_required",
+      "source_modes": [
+        "listener.log",
+        "ADR listener text/XML",
+        "RAC/SCAN variants"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_database_listener"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "source_shape_acquisition_plan_2026_06_20",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "oracle_database_splunk_onboarding_2026_07_06",
+        "splunk_inputs_conf_example"
+      ],
+      "known_limitations": [
+        "Blocked until exact standalone/RAC/SCAN/TCPS/failure examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured.",
+        "Conservative Splunk inputs.conf.example stanzas are disabled placeholders and require local source-shape/replay/read-back validation before enablement."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_database_alert_adr",
+      "label": "ADR alert / V$DIAG_ALERT_EXT diagnostics",
+      "description": "ADR alert / V$DIAG_ALERT_EXT diagnostics: ADR view row export, alert log text/XML candidates.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "source_shape_required",
+      "source_modes": [
+        "ADR view row export",
+        "alert log text/XML candidates"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_database_alert_adr"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "source_shape_acquisition_plan_2026_06_20",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "oracle_database_splunk_onboarding_2026_07_06",
+        "splunk_inputs_conf_example"
+      ],
+      "known_limitations": [
+        "Actionable for row-schema planning; raw text/XML fixtures blocked until boundaries are proven.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured.",
+        "Conservative Splunk inputs.conf.example stanzas are disabled placeholders and require local source-shape/replay/read-back validation before enablement."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_database_rac_grid_asm",
+      "label": "RAC / Grid Infrastructure / ASM logs",
+      "description": "RAC / Grid Infrastructure / ASM logs: CRS/CSS/OHASD/ASM/SCAN listener logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "source_shape_required",
+      "source_modes": [
+        "CRS/CSS/OHASD/ASM/SCAN listener logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_database_rac_grid_asm"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "source_shape_acquisition_plan_2026_06_20",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "oracle_database_splunk_onboarding_2026_07_06",
+        "splunk_inputs_conf_example"
+      ],
+      "known_limitations": [
+        "Blocked on exact emitted examples.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured.",
+        "Conservative Splunk inputs.conf.example stanzas are disabled placeholders and require local source-shape/replay/read-back validation before enablement."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    }
+  ],
+  "adapters": {
+    "generic": {
+      "manager_visibility": "catalog_only",
+      "routing_enabled": false,
+      "sechub_detection_claims": "none",
+      "notes": "Manager/SecHub should surface this as a source-shape checklist, not a deployable parser."
+    },
+    "cribl": {
+      "default_behavior": "preserve_all_fields",
+      "notes": "Collector serialization and redaction policy required before route design."
+    },
+    "splunk": {
+      "official_ta_preferred": "Splunk Add-on for Oracle Database (Splunkbase 1910) where installed and compatible; DB Connect (2686) plus Oracle JDBC add-on (6151) for table/view polling.",
+      "custom_artifact_status": "splunk/default/inputs.conf.example is disabled example-only scaffolding; no parser/props/dashboard/read-back validation is claimed.",
+      "notes": "Use official TA sourcetypes/props when deploying Splunk_TA_oracle. SecHub oracle:database:* sourcetypes require an explicit tested bridge if official TA parsing is used."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "implementation_status": "fixture_backed_alpha_replay_required",
+  "manager_visibility": "available_with_limitations",
+  "sechub_detection_claims": "fixture_backed_alpha_only",
+  "routing_enabled": false,
+  "fixture_policy": "synthetic-equivalent fixtures from public source-shape evidence; not production validation",
+  "sc4s_adapter_enabled": false,
+  "known_limitations": [
+    "Source-shape acquisition plan is documented, but no exact Oracle emitted/exported records have been captured for fixture authoring.",
+    "Trust remains unverified and quality remains catalogued; do not promote from CI or pack presence.",
+    "Oracle logs/exports may contain sensitive users, SQL text/binds, business data, OCIDs, hostnames, request parameters, or tenant identifiers; sample capture requires sanitisation.",
+    "Fixture-backed alpha only; no live replay/read-back evidence exists.",
+    "Production ready: no. Beta: no. Keep trust unverified until SC4S/Splunk read-back passes.",
+    "Splunk official Add-on documentation pages were not accessible from this environment (HTTP 403); current TA details must be verified from Splunk docs or an installed TA before production onboarding."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "local source-shape fixture marker/count/family audit; no replay/read-back",
+    "tested_artifact_hashes": {
+      "packs/oracle_database/README.md": "sha256:9068d8ce8a19fdef00950820d6336172c59896421c9cd1d72b24bad423f48921",
+      "packs/oracle_database/docs/collection/oracle_database_splunk_onboarding.md": "sha256:bd456f106d5a0adde800404ae6fe52bd3d32020196ae5193a9a4e7a46ea1b61e",
+      "packs/oracle_database/docs/research/elastic-oracle-database-audit-source-shape-20260701.md": "sha256:5eac4e0d92109759424d24906bb8656cd381a4f7ad7ca5a71e2e86892814e125",
+      "packs/oracle_database/docs/research/unified-audit-source-shape-20260701.md": "sha256:6f1b285d658205d4d3d78aaccb7115f3987e8af89de408842a2cb9969d4e4fd1",
+      "packs/oracle_database/splunk/default/inputs.conf.example": "sha256:202b26b5083dc0e53dc6edce30e469beab107cb477ba62aa48a315a235570b5e",
+      "packs/oracle_database/test-events/oracle_database_audit_file.txt": "sha256:23a166066f2f5b0581763d2a9e8a48f6b075626c6f3727a438c6e62d8b93c769",
+      "packs/oracle_database/test-events/oracle_database_unified_audit_syslog.txt": "sha256:3bd7fddf44361482d3329723c73864a1f83a04280692f08b38320f947de45d74",
+      "packs/oracle_database/test-events/source_shape_required.txt": "sha256:18d896921beadc679687c5b21bfc8a3de6c36e5a9a524ce2cf96d3486bb00740",
+      "packs/oracle_database/validation/demo-lab-data-acquisition-plan-2026-07-02.md": "sha256:fab1dd3f72d3bb17d7a22a2cd1851ba9a7e11b64e74d9aefdb8e3e9d17ecc0e9",
+      "packs/oracle_database/validation/fixture-ivv-2026-07-01.md": "sha256:82d58ca5bde9ca3a94d17cb69238f363d2f7c85608da06d12eaff6b6c99999e9",
+      "packs/oracle_database/validation/preflight-2026-06-08.md": "sha256:a083bcba91801c6abf77b18ebca33bd68e2c0db38fc30089b8c0a1a3fec3a209",
+      "packs/oracle_database/validation/source-shape-acquisition-plan-2026-06-20.md": "sha256:65ba4299eaae4c80d4c76653ba44d9eb9e66651b3bc6d00b3a1cd3f0432681f4"
+    },
+    "tested_commit": "not_committed_yet",
+    "last_updated": "2026-07-08",
+    "last_tested": "2026-07-08 local CI pending final commit"
+  },
+  "source_delivery": {
+    "mode": "source_shape_fixture_alpha_only",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "raw",
+    "supported_transport_refs": [
+      "collector_definition_only"
+    ],
+    "notes": "Synthetic-equivalent audit-file fixtures and source-shape notes only; no deployable SC4S/Splunk artifact export while this remains a generic source definition.",
+    "validation_status": "local_fixture_schema_only; does not imply live replay/read-back validation"
+  }
+}

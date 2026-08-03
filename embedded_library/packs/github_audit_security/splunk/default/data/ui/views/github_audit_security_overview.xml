@@ -1,0 +1,230 @@
+<form version="1.1" theme="dark">
+  <label>GitHub Audit and Security - Overview</label>
+  <description>Fixture-backed overview for GitHub organization/enterprise audit and security JSON relay events. Panels use fields proven by synthetic-equivalent fixtures plus Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total GitHub audit events</title>
+      <single>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Repository and branch/rules changes</title>
+      <single>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ github_audit_family IN ("repo","branch_rules") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Token/SSO/app, webhook, and security-alert activity</title>
+      <single>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ github_audit_family IN ("sso_credential_authorization","token_app_access","audit_streaming","webhooks","ssh_certificate_authority","secret_scanning","security_alerts") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Org/team, enterprise admin, and Actions admin</title>
+      <single>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ github_audit_family IN ("org_membership","enterprise_admin","actions") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by GitHub audit family</title>
+      <chart>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | eval family=coalesce(github_audit_family,"github_audit") | timechart count by family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | eval family=coalesce(github_audit_family,"github_audit") | stats count by family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top GitHub audit actions</title>
+      <chart>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | stats count by action | sort -count | head 25</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top actors / users</title>
+      <chart>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | eval github_user=coalesce(actor, user, src_user) | stats count by github_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Actor country/source context</title>
+      <chart>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | eval actor_country=coalesce(src, 'actor_location.country_code') | stats count by actor_country | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Organization, repository, and object coverage</title>
+      <table>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | stats count by org business repo object github_audit_family status | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">15</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Token/SSO/streaming/webhook and security-alert review</title>
+      <table>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ github_audit_family IN ("sso_credential_authorization","token_app_access","audit_streaming","webhooks","ssh_certificate_authority","secret_scanning","security_alerts") | table _time host github_audit_family action actor user org repo token_id oauth_credential_type managed_token_scopes audit_log_stream_id audit_log_stream_enabled audit_log_stream_sink new_s3_bucket old_s3_bucket secrets_updated hook_id events name invitee inviter permission public_repo ssh_certificate_authority_id fingerprint user_agent request_id alert_number secret_type alert_state severity security_advisory_ghsa_id status signature_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Actions and branch/rules administration</title>
+      <table>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ github_audit_family IN ("actions","branch_rules") | table _time host action actor org repo branch secret_name object status alert_number alert_state severity marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Enterprise owner/admin changes</title>
+      <table>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ github_audit_family="enterprise_admin" | table _time host action actor user org business enterprise_role permission operation_type user_agent request_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host github_audit_family | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw GitHub audit events</title>
+      <table>
+        <search>
+          <query>index=gitops sourcetype="github:audit:json" host=$host_tok$ | table _time host github_audit_family action actor user org business repo object status enterprise_role audit_log_stream_id audit_log_stream_enabled audit_log_stream_sink new_s3_bucket old_s3_bucket secrets_updated hook_id events name invitee inviter permission public_repo ssh_certificate_authority_id fingerprint oauth_credential_type user_agent request_id signature signature_id src marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

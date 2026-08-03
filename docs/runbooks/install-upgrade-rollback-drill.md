@@ -1,81 +1,156 @@
 # SC4S Manager Install/Upgrade/Rollback Drill
 
-Run this release drill only on a disposable Docker-capable VM/LXC. It produces evidence about the artifact and the **Compose lifecycle**; it is not a production deployment procedure. Take a host snapshot labelled `CLEAN-BASELINE` before mutation and redact evidence before storing it.
-
-## Important implementation boundary
-
-`deploy/install/install.sh` and `deploy/upgrade/upgrade.sh` are dry-run planners. `--execute`, `--apply`, and `--rollback` intentionally return exit code 2. A prior drill command using those flags is invalid and must not be counted as live install/upgrade/rollback proof.
-
-The Compose bundle has no control daemon. Do not test systemd control socket activation as part of this drill and do not add a Docker socket mount. Control-socket absence is expected in the Compose deployment.
+This runbook describes a reproducible human drill of install, upgrade, and rollback
+on a disposable VM or LXC container. It must be run on a throwaway host; never on
+production. Evidence must be written to `docs/acceptance/package-install-<timestamp>.json`
+with secrets redacted before it counts toward the release gate.
 
 ## Prerequisites
 
-- Disposable host with Docker Engine, Docker Compose v2, internet/registry access as required, and a snapshot.
-- A built `sc4s-manager-<version>.tar.gz`, adjacent `manifest.json`, checksums, and two known Manager image references: a baseline and a candidate.
-- Non-production HEC/test destination credentials and a safe marker/readback plan.
-- A temporary evidence directory outside the repository, for example `/tmp/sc4s-manager-drill`.
+- Disposable VM or LXC container (Ubuntu 22.04 LTS or later recommended).
+- Snapshot taken **before** any step that mutates system state.
+- `sc4s-manager-<version>.tar.gz` and `manifest.json` already built and transferred.
+- No docker socket access beyond what the control daemon requires.
+- Evidence output path: `docs/acceptance/package-install-<timestamp>.json`.
 
-## 1. Verify artifact shape without mutation
+## Snapshot boundary
+
+Take a snapshot at the state labelled **CLEAN-BASELINE** so rollback to
+pre-install state is available if the drill needs to start over.
+
+## Step 0: Confirm artifact integrity
 
 ```bash
-mkdir -p /tmp/sc4s-manager-drill
+sha256sum sc4s-manager-<version>.tar.gz
+python3 -c "import json; m=json.load(open('manifest.json')); print(m['version'], m['git_commit'])"
+```
+
+Record the SHA-256 in the evidence JSON `artifact_sha256` field.
+
+## Step 1: Run the package install validator in dry-run mode
+
+This step validates artifact structure and script syntax without changing system state:
+
+```bash
 python3 scripts/validate_package_install.py \
   --dry-run \
   --artifact sc4s-manager-<version>.tar.gz \
-  --workdir /tmp/sc4s-manager-drill \
-  --evidence-out /tmp/sc4s-manager-drill/package-dry-run.json
+  --workdir /tmp/sc4s-manager-package-drill \
+  --evidence-out /tmp/sc4s-package-dry-run.json
 ```
 
-Expected: exit 0 and a redacted JSON report. This proves package structure/planner behavior only; it does not prove service installation or lifecycle.
+Expected: exit code 0. Review `/tmp/sc4s-package-dry-run.json`.
 
-## 2. Install baseline Compose stack
-
-Extract the artifact, use its Compose template, and follow the permission/authentication instructions in [install.md](install.md). Set a fixed baseline Manager version in `.env`, not `latest`.
+## Step 2: Exercise packaged lifecycle planners
 
 ```bash
 tar -xzf sc4s-manager-<version>.tar.gz
 cd sc4s-manager
-sudo install -d -o root -g 10001 -m 0770 /opt/sc4s/{env,local,archive,tls,manager}
-sudo docker volume create splunk-sc4s-var
-sudo install -m 0644 deploy/compose/compose.yaml /opt/sc4s/compose.yaml
-sudo install -m 0644 deploy/compose/.env.example /opt/sc4s/.env
-sudo install -m 0640 -o root -g 10001 deploy/compose/env_file.example /opt/sc4s/env/env_file
-sudo ln -sfn env/env_file /opt/sc4s/env_file
-sudo install -m 0640 -o root -g 10001 deploy/compose/manager.env.example /opt/sc4s/manager.env
-sudo editor /opt/sc4s/.env /opt/sc4s/env/env_file /opt/sc4s/manager.env
-cd /opt/sc4s
-sudo docker compose -f compose.yaml config -q
-sudo docker compose -f compose.yaml up -d
-sudo docker compose -f compose.yaml ps
-curl -fsS http://127.0.0.1:8090/health | python3 -m json.tool
-curl -fsS http://127.0.0.1:8080/health
+bash deploy/install/install.sh --dry-run
+bash deploy/upgrade/upgrade.sh --artifact ../sc4s-manager-<version>.tar.gz --dry-run
+touch /tmp/sc4s-manager-backup-fixture
+bash deploy/rollback/rollback.sh --backup /tmp/sc4s-manager-backup-fixture --dry-run
 ```
 
-Record the baseline Manager/SC4S image references, `ps`, redacted health output, and a listing/hash of state to be preserved under `/opt/sc4s/manager`.
-
-## 3. Upgrade candidate Manager image
-
-Back up `/opt/sc4s/manager`, `local`, `env/` (including the `env_file` symlink), `manager.env`, `.env`, and `compose.yaml`, then follow [upgrade.md](upgrade.md) to pin, pull, and recreate only `manager`. Record the pre/post image references and retain state-preservation evidence.
-
-The candidate fails the drill if Compose rewrites SC4S, Manager or SC4S fails health, state disappears, unexpected permissions fail, or the configured test marker cannot be proven downstream when downstream proof is in scope.
-
-## 4. Roll back to baseline Manager image
-
-Follow [rollback.md](rollback.md) using the image reference recorded in step 2. Record the returned Manager image reference, `docker compose ps`, redacted health responses, logs, and preserved state listing. A green `docker compose up -d` alone is not a rollback pass.
-
-## 5. Record evidence and gate it honestly
-
-Create evidence based on `docs/acceptance/package-install-template.json`. A real Compose drill should set `install.ok`, `upgrade.ok`, and `rollback.ok` only after the corresponding observed checks pass. Identify `control_daemon` as unavailable/not exercised for this Compose topology instead of fabricating success.
+These commands are non-mutating and do not prove service state or lifecycle
+execution. `--execute`, `--apply`, and `--force` are deliberately rejected.
 
 ```bash
-python3 scripts/validate_acceptance_evidence.py --require-package-drill
+python3 -c "import json; e=json.load(open('/tmp/sc4s-package-dry-run.json')); print(e['planner_gate_ok'], e['lifecycle_gate_ok'])"
 ```
 
-Expected: this gate fails until a timestamped, redacted `docs/acceptance/package-install-<timestamp>.json` with real lifecycle evidence exists. A dry-run report is insufficient. If the host lacks Docker/systemd/safe downstream access, record the concrete blocker and keep the release lifecycle claim blocked.
+## Step 3: Live lifecycle (external/manual blocker)
+
+No repository script currently performs transactional install, upgrade, or
+rollback. A release must remain blocked until a separately reviewed disposable-
+host procedure produces real `install.ok`, `upgrade.ok`, and `rollback.ok`
+evidence. Do not substitute planner output or a host snapshot for those fields.
+
+Confirm services restarted and state directories were preserved:
+
+```bash
+systemctl status sc4s-manager.service sc4s-manager-control.service
+ls /opt/sc4s-manager/state/
+ls /opt/sc4s-manager/backups/
+```
+
+## Step 4: Restore the disposable host
+
+Restore the CLEAN-BASELINE snapshot after the externally managed live drill.
+
+If a live drill was actually performed, confirm services are back in the
+pre-upgrade state and capture that output as evidence:
+
+```bash
+systemctl status sc4s-manager.service
+```
+
+## Step 5: Service readback commands
+
+```bash
+curl -s http://localhost:8080/api/stats | python3 -m json.tool
+systemctl is-active sc4s-manager.service
+systemctl is-active sc4s-manager-control.service
+```
+
+## Step 6: Capture evidence honestly
+
+`--dry-run` captures **planner** evidence only (`planner_gate_ok`). It does **not**
+prove install/upgrade/rollback lifecycle execution (`lifecycle_gate_ok` stays false).
+
+```bash
+TIMESTAMP=$(date -u +%Y%m%dT%H%M%SZ)
+python3 scripts/validate_package_install.py \
+  --dry-run \
+  --artifact sc4s-manager-<version>.tar.gz \
+  --workdir /tmp/sc4s-manager-package-drill \
+  --evidence-out /tmp/sc4s-package-planner-${TIMESTAMP}.json
+```
+
+Running the validator **without** `--dry-run` currently fails closed: the install /
+upgrade / rollback scripts are planners, not disposable-host executors. Real live
+lifecycle evidence must come from a separately reviewed disposable-host procedure
+that sets `install.ok`, `upgrade.ok`, and `rollback.ok` to true before
+`python3 scripts/validate_acceptance_evidence.py --require-package-drill` can pass.
+
+Copy accepted evidence to the acceptance directory only after redaction:
+
+```bash
+cp /tmp/sc4s-package-planner-${TIMESTAMP}.json \
+   docs/acceptance/package-install-${TIMESTAMP}.json
+```
 
 ## Redaction checklist
 
-- No HEC/API/proxy/manual tokens, cookies, private keys, or authorization headers.
-- No unapproved internal hostnames or addresses.
-- Artifact and image digests are recorded; secret values are not.
-- Command evidence records arguments only after token/header redaction.
+Before committing the evidence file, verify:
+
+- [ ] No HEC tokens, API tokens, or secrets appear unredacted.
+- [ ] No internal IP addresses or hostnames beyond what is publicly known.
+- [ ] `artifact_sha256` records the SHA-256 of the tarball, not a secret.
+- [ ] `commands[].argv` entries are present and redacted where needed.
+- [ ] `redaction.findings` lists any found and redacted items.
+
+## Verification commands
+
+```bash
+python3 scripts/validate_package_install.py \
+  --dry-run \
+  --workdir /tmp/sc4s-manager-package-drill \
+  --evidence-out /tmp/sc4s-package-dry-run.json
+
+./scripts/test.sh tests/test_release_packaging.py tests/test_package_install_validator.py
+
+python3 scripts/validate_acceptance_evidence.py --require-package-drill
+```
+
+The last command is expected to fail until real timestamped evidence exists under
+`docs/acceptance/package-install-<timestamp>.json`. Do not mark this drill complete
+without live evidence.
+
+## Blockers for live run
+
+A live full drill requires a disposable VM/LXC with systemd available. If running
+in a CI-only environment without a VM/LXC, record this as a blocker in the evidence
+JSON `install.notes` field and use `--dry-run` only. The dry-run result is **not**
+sufficient to satisfy `--require-package-drill` in the release gate — only timestamped
+live evidence with `install.ok=true`, `upgrade.ok=true`, and `rollback.ok=true` qualifies.

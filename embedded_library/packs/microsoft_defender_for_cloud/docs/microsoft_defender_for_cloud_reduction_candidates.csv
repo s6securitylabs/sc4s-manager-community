@@ -1,0 +1,6 @@
+field,default_action,safety_notes
+entities,preserve,Alert entities often drive triage and correlation; do not drop without read-back and SOC approval.
+remediationSteps,preserve,Remediation context is useful during incident handling.
+confidenceReasons,preserve,Explains alert confidence and analyst priority.
+metadata.remediationDescription,preserve,Assessment remediation text helps posture owners.
+policyDefinitionId,preserve,Policy linkage supports compliance traceability.

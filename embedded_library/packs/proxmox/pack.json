@@ -1,0 +1,1004 @@
+{
+  "schema_version": "0.1",
+  "id": "proxmox",
+  "version": "0.1.3",
+  "url": "https://www.proxmox.com/",
+  "description": "Curated SecHub Resources SC4S pack for Proxmox VE control-plane authentication and task syslog relay rows.",
+  "display_name": "Proxmox VE control-plane telemetry",
+  "vendor": "proxmox",
+  "product": "proxmox_ve",
+  "default_index": "infraops",
+  "default_source": "proxmox",
+  "listener": {
+    "source_id": "PROXMOX",
+    "transport": "tcp",
+    "port": 20074,
+    "env": {
+      "SC4S_LISTEN_PROXMOX_TCP_PORT": "20074",
+      "SOURCE_ALL_SET_APPEND": "PROXMOX"
+    }
+  },
+  "sourcetypes": {
+    "auth": "proxmox:ve:auth",
+    "service_task": "proxmox:ve:service:task",
+    "task_summary": "proxmox:ve:task:summary"
+  },
+  "event_families": [
+    {
+      "id": "auth",
+      "label": "Proxmox VE authentication success/failure",
+      "match_engine": "pcre",
+      "match": "authentication failure;|successful auth for user|SC4S_PROXMOX_TEST_AUTH_",
+      "expected_sourcetype": "proxmox:ve:auth",
+      "primary_id_field": "user",
+      "required_fields": [
+        "user",
+        "action",
+        "result"
+      ],
+      "timestamp_fields": [
+        "syslog payload timestamp"
+      ]
+    },
+    {
+      "id": "service_task",
+      "label": "Proxmox VE service lifecycle task rows",
+      "match_engine": "pcre",
+      "match": "(starting|stopping|re-starting|reloading) service .*UPID:|SC4S_PROXMOX_TEST_SERVICE_",
+      "expected_sourcetype": "proxmox:ve:service:task",
+      "primary_id_field": "upid",
+      "required_fields": [
+        "service",
+        "upid",
+        "user"
+      ],
+      "timestamp_fields": [
+        "syslog payload timestamp"
+      ]
+    },
+    {
+      "id": "task_summary",
+      "label": "Proxmox VE task and node lifecycle summary rows",
+      "match_engine": "pcre",
+      "match": "end task UPID:|all VMs and CTs stopped|SC4S_PROXMOX_TEST_TASK_END_|SC4S_PROXMOX_TEST_NODE_SUMMARY_",
+      "expected_sourcetype": "proxmox:ve:task:summary",
+      "primary_id_field": "upid",
+      "required_fields": [
+        "upid or message",
+        "action",
+        "result"
+      ],
+      "timestamp_fields": [
+        "syslog payload timestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "proxmox",
+    "product": "proxmox_ve",
+    "vendor_product": "proxmox:proxmox_ve",
+    "host": "Proxmox node hostname",
+    "process": "syslog program",
+    "process_id": "syslog process ID",
+    "user": "realm-qualified Proxmox user where present",
+    "src_ip": "remote authentication client IP for failed login rows",
+    "action": "derived from Proxmox message/task context",
+    "result": "authentication/task result text",
+    "service": "service lifecycle task target",
+    "upid": "Proxmox unique task identifier",
+    "proxmox_node": "node parsed from UPID",
+    "task_type": "task type token parsed from UPID",
+    "task_object": "task object/VMID/service token parsed from UPID",
+    "signature": "task_type or process fallback",
+    "signature_id": "UPID or marker fallback",
+    "marker": "synthetic fixture marker only"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-proxmox.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/proxmox_overview.xml"
+    ],
+    "test_events": [
+      "test-events/proxmox_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20074.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/proxmox_reduction_candidates.csv",
+      "validation/preflight-2026-06-08.md",
+      "validation/replay-readback-2026-06-14.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Proxmox relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20074,
+      "notes": "Dedicated TCP listener for one Proxmox syslog/journal relay message per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Proxmox VE syslog/task messages",
+    "min": "Proxmox public docs/source scan through 2026-06-08",
+    "max": null,
+    "notes": "Grounded in public Proxmox docs/source lines for authentication, service task, and task summary messages; exact deployment envelope must be validated locally."
+  },
+  "validation": {
+    "date_validated": "2026-06-14",
+    "validated_by": "S6 Security Labs / Hermes SC4S TEST replay-readback",
+    "source_log_version": "Synthetic-equivalent fixture set; real product source-version evidence still required for field validation",
+    "sc4s_version": "ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0 / axosyslog 4.25.0",
+    "splunk_version": "Splunk 10.2.3 build 4d61cf8a5c0c",
+    "evidence": "SC4S TEST replay to dedicated TCP 20074 listener and Splunk TEST read-back captured 6/6 Proxmox fixture events across proxmox:ve:auth, proxmox:ve:service:task, and proxmox:ve:task:summary in infraops. Dashboard XML read-back succeeded in Splunk TEST."
+  },
+  "validation_harness": {
+    "status": "passed",
+    "required_for_quality_promotion": false,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Proxmox VE syslog relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "proxmox_ve_syslog"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_PROXMOX_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20074.sh"
+    },
+    "readback": {
+      "spl": "index=infraops sechub_fixture_marker=\"SC4S_PROXMOX_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product host process process_id user src_ip action result service upid proxmox_node task_type task_object signature signature_id marker _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "node/program/process context",
+        "auth user/source/result",
+        "service/task/UPID identity",
+        "eventtypes/tags",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "passed",
+      "date": "2026-06-14",
+      "summary": "2026-06-14 SC4S TEST -> Splunk TEST replay/read-back passed: 6/6 Proxmox fixture events indexed in infraops with expected sourcetypes; dashboard XML read-back succeeded.",
+      "evidence_path": "validation/replay-readback-2026-06-14.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing Proxmox TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      },
+      {
+        "type": "sc4s_splunk_replay_readback",
+        "path": "validation/replay-readback-2026-06-14.md",
+        "summary": "2026-06-14 SC4S TEST -> Splunk TEST replay/read-back passed: 6/6 Proxmox fixture events indexed in infraops with expected sourcetypes; dashboard XML read-back succeeded."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20074,
+          "protocol": "line_delimited_syslog_raw",
+          "purpose": "Dedicated Proxmox VE syslog relay listener"
+        }
+      ],
+      "required_indexes": [
+        "infraops"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to infraops",
+        "Search role can read infraops"
+      ]
+    },
+    "testbed": {
+      "sc4s_host": "sc4s-test / 10.10.1.183",
+      "splunk_host": "splunk-test / 10.10.1.251",
+      "sc4s_version": "ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0 / axosyslog 4.25.0",
+      "splunk_version": "Splunk 10.2.3 build 4d61cf8a5c0c",
+      "validation_run": "SC4S_REAL_VALIDATE_20260614T005539Z"
+    },
+    "e2e_docker_harness": {
+      "id": "proxmox_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/proxmox/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/proxmox/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/proxmox/compose.yaml",
+      "compose_project": "sechub-proxmox-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "infraops index preflight/create"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/proxmox/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/proxmox/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/proxmox/scripts/send_tcp_20074.sh 127.0.0.1 20074",
+        "splunk_summary_readback": "index=infraops sechub_fixture_marker=\"SC4S_PROXMOX_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=infraops sechub_fixture_marker=\"SC4S_PROXMOX_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product host process process_id user src_ip action result service upid proxmox_node task_type task_object signature signature_id marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "infraops",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/proxmox/splunk -> /opt/splunk/etc/apps/sechub_proxmox:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20074,
+          "host_port_env": "SC4S_PROXMOX_PORT",
+          "source_id": "PROXMOX"
+        },
+        "parser_mount": "packs/proxmox/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "proxmox_ve",
+          "source_shape": "auth_syslog",
+          "event_family": "auth",
+          "sourcetype": "proxmox:ve:auth",
+          "data_structures": [
+            "authentication failure",
+            "authentication success"
+          ],
+          "markers": [
+            "SC4S_PROXMOX_TEST_AUTH_FAILURE_001",
+            "SC4S_PROXMOX_TEST_AUTH_SUCCESS_002"
+          ]
+        },
+        {
+          "source": "proxmox_ve",
+          "source_shape": "service_task_syslog",
+          "event_family": "service_task",
+          "sourcetype": "proxmox:ve:service:task",
+          "data_structures": [
+            "service lifecycle start/stop task rows with UPID context"
+          ],
+          "markers": [
+            "SC4S_PROXMOX_TEST_SERVICE_START_003",
+            "SC4S_PROXMOX_TEST_SERVICE_STOP_004"
+          ]
+        },
+        {
+          "source": "proxmox_ve",
+          "source_shape": "task_summary_syslog",
+          "event_family": "task_summary",
+          "sourcetype": "proxmox:ve:task:summary",
+          "data_structures": [
+            "task end summary",
+            "node summary line"
+          ],
+          "markers": [
+            "SC4S_PROXMOX_TEST_TASK_END_005",
+            "SC4S_PROXMOX_TEST_NODE_SUMMARY_006"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Proxmox Backup Server rows remain deferred until exact source-shape evidence or sanitized samples are available",
+        "HA/quorum, migration, storage/network/firewall, and broad VM/CT lifecycle rows are not covered by this fixture set",
+        "collector JSON wrappers and field validation with retained real product telemetry are out of scope for this harness"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "proxmox_ve_syslog",
+      "label": "Proxmox VE syslog synthetic-equivalent fixtures",
+      "path": "test-events/proxmox_test_events.txt",
+      "format": "raw",
+      "wire_format": "proxmox_syslog_payload",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_PROXMOX_TEST_AUTH_FAILURE_001",
+        "SC4S_PROXMOX_TEST_AUTH_SUCCESS_002",
+        "SC4S_PROXMOX_TEST_SERVICE_START_003",
+        "SC4S_PROXMOX_TEST_SERVICE_STOP_004",
+        "SC4S_PROXMOX_TEST_TASK_END_005",
+        "SC4S_PROXMOX_TEST_NODE_SUMMARY_006"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "leading syslog payload timestamp",
+        "primary_timezone": "UTC when timestamp ends in Z",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or receiver timezone policy"
+        ],
+        "notes": "Fixtures use UTC timestamps. Production relays should preserve timezone-qualified syslog/journal time."
+      },
+      "field_delimiting": {
+        "style": "syslog_text_kv_mixed",
+        "field_separator": "spaces plus semicolon/key-value tokens",
+        "quote_character": "single quote for successful auth user",
+        "escape_policy": "Synthetic fixture values avoid embedded delimiters except Proxmox UPID colons.",
+        "notes": "Each line is one message; UPID colon delimiters are preserved."
+      },
+      "expected_families": [
+        "auth",
+        "service_task",
+        "task_summary"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-proxmox.conf",
+      "target_path": "local/config/app_parsers/syslog/app-proxmox.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/proxmox.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/proxmox_test_events.txt",
+      "target_path": "test-events/proxmox_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20074.sh",
+      "target_path": "scripts/send_tcp_20074.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_compose_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_compose_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/proxmox_reduction_candidates.csv",
+      "target_path": "docs/proxmox_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/proxmox_overview.xml",
+      "target_path": "splunk/default/data/ui/views/proxmox_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "replay_readback_2026_06_14",
+      "group": "docs",
+      "source_path": "validation/replay-readback-2026-06-14.md",
+      "target_path": "validation/replay-readback-2026-06-14.md",
+      "kind": "validation_replay_readback_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "docs/evidence/proxmox-evidence-scan-20260608.md; public Proxmox VE/PBS docs and source references for authentication, service task, and task/UPID shapes.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example users/hostnames, RFC5737 addresses, and synthetic UPIDs; no customer Proxmox logs or secrets are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-08",
+      "notes": "Created from Milestone 8 next build queue after Proxmox evidence scan made conservative VE control-plane syslog pack actionable."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "s6_verified",
+  "quality_status": "validated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "auth_user",
+            "success_user"
+          ],
+          "status": "partial",
+          "notes": "Realm-qualified Proxmox user where present."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "rhost"
+          ],
+          "status": "partial",
+          "notes": "Remote client IP for authentication failure rows."
+        },
+        "dest": {
+          "source_fields": [
+            "host",
+            "proxmox_node"
+          ],
+          "status": "partial",
+          "notes": "Proxmox node context."
+        },
+        "action": {
+          "source_fields": [
+            "action",
+            "service_action",
+            "task_type"
+          ],
+          "status": "partial",
+          "notes": "Derived from message/task context; not a complete action taxonomy."
+        },
+        "signature": {
+          "source_fields": [
+            "task_type",
+            "process"
+          ],
+          "status": "partial",
+          "notes": "Task type or process grouping."
+        },
+        "signature_id": {
+          "source_fields": [
+            "upid",
+            "marker"
+          ],
+          "status": "partial",
+          "notes": "UPID where present; marker only for fixtures."
+        }
+      },
+      "notes": "Partial authentication/change mapping; not complete Proxmox audit taxonomy."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "user",
+            "auth_user",
+            "success_user"
+          ],
+          "status": "partial",
+          "notes": "User/realm where present."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Authentication client IP."
+        },
+        "device.hostname": {
+          "source_fields": [
+            "host",
+            "proxmox_node"
+          ],
+          "status": "partial",
+          "notes": "Proxmox node."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action",
+            "service_action",
+            "task_type"
+          ],
+          "status": "partial",
+          "notes": "Derived activity label."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "upid"
+          ],
+          "status": "partial",
+          "notes": "Proxmox UPID task identifier."
+        },
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "partial",
+          "notes": "Raw row retained."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "host.hostname": {
+          "source_fields": [
+            "host",
+            "proxmox_node"
+          ],
+          "status": "partial",
+          "notes": "Proxmox node."
+        },
+        "user.name": {
+          "source_fields": [
+            "user",
+            "auth_user",
+            "success_user"
+          ],
+          "status": "partial",
+          "notes": "Realm-qualified Proxmox user."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Authentication source IP."
+        },
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived analyst action."
+        },
+        "event.id": {
+          "source_fields": [
+            "upid"
+          ],
+          "status": "partial",
+          "notes": "UPID task identifier."
+        },
+        "process.name": {
+          "source_fields": [
+            "process"
+          ],
+          "status": "partial",
+          "notes": "Syslog program name."
+        }
+      },
+      "notes": "ECS mapping is partial field-name guidance only."
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "virtualization",
+    "infrastructure",
+    "control_plane",
+    "backup",
+    "security"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "proxmox_ve_syslog",
+      "label": "Proxmox VE syslog/journal relay",
+      "description": "One Proxmox VE control-plane syslog message per line for authentication and narrow task/service lifecycle rows.",
+      "default": true,
+      "evidence_status": "validated",
+      "source_modes": [
+        "syslog",
+        "journald_relay",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "auth",
+        "service_task",
+        "task_summary"
+      ],
+      "test_event_sets": [
+        "proxmox_ve_syslog"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "S6 lab replay/read-back is limited to synthetic-equivalent fixtures; real Proxmox product/source-version telemetry is still required for field validation.",
+        "Scope is limited to authentication, service task, and task summary rows with public source evidence."
+      ]
+    },
+    {
+      "id": "proxmox_backup_server_future",
+      "label": "Proxmox Backup Server future variant",
+      "description": "Structured PBS backup/restore/datastore parsing is deferred until exact emitted-record evidence or a testbed exists.",
+      "default": false,
+      "evidence_status": "unknown",
+      "source_modes": [
+        "pbs_syslog",
+        "pbs_task_logs"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "unknown"
+      ],
+      "event_families": [],
+      "test_event_sets": [],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards"
+      ],
+      "artifact_references": [],
+      "known_limitations": [
+        "No structured PBS fixtures are shipped in this initial pack."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/proxmox_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "host",
+        "process",
+        "user",
+        "src_ip",
+        "service",
+        "upid",
+        "task_type",
+        "task_object",
+        "marker"
+      ],
+      "notes": "Preserve node, actor, UPID, task, result, and raw message fields by default. Any suppression must be validated with replay/read-back."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "Validation is S6 lab replay/read-back using synthetic-equivalent fixtures; field_validated/field_verified promotion still requires real product/source-version telemetry or vendor-certified equivalent with retained read-back evidence.",
+    "Fixtures are synthetic-equivalent examples, not real node/PBS exports.",
+    "PBS, HA/quorum, migration, storage/network/firewall, and broad VM/CT lifecycle schemas remain deferred.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Proxmox VE syslog intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props for Proxmox VE control-plane syslog rows. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-proxmox.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Proxmox analyst knowledge",
+      "description": "Adds eventtypes/tags for authentication, service task, and task summary groupings. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Proxmox reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/proxmox_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/proxmox/test-events/proxmox_test_events.txt": "sha256:a25c2ab78f0d0a2eb8e3e4593da926a1aba04bd63de601db0ccff0c3c10e5c12",
+      "packs/proxmox/sc4s/env.example": "sha256:349e845940075f4267a0cc991e5a20904ac3656545a000252ccd041c48255ebd",
+      "packs/proxmox/sc4s/app_parsers/syslog/app-proxmox.conf": "sha256:ed81029f2e1426d901e3eb1412852a7a1ba8f15bc2fd7a31a4bbc2e7587bc413",
+      "packs/proxmox/splunk/default/props.conf": "sha256:96e8bb619e5f5144dc12c12fe45ba28fdbc16681a5d3d6f09a16cc1b69437e63",
+      "packs/proxmox/splunk/default/transforms.conf": "sha256:1ca957fdccfa3ce1dc0c91034e36c0edbc71dc6cf4d92fa07b6356a29c0d5680",
+      "packs/proxmox/splunk/default/eventtypes.conf": "sha256:dcb86507775d55b48004331c4d8fdd2163640829a38b8dfcd4ba993896ad5929",
+      "packs/proxmox/splunk/default/tags.conf": "sha256:9288f9455f5e961dd40f04d558033e4b7b9396c7922463c33c2b741107e80e46",
+      "packs/proxmox/docs/proxmox_reduction_candidates.csv": "sha256:b42a355f1c605645f3591ac11fc8662172a37b91bb84a2cdeb2190fac2b58b71",
+      "packs/proxmox/scripts/send_tcp_20074.sh": "sha256:93ab290e21f9f53444b03540c21d8a22334d087684856ddacfb5c0f2747d89ae",
+      "packs/proxmox/validation/preflight-2026-06-08.md": "sha256:ae007e0657a0bab513ac78a38f69614770b4ad690104d371a86c81abd841b650",
+      "packs/proxmox/README.md": "sha256:6a089938ed3802480801e6627b8928c8fe105cf99fd4ba9e891de11bec301acf",
+      "packs/proxmox/splunk/default/data/ui/views/proxmox_overview.xml": "sha256:d2c074f667f36e9679ff7589e50d53e9a98ca6b9ba3d584fad862d10dd67cb47",
+      "packs/proxmox/validation/replay-readback-2026-06-14.md": "sha256:3d31c7d9ec6f7e49f770fb8b83122635672242c5806826e11eb3eb73016a9609",
+      "packs/proxmox/scripts/e2e_docker_compose.sh": "sha256:d4e67bb09ad7045ac4e590ebb08e38af172c5071a6a3f16d78b51e9911681efe"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-23",
+    "last_tested": "2026-06-23"
+  },
+  "source_delivery": {
+    "mode": "syslog_journal_relay",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "raw",
+    "supported_transport_refs": [
+      "tcp_syslog"
+    ],
+    "notes": "Proxmox operational records are syslog/journal-style; no API collector required for pack assumptions. The default syslog relay route has S6 lab replay/read-back for the synthetic-equivalent fixture set only; real product/source-version telemetry is still required for field validation.",
+    "validation_status": "s6_lab_replay_readback_passed; synthetic-equivalent fixtures only; field validation requires real product/source-version evidence"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "proxmox_overview_splunk_test",
+      "title": "Proxmox VE control-plane telemetry — dashboard example",
+      "source_path": "dashboards/screenshots/proxmox-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Proxmox VE control-plane telemetry dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

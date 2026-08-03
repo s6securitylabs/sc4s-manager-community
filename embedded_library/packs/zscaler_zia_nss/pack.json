@@ -1,0 +1,927 @@
+{
+  "schema_version": "0.1",
+  "id": "zscaler_zia_nss",
+  "version": "0.1.3",
+  "url": "https://github.com/elastic/integrations/tree/main/packages/zscaler_zia",
+  "description": "Conservative SecHub Resources SC4S pack for Zscaler Internet Access NSS JSON web and firewall feeds, grounded in upstream SC4S Zscaler inventory and public Elastic zscaler_zia sample schemas without stating lab validation.",
+  "display_name": "Zscaler Internet Access NSS",
+  "vendor": "zscaler",
+  "product": "zia",
+  "default_index": "netproxy",
+  "default_source": "zscaler_zia_nss",
+  "listener": {
+    "source_id": "ZSCALER_ZIA_NSS",
+    "transport": "tcp",
+    "port": 20046,
+    "env": {
+      "SC4S_LISTEN_ZSCALER_ZIA_NSS_TCP_PORT": "20046",
+      "SOURCE_ALL_SET_APPEND": "ZSCALER_ZIA_NSS"
+    }
+  },
+  "sourcetypes": {
+    "zia_web": "zscaler:zia:web",
+    "zia_firewall": "zscaler:zia:firewall"
+  },
+  "event_families": [
+    {
+      "id": "zia_web",
+      "label": "ZIA NSS web JSON events",
+      "match_engine": "pcre",
+      "match": "\"sourcetype\"\\s*:\\s*\"zscalernss-web\"",
+      "expected_sourcetype": "zscaler:zia:web",
+      "primary_id_field": "recordid",
+      "required_fields": [
+        "sourcetype",
+        "event.time",
+        "event.action"
+      ],
+      "timestamp_fields": [
+        "event.time",
+        "event.tz"
+      ]
+    },
+    {
+      "id": "zia_firewall",
+      "label": "ZIA NSS firewall JSON events",
+      "match_engine": "pcre",
+      "match": "\"sourcetype\"\\s*:\\s*\"zscalernss-fw\"",
+      "expected_sourcetype": "zscaler:zia:firewall",
+      "primary_id_field": "recordid",
+      "required_fields": [
+        "sourcetype",
+        "event.datetime",
+        "event.action"
+      ],
+      "timestamp_fields": [
+        "event.datetime"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Zscaler",
+    "product": "ZIA",
+    "vendor_product": "zscaler:zia",
+    "src": "event.cltip or event.csip",
+    "dest": "event.serverip or event.cdip",
+    "dest_port": "event.cdport",
+    "transport": "event.proto",
+    "user": "event.login or event.user",
+    "action": "event.action",
+    "severity": "event.threatseverity",
+    "app": "event.appname or event.nwapp",
+    "src_ip": "event.cltip or event.csip",
+    "src_port": "event.cltsourceport or event.csport",
+    "dest_ip": "event.serverip or event.cdip",
+    "rule": "event.rulelabel",
+    "url_host": "event.host"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-zscaler_zia_nss.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/zscaler_zia_nss_overview.xml"
+    ],
+    "test_events": [
+      "test-events/zscaler_zia_nss_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20046.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20046,
+      "notes": "Dedicated TCP listener for ZIA NSS JSON feed onboarding.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "udp_syslog",
+      "label": "UDP syslog",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Only for legacy/lab use where loss is acceptable.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Zscaler Internet Access NSS JSON templates",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in Elastic zscaler_zia public sample logs and pipeline schemas; exact customer NSS template coverage requires feed replay."
+  },
+  "validation": {
+    "date_validated": "not lab validated; curated 2026-06-05",
+    "validated_by": "Hermes autonomous curation (public evidence only)",
+    "source_log_version": "Elastic zscaler_zia public web/firewall sample logs; upstream SC4S Zscaler NSS parser inventory",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Schema and fixture checks only. No live ZIA NSS feed, SC4S runtime, or Splunk read-back validation captured."
+  },
+  "test_event_sets": [
+    {
+      "id": "zscaler_zia_nss_json",
+      "label": "Zscaler ZIA NSS JSON fixtures",
+      "path": "test-events/zscaler_zia_nss_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 2,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ZSCALER_ZIA_NSS_TEST_WEB_001",
+        "SC4S_ZSCALER_ZIA_NSS_TEST_FIREWALL_002"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "event.time/event.datetime",
+        "primary_timezone": "web fixture has event.tz=GMT; firewall example timezone is feed/deployment dependent",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "event.tz",
+          "feed timezone configuration"
+        ],
+        "notes": "Production validation must confirm ZIA NSS template timezone handling."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping; fixtures use documentation/example identities",
+        "notes": "Fixtures are reduced synthetic-equivalent records from public Elastic package sample shapes."
+      },
+      "expected_families": [
+        "zia_web",
+        "zia_firewall"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-zscaler_zia_nss.conf",
+      "target_path": "local/config/app_parsers/syslog/app-zscaler_zia_nss.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/zscaler_zia_nss.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/zscaler_zia_nss_overview.xml",
+      "target_path": "splunk/default/data/ui/views/zscaler_zia_nss_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/zscaler_zia_nss_test_events.txt",
+      "target_path": "test-events/zscaler_zia_nss_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20046.sh",
+      "target_path": "scripts/send_tcp_20046.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Upstream SC4S Zscaler NSS/LSS inventory plus Elastic zscaler_zia public sample logs and ingest schemas. Official Zscaler NSS help routes were checked but not used for extracted content because they rendered as a JavaScript app in this environment.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are reduced synthetic-equivalent JSON records based on public Elastic sample shapes with RFC5737/documentation IP ranges and example identities."
+    },
+    "curation": {
+      "reviewed_by": "Hermes autonomous curation",
+      "reviewed_at": "2026-06-05",
+      "notes": "Selected as high-value secure web gateway/cloud proxy source absent from curated packs, with upstream SC4S parser inventory and public sample-schema evidence."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": [
+        "docs/sources/vendor/Zscaler/nss.md",
+        "docs/sources/vendor/Zscaler/lss.md",
+        "package/etc/conf.d/conflib/syslog/app-syslog-zscaler_nss_proxy.conf",
+        "package/etc/conf.d/conflib/syslog/app-syslog-zscaler_nss_alerts.conf",
+        "package/lite/etc/addons/zscaler/app-json-zscaler_lss.conf"
+      ]
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "event.cltip",
+            "event.csip",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Client/source IP depending on web vs firewall feed."
+        },
+        "dest": {
+          "source_fields": [
+            "event.serverip",
+            "event.cdip",
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Server/destination IP depending on feed."
+        },
+        "dest_port": {
+          "source_fields": [
+            "event.cdport",
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Firewall feed destination port."
+        },
+        "transport": {
+          "source_fields": [
+            "event.proto",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "Protocol string such as TCP/HTTPS."
+        },
+        "user": {
+          "source_fields": [
+            "event.login",
+            "event.user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Authenticated user in feed."
+        },
+        "action": {
+          "source_fields": [
+            "event.action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Native Zscaler allow/block/drop action."
+        },
+        "severity": {
+          "source_fields": [
+            "event.threatseverity",
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Web threat severity when present."
+        },
+        "app": {
+          "source_fields": [
+            "event.appname",
+            "event.nwapp",
+            "app"
+          ],
+          "status": "partial",
+          "notes": "Application/protocol context."
+        },
+        "src_port": {
+          "source_fields": [
+            "event.cltsourceport",
+            "event.csport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Client/source port from web or firewall feed when present."
+        },
+        "rule": {
+          "source_fields": [
+            "event.rulelabel",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Firewall rule label for firewall feed triage."
+        },
+        "url_host": {
+          "source_fields": [
+            "event.host",
+            "url_host"
+          ],
+          "status": "partial",
+          "notes": "Web feed host/domain context when present."
+        }
+      },
+      "notes": "Network Traffic/Web mapping is partial and sample-grounded only."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "event.cltip",
+            "event.csip",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Source/client IP."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "event.serverip",
+            "event.cdip",
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Destination/server IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "event.action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Native action value."
+        },
+        "src_endpoint.port": {
+          "source_fields": [
+            "event.cltsourceport",
+            "event.csport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Client/source port when present in NSS feed."
+        },
+        "dst_endpoint.port": {
+          "source_fields": [
+            "event.cdport",
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Firewall feed destination port."
+        },
+        "connection_info.protocol_name": {
+          "source_fields": [
+            "event.proto",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "Protocol string such as HTTPS or TCP; sample-grounded only."
+        },
+        "rule.name": {
+          "source_fields": [
+            "event.rulelabel",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Firewall rule label; not complete policy validation."
+        }
+      },
+      "notes": "Optional OCSF mapping incomplete."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "event.cltip",
+            "event.csip",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Source/client IP."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "event.serverip",
+            "event.cdip",
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Destination/server IP."
+        },
+        "user.name": {
+          "source_fields": [
+            "event.login",
+            "event.user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Authenticated user."
+        },
+        "event.action": {
+          "source_fields": [
+            "event.action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Native action."
+        },
+        "source.port": {
+          "source_fields": [
+            "event.cltsourceport",
+            "event.csport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Client/source port when present."
+        },
+        "destination.port": {
+          "source_fields": [
+            "event.cdport",
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Firewall destination port."
+        },
+        "network.transport": {
+          "source_fields": [
+            "event.proto",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "Native protocol token; values are not normalized beyond Splunk aliasing."
+        },
+        "rule.name": {
+          "source_fields": [
+            "event.rulelabel",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Firewall rule label."
+        },
+        "url.domain": {
+          "source_fields": [
+            "event.host",
+            "url_host"
+          ],
+          "status": "partial",
+          "notes": "Web host/domain context."
+        }
+      },
+      "notes": "Aligned loosely with Elastic package field intent; not a complete ECS implementation."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/zscaler_zia_nss/sc4s/app_parsers/syslog/app-zscaler_zia_nss.conf": "sha256:e2192a90fed1127d335d034003cfe36c4abc5ceb16092e9fef2b9cc1de713a97",
+      "packs/zscaler_zia_nss/sc4s/env.example": "sha256:29bcf7f9d48948a3217a0cd319749ea5979ff97d9dfb8669bad804a40f789593",
+      "packs/zscaler_zia_nss/splunk/default/props.conf": "sha256:6dbbbbe2145937a39c31e6f36dbae47dc8758a057b40d9360afa7b89f4bc680b",
+      "packs/zscaler_zia_nss/splunk/default/transforms.conf": "sha256:64152855d78d70b1779bfa89bde6f15ade89157c1be02e8bc0e10de69abf7051",
+      "packs/zscaler_zia_nss/splunk/default/eventtypes.conf": "sha256:afd51d1beec8ba5167fa48652599730fca9fd8febb7692eab36720e75684777c",
+      "packs/zscaler_zia_nss/splunk/default/tags.conf": "sha256:1cb17a26db044af11da28f98e47609f314863bd0d2b97532de0ed77b2f9e8dea",
+      "packs/zscaler_zia_nss/test-events/zscaler_zia_nss_test_events.txt": "sha256:8d9f0db4be611d06509418acfe4d2f9f443173e580b68e063165349658ed06e8",
+      "packs/zscaler_zia_nss/scripts/send_tcp_20046.sh": "sha256:a8aad0287fdd1e299a3e8996ba95d072d01d7e722fc955eef435746578d859d7",
+      "packs/zscaler_zia_nss/README.md": "sha256:9c1a6f1d245d7545c4e3280918a11a7bbaf18efb90e9608cc507adbad4c7579c",
+      "packs/zscaler_zia_nss/validation/preflight-2026-06-08.md": "sha256:03b5448e573fc118bd761a78299cdd21895e7d58bfbc837354d7131cc49c6323",
+      "packs/zscaler_zia_nss/splunk/default/data/ui/views/zscaler_zia_nss_overview.xml": "sha256:2e214d6cb3278d04068c9cdaa08b62d68cea73f60fffcf4196379613e95d87f4",
+      "packs/zscaler_zia_nss/scripts/e2e_docker_compose.sh": "sha256:6170652e55644932a2dc4ca4e65abfca36e37c30f7b752a7c468ce04bdbd67ae"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-26",
+    "last_tested": "2026-06-26"
+  },
+  "known_limitations": [
+    "No live ZIA NSS feed replay or Splunk read-back evidence; keep curated/unverified.",
+    "Only web and firewall JSON feed shapes are represented; other ZIA/ZPA/NSS families are backlog.",
+    "Official Zscaler help content was reachable but not extractable without JavaScript in this cron environment."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic ZIA NSS ingestion",
+      "description": "Parser, listener env example, fixtures, and JSON Splunk props. No drops or reductions.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-zscaler_zia_nss.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; preserves events."
+    },
+    {
+      "id": "standard",
+      "label": "Standard ZIA NSS knowledge",
+      "description": "Adds eventtypes/tags for web proxy and firewall searches. No drops or reductions.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Still non-lossy."
+    }
+  ],
+  "reduction_rules": [],
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Zscaler ZIA NSS JSON feeds",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "zscaler_zia_nss_json"
+      ],
+      "event_count": 2,
+      "marker_prefix": "SC4S_ZSCALER_ZIA_NSS_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20046.sh"
+    },
+    "readback": {
+      "spl": "index IN (netproxy,netfw) sechub_fixture_marker=\"SC4S_ZSCALER_ZIA_NSS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product vendor_product src src_ip src_port dest dest_ip dest_port transport user action severity app rule url_host event.recordid event.sc4s_marker marker _raw",
+      "expected_count": 2,
+      "must_verify": [
+        "event count",
+        "index netproxy/netfw by family",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "ZIA web/firewall family",
+        "client/source and destination fields",
+        "user/action",
+        "severity/app/rule/destination port",
+        "timestamp/timezone handling",
+        "raw and aliased source/destination fields including src_port where present",
+        "rule/url_host/app context from fixture-backed fields"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TCP listener on 127.0.0.1:20046 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing Zscaler ZIA NSS TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20046,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Zscaler ZIA NSS JSON listener"
+        }
+      ],
+      "required_indexes": [
+        "netproxy",
+        "netfw"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to required index(es)",
+        "Search role can read required index(es)"
+      ]
+    },
+    "e2e_docker_harness": {
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/zscaler_zia_nss/scripts/e2e_docker_compose.sh run",
+      "commands": {
+        "plan": "packs/zscaler_zia_nss/scripts/e2e_docker_compose.sh plan",
+        "write_compose": "packs/zscaler_zia_nss/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/zscaler_zia_nss/scripts/e2e_docker_compose.sh run",
+        "down": "packs/zscaler_zia_nss/scripts/e2e_docker_compose.sh down"
+      },
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "splunk_requirements": {
+        "required_index": "netproxy",
+        "hec_enabled": true,
+        "app_mount": "packs/zscaler_zia_nss/splunk",
+        "readback_spl": "index IN (netproxy,netfw) sechub_fixture_marker=\"SC4S_ZSCALER_ZIA_NSS_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product vendor_product src src_ip src_port dest dest_ip dest_port transport user action severity app rule url_host event.recordid event.sc4s_marker marker _raw"
+      },
+      "sc4s_requirements": {
+        "image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "source_id": "ZSCALER_ZIA_NSS",
+          "transport": "tcp",
+          "container_port": 20046,
+          "default_host_port": 20046,
+          "framing": "line_delimited"
+        },
+        "parser_mount": "packs/zscaler_zia_nss/sc4s/app_parsers/syslog"
+      },
+      "coverage_matrix": [
+        {
+          "event_family": "zia_web",
+          "sourcetype": "zscaler:zia:web",
+          "markers": [
+            "SC4S_ZSCALER_ZIA_NSS_TEST_WEB_001"
+          ],
+          "required_fields": [
+            "user",
+            "src",
+            "src_ip",
+            "src_port",
+            "dest",
+            "dest_ip",
+            "action",
+            "severity",
+            "app",
+            "url_host",
+            "event.recordid",
+            "event.sc4s_marker"
+          ]
+        },
+        {
+          "event_family": "zia_firewall",
+          "sourcetype": "zscaler:zia:firewall",
+          "markers": [
+            "SC4S_ZSCALER_ZIA_NSS_TEST_FIREWALL_002"
+          ],
+          "required_fields": [
+            "user",
+            "src",
+            "src_ip",
+            "src_port",
+            "dest",
+            "dest_ip",
+            "dest_port",
+            "transport",
+            "action",
+            "rule",
+            "app",
+            "event.recordid",
+            "event.sc4s_marker"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Does not prove real Zscaler tenant/NSS source-version emission, official feed-template output, or complete NSS/LSS family coverage.",
+        "Does not prove UDP syslog, TLS-wrapped intermediary, API/object-store/file-tail collectors, or SIEM-forwarder wrappers beyond the disposable TCP syslog fixture replay helper.",
+        "Does not prove feed timezone/template behavior without local configuration and read-back review.",
+        "Does not prove SC4S listener replay, HEC delivery, or Splunk indexed read-back until the harness is actually run in a permitted Docker lab.",
+        "Does not change curated/unverified trust or quality posture without retained replay/read-back evidence."
+      ]
+    }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native_json",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "udp_syslog"
+    ],
+    "notes": "ZIA NSS is a Zscaler syslog feed; JSON payload is native feed format, not API polling.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "zscaler_zia_nss_overview_splunk_test",
+      "title": "Zscaler Internet Access NSS — dashboard example",
+      "source_path": "dashboards/screenshots/zscaler-zia-nss-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Zscaler Internet Access NSS dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard"
+    }
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  }
+}

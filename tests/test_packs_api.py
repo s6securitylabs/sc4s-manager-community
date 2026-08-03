@@ -23,7 +23,7 @@ def test_packs_api_detail_contract_contains_schema_and_curated_metadata():
     assert detail["id"] == "commvault_commcell"
     assert detail["export_artifacts"]
     assert detail["test_event_sets"]
-    assert detail["provenance"]["origin"] == "sechub-resource"
+    assert detail["provenance"]["origin"] == "sechub-resources-pack"
     assert detail["relationship_to_upstream"] == "new_pack"
     assert detail["trust_level"] == "s6_verified"
     assert detail["quality_status"] == "validated"

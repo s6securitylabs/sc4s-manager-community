@@ -1,0 +1,185 @@
+<form version="1.1" theme="dark">
+  <label>Cisco IOS / IOS-XE - SOC Overview</label>
+  <description>Ingestion health, configuration changes, interface state, login events, and high-severity alerts for cisco:ios sourcetype. Not field-validated: panels use synthetic-equivalent fixture evidence only. Verify field availability before relying on panel counts.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Cisco IOS events</title>
+      <single>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Config changes (CONFIG_I)</title>
+      <single>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" cisco_identifier="SYS" cisco_mnemonic="CONFIG_I" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,5]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Login failures</title>
+      <single>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" cisco_identifier="SEC_LOGIN" cisco_mnemonic="LOGIN_FAILED" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>High-severity (0-3: emergency to error)</title>
+      <single>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" (cisco_severity=0 OR cisco_severity=1 OR cisco_severity=2 OR cisco_severity=3) host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,20]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events by severity label over time</title>
+      <chart>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" host=$host_tok$ | eval sev_label=coalesce(severity_label, "unknown") | timechart count by sev_label</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Configuration changes</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" cisco_identifier="SYS" cisco_mnemonic="CONFIG_I" host=$host_tok$ | eval who=coalesce(user, "unknown") | table _time host who config_source terminal cisco_message | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Login events (success and failure)</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" cisco_identifier="SEC_LOGIN" cisco_mnemonic IN (LOGIN_SUCCESS, LOGIN_FAILED) host=$host_tok$ | eval outcome=coalesce(login_result, cisco_mnemonic) | table _time host user src_ip dest_port outcome | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Interface state changes</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" cisco_identifier IN (LINK, LINEPROTO) interface=* host=$host_tok$ | eval state=coalesce(interface_state, line_protocol_state, "unknown") | table _time host interface state cisco_identifier cisco_mnemonic | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>High-severity events (severity 0-3)</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" (cisco_severity=0 OR cisco_severity=1 OR cisco_severity=2 OR cisco_severity=3) host=$host_tok$ | table _time host cisco_identifier cisco_severity severity_label cisco_mnemonic cisco_message | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top Cisco IOS event types by host</title>
+      <chart>
+        <search>
+          <query>index=netops sourcetype="cisco:ios" host=$host_tok$ | stats count by host, cisco_identifier | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SPL for manual triage (copy and run)</title>
+      <html>
+        <![CDATA[
+        <div style="font-family:monospace;font-size:12px;padding:8px;">
+          <b>All Cisco IOS events drilldown:</b><br/>
+          <code>index=netops sourcetype="cisco:ios" | table _time host cisco_identifier cisco_severity severity_label cisco_mnemonic cisco_message action signature user src_ip dest_port _raw</code><br/><br/>
+          <b>Login brute force (multiple failures from same IP):</b><br/>
+          <code>index=netops sourcetype="cisco:ios" cisco_mnemonic="LOGIN_FAILED" | stats count by src_ip, host | where count > 5 | sort -count</code><br/><br/>
+          <b>Emergency/alert events (severity 0-1):</b><br/>
+          <code>index=netops sourcetype="cisco:ios" (cisco_severity=0 OR cisco_severity=1) | table _time host cisco_identifier cisco_mnemonic severity_label cisco_message</code><br/><br/>
+          <i>Note: panels use synthetic-equivalent fixture evidence; not field-validated on live Cisco IOS sources.</i>
+        </div>
+        ]]>
+      </html>
+    </panel>
+  </row>
+
+</form>

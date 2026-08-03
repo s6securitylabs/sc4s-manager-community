@@ -268,12 +268,12 @@ export function Dashboard() {
           </Group>
         </Card>
         <Card withBorder shadow="sm" padding="lg">
-          <Text size="sm" c="dimmed">SC4S Library sources</Text>
+          <Text size="sm" c="dimmed">Embedded SC4S Library</Text>
           <Group justify="space-between" align="end">
             <div>
               <Title order={2}>{librarySourcesQuery.data?.sources?.length ?? '—'}</Title>
               <Text size="xs" c="dimmed">
-                {libraryImportsQuery.isError ? 'Library source unavailable — check source health' : `${libraryImportsQuery.data?.imports?.length ?? 0} packs checked`}
+                {libraryImportsQuery.isError ? 'Library imports unavailable — check snapshot status' : `${libraryImportsQuery.data?.imports?.length ?? 0} packs checked`}
               </Text>
             </div>
             <RouterAnchor to="/library">Open</RouterAnchor>
@@ -303,7 +303,7 @@ export function Dashboard() {
         <Stack gap="xs">
           {catalogueQuery.isError ? <Alert color="red" title="Unable to load source catalogue">{operatorSafeErrorMessage(catalogueQuery.error)}</Alert> : null}
           {packsQuery.isError ? <Alert color="red" title="Unable to load local packs">{operatorSafeErrorMessage(packsQuery.error)}</Alert> : null}
-          {librarySourcesQuery.isError ? <Alert color="red" title="Could not load Library sources">{operatorSafeErrorMessage(librarySourcesQuery.error)}</Alert> : null}
+          {librarySourcesQuery.isError ? <Alert color="red" title="Could not load embedded Library">{operatorSafeErrorMessage(librarySourcesQuery.error)}</Alert> : null}
           {libraryImportsQuery.isError ? <Alert color="red" title="Could not load checked packs">{operatorSafeErrorMessage(libraryImportsQuery.error)}</Alert> : null}
         </Stack>
       ) : null}

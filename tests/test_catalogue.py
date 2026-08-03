@@ -238,9 +238,9 @@ def test_catalogue_entries_merge_upstream_only_next_only_and_extended_entries(tm
     assert upstream_only['capabilities']['splunk_props_transforms'] is False
 
     extended = ids['commvault_commcell']
-    assert extended['effective_origin'] == 'sechub-resource'
+    assert extended['effective_origin'] == 'sechub-resources-pack'
     assert extended['relationship_to_upstream'] == 'extends_upstream'
-    assert set(extended['origins']) == {'sc4s-inbuilt', 'sechub-resource'}
+    assert set(extended['origins']) == {'sc4s-inbuilt', 'sechub-resources-pack'}
     assert extended['capabilities']['parser'] is True
     assert extended['capabilities']['splunk_props_transforms'] is True
     assert extended['capabilities']['fixtures'] is True
@@ -257,7 +257,7 @@ def test_catalogue_inventory_filters_and_paginates(tmp_path: Path) -> None:
         packs_root,
         manager_root,
         {
-            'origin': 'sechub-resource',
+            'origin': 'sechub-resources-pack',
             'has_splunk_knowledge': 'true',
             'limit': '1',
             'offset': '0',
@@ -354,7 +354,7 @@ def test_catalogue_inventory_exposes_facets_for_modern_filter_ui(tmp_path: Path)
     facets = inventory['facets']
     assert facets['origins'] == [
         {'value': 'sc4s-inbuilt', 'label': 'SC4S built-in', 'count': 2},
-        {'value': 'sechub-resource', 'label': 'SecHub Resources SC4S pack', 'count': 1},
+        {'value': 'sechub-resources-pack', 'label': 'SC4S Library pack', 'count': 1},
     ]
     assert {'value': 'cisco', 'label': 'Cisco', 'count': 1} in facets['vendors']
     assert {'value': 'commvault', 'label': 'Commvault', 'count': 1} in facets['vendors']
@@ -555,7 +555,7 @@ def test_catalogue_merges_seeded_community_candidates_without_validated_claims(t
     assert any('not curated or validated' in warning.lower() for warning in malicious_candidate['candidate_warnings'])
 
     official_entry = ids['commvault_commcell']
-    assert official_entry['effective_origin'] == 'sechub-resource'
+    assert official_entry['effective_origin'] == 'sechub-resources-pack'
     assert official_entry['source_status'] is None
     assert official_entry['validation'].get('state') != 'unvalidated_source_corpus'
 

@@ -1,0 +1,1078 @@
+{
+  "schema_version": "0.1",
+  "id": "oracle_exadata",
+  "version": "0.1.4",
+  "url": "https://docs.oracle.com/en/engineered-systems/exadata-database-machine/",
+  "description": "Oracle Exadata engineered systems telemetry covering Storage Cell alert and syslog, DB node syslog/auditd, ILOM hardware events, InfiniBand/management switch syslog, ExaWatcher metric bundles, ExaChk reports, ASR events, and OCI Audit for Exadata service actions. Typical forwarding: syslog/rsyslog relay from cell and compute nodes; ILOM syslog or SNMP trap relay; file-beat from log directories; OCI Logging API pull. Source-shape acquisition is blocked; no relay envelope selected and no validated parser exists yet. Operator action required: provide fixture events before this source can be promoted.",
+  "display_name": "Oracle Exadata engineered systems logs",
+  "vendor": "oracle",
+  "product": "exadata",
+  "default_index": "oracle",
+  "default_source": "oracle_exadata",
+  "listener": {
+    "source_id": "ORACLE_EXADATA",
+    "transport": "tcp",
+    "port": 20105,
+    "env": {
+      "SC4S_LISTEN_ORACLE_EXADATA_TCP_PORT": "20105",
+      "SOURCE_ALL_SET_APPEND": "ORACLE_EXADATA"
+    }
+  },
+  "sourcetypes": {
+    "oracle_exadata_cell_alert": "oracle:exadata:cell:alert",
+    "oracle_exadata_cell_syslog": "oracle:exadata:cell:syslog",
+    "oracle_exadata_dbnode_syslog": "oracle:exadata:dbnode:syslog",
+    "oracle_exadata_ilom": "oracle:exadata:ilom",
+    "oracle_exadata_switch_syslog": "oracle:exadata:switch:syslog",
+    "oracle_exadata_exawatcher": "oracle:exadata:exawatcher",
+    "oracle_exadata_exachk": "oracle:exadata:exachk",
+    "oracle_exadata_asr": "oracle:exadata:asr",
+    "oracle_exadata_oci_audit": "oracle:exadata:oci:audit"
+  },
+  "event_families": [
+    {
+      "id": "oracle_exadata_cell_alert",
+      "label": "Storage cell alerts",
+      "match_engine": "pcre",
+      "match": "SC4S_ORACLE_EXADATA_SOURCE_SHAPE_REQUIRED_001",
+      "expected_sourcetype": "oracle:exadata:cell:alert",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_exadata_cell_syslog",
+      "label": "Storage cell syslog",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_EXADATA_ORACLE_EXADATA_CELL_SYSLOG_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:exadata:cell:syslog",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_exadata_dbnode_syslog",
+      "label": "DB node Oracle Linux syslog",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_EXADATA_ORACLE_EXADATA_DBNODE_SYSLOG_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:exadata:dbnode:syslog",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_exadata_ilom",
+      "label": "ILOM / service processor logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_EXADATA_ORACLE_EXADATA_ILOM_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:exadata:ilom",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_exadata_switch_syslog",
+      "label": "RoCE/InfiniBand switch logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_EXADATA_ORACLE_EXADATA_SWITCH_SYSLOG_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:exadata:switch:syslog",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_exadata_exawatcher",
+      "label": "ExaWatcher / OSWatcher telemetry",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_EXADATA_ORACLE_EXADATA_EXAWATCHER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:exadata:exawatcher",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_exadata_exachk",
+      "label": "EXAchk / ORAchk findings",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_EXADATA_ORACLE_EXADATA_EXACHK_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:exadata:exachk",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_exadata_asr",
+      "label": "Auto Service Request events",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_EXADATA_ORACLE_EXADATA_ASR_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:exadata:asr",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_exadata_oci_audit",
+      "label": "Exadata Cloud OCI Audit",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_EXADATA_ORACLE_EXADATA_OCI_AUDIT_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:exadata:oci:audit",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "event_time": "Preserve event_time when present in the exact source shape; do not invent or derive without evidence.",
+    "cell_name": "Preserve cell_name when present in the exact source shape; do not invent or derive without evidence.",
+    "db_node": "Preserve db_node when present in the exact source shape; do not invent or derive without evidence.",
+    "rack": "Preserve rack when present in the exact source shape; do not invent or derive without evidence.",
+    "machine": "Preserve machine when present in the exact source shape; do not invent or derive without evidence.",
+    "alert_id": "Preserve alert_id when present in the exact source shape; do not invent or derive without evidence.",
+    "severity": "Preserve severity when present in the exact source shape; do not invent or derive without evidence.",
+    "metric": "Preserve metric when present in the exact source shape; do not invent or derive without evidence.",
+    "object_type": "Preserve object_type when present in the exact source shape; do not invent or derive without evidence.",
+    "disk": "Preserve disk when present in the exact source shape; do not invent or derive without evidence.",
+    "grid_disk": "Preserve grid_disk when present in the exact source shape; do not invent or derive without evidence.",
+    "service": "Preserve service when present in the exact source shape; do not invent or derive without evidence.",
+    "state": "Preserve state when present in the exact source shape; do not invent or derive without evidence.",
+    "component": "Preserve component when present in the exact source shape; do not invent or derive without evidence.",
+    "src_ip": "Preserve src_ip when present in the exact source shape; do not invent or derive without evidence.",
+    "action": "Preserve action when present in the exact source shape; do not invent or derive without evidence.",
+    "message": "Preserve message when present in the exact source shape; do not invent or derive without evidence."
+  },
+  "artifacts": {
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md",
+      "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "docs/research/oracle-official-exadata-log-source-shape-evidence-20260703.md",
+      "docs/collection/oracle_exadata_splunk_onboarding.md"
+    ],
+    "test_events": [
+      "test-events/source_shape_required.txt"
+    ],
+    "splunk": [
+      "splunk/default/inputs.conf.example"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "collector_definition_only",
+      "label": "Collector/source definition only — routing disabled",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20105,
+      "notes": "Placeholder listener metadata required by current schema. No SC4S parser/listener is shipped; Manager/SecHub should keep routing disabled until a concrete relay envelope is selected.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "collector_definition_only",
+  "source_log_version": {
+    "name": "Oracle Exadata engineered systems logs",
+    "min": "public Oracle evidence scan 2026-06-08",
+    "max": null,
+    "notes": "Exact product version/source mode required before parser fixtures or deployment routing."
+  },
+  "validation": {
+    "date_validated": "not validated; catalogued 2026-06-08",
+    "validated_by": "Hermes source-definition curation only; no validated/verified status stated",
+    "source_log_version": "Public Oracle evidence scan only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Pack definition only. No parser artifacts, fixtures, SC4S replay, HEC delivery, Splunk read-back, Manager collector read-back, or production-equivalent validation captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "Source-shape then replay/readback gate for Oracle Exadata engineered systems logs",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "source_shape_required"
+      ],
+      "event_count": 1,
+      "marker_prefix": "SC4S_ORACLE_EXADATA_TEST_",
+      "transport": "source_shape_required",
+      "framing": "source_shape_required"
+    },
+    "readback": {
+      "spl": "index=oracle sechub_fixture_marker=\"SC4S_ORACLE_EXADATA_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product action user src severity status message _raw",
+      "expected_count": 1,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "timestamp",
+        "required fields for selected variant",
+        "no sensitive values exposed"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "source_mapping",
+      "date": "2026-06-08",
+      "summary": "No exact emitted source shape or relay envelope has been selected for this Oracle source-family definition; parser fixtures and replay/read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Documents source-shape/replay blocker; not validation evidence."
+      },
+      {
+        "type": "source_shape_acquisition_plan",
+        "path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+        "summary": "Variant-specific evidence acquisition checklist; not validation evidence."
+      },
+      {
+        "type": "source_shape_reference",
+        "path": "docs/research/oracle-official-exadata-log-source-shape-evidence-20260703.md",
+        "summary": "2026-07-03 Oracle-official source-shape evidence pass: OS syslog and OCI Audit are relayable, cell ALERTHISTORY is strong-partial (channel choice required), ILOM/switch/ASR/ExaWatcher/EXAchk remain blocked. Not validation evidence and no trust promotion."
+      }
+    ]
+  },
+  "test_event_sets": [
+    {
+      "id": "source_shape_required",
+      "label": "Source-shape evidence placeholder marker",
+      "path": "test-events/source_shape_required.txt",
+      "format": "raw",
+      "wire_format": "placeholder_not_product_log",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 1,
+      "events_per_file": "single",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ORACLE_EXADATA_SOURCE_SHAPE_REQUIRED_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "unknown_requires_validation",
+        "primary_field": "not_applicable_source_shape_required",
+        "primary_timezone": "unknown_requires_validation",
+        "fallback_fields": [],
+        "fallback_time_mode": "unknown_requires_validation",
+        "fallback_timezone": "unknown_requires_validation",
+        "requires_source_timezone_when_fields_missing": [
+          "selected Oracle source variant timezone policy"
+        ],
+        "notes": "Placeholder only; no source timestamp exists until an emitted source shape is selected."
+      },
+      "field_delimiting": {
+        "style": "placeholder_not_product_log",
+        "field_separator": "none",
+        "quote_character": "none",
+        "escape_policy": "not applicable",
+        "notes": "This is not an Oracle event fixture; it prevents empty fixture requirementss while keeping routing disabled."
+      },
+      "expected_families": []
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "091835cb09c06e3ebf3113c7f7c3574160ee398484f36beb27885628efc4279f"
+    },
+    {
+      "id": "preflight",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "41c52f79f1bc9f78983eda9f0cd10240a6ddc240e5073f98b4d135cc8e7110a0"
+    },
+    {
+      "id": "source_shape_required",
+      "group": "test_events",
+      "source_path": "test-events/source_shape_required.txt",
+      "target_path": "test-events/source_shape_required.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "de6af8f8833364c3a1c991ee9325f9a7e8f6db4351fd30cee52c0ed28ee1bb9f"
+    },
+    {
+      "id": "source_shape_acquisition_plan",
+      "group": "docs",
+      "source_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "target_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "kind": "evidence_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "88c234808a61084ddd513ec319456fb19470558d7540a54d1a34588d26257933"
+    },
+    {
+      "id": "exadata_log_source_shape_evidence_20260703",
+      "group": "docs",
+      "source_path": "docs/research/oracle-official-exadata-log-source-shape-evidence-20260703.md",
+      "target_path": "docs/research/oracle-official-exadata-log-source-shape-evidence-20260703.md",
+      "kind": "research_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "c41eb222aad3b54943cafb9b9f83775de2b18a4a8e4d54922dbd70465cbeb3c4"
+    },
+    {
+      "id": "exadata_splunk_onboarding_guidance",
+      "group": "docs",
+      "source_path": "docs/collection/oracle_exadata_splunk_onboarding.md",
+      "target_path": "docs/collection/oracle_exadata_splunk_onboarding.md",
+      "kind": "collection_guidance",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "be63927f45ae7b62b81c6c017ff15152fdc9e4b970f8071278f6da9ea3743245"
+    },
+    {
+      "id": "splunk_inputs_example",
+      "group": "splunk",
+      "source_path": "splunk/default/inputs.conf.example",
+      "target_path": "splunk/default/inputs.conf.example",
+      "kind": "splunk_inputs_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "dc7c2d64d0b419c0bc740f1e156178226c35c236ab6ccf3bc8d304f26039d653"
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "docs/evidence/oracle-platform-evidence-scan-20260608.md plus Oracle public product documentation listed there.",
+      "redistribution": "unknown",
+      "sanitisation_status": "unknown",
+      "notes": "No source samples are redistributed; pack definitions record source-shape requirements only."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent with subagent planning",
+      "reviewed_at": "2026-07-03",
+      "notes": "Created from Oracle platform backlog/subagent plan as catalogue-first definitions for Manager/SecHub; routing disabled until source evidence exists. 2026-07-03 Oracle-official source-shape evidence pass classified each variant (relayable vs blocked) and recorded per-variant blockers; the pack remains catalogue-only because no live replay/read-back was captured."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "catalogued",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "signature": {
+          "source_fields": [
+            "signature"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "status": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        }
+      },
+      "notes": "Planning note only; no parser/read-back evidence."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "unknown",
+          "notes": "Raw event retention required once source exists."
+        }
+      },
+      "notes": "Source-family planning only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires evidence."
+        }
+      },
+      "notes": "Optional helper mapping only."
+    }
+  },
+  "source_pack_kind": "generic_log_source_definition",
+  "source_categories": [
+    "infrastructure",
+    "database",
+    "storage",
+    "hardware",
+    "network",
+    "cloud"
+  ],
+  "supported_targets": [
+    "splunk",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "oracle_exadata_cell_alert",
+      "label": "Storage cell alerts",
+      "description": "Storage cell alerts: CellCLI alert history/export, cell alert files.",
+      "default": true,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "CellCLI alert history/export",
+        "cell alert files"
+      ],
+      "payload_formats": [
+        "documented_alerthistory_object_no_native_syslog_line_requires_channel_choice"
+      ],
+      "envelopes": [
+        "smtp_or_snmp_trap_or_cell_ms_alert_log_file_tail_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_exadata_cell_alert"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: ALERTHISTORY attributes (alertSequenceID, alertType, severity, alertMessage, metricObjectName, examinedBy, beginTime/endTime) and timestamp formats are documented, but Oracle documents SMTP/SNMP-trap/file-tail delivery and no native single-line syslog wire format for the alert object.",
+        "Strong-partial: a fixture is feasible but must declare its delivery-channel assumption (file-tail record vs SNMP-trap-derived record) explicitly before any parser is built.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_exadata_cell_syslog",
+      "label": "Storage cell syslog",
+      "description": "Storage cell syslog: cell syslog/rsyslog relay.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "cell syslog/rsyslog relay"
+      ],
+      "payload_formats": [
+        "rfc3164_or_rfc5424_syslog_line"
+      ],
+      "envelopes": [
+        "native_rsyslog_relay_syslogconf_or_syslogInput"
+      ],
+      "event_families": [
+        "oracle_exadata_cell_syslog"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: cells run Oracle Linux rsyslog (RFC3164/5424) with documented forwarding attributes (syslogconf, syslogInput since 22.1); this is syslog-relayable and the cleanest SC4S path.",
+        "Overlaps generic Linux syslog handling; the Exadata-specific value is cell/component identity and cell-service program tags, which still need a captured sample to lock.",
+        "Blocked from deployable promotion until a representative sanitised cell syslog line and replay/read-back exist."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_exadata_dbnode_syslog",
+      "label": "DB node Oracle Linux syslog",
+      "description": "DB node Oracle Linux syslog: Oracle Linux syslog/journald/auditd with Exadata metadata.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Oracle Linux syslog/journald/auditd with Exadata metadata"
+      ],
+      "payload_formats": [
+        "rfc3164_or_rfc5424_syslog_line"
+      ],
+      "envelopes": [
+        "native_rsyslog_relay_syslogconf_or_syslogInput"
+      ],
+      "event_families": [
+        "oracle_exadata_dbnode_syslog"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: DB nodes run Oracle Linux rsyslog (RFC3164/5424); syslog-relayable but largely generic Linux syslog.",
+        "Use the Linux syslog/auditd packs for Linux parsing; Exadata-specific metadata (rack/node identity, cell correlation) requires captured examples.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_exadata_ilom",
+      "label": "ILOM / service processor logs",
+      "description": "ILOM / service processor logs: ILOM syslog/SNMP/hardware event export.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "ILOM syslog/SNMP/hardware event export"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_exadata_ilom"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: ILOM syslog forwarding carries the local event-log fields (Class, Type, Severity, Description, timestamp), but Oracle does not publish the exact wire format (RFC3164 vs 5424, program/tag, timestamp precision/timezone).",
+        "Blocked: fields known, wire shape unknown; a captured forwarded sample is required before a parser.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_exadata_switch_syslog",
+      "label": "RoCE/InfiniBand switch logs",
+      "description": "RoCE/InfiniBand switch logs: switch syslog/SNMP relay.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "switch syslog/SNMP relay"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_exadata_switch_syslog"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: X8M+ uses Cisco Nexus 9336C-FX2 (NX-OS) and pre-X8M uses Sun/Oracle InfiniBand switches (ILOM); the Exadata configuration procedure sets up no logging host, so any parser would rely on generic NX-OS/ILOM syslog assumptions, not Exadata evidence.",
+        "Blocked: generation-dependent and no Exadata-specific emitted-log format is documented.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_exadata_exawatcher",
+      "label": "ExaWatcher / OSWatcher telemetry",
+      "description": "ExaWatcher / OSWatcher telemetry: metric/report bundle outputs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "metric/report bundle outputs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_exadata_exawatcher"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: ExaWatcher/OSWatcher samples OS tools and cellsrvstat into bzip2 archive bundles (timestamp in filename), extracted offline via GetExaWatcherResults.sh; it is a diagnostic archive, not a live line stream.",
+        "Catalogue-only: not onboardable as an event source without a batch/archive collector; no line-oriented relay exists.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_exadata_exachk",
+      "label": "EXAchk / ORAchk findings",
+      "description": "EXAchk / ORAchk findings: report XML/JSON/HTML/text.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "report XML/JSON/HTML/text"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_exadata_exachk"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: EXAchk/ORAchk (AHF) produces a periodic report bundle per run (HTML primary, optional JSON/XML, named exachk_<host>_<db>_<date>_<timestamp>.html); there is no line-oriented event stream.",
+        "Catalogue-only: JSON output could feed a future batch/API pull but is not a syslog source; a redistributable schema/sample is required.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_exadata_asr",
+      "label": "Auto Service Request events",
+      "description": "Auto Service Request events: ASR API/email/export relay.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "ASR API/email/export relay"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_exadata_asr"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: ASR is fed by SNMP traps (SUN-HW-TRAP-MIB varbinds such as sunHwTrapSuspectComponentName, sunHwTrapFaultClass, sunHwTrapFaultMessageID) to an ASR Manager; this is structured SNMP, not a syslog line, and the ASR->Oracle leg is a closed API/email path.",
+        "Blocked/out-of-band: an SNMP-trap collector (not syslog) would be required, and the onward leg is not customer-onboardable.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_exadata_oci_audit",
+      "label": "Exadata Cloud OCI Audit",
+      "description": "Exadata Cloud OCI Audit: OCI Audit/Logging JSON for Exadata service actions.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "OCI Audit/Logging JSON for Exadata service actions"
+      ],
+      "payload_formats": [
+        "cloudevents_0_1_json_one_record_per_event"
+      ],
+      "envelopes": [
+        "oci_audit_api_or_logging_or_service_connector"
+      ],
+      "event_families": [
+        "oracle_exadata_oci_audit"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "exadata_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: OCI Audit / Exadata Database Service on Cloud@Customer emit CloudEvents 0.1 JSON (eventType com.oraclecloud.databaseservice.*, eventTime RFC3339 UTC, data.identity/request/response) via API/Logging/Service Connector.",
+        "Overlaps generic OCI audit coverage (packs/oracle_oci); the Exadata-specific angle is the databaseservice eventType vocabulary.",
+        "Use generic OCI Audit until Exadata-specific payload examples and read-back exist."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    }
+  ],
+  "adapters": {
+    "generic": {
+      "manager_visibility": "catalog_only",
+      "routing_enabled": false,
+      "sechub_detection_claims": "none",
+      "notes": "Manager/SecHub should surface this as a source-shape checklist, not a deployable parser."
+    },
+    "cribl": {
+      "default_behavior": "preserve_all_fields",
+      "notes": "Collector serialization and redaction policy required before route design."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "implementation_status": "catalogued_source_definition_source_shape_required",
+  "manager_visibility": "catalog_only",
+  "sechub_detection_claims": "none",
+  "routing_enabled": false,
+  "fixture_policy": "no fixtures until exact source-shape evidence exists",
+  "sc4s_adapter_enabled": false,
+  "known_limitations": [
+    "This is a catalogue/source definition, not a deployable SC4S parser pack.",
+    "No fixtures are shipped because exact emitted source shapes are not yet selected for the variants.",
+    "2026-07-03 Oracle-official evidence pass (docs/research/oracle-official-exadata-log-source-shape-evidence-20260703.md): OS syslog (cell + DB node) and OCI Audit / Cloud@Customer events are relayable and could support a future conservative fixture-backed alpha slice; cell ALERTHISTORY is strong-partial pending an explicit delivery-channel choice; ILOM, RoCE/IB switch, ASR, ExaWatcher, and EXAchk remain blocked/catalogue-only for the reasons recorded per variant.",
+    "Routing stays disabled because no live SC4S TEST -> HEC -> Splunk TEST read-back was captured; documented shape evidence alone does not promote trust.",
+    "Trust remains unverified and quality remains catalogued; do not promote from CI or pack presence.",
+    "Oracle logs/exports may contain sensitive users, SQL text/binds, business data, OCIDs, hostnames, request parameters, or tenant identifiers; sample capture requires sanitisation."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "not applicable; no fixtures until source shape exists",
+    "tested_artifact_hashes": {
+      "packs/oracle_exadata/README.md": "sha256:b9cb2a7b9cb6e77768b3766327c321737ee2ae4c744c9a7a40e7c9c76a94c6a8",
+      "packs/oracle_exadata/docs/research/oracle-official-exadata-log-source-shape-evidence-20260703.md": "sha256:c41eb222aad3b54943cafb9b9f83775de2b18a4a8e4d54922dbd70465cbeb3c4",
+      "packs/oracle_exadata/test-events/source_shape_required.txt": "sha256:de6af8f8833364c3a1c991ee9325f9a7e8f6db4351fd30cee52c0ed28ee1bb9f",
+      "packs/oracle_exadata/validation/preflight-2026-06-08.md": "sha256:41c52f79f1bc9f78983eda9f0cd10240a6ddc240e5073f98b4d135cc8e7110a0",
+      "packs/oracle_exadata/validation/source-shape-acquisition-plan-2026-06-20.md": "sha256:88c234808a61084ddd513ec319456fb19470558d7540a54d1a34588d26257933",
+      "README.md": "091835cb09c06e3ebf3113c7f7c3574160ee398484f36beb27885628efc4279f",
+      "docs/collection/oracle_exadata_splunk_onboarding.md": "be63927f45ae7b62b81c6c017ff15152fdc9e4b970f8071278f6da9ea3743245",
+      "docs/research/oracle-official-exadata-log-source-shape-evidence-20260703.md": "c41eb222aad3b54943cafb9b9f83775de2b18a4a8e4d54922dbd70465cbeb3c4",
+      "splunk/default/inputs.conf.example": "dc7c2d64d0b419c0bc740f1e156178226c35c236ab6ccf3bc8d304f26039d653",
+      "test-events/source_shape_required.txt": "de6af8f8833364c3a1c991ee9325f9a7e8f6db4351fd30cee52c0ed28ee1bb9f",
+      "validation/preflight-2026-06-08.md": "41c52f79f1bc9f78983eda9f0cd10240a6ddc240e5073f98b4d135cc8e7110a0",
+      "validation/source-shape-acquisition-plan-2026-06-20.md": "88c234808a61084ddd513ec319456fb19470558d7540a54d1a34588d26257933"
+    },
+    "tested_commit": "not_committed_yet",
+    "last_updated": "2026-07-09",
+    "last_tested": "2026-07-08 local CI pending final commit"
+  },
+  "source_delivery": {
+    "mode": "catalogue_definition_only",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "unknown_placeholder_raw",
+    "supported_transport_refs": [
+      "collector_definition_only"
+    ],
+    "notes": "Catalogue/source-definition only; no deployable SC4S parser/listener is shipped.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  }
+}

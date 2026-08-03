@@ -1,0 +1,1129 @@
+{
+  "schema_version": "0.1",
+  "id": "oracle_ebs",
+  "version": "0.2.4",
+  "url": "https://www.oracle.com/security-alerts/cspumay2026verbose.html",
+  "description": "Curated SecHub Resources SC4S/Splunk pack for Oracle E-Business Suite security and audit monitoring through a site-owned normalized JSON relay. Covers EBS sign-on audit, AuditTrail sensitive changes, FND/security errors, concurrent request failures, workflow/mailer errors, admin/security configuration changes, OHS/WebLogic/Forms/OAF app-tier events, and May 2026 Oracle Payments File Transmission advisory-focus context plus broader EBS module monitoring. Official Oracle docs/eTRM support the generic source-family mapping, while native EBS table/log source shapes and live replay/read-back remain blocked until source-backed samples are provided.",
+  "display_name": "Oracle E-Business Suite security and audit logs",
+  "vendor": "oracle",
+  "product": "e_business_suite",
+  "default_index": "main",
+  "default_source": "oracle_ebs",
+  "listener": {
+    "source_id": "ORACLE_EBS",
+    "transport": "tcp",
+    "port": 20104,
+    "env": {
+      "SC4S_LISTEN_ORACLE_EBS_TCP_PORT": "20104",
+      "SOURCE_ALL_SET_APPEND": "ORACLE_EBS"
+    }
+  },
+  "sourcetypes": {
+    "ebs_signon_success": "oracle:ebs:security:json",
+    "ebs_signon_failure": "oracle:ebs:security:json",
+    "ebs_audittrail_sensitive_change": "oracle:ebs:security:json",
+    "ebs_fnd_security_error": "oracle:ebs:security:json",
+    "ebs_concurrent_privileged_request": "oracle:ebs:security:json",
+    "ebs_workflow_mailer_change": "oracle:ebs:security:json",
+    "ebs_ohs_suspicious_http": "oracle:ebs:security:json",
+    "ebs_weblogic_security": "oracle:ebs:security:json",
+    "ebs_forms_oaf_error": "oracle:ebs:security:json",
+    "ebs_oracle_payments_file_transmission": "oracle:ebs:security:json",
+    "ebs_enterprise_command_center": "oracle:ebs:security:json",
+    "ebs_supplier_payroll_financials": "oracle:ebs:security:json"
+  },
+  "event_families": [
+    {
+      "id": "ebs_signon_success",
+      "label": "EBS Sign-On Audit success",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_signon_success\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_signon_failure",
+      "label": "EBS Sign-On Audit failure",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_signon_failure\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_audittrail_sensitive_change",
+      "label": "EBS AuditTrail sensitive object or account change",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_audittrail_sensitive_change\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_fnd_security_error",
+      "label": "FND application/security error",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_fnd_security_error\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_concurrent_privileged_request",
+      "label": "Privileged concurrent request activity",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_concurrent_privileged_request\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_workflow_mailer_change",
+      "label": "Workflow / Notification Mailer routing change",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_workflow_mailer_change\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_ohs_suspicious_http",
+      "label": "OHS suspicious HTTP request for EBS app tier",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_ohs_suspicious_http\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_weblogic_security",
+      "label": "EBS WebLogic application-tier security event",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_weblogic_security\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_forms_oaf_error",
+      "label": "Forms/OAF application-tier error",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_forms_oaf_error\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_oracle_payments_file_transmission",
+      "label": "Oracle Payments / File Transmission advisory-focus activity",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_oracle_payments_file_transmission\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_enterprise_command_center",
+      "label": "Enterprise Command Center Framework advisory-focus activity",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_enterprise_command_center\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    },
+    {
+      "id": "ebs_supplier_payroll_financials",
+      "label": "High-risk supplier, payroll, financials, or HR module activity",
+      "match_engine": "pcre",
+      "match": "\"event_family\"\\s*:\\s*\"ebs_supplier_payroll_financials\"",
+      "expected_sourcetype": "oracle:ebs:security:json",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "event_time",
+        "vendor",
+        "product",
+        "source_mode",
+        "event_family",
+        "action",
+        "status",
+        "severity",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "event_time"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "event_time": "UTC timestamp emitted by the normalized relay.",
+    "event_family": "EBS family used by parser/dashboard routing.",
+    "user": "EBS user, APPS account, or application actor preserved from source-backed relay.",
+    "responsibility": "EBS responsibility when available.",
+    "application": "EBS application/module name.",
+    "src_ip": "Client/source IP when available.",
+    "action": "Raw collector/source action token.",
+    "status": "Raw collector/source status/result.",
+    "severity": "Collector-normalized severity from source context; raw severity preserved where available.",
+    "cve": "Advisory reference when the event is explicitly tagged for May/June 2026 monitoring.",
+    "message": "Source or collector summary with raw event retained in _raw.",
+    "config_scope": "Collector-normalized administrative/security configuration scope when source-backed context is available.",
+    "request_status": "Concurrent request status/result when emitted by the relay.",
+    "mailer_component": "Workflow or Notification Mailer component when emitted by the relay."
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-oracle_ebs.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/oracle_ebs_security_overview.xml",
+      "splunk/metadata/default.meta",
+      "splunk/default/inputs.conf.example"
+    ],
+    "test_events": [
+      "test-events/oracle_ebs_security_json_relay.txt",
+      "test-events/source_shape_required.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20104.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/oracle_ebs_reduction_candidates.csv",
+      "docs/research/thehackernews-oracle-ebs-cve-2026-46817-20260701.md",
+      "docs/research/oracle-official-ebs-logging-audit-source-evidence-20260701.md",
+      "docs/research/oracle-official-ebs-source-shape-gap-addendum-20260701.md",
+      "validation/preflight-2026-06-08.md",
+      "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "validation/preflight-2026-07-01.md",
+      "validation/ivv-2026-07-01.md",
+      "docs/collection/oracle-ebs-app-family-splunk-onboarding.md",
+      "docs/research/oracle-official-ebs-olm-apex-ecc-collection-evidence-20260706.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "oracle_ebs_tcp_json_relay",
+      "label": "Oracle EBS normalized JSON relay over TCP",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20104,
+      "notes": "One sanitized JSON object per line from a site-owned collector; not native EBS collection.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "oracle_ebs_tcp_json_relay",
+  "source_log_version": {
+    "name": "Oracle E-Business Suite 12.2 security/audit normalized relay",
+    "min": "12.2.3 advisory context",
+    "max": "12.2.15 advisory context",
+    "notes": "Synthetic-equivalent normalized relay fixtures; unsupported/misattributed CVE tags removed 2026-07-06. Native source shapes and live replay/read-back remain unvalidated."
+  },
+  "validation": {
+    "date_validated": "not validated; curated/unverified hygiene update 2026-07-06",
+    "validated_by": "Hermes local schema/fixture/dashboard checks only; no validated/verified status stated",
+    "source_log_version": "Synthetic-equivalent normalized relay fixtures plus Oracle public advisory context",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Local fixture/parser/dashboard artifacts only. No source-backed EBS sample, SC4S replay, HEC delivery, Splunk read-back, Manager collector read-back, or production-equivalent validation captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "Source-backed replay/readback gate for Oracle E-Business Suite normalized JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "oracle_ebs_security_json_relay"
+      ],
+      "event_count": 15,
+      "marker_prefix": "SC4S_ORACLE_EBS_TEST_",
+      "transport": "tcp",
+      "framing": "line_delimited_json_over_syslog"
+    },
+    "readback": {
+      "spl": "index=main sourcetype=\"oracle:ebs:security:json\" sechub_fixture_marker=\"SC4S_ORACLE_EBS_TEST_*\" earliest=-2h | table _time index sourcetype source host event_family user src_ip action status severity cve sechub_fixture_marker _raw",
+      "expected_count": 15,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "host",
+        "timestamp",
+        "event_family",
+        "sechub_fixture_marker",
+        "required EBS fields",
+        "no sensitive values exposed"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "indexed_readback",
+      "date": "2026-07-01",
+      "summary": "Parser/dashboard artifacts and expanded synthetic-equivalent fixture corpus were prepared, but live SC4S TEST -> HEC -> Splunk TEST indexed read-back has not yet run.",
+      "evidence_path": "validation/preflight-2026-07-01.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Original source-shape/replay blocker; not validation evidence."
+      },
+      {
+        "type": "source_shape_acquisition_plan",
+        "path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+        "summary": "Variant-specific evidence acquisition checklist; not validation evidence."
+      },
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-07-01.md",
+        "summary": "Normalized relay pack preflight; live replay/read-back still blocked."
+      },
+      {
+        "type": "research_note",
+        "path": "docs/research/thehackernews-oracle-ebs-cve-2026-46817-20260701.md",
+        "summary": "Attribution and derived May/June 2026 advisory-to-dashboard mapping; not validation evidence."
+      },
+      {
+        "type": "ivv_review",
+        "path": "validation/ivv-2026-07-01.md",
+        "summary": "Pass for curated/unverified publication; blocked for validated/source-validated publication."
+      },
+      {
+        "type": "research_note",
+        "path": "docs/research/oracle-official-ebs-logging-audit-source-evidence-20260701.md",
+        "summary": "Oracle official documentation/eTRM source-shape evidence and blocked-native-parser boundaries for EBS logging/audit families."
+      },
+      {
+        "type": "research_note",
+        "path": "docs/research/oracle-official-ebs-source-shape-gap-addendum-20260701.md",
+        "summary": "Official Oracle documentation source-shape addendum classifying EBS source families as normalized-relay-only, parser-candidate, or blocked without native validation promotion."
+      }
+    ]
+  },
+  "test_event_sets": [
+    {
+      "id": "oracle_ebs_security_json_relay",
+      "label": "Oracle EBS normalized security/audit JSON relay synthetic-equivalent fixtures",
+      "path": "test-events/oracle_ebs_security_json_relay.txt",
+      "format": "custom_application",
+      "wire_format": "syslog_wrapped_json",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "serialization": "json_lines",
+      "event_count": 15,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ORACLE_EBS_TEST_SIGNON_SUCCESS_001",
+        "SC4S_ORACLE_EBS_TEST_SIGNON_FAILURE_001",
+        "SC4S_ORACLE_EBS_TEST_AUDITTRAIL_CHANGE_001",
+        "SC4S_ORACLE_EBS_TEST_FND_SECURITY_ERROR_001",
+        "SC4S_ORACLE_EBS_TEST_CONCURRENT_REQUEST_001",
+        "SC4S_ORACLE_EBS_TEST_WORKFLOW_CHANGE_001",
+        "SC4S_ORACLE_EBS_TEST_OHS_SUSPICIOUS_HTTP_001",
+        "SC4S_ORACLE_EBS_TEST_WEBLOGIC_SECURITY_001",
+        "SC4S_ORACLE_EBS_TEST_FORMS_OAF_ERROR_001",
+        "SC4S_ORACLE_EBS_TEST_ORACLE_PAYMENTS_CVE_001",
+        "SC4S_ORACLE_EBS_TEST_ECC_CVE_001",
+        "SC4S_ORACLE_EBS_TEST_PAYROLL_FINANCIALS_001",
+        "SC4S_ORACLE_EBS_TEST_ADMIN_CONFIG_CHANGE_001",
+        "SC4S_ORACLE_EBS_TEST_CONCURRENT_FAILURE_001",
+        "SC4S_ORACLE_EBS_TEST_WORKFLOW_ERROR_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "event_time",
+        "primary_timezone": "UTC",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "UTC",
+        "requires_source_timezone_when_fields_missing": [],
+        "notes": "Normalized relay requires UTC event_time. Native EBS local timezone handling remains source-shape specific."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "not_applicable",
+        "quote_character": "json_string",
+        "escape_policy": "json",
+        "notes": "One JSON object per line after collector normalization."
+      },
+      "expected_families": [
+        "ebs_signon_success",
+        "ebs_signon_failure",
+        "ebs_audittrail_sensitive_change",
+        "ebs_fnd_security_error",
+        "ebs_concurrent_privileged_request",
+        "ebs_workflow_mailer_change",
+        "ebs_ohs_suspicious_http",
+        "ebs_weblogic_security",
+        "ebs_forms_oaf_error",
+        "ebs_oracle_payments_file_transmission",
+        "ebs_enterprise_command_center",
+        "ebs_supplier_payroll_financials"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-oracle_ebs.conf",
+      "target_path": "local/config/app_parsers/syslog/app-oracle_ebs.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "5a855230d8e0e8bd50e785b41127e9d1286d38834414581dd9049c909ea4db5e"
+    },
+    {
+      "id": "env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/oracle_ebs.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "e5bad1e622d56e86488ae0c44a2cdb6882cca9be4f90f752901961de283b5e73"
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "cfece787d67696607e20833d4904c1dba438d416b50c265a836c2f94e33a2082"
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "c6101086a2f3bc6896f179949b63350976c2c76346601a827e740ccdfd985984"
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "ec1eebd470e673d3f15a699858fc2e0048993b53496a55048b07d259e7ac4543"
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "052368842b2e222fa379f90852d5fcc02ca103f80fe276ab485064ea0c5a273d"
+    },
+    {
+      "id": "splunk_dashboard",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/oracle_ebs_security_overview.xml",
+      "target_path": "splunk/default/data/ui/views/oracle_ebs_security_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "7a42aa184af429c0ba2feaaf7da585d6c47990c71e3ad25337a2e8bb88aed9f6"
+    },
+    {
+      "id": "splunk_metadata",
+      "group": "splunk",
+      "source_path": "splunk/metadata/default.meta",
+      "target_path": "splunk/metadata/default.meta",
+      "kind": "splunk_metadata",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "8e0c1f78b2c3e4414fa4f50f758b886f74570c880cd91f0b12cd1dba251aa8ea"
+    },
+    {
+      "id": "fixture_oracle_ebs_security_json_relay",
+      "group": "test_events",
+      "source_path": "test-events/oracle_ebs_security_json_relay.txt",
+      "target_path": "test-events/oracle_ebs_security_json_relay.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "8fa69b020eb7307223586e0dd660f4d783db09c5434803c91701c8c023d45dc7"
+    },
+    {
+      "id": "send_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20104.sh",
+      "target_path": "scripts/send_tcp_20104.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "a73f5da674271a6111211555f7cd479a9aee6fcd87f03a34b264259d738ddcb5"
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "022e89361f05c0695ba778d41c6854051085d1960445c29775263e445b86bdb8"
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/oracle_ebs_reduction_candidates.csv",
+      "target_path": "docs/oracle_ebs_reduction_candidates.csv",
+      "kind": "reduction_candidates",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "4c1868c514eb25aa5238bececa75bafc554dae278defc106eb5bb818912abf56"
+    },
+    {
+      "id": "research_cve_2026_46817",
+      "group": "docs",
+      "source_path": "docs/research/thehackernews-oracle-ebs-cve-2026-46817-20260701.md",
+      "target_path": "docs/research/thehackernews-oracle-ebs-cve-2026-46817-20260701.md",
+      "kind": "evidence_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "82a1ce7d83cace3fe09a48fc12fc728d95194071cfe7c3bb4e5234f7b5bb955d"
+    },
+    {
+      "id": "preflight_20260608",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "849556444092e4bd00b044428cff5f6ed71b945da7a2fe3b3859f32447aef3d4"
+    },
+    {
+      "id": "source_shape_acquisition_plan",
+      "group": "docs",
+      "source_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "target_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "kind": "evidence_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "6cfc244025c6a8dd5ac554b0c255eaced7ea43752fe42be034a379b7f833ade3"
+    },
+    {
+      "id": "preflight_20260701",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-07-01.md",
+      "target_path": "validation/preflight-2026-07-01.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "c8098cb8278c9dd8ccc2b72c585aee50db7181e19be1162b055453dce3d4fb62"
+    },
+    {
+      "id": "ivv_20260701",
+      "group": "docs",
+      "source_path": "validation/ivv-2026-07-01.md",
+      "target_path": "validation/ivv-2026-07-01.md",
+      "kind": "validation_ivv_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "684db607748a2efd1fd47d010531a06460b0fd41802ade65da7e661dae6475d4"
+    },
+    {
+      "id": "research_oracle_official_source_evidence",
+      "group": "docs",
+      "source_path": "docs/research/oracle-official-ebs-logging-audit-source-evidence-20260701.md",
+      "target_path": "docs/research/oracle-official-ebs-logging-audit-source-evidence-20260701.md",
+      "kind": "evidence_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "2db62197c3bd638c18cdfd21f68df37b9352d5609f14da8234c1ac0e0486f79c"
+    },
+    {
+      "id": "research_oracle_official_source_shape_gap_addendum",
+      "group": "docs",
+      "source_path": "docs/research/oracle-official-ebs-source-shape-gap-addendum-20260701.md",
+      "target_path": "docs/research/oracle-official-ebs-source-shape-gap-addendum-20260701.md",
+      "kind": "evidence_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "03671d3a343a4282760e1409aed0ac4a3ca4a72a848113e3a15f29aafd1a1d99"
+    },
+    {
+      "id": "splunk_inputs_example",
+      "group": "splunk",
+      "source_path": "splunk/default/inputs.conf.example",
+      "target_path": "splunk/default/inputs.conf.example",
+      "kind": "splunk_inputs_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "87c43de4d75f68963b081de4ca6f5f62691fe57e226c1486bafc7868339213bd"
+    },
+    {
+      "id": "collection_onboarding_ebs_app_family",
+      "group": "docs",
+      "source_path": "docs/collection/oracle-ebs-app-family-splunk-onboarding.md",
+      "target_path": "docs/collection/oracle-ebs-app-family-splunk-onboarding.md",
+      "kind": "collection_guidance",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "45b4b09ba2dba1ea0965495a2d27d22078b1d850e75d52981dd515c52612c6f9"
+    },
+    {
+      "id": "research_oracle_official_ebs_olm_apex_ecc_collection_evidence",
+      "group": "docs",
+      "source_path": "docs/research/oracle-official-ebs-olm-apex-ecc-collection-evidence-20260706.md",
+      "target_path": "docs/research/oracle-official-ebs-olm-apex-ecc-collection-evidence-20260706.md",
+      "kind": "evidence_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "7f7a6e62880cb79c63f60c2b512598f0d0007ff7e2498a94667ac6f1cc75b876"
+    },
+    {
+      "id": "source_shape_required_placeholder",
+      "group": "test_events",
+      "source_path": "test-events/source_shape_required.txt",
+      "target_path": "test-events/source_shape_required.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "9a590d811d2997ae2dcacbd1a7761557a6e5f174fdb42666dab29374f43443e4"
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Oracle May/June 2026 CSPU risk matrices, Oracle EBS security/logging documentation from prior evidence scan, and THN article attribution note under docs/research/.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are locally authored synthetic-equivalent normalized relay examples; no Oracle/customer logs or third-party article text is redistributed."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-07-01",
+      "notes": "Promoted from catalogue-only Oracle source definition to conservative normalized JSON relay parser/dashboard pack while keeping native EBS source modes blocked until exact source-shape evidence exists."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "ebs_user"
+          ],
+          "status": "partial",
+          "notes": "Normalized relay preserves actor when available; source-backed validation pending."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "client_host"
+          ],
+          "status": "partial",
+          "notes": "Client/source attribution depends on collector and app-tier logs."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Raw source/collector action preserved; no lossy normalization."
+        },
+        "signature": {
+          "source_fields": [
+            "cve",
+            "error_code",
+            "component",
+            "module",
+            "event_family"
+          ],
+          "status": "partial",
+          "notes": "Search-time helper only."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Collector/source severity retained; promotion pending source evidence."
+        },
+        "status": {
+          "source_fields": [
+            "status",
+            "request_status",
+            "http_status"
+          ],
+          "status": "partial",
+          "notes": "Status/result preserved where emitted."
+        }
+      },
+      "notes": "CIM helper mapping for Splunk triage; not field-validated."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "partial",
+          "notes": "Raw JSON relay event remains in _raw."
+        }
+      },
+      "notes": "Optional future mapping only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Raw action token."
+        },
+        "event.outcome": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "partial",
+          "notes": "Outcome mapping remains local/search-time."
+        }
+      },
+      "notes": "Optional helper mapping only."
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "business_application",
+    "application",
+    "database",
+    "identity",
+    "security",
+    "vulnerability_management"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "ebs_security_json_relay",
+      "label": "EBS security/audit normalized JSON relay",
+      "description": "Site-owned collector emits one sanitized JSON object per line across EBS sign-on, AuditTrail/admin security changes, FND, concurrent request failures, workflow/mailer errors, app-tier, and advisory-focus module events.",
+      "default": true,
+      "evidence_status": "curated",
+      "implementation_status": "parser_and_dashboard_synthetic_equivalent",
+      "source_modes": [
+        "database table/query export normalized by collector",
+        "application-tier log tail normalized by collector",
+        "advisory-focus enrichment by collector/SOC"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "bsd_rfc3164_or_headerless"
+      ],
+      "event_families": [
+        "ebs_signon_success",
+        "ebs_signon_failure",
+        "ebs_audittrail_sensitive_change",
+        "ebs_fnd_security_error",
+        "ebs_concurrent_privileged_request",
+        "ebs_workflow_mailer_change",
+        "ebs_ohs_suspicious_http",
+        "ebs_weblogic_security",
+        "ebs_forms_oaf_error",
+        "ebs_oracle_payments_file_transmission",
+        "ebs_enterprise_command_center",
+        "ebs_supplier_payroll_financials"
+      ],
+      "test_event_sets": [
+        "oracle_ebs_security_json_relay"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "env_example",
+        "splunk_props",
+        "splunk_eventtypes",
+        "splunk_tags",
+        "splunk_dashboard",
+        "fixture_oracle_ebs_security_json_relay",
+        "readme",
+        "research_cve_2026_46817",
+        "research_oracle_official_source_evidence",
+        "research_oracle_official_source_shape_gap_addendum"
+      ],
+      "known_limitations": [
+        "Native EBS table/log/file source shapes remain blocked until exact emitted samples are provided.",
+        "Synthetic-equivalent fixtures do not prove live Oracle EBS collection, exploit detection, or field validation.",
+        "No SC4S TEST to Splunk TEST indexed read-back has been captured yet."
+      ],
+      "event_boundary": "line (one JSON object per line)",
+      "events_per_file_or_message": "multiple JSON lines per relay stream/file",
+      "uniqueness_or_multiline": "single-line events with unique sechub_fixture_marker per fixture event; no multiline",
+      "field_delimiting_or_escaping": "JSON object per line with standard JSON escaping",
+      "timestamp_timezone": "event_time UTC ISO-8601 (%Y-%m-%dT%H:%M:%SZ)"
+    }
+  ],
+  "adapters": {
+    "sc4s": {
+      "manager_visibility": "downloadable_after_review",
+      "routing_enabled": true,
+      "notes": "Parser only for normalized JSON relay; collector/source-shape work remains external."
+    },
+    "splunk": {
+      "default_behavior": "search-time JSON extraction and dashboard",
+      "notes": "Dashboard is an onboarding/triage aid, not validation evidence."
+    },
+    "cribl": {
+      "default_behavior": "preserve_all_fields",
+      "notes": "Cribl/collector may normalize EBS source rows/logs into the documented relay shape; no default masking."
+    },
+    "generic": {
+      "manager_visibility": "curated_unverified",
+      "routing_enabled": false,
+      "notes": "Non-SC4S consumers can use the source fields and dashboard mapping as a relay specification."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "implementation_status": "curated_parser_dashboard_blocked_readback",
+  "manager_visibility": "downloadable_curated_unverified",
+  "sechub_detection_claims": "operator_triage_only_not_exploit_detection",
+  "routing_enabled": true,
+  "fixture_policy": "synthetic_equivalent_normalized_relay_fixtures_only",
+  "sc4s_adapter_enabled": true,
+  "known_limitations": [
+    "Native Oracle EBS source-shape variants remain unverified; this pack parses a normalized JSON relay, not arbitrary EBS tables/logs.",
+    "No live replay/read-back or field validation has been captured.",
+    "Oracle logs/exports may contain sensitive users, SQL text/binds, business data, hostnames, request parameters, and object values; public samples must be sanitized.",
+    "Dashboard advisory panels identify monitoring focus areas for May/June 2026 Oracle EBS vulnerabilities; they are not exploit signatures."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "collector_normalized_json_relay",
+    "sc4s_native": true,
+    "collector_required": true,
+    "payload_format": "json_lines",
+    "supported_transport_refs": [
+      "oracle_ebs_tcp_json_relay"
+    ],
+    "notes": "Site-owned collector/relay must normalize selected EBS table/log/API/file sources; this pack owns parser/Splunk/dashboard for the relay output.",
+    "validation_status": "synthetic-equivalent fixture/schema/dashboard checks only; does not imply live replay/read-back or field validation evidence"
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "validate_pack_fixtures oracle_ebs, fixture marker uniqueness, source_mode scoping, and dashboard XML parse",
+    "tested_artifact_hashes": {
+      "packs/oracle_ebs/README.md": "sha256:022e89361f05c0695ba778d41c6854051085d1960445c29775263e445b86bdb8",
+      "packs/oracle_ebs/docs/collection/oracle-ebs-app-family-splunk-onboarding.md": "sha256:45b4b09ba2dba1ea0965495a2d27d22078b1d850e75d52981dd515c52612c6f9",
+      "packs/oracle_ebs/docs/oracle_ebs_reduction_candidates.csv": "sha256:4c1868c514eb25aa5238bececa75bafc554dae278defc106eb5bb818912abf56",
+      "packs/oracle_ebs/docs/research/oracle-official-ebs-logging-audit-source-evidence-20260701.md": "sha256:2db62197c3bd638c18cdfd21f68df37b9352d5609f14da8234c1ac0e0486f79c",
+      "packs/oracle_ebs/docs/research/oracle-official-ebs-olm-apex-ecc-collection-evidence-20260706.md": "sha256:7f7a6e62880cb79c63f60c2b512598f0d0007ff7e2498a94667ac6f1cc75b876",
+      "packs/oracle_ebs/docs/research/oracle-official-ebs-source-shape-gap-addendum-20260701.md": "sha256:03671d3a343a4282760e1409aed0ac4a3ca4a72a848113e3a15f29aafd1a1d99",
+      "packs/oracle_ebs/docs/research/thehackernews-oracle-ebs-cve-2026-46817-20260701.md": "sha256:82a1ce7d83cace3fe09a48fc12fc728d95194071cfe7c3bb4e5234f7b5bb955d",
+      "packs/oracle_ebs/sc4s/app_parsers/syslog/app-oracle_ebs.conf": "sha256:5a855230d8e0e8bd50e785b41127e9d1286d38834414581dd9049c909ea4db5e",
+      "packs/oracle_ebs/sc4s/env.example": "sha256:e5bad1e622d56e86488ae0c44a2cdb6882cca9be4f90f752901961de283b5e73",
+      "packs/oracle_ebs/scripts/send_tcp_20104.sh": "sha256:a73f5da674271a6111211555f7cd479a9aee6fcd87f03a34b264259d738ddcb5",
+      "packs/oracle_ebs/splunk/default/data/ui/views/oracle_ebs_security_overview.xml": "sha256:7a42aa184af429c0ba2feaaf7da585d6c47990c71e3ad25337a2e8bb88aed9f6",
+      "packs/oracle_ebs/splunk/default/eventtypes.conf": "sha256:ec1eebd470e673d3f15a699858fc2e0048993b53496a55048b07d259e7ac4543",
+      "packs/oracle_ebs/splunk/default/inputs.conf.example": "sha256:87c43de4d75f68963b081de4ca6f5f62691fe57e226c1486bafc7868339213bd",
+      "packs/oracle_ebs/splunk/default/props.conf": "sha256:cfece787d67696607e20833d4904c1dba438d416b50c265a836c2f94e33a2082",
+      "packs/oracle_ebs/splunk/default/tags.conf": "sha256:052368842b2e222fa379f90852d5fcc02ca103f80fe276ab485064ea0c5a273d",
+      "packs/oracle_ebs/splunk/default/transforms.conf": "sha256:c6101086a2f3bc6896f179949b63350976c2c76346601a827e740ccdfd985984",
+      "packs/oracle_ebs/splunk/metadata/default.meta": "sha256:8e0c1f78b2c3e4414fa4f50f758b886f74570c880cd91f0b12cd1dba251aa8ea",
+      "packs/oracle_ebs/test-events/oracle_ebs_security_json_relay.txt": "sha256:8fa69b020eb7307223586e0dd660f4d783db09c5434803c91701c8c023d45dc7",
+      "packs/oracle_ebs/test-events/source_shape_required.txt": "sha256:9a590d811d2997ae2dcacbd1a7761557a6e5f174fdb42666dab29374f43443e4",
+      "packs/oracle_ebs/validation/ivv-2026-07-01.md": "sha256:684db607748a2efd1fd47d010531a06460b0fd41802ade65da7e661dae6475d4",
+      "packs/oracle_ebs/validation/preflight-2026-06-08.md": "sha256:849556444092e4bd00b044428cff5f6ed71b945da7a2fe3b3859f32447aef3d4",
+      "packs/oracle_ebs/validation/preflight-2026-07-01.md": "sha256:c8098cb8278c9dd8ccc2b72c585aee50db7181e19be1162b055453dce3d4fb62",
+      "packs/oracle_ebs/validation/source-shape-acquisition-plan-2026-06-20.md": "sha256:6cfc244025c6a8dd5ac554b0c255eaced7ea43752fe42be034a379b7f833ade3"
+    },
+    "tested_commit": "not_committed_yet",
+    "last_updated": "2026-07-08",
+    "last_tested": "2026-07-08 local CI pending final commit"
+  }
+}

@@ -20,37 +20,22 @@ import { useEffect, useMemo, useState } from 'react';
 
 const LIBRARY_PAGE_SIZE = 10;
 import { operatorSafeErrorMessage } from '../lib/displayError';
-import { safeHttpUrl } from '../lib/url';
 
 import {
   applyLibraryImport,
-  downloadLibraryBundle,
   getLibrarySourceHealth,
   getLibraryEntry,
   listLibraryCatalogue,
   listLibraryImports,
   listLibrarySources,
-  syncLibrarySource,
   validateLibraryImport,
   type LibraryCatalogueEntry,
   type LibraryImportRecord,
 } from '../api/library';
 
-const CHECK_LABELS: Record<string, string> = {
-  catalogue: 'Pack list',
-  manifest: 'Pack metadata',
-  test_bundle: 'Test download',
-  sample_bundle: 'Sample download',
-};
-
-function formatCheckName(name: string) {
-  return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 function formatSourceLine(source: Record<string, unknown>) {
-  const sourceId = String(source.source_id || 'unknown');
-  const primary = String(source.catalogue_url || '');
-  return `${sourceId} → ${primary}`;
+  const snapshot = source.snapshot as Record<string, unknown> | undefined;
+  return `Embedded snapshot · ${String(snapshot?.source_revision || 'revision unavailable')}`;
 }
 
 function importStateLabel(item: LibraryImportRecord) {
@@ -67,7 +52,7 @@ function importStateTone(item: LibraryImportRecord) {
 
 export function Library() {
   const queryClient = useQueryClient();
-  const [sourceId, setSourceId] = useState('official');
+  const [sourceId] = useState('embedded');
   const [search, setSearch] = useState('');
   const [downloadableOnly, setDownloadableOnly] = useState(true);
   const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
@@ -82,21 +67,14 @@ export function Library() {
   });
 
   const healthQuery = useQuery({
-    queryKey: ['library', 'source-health', sourceId || 'official'],
-    queryFn: ({ signal }) => getLibrarySourceHealth(sourceId || 'official', signal),
+    queryKey: ['library', 'source-health', sourceId],
+    queryFn: ({ signal }) => getLibrarySourceHealth(sourceId, signal),
   });
-
-  useEffect(() => {
-    const firstSource = sourcesQuery.data?.sources?.[0]?.source_id;
-    if (firstSource && !sourceId) {
-      setSourceId(firstSource);
-    }
-  }, [sourceId, sourcesQuery.data]);
 
   useEffect(() => { setLibPage(1); }, [search, downloadableOnly, sourceId]);
 
   const catalogueParams = useMemo(() => {
-    const next: Record<string, string> = { source_id: sourceId || 'official' };
+    const next: Record<string, string> = { source_id: sourceId };
     if (downloadableOnly) next.downloadable_only = 'yes';
     if (search.trim()) next.search = search.trim();
     return next;
@@ -116,7 +94,7 @@ export function Library() {
 
   const detailQuery = useQuery({
     queryKey: ['library', 'entry', sourceId, selectedEntryId],
-    queryFn: ({ signal }) => getLibraryEntry(sourceId || 'official', selectedEntryId || '', false, signal),
+    queryFn: ({ signal }) => getLibraryEntry(sourceId, selectedEntryId || '', signal),
     enabled: Boolean(selectedEntryId),
   });
 
@@ -156,11 +134,11 @@ export function Library() {
     <Stack gap="lg">
       <div>
         <Title order={1}>SC4S Library</Title>
-        <Text c="dimmed">Browse Library packs and install their SC4S configuration into your instance. Related product Splunk TA releases remain separate deployment downloads.</Text>
+        <Text c="dimmed">Browse the embedded offline Library snapshot and stage SC4S configuration for local validation. Splunk knowledge remains reference-only.</Text>
       </div>
 
       <Alert color="cyan" title="Nothing is installed until you approve it" variant="light">
-        Downloaded packs are stored locally but not active. Only after you check a pack and click <strong>Install to SC4S</strong> do any config files change on your instance. Only SC4S config files are installed — Splunk apps, scripts, docs, and test events are kept as reference only.
+        Embedded packs are staged locally but not active. Only after you check a pack and click <strong>Install to SC4S</strong> do any config files change on your instance. Only SC4S config files are installed — Splunk knowledge, scripts, docs, and test events are kept as reference only.
       </Alert>
       {detailQuery.isError ? <Alert color="red" title="Could not load pack details">{operatorSafeErrorMessage(detailQuery.error)}</Alert> : null}
 
@@ -168,27 +146,27 @@ export function Library() {
         <Stack gap="md">
           <Group justify="space-between" align="start">
             <div>
-              <Text className="panel-overline">Library source connection</Text>
-              <Title order={3}>Connection checks</Title>
-              <Text size="sm" c="dimmed">Verifies that Manager can reach the configured Library source, browse the pack list, and download a test bundle.</Text>
+              <Text className="panel-overline">Snapshot integrity</Text>
+              <Title order={3}>Local integrity check</Title>
+              <Text size="sm" c="dimmed">Verifies the committed snapshot metadata and local pack manifests. No network request is made.</Text>
             </div>
             <Badge color={healthQuery.data?.overall_ok ? 'green' : healthQuery.isError ? 'red' : 'gray'} variant="light">
-              {healthQuery.data?.overall_ok ? 'Library source reachable' : healthQuery.isError ? 'Connection failed' : 'Checking'}
+              {healthQuery.data?.overall_ok ? 'Snapshot valid' : healthQuery.isError ? 'Snapshot invalid' : 'Checking'}
             </Badge>
           </Group>
-          <Alert color="yellow" title="SecHub review labels are a starting point, not proof" variant="light">
-            SecHub review labels tell you what S6 has checked. Your own SC4S and Splunk validation still decides whether a pack is safe to run in your environment.
+          <Alert color="yellow" title="Embedded availability is not local proof" variant="light">
+            This pinned source material is available offline. Your own SC4S and Splunk validation still decides whether a pack is safe to run in your environment.
           </Alert>
           {healthQuery.isLoading ? <Loader size="sm" /> : null}
-          {healthQuery.isError ? <Alert color="red" title="Could not reach Library source">{operatorSafeErrorMessage(healthQuery.error, 'Could not reach the configured Library source. Check its URL and network path, then retry.')}</Alert> : null}
+          {healthQuery.isError ? <Alert color="red" title="Embedded snapshot is invalid">{operatorSafeErrorMessage(healthQuery.error, 'The embedded snapshot could not be validated. Do not stage packs until it is repaired.')}</Alert> : null}
           {healthQuery.data ? (
             <Stack gap="xs">
-              <Text size="sm" c="dimmed">{healthQuery.data.catalogue.entry_count} packs available · {healthQuery.data.catalogue.product_release_count ?? 0} related product TA releases · last updated: {healthQuery.data.checked_at}</Text>
+              <Text size="sm" c="dimmed">{healthQuery.data.catalogue.entry_count} packs available locally · checked: {healthQuery.data.checked_at}</Text>
               {healthQuery.data.checks.map((check) => (
                 <Paper key={check.name} withBorder p="sm" radius="md">
                   <Group justify="space-between" align="start">
                     <div>
-                      <Text fw={600}>{CHECK_LABELS[check.name] || formatCheckName(check.name)}</Text>
+                      <Text fw={600}>{check.name.replace(/_/g, ' ')}</Text>
                       {!check.ok ? <Text size="sm">{check.message || 'check failed'} {check.next_action ? `What to do: ${check.next_action}` : ''}</Text> : null}
                     </div>
                     <Badge color={check.ok ? 'green' : 'red'} variant="light">{check.ok ? 'OK' : check.error_code || 'failed'}</Badge>
@@ -207,17 +185,10 @@ export function Library() {
         <Stack gap="md">
           <Group justify="space-between" align="start">
             <div>
-              <Text className="panel-overline">Pack source</Text>
-              <Title order={3}>Configured Library source</Title>
-              <Text size="sm" c="dimmed">The source URL is shown below. Refresh to pull its latest Library pack list.</Text>
+              <Text className="panel-overline">Pack provenance</Text>
+              <Title order={3}>Embedded immutable snapshot</Title>
+              <Text size="sm" c="dimmed">This Library is shipped with Manager. It does not poll, refresh, or download from a remote source at runtime.</Text>
             </div>
-            <Button
-              loading={busyKey === 'sync'}
-              onClick={() => runAction('sync', () => syncLibrarySource(sourceId || 'official'), 'SC4S Library pack list refreshed.')}
-              variant="light"
-            >
-              Refresh pack list
-            </Button>
           </Group>
           {sourcesQuery.isLoading ? <Loader size="sm" /> : null}
           {sourcesQuery.isError ? <Alert color="red" title="Could not load Library sources">{operatorSafeErrorMessage(sourcesQuery.error)}</Alert> : null}
@@ -228,7 +199,7 @@ export function Library() {
                   <Text fw={600}>{formatSourceLine(source)}</Text>
                   <Badge color={source.enabled ? 'green' : 'red'} variant="light">{source.enabled ? 'Enabled' : 'Disabled'}</Badge>
                 </Group>
-                <Text size="sm" c="dimmed">Last updated: {source.last_sync || 'never'} · {source.entry_count ?? 0} packs available</Text>
+                <Text size="sm" c="dimmed">{source.entry_count ?? 0} packs available locally</Text>
               </Stack>
             </Paper>
           ))}
@@ -266,37 +237,16 @@ export function Library() {
                     </Badge>
                   </Group>
                   {entry.version && <Text size="xs" c="dimmed">Version {entry.version}</Text>}
-                  {entry.product_releases?.length ? (
-                    <Stack gap={4}>
-                      <Badge size="xs" color="violet" variant="light" w="fit-content">Product TA available</Badge>
-                      <Text size="xs" c="dimmed">Each product Splunk TA is a separate deployment artifact. Manager imports only this SC4S Library pack.</Text>
-                      {entry.product_releases.map((release) => {
-                        const href = safeHttpUrl(release.url);
-                        return href ? (
-                          <Button key={release.product_id} component="a" href={href} target="_blank" rel="noreferrer" size="xs" variant="subtle" color="violet">
-                            Open {release.display_name} TA v{release.version}
-                          </Button>
-                        ) : null;
-                      })}
-                    </Stack>
-                  ) : null}
                   <Group gap="xs" mt="auto" pt="xs">
                     <Button size="xs" variant={selectedEntryId === entry.id ? 'filled' : 'light'} onClick={() => setSelectedEntryId(selectedEntryId === entry.id ? null : entry.id)}>
                       {selectedEntryId === entry.id ? 'Hide details' : 'View details'}
                     </Button>
                     <Button
                       size="xs"
-                      variant="default"
-                      loading={busyKey === `download:${entry.id}`}
-                      onClick={() => runAction(`download:${entry.id}`, () => downloadLibraryBundle(sourceId || 'official', entry.id), `Pack downloaded. Click "Check pack" to validate it before installing.`)}
-                    >
-                      Download
-                    </Button>
-                    <Button
-                      size="xs"
                       color="cyan"
+                      disabled={!entry.download_available}
                       loading={busyKey === `validate:${entry.id}`}
-                      onClick={() => runAction(`validate:${entry.id}`, () => validateLibraryImport(sourceId || 'official', entry.id), `Pack checked. Review the results below and click "Install to SC4S" if everything looks good.`)}
+                      onClick={() => runAction(`validate:${entry.id}`, () => validateLibraryImport(sourceId, entry.id), `Pack checked locally. Review the results below and click "Install to SC4S" if everything looks good.`)}
                     >
                       Check pack
                     </Button>
@@ -328,12 +278,12 @@ export function Library() {
             {selectedEntry && selectedEligibility ? (
               <Stack gap="sm">
                 <Group>
-                  <Badge color={selectedEligibility.download_available ? 'green' : 'gray'} variant="light">{selectedEligibility.download_available ? 'Download available' : 'Not downloadable'}</Badge>
+                  <Badge color={selectedEligibility.download_available ? 'green' : 'gray'} variant="light">{selectedEligibility.download_available ? 'Embedded locally' : 'Unavailable'}</Badge>
                   <Badge color={selectedEligibility.runtime_candidate_count > 0 ? 'cyan' : 'gray'} variant="light">
                     {selectedEligibility.runtime_candidate_count} SC4S config file{selectedEligibility.runtime_candidate_count === 1 ? '' : 's'} to install
                   </Badge>
                 </Group>
-                <Text size="sm" c="dimmed">Only SC4S config files are installed. Splunk apps, scripts, docs, and test events are downloaded for reference but not applied automatically.</Text>
+                <Text size="sm" c="dimmed">Only SC4S config files are installed. Splunk knowledge, scripts, docs, and test events are staged locally for reference but not applied automatically.</Text>
               </Stack>
             ) : null}
           </Stack>
@@ -379,7 +329,7 @@ export function Library() {
               </Paper>
             ))
           ) : !importsQuery.isLoading && !importsQuery.isError ? (
-            <Text c="dimmed">No packs checked yet. Download a pack above and click "Check pack" first.</Text>
+            <Text c="dimmed">No packs checked yet. Select an embedded pack above and click "Check pack" first.</Text>
           ) : null}
         </Stack>
       </Card>

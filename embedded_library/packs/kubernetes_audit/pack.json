@@ -1,0 +1,1181 @@
+{
+  "schema_version": "0.1",
+  "id": "kubernetes_audit",
+  "version": "0.1.4",
+  "url": "https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/",
+  "description": "Curated SecHub Resources SC4S pack for Kubernetes API server audit events relayed as one JSON record per line, with explicit RBAC, secret access, workload, exec, impersonation, service-account token, and authorization-denial families.",
+  "display_name": "Kubernetes Audit",
+  "vendor": "kubernetes",
+  "product": "audit",
+  "default_index": "main",
+  "default_source": "kubernetes_audit",
+  "listener": {
+    "source_id": "KUBERNETES_AUDIT",
+    "transport": "tcp",
+    "port": 20069,
+    "env": {
+      "SC4S_LISTEN_KUBERNETES_AUDIT_TCP_PORT": "20069",
+      "SOURCE_ALL_SET_APPEND": "KUBERNETES_AUDIT"
+    }
+  },
+  "sourcetypes": {
+    "rbac_change": "kubernetes:audit",
+    "secret_access": "kubernetes:audit",
+    "workload_change": "kubernetes:audit",
+    "exec_subresource": "kubernetes:audit",
+    "authz_forbidden": "kubernetes:audit",
+    "impersonated_request": "kubernetes:audit",
+    "serviceaccount_token_request": "kubernetes:audit"
+  },
+  "event_families": [
+    {
+      "id": "rbac_change",
+      "label": "RBAC role/binding changes",
+      "match_engine": "pcre",
+      "match": "\"apiVersion\"\\s*:\\s*\"audit\\.k8s\\.io/v[0-9]+\".*\"objectRef\".*\"apiGroup\"\\s*:\\s*\"rbac\\.authorization\\.k8s\\.io\"",
+      "expected_sourcetype": "kubernetes:audit",
+      "primary_id_field": "auditID",
+      "required_fields": [
+        "auditID",
+        "verb",
+        "user.username",
+        "objectRef.resource",
+        "responseStatus.code"
+      ],
+      "timestamp_fields": [
+        "requestReceivedTimestamp",
+        "stageTimestamp"
+      ]
+    },
+    {
+      "id": "secret_access",
+      "label": "Secret object access",
+      "match_engine": "pcre",
+      "match": "\"apiVersion\"\\s*:\\s*\"audit\\.k8s\\.io/v[0-9]+\".*\"objectRef\".*\"resource\"\\s*:\\s*\"secrets\"",
+      "expected_sourcetype": "kubernetes:audit",
+      "primary_id_field": "auditID",
+      "required_fields": [
+        "auditID",
+        "verb",
+        "user.username",
+        "objectRef.namespace",
+        "objectRef.name"
+      ],
+      "timestamp_fields": [
+        "requestReceivedTimestamp",
+        "stageTimestamp"
+      ]
+    },
+    {
+      "id": "workload_change",
+      "label": "Workload resource changes",
+      "match_engine": "pcre",
+      "match": "(?=.*\"apiVersion\"\\s*:\\s*\"audit\\.k8s\\.io/v[0-9]+\")(?=.*\"verb\"\\s*:\\s*\"(create|update|patch|delete)\")(?=.*\"objectRef\".*\"resource\"\\s*:\\s*\"(deployments|daemonsets|statefulsets|pods)\")",
+      "expected_sourcetype": "kubernetes:audit",
+      "primary_id_field": "auditID",
+      "required_fields": [
+        "auditID",
+        "verb",
+        "user.username",
+        "objectRef.resource",
+        "objectRef.name"
+      ],
+      "timestamp_fields": [
+        "requestReceivedTimestamp",
+        "stageTimestamp"
+      ]
+    },
+    {
+      "id": "exec_subresource",
+      "label": "Pod exec subresource requests",
+      "match_engine": "pcre",
+      "match": "\"apiVersion\"\\s*:\\s*\"audit\\.k8s\\.io/v[0-9]+\".*\"objectRef\".*\"resource\"\\s*:\\s*\"pods\".*\"subresource\"\\s*:\\s*\"exec\"",
+      "expected_sourcetype": "kubernetes:audit",
+      "primary_id_field": "auditID",
+      "required_fields": [
+        "auditID",
+        "verb",
+        "user.username",
+        "objectRef.namespace",
+        "objectRef.name",
+        "objectRef.subresource"
+      ],
+      "timestamp_fields": [
+        "requestReceivedTimestamp",
+        "stageTimestamp"
+      ]
+    },
+    {
+      "id": "impersonated_request",
+      "label": "Impersonated API requests",
+      "match_engine": "pcre",
+      "match": "\"apiVersion\"\\s*:\\s*\"audit\\.k8s\\.io/v[0-9]+\".*\"impersonatedUser\"\\s*:",
+      "expected_sourcetype": "kubernetes:audit",
+      "primary_id_field": "auditID",
+      "required_fields": [
+        "auditID",
+        "verb",
+        "user.username",
+        "impersonatedUser.username",
+        "objectRef.resource",
+        "responseStatus.code"
+      ],
+      "timestamp_fields": [
+        "requestReceivedTimestamp",
+        "stageTimestamp"
+      ]
+    },
+    {
+      "id": "serviceaccount_token_request",
+      "label": "ServiceAccount token requests",
+      "match_engine": "pcre",
+      "match": "\"apiVersion\"\\s*:\\s*\"audit\\.k8s\\.io/v[0-9]+\".*\"objectRef\".*\"resource\"\\s*:\\s*\"serviceaccounts\".*\"subresource\"\\s*:\\s*\"token\"",
+      "expected_sourcetype": "kubernetes:audit",
+      "primary_id_field": "auditID",
+      "required_fields": [
+        "auditID",
+        "verb",
+        "user.username",
+        "objectRef.resource",
+        "objectRef.subresource",
+        "objectRef.name",
+        "responseStatus.code"
+      ],
+      "timestamp_fields": [
+        "requestReceivedTimestamp",
+        "stageTimestamp"
+      ]
+    },
+    {
+      "id": "authz_forbidden",
+      "label": "Authorization denied or forbidden requests",
+      "match_engine": "pcre",
+      "match": "\"apiVersion\"\\s*:\\s*\"audit\\.k8s\\.io/v[0-9]+\".*(\"code\"\\s*:\\s*403|\"reason\"\\s*:\\s*\"Forbidden\"|\"authorization\\.k8s\\.io/decision\"\\s*:\\s*\"forbid\")",
+      "expected_sourcetype": "kubernetes:audit",
+      "primary_id_field": "auditID",
+      "required_fields": [
+        "auditID",
+        "verb",
+        "user.username",
+        "responseStatus.code"
+      ],
+      "timestamp_fields": [
+        "requestReceivedTimestamp",
+        "stageTimestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "kubernetes",
+    "product": "audit",
+    "vendor_product": "kubernetes:audit",
+    "kubernetes_audit_family": "Derived family: rbac_change, secret_access, workload_change, exec_subresource, impersonated_request, serviceaccount_token_request, or authz_forbidden",
+    "kubernetes_audit_id": "Kubernetes auditID request correlation identifier",
+    "kubernetes_namespace": "objectRef.namespace where present",
+    "kubernetes_resource": "objectRef.resource such as secrets, rolebindings, deployments, pods, or configmaps",
+    "kubernetes_resource_name": "objectRef.name target object name",
+    "kubernetes_subresource": "objectRef.subresource such as exec",
+    "user": "user.username actor",
+    "src_user": "user.username actor alias",
+    "src": "First sourceIPs value",
+    "src_ip": "First sourceIPs value",
+    "action": "Native audit verb such as create, get, delete, patch, or update",
+    "status": "responseStatus reason/status/code context",
+    "signature": "objectRef resource or subresource grouping",
+    "signature_id": "auditID",
+    "url": "requestURI",
+    "marker": "Synthetic fixture marker only",
+    "user_agent": "Kubernetes client userAgent string from the audit event",
+    "audit_stage": "Kubernetes audit stage such as ResponseComplete",
+    "audit_level": "Kubernetes audit policy level such as Metadata, Request, or RequestResponse",
+    "response_code": "responseStatus.code HTTP/API status code preserved for read-back auditability",
+    "authorization_decision": "annotations.authorization.k8s.io/decision value such as allow or forbid where present",
+    "impersonated_user": "impersonatedUser.username when Kubernetes API impersonation is used",
+    "request_kind": "requestObject.kind where audit policy captures request bodies, for example TokenRequest",
+    "request_api_version": "requestObject.apiVersion where audit policy captures request bodies",
+    "token_audience": "TokenRequest audiences for service-account token issuance; fixture uses safe example audience only",
+    "token_expiration_seconds": "TokenRequest requested expirationSeconds",
+    "bound_object_kind": "TokenRequest boundObjectRef.kind where present",
+    "bound_object_name": "TokenRequest boundObjectRef.name where present"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-kubernetes_audit.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/kubernetes_audit_overview.xml"
+    ],
+    "test_events": [
+      "test-events/kubernetes_audit_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20069.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/kubernetes_audit_reduction_candidates.csv",
+      "validation/preflight-2026-06-07.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Kubernetes audit JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20069,
+      "notes": "Dedicated TCP listener for one Kubernetes audit JSON event per line from file, webhook, Fluent Bit, Cribl, or another relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20069,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Kubernetes audit.k8s.io/v1 Event records",
+    "min": "audit.k8s.io/v1",
+    "max": null,
+    "notes": "Grounded in public Kubernetes audit documentation and synthetic-equivalent fixtures; local audit policy level and collector wrapping must be validated before promotion."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-07",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Kubernetes public audit.k8s.io/v1 documentation and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Kubernetes audit records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Kubernetes audit relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Kubernetes audit relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "kubernetes_audit_mixed"
+      ],
+      "event_count": 7,
+      "marker_prefix": "SC4S_KUBERNETES_AUDIT_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20069.sh"
+    },
+    "readback": {
+      "spl": "index=main sechub_fixture_marker=\"SC4S_KUBERNETES_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product kubernetes_audit_family kubernetes_namespace kubernetes_resource kubernetes_resource_name kubernetes_subresource user impersonated_user user_agent src_ip action status response_code authorization_decision audit_stage audit_level signature signature_id request_kind token_audience token_expiration_seconds bound_object_kind bound_object_name marker eventtype _raw",
+      "expected_count": 7,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "Kubernetes audit family",
+        "actor/source IP",
+        "namespace/resource/subresource",
+        "verb/action",
+        "status",
+        "timestamp",
+        "impersonated user when present",
+        "service-account token request metadata when present"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-07",
+      "summary": "2026-06-07 local preflight found no TCP listener on 127.0.0.1:20069 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-07.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-07.md",
+        "summary": "Command-grounded local preflight evidence for missing Kubernetes audit TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20069,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Kubernetes audit relay listener"
+        }
+      ],
+      "required_indexes": [
+        "main"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to main",
+        "Search role can read main"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "kubernetes_audit_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/kubernetes_audit/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/kubernetes_audit/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/kubernetes_audit/compose.yaml",
+      "compose_project": "sechub-kubernetes-audit-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "main index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/kubernetes_audit/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/kubernetes_audit/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/kubernetes_audit/scripts/send_tcp_20069.sh 127.0.0.1 20069",
+        "splunk_summary_readback": "index=main sechub_fixture_marker=\"SC4S_KUBERNETES_AUDIT_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=main sechub_fixture_marker=\"SC4S_KUBERNETES_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product kubernetes_audit_family kubernetes_namespace kubernetes_resource kubernetes_resource_name kubernetes_subresource user impersonated_user user_agent src_ip action status response_code authorization_decision audit_stage audit_level signature signature_id request_kind token_audience token_expiration_seconds bound_object_kind bound_object_name marker eventtype _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "main",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/kubernetes_audit/splunk -> /opt/splunk/etc/apps/sechub_kubernetes_audit:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20069,
+          "host_port_env": "SC4S_KUBERNETES_AUDIT_PORT",
+          "source_id": "KUBERNETES_AUDIT"
+        },
+        "parser_mount": "packs/kubernetes_audit/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "kubernetes_audit",
+          "source_shape": "json_line_relay",
+          "event_families": [
+            "rbac_change",
+            "secret_access",
+            "workload_change",
+            "exec_subresource",
+            "authz_forbidden",
+            "impersonated_request",
+            "serviceaccount_token_request"
+          ],
+          "expected_sourcetypes": [
+            "kubernetes:audit"
+          ],
+          "data_structures": [
+            "Kubernetes audit.k8s.io/v1 Event JSON records",
+            "objectRef/user/responseStatus/annotations/requestObject structures where present"
+          ],
+          "markers": [
+            "SC4S_KUBERNETES_AUDIT_TEST_RBAC_001",
+            "SC4S_KUBERNETES_AUDIT_TEST_SECRET_002",
+            "SC4S_KUBERNETES_AUDIT_TEST_WORKLOAD_003",
+            "SC4S_KUBERNETES_AUDIT_TEST_EXEC_004",
+            "SC4S_KUBERNETES_AUDIT_TEST_FORBIDDEN_005",
+            "SC4S_KUBERNETES_AUDIT_TEST_IMPERSONATE_006",
+            "SC4S_KUBERNETES_AUDIT_TEST_TOKEN_REQUEST_007"
+          ],
+          "must_verify": [
+            "count=7",
+            "index=main",
+            "sourcetype=kubernetes:audit",
+            "source=KUBERNETES_AUDIT",
+            "kubernetes_audit_family",
+            "actor/source IP",
+            "namespace/resource/subresource",
+            "action/status",
+            "authorization decision",
+            "impersonated user",
+            "TokenRequest metadata"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Does not prove a live Kubernetes cluster, audit-policy completeness, webhook backend behavior, cloud-managed audit wrappers, collector envelope/checkpointing, or API-server configuration.",
+        "Request-body fields such as TokenRequest metadata depend on local audit policy level and remain fixture-backed until captured from a test cluster.",
+        "Field validation requires sanctioned cluster audit samples or a non-production Kubernetes audit feed with retained source-version evidence."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "kubernetes_audit_mixed",
+      "label": "Kubernetes synthetic-equivalent audit events",
+      "path": "test-events/kubernetes_audit_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 7,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_KUBERNETES_AUDIT_TEST_RBAC_001",
+        "SC4S_KUBERNETES_AUDIT_TEST_SECRET_002",
+        "SC4S_KUBERNETES_AUDIT_TEST_WORKLOAD_003",
+        "SC4S_KUBERNETES_AUDIT_TEST_EXEC_004",
+        "SC4S_KUBERNETES_AUDIT_TEST_FORBIDDEN_005",
+        "SC4S_KUBERNETES_AUDIT_TEST_IMPERSONATE_006",
+        "SC4S_KUBERNETES_AUDIT_TEST_TOKEN_REQUEST_007"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "requestReceivedTimestamp",
+        "primary_timezone": "UTC ISO-8601 Z",
+        "fallback_fields": [
+          "stageTimestamp"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Kubernetes audit collector timestamp normalization policy"
+        ],
+        "notes": "Fixtures use UTC requestReceivedTimestamp and stageTimestamp values."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is a compact Kubernetes audit event with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "rbac_change",
+        "secret_access",
+        "workload_change",
+        "exec_subresource",
+        "authz_forbidden",
+        "impersonated_request",
+        "serviceaccount_token_request"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-kubernetes_audit.conf",
+      "target_path": "local/config/app_parsers/syslog/app-kubernetes_audit.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/kubernetes_audit.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/kubernetes_audit_overview.xml",
+      "target_path": "splunk/default/data/ui/views/kubernetes_audit_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/kubernetes_audit_test_events.txt",
+      "target_path": "test-events/kubernetes_audit_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20069.sh",
+      "target_path": "scripts/send_tcp_20069.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "notes": "Idempotent disposable Splunk TEST + SC4S TEST harness; passing it is fixture-scope replay/read-back evidence only, not field validation."
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/kubernetes_audit_reduction_candidates.csv",
+      "target_path": "docs/kubernetes_audit_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_07",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-07.md",
+      "target_path": "validation/preflight-2026-06-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "Kubernetes official audit documentation and audit.k8s.io/v1 Event schema examples; fixtures are synthetic-equivalent examples shaped to public documentation.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use EXAMPLE users, example Kubernetes object names, UUID-like synthetic audit IDs, and RFC5737 documentation IP ranges; no customer or cluster data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-07",
+      "notes": "Created from the v1 high-value pack backlog after OS/cloud foundations."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user.username"
+          ],
+          "status": "partial",
+          "notes": "Kubernetes API actor."
+        },
+        "src": {
+          "source_fields": [
+            "sourceIPs{}"
+          ],
+          "status": "partial",
+          "notes": "First source IP from audit event."
+        },
+        "action": {
+          "source_fields": [
+            "verb"
+          ],
+          "status": "partial",
+          "notes": "Native Kubernetes audit verb; not normalized to a complete action taxonomy."
+        },
+        "signature": {
+          "source_fields": [
+            "objectRef.resource",
+            "objectRef.subresource"
+          ],
+          "status": "partial",
+          "notes": "API resource/subresource grouping."
+        },
+        "signature_id": {
+          "source_fields": [
+            "auditID"
+          ],
+          "status": "partial",
+          "notes": "Audit request correlation identifier."
+        },
+        "status": {
+          "source_fields": [
+            "responseStatus.code",
+            "responseStatus.reason",
+            "annotations.authorization.k8s.io/decision"
+          ],
+          "status": "partial",
+          "notes": "API response and authorization decision context."
+        },
+        "response_code": {
+          "source_fields": [
+            "responseStatus.code"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed API response code preserved separately from the broader status field for read-back auditability."
+        },
+        "authorization_decision": {
+          "source_fields": [
+            "annotations.authorization.k8s.io/decision"
+          ],
+          "status": "partial",
+          "notes": "Kubernetes authorization decision annotation where emitted by audit policy."
+        },
+        "audit_stage": {
+          "source_fields": [
+            "stage"
+          ],
+          "status": "partial",
+          "notes": "Kubernetes audit event stage such as ResponseComplete."
+        },
+        "audit_level": {
+          "source_fields": [
+            "level"
+          ],
+          "status": "partial",
+          "notes": "Audit policy level from the source event; not a validation or severity label."
+        },
+        "user_agent": {
+          "source_fields": [
+            "userAgent"
+          ],
+          "status": "partial",
+          "notes": "Kubernetes client user-agent string for actor/tool triage."
+        },
+        "impersonated_user": {
+          "source_fields": [
+            "impersonatedUser.username"
+          ],
+          "status": "partial",
+          "notes": "Kubernetes impersonation target; does not prove local impersonation policy."
+        },
+        "request_kind": {
+          "source_fields": [
+            "requestObject.kind"
+          ],
+          "status": "partial",
+          "notes": "Request object kind when audit policy captures request bodies, e.g. TokenRequest."
+        },
+        "token_expiration_seconds": {
+          "source_fields": [
+            "requestObject.spec.expirationSeconds"
+          ],
+          "status": "partial",
+          "notes": "TokenRequest requested expiration seconds; no token value is captured."
+        }
+      },
+      "notes": "Partial Change, Authentication/Authorization, and Audit guidance only; not full Kubernetes TA parity."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "user.username"
+          ],
+          "status": "partial",
+          "notes": "API actor."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "sourceIPs{}"
+          ],
+          "status": "partial",
+          "notes": "Audit source IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "verb"
+          ],
+          "status": "partial",
+          "notes": "Native Kubernetes action."
+        },
+        "api.operation": {
+          "source_fields": [
+            "verb",
+            "requestURI"
+          ],
+          "status": "partial",
+          "notes": "API verb and request URI."
+        },
+        "resource.name": {
+          "source_fields": [
+            "objectRef.name",
+            "objectRef.resource",
+            "objectRef.namespace"
+          ],
+          "status": "partial",
+          "notes": "Target object context."
+        },
+        "status": {
+          "source_fields": [
+            "responseStatus.code",
+            "responseStatus.reason"
+          ],
+          "status": "partial",
+          "notes": "Response/authorization result."
+        },
+        "actor.user.uid": {
+          "source_fields": [
+            "impersonatedUser.username"
+          ],
+          "status": "partial",
+          "notes": "Helper mapping for impersonated Kubernetes user/service account context."
+        },
+        "http_request.user_agent": {
+          "source_fields": [
+            "userAgent"
+          ],
+          "status": "partial",
+          "notes": "Client tool user-agent from the API audit event."
+        },
+        "api.request.uid": {
+          "source_fields": [
+            "requestObject.kind",
+            "requestObject.apiVersion"
+          ],
+          "status": "partial",
+          "notes": "Request object type context when captured by audit policy."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "user.username"
+          ],
+          "status": "partial",
+          "notes": "Kubernetes API actor."
+        },
+        "source.ip": {
+          "source_fields": [
+            "sourceIPs{}"
+          ],
+          "status": "partial",
+          "notes": "Audit source IP."
+        },
+        "event.action": {
+          "source_fields": [
+            "verb"
+          ],
+          "status": "partial",
+          "notes": "Native audit verb."
+        },
+        "event.id": {
+          "source_fields": [
+            "auditID"
+          ],
+          "status": "partial",
+          "notes": "Audit correlation ID."
+        },
+        "url.path": {
+          "source_fields": [
+            "requestURI"
+          ],
+          "status": "partial",
+          "notes": "Kubernetes API request path."
+        },
+        "kubernetes.namespace": {
+          "source_fields": [
+            "objectRef.namespace"
+          ],
+          "status": "partial",
+          "notes": "Target namespace."
+        },
+        "user.effective.name": {
+          "source_fields": [
+            "impersonatedUser.username"
+          ],
+          "status": "partial",
+          "notes": "Impersonated user/service account where present."
+        },
+        "user_agent.original": {
+          "source_fields": [
+            "userAgent"
+          ],
+          "status": "partial",
+          "notes": "Kubernetes client user-agent string."
+        },
+        "event.kind": {
+          "source_fields": [
+            "requestObject.kind"
+          ],
+          "status": "partial",
+          "notes": "Request object kind where present; not a complete ECS event.kind taxonomy."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/kubernetes_audit/sc4s/app_parsers/syslog/app-kubernetes_audit.conf": "sha256:bcd8afbbf64cebe7a00cb48acd7b6eada7e536f58d45139dcf8ddff3e3579850",
+      "packs/kubernetes_audit/sc4s/env.example": "sha256:054c0a463bcff8ac38b23f744c80b744f14ae5aed0d9232bc390d10697de9802",
+      "packs/kubernetes_audit/splunk/default/props.conf": "sha256:dd7a20be7e8c99e3a411e7c42f73b652a86f1870557cdcce0cba18e3a7f41172",
+      "packs/kubernetes_audit/splunk/default/transforms.conf": "sha256:884c61a25ae79675a255c61f8af8bac1ef1d53eee22a47c210c028c91b76da48",
+      "packs/kubernetes_audit/splunk/default/eventtypes.conf": "sha256:5d65ad5453e516f8444cb14162b07fd17e4efcef0780dfeb2783470292d4b7ca",
+      "packs/kubernetes_audit/splunk/default/tags.conf": "sha256:b895c9c4b5865264c1eb7523abe431c91bc3c04ceb69b14ceabd89220ecf69ad",
+      "packs/kubernetes_audit/splunk/default/data/ui/views/kubernetes_audit_overview.xml": "sha256:c860803068b5c59f85c5767b86344f688300ec786f6da8bb16e4c976ed4233d9",
+      "packs/kubernetes_audit/test-events/kubernetes_audit_test_events.txt": "sha256:a0f0be266f2f3e0d25ccee74d5a7f1740c9a4eff132ea429520e06e9a0d7df9e",
+      "packs/kubernetes_audit/scripts/send_tcp_20069.sh": "sha256:996cd32ea8182896e31b9e388588ffbfef223ebfb61717364c906d40468376c5",
+      "packs/kubernetes_audit/docs/kubernetes_audit_reduction_candidates.csv": "sha256:a41eb9e6e2f5c61163a5fa93fb8697d7f48c028dddf4750aedd1b7ea99723d75",
+      "packs/kubernetes_audit/validation/preflight-2026-06-07.md": "sha256:97d152854be763e55bf2fce40fd5a396c06cb681d9e7f08ef84cdbf40195136f",
+      "packs/kubernetes_audit/README.md": "sha256:da8bc544b871cb7ccad4c0e6f251ff254e45e674f389b85fa9f05541473d6f2a",
+      "packs/kubernetes_audit/scripts/e2e_docker_compose.sh": "sha256:2692f471b2e81611044b69a7d6ba25ee1b55d02ab620f1bc9dc75de9b1ca2bd7"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-23",
+    "last_tested": "2026-06-23"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "kubernetes",
+    "cloud_native",
+    "audit",
+    "security",
+    "platform"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "audit_json_relay",
+      "label": "Kubernetes audit JSON relay",
+      "description": "Kubernetes API server audit events preserving actor, impersonation context, source IP, request URI, object reference, status, request-body metadata where captured, and authorization annotations.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "api_server_audit_log_file",
+        "audit_webhook",
+        "fluent_bit_relay",
+        "cribl_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "rbac_change",
+        "secret_access",
+        "workload_change",
+        "exec_subresource",
+        "impersonated_request",
+        "serviceaccount_token_request",
+        "authz_forbidden"
+      ],
+      "test_event_sets": [
+        "kubernetes_audit_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Kubernetes relay replay/read-back captured.",
+        "Audit policy level and collector wrapping can materially change field presence."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/kubernetes_audit_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "apiVersion",
+        "kind",
+        "verb",
+        "objectRef.resource",
+        "objectRef.subresource",
+        "responseStatus.code"
+      ],
+      "notes": "Use after sampling the local Kubernetes audit feed. Do not drop actor, source IP, objectRef, verb, responseStatus, authorization annotations, requestURI, or timestamps by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Kubernetes audit relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real cluster records.",
+    "Audit policy levels and collector wrappers affect field presence and nesting; local mapping is required.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included.",
+    "Service-account TokenRequest fixture preserves request metadata only; never store issued token values in fixtures or public artifacts."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Kubernetes audit intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-kubernetes_audit.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Kubernetes audit analyst knowledge",
+      "description": "Adds eventtypes/tags for RBAC, secret access, workload changes, exec, impersonation, service-account token requests, and forbidden API requests. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Kubernetes audit reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/kubernetes_audit_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "json_native_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Kubernetes audit emits JSON records, but SC4S needs a file/webhook/collector relay.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "kubernetes_audit_overview_splunk_test",
+      "title": "Kubernetes Audit — dashboard example",
+      "source_path": "dashboards/screenshots/kubernetes-audit-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Kubernetes Audit dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

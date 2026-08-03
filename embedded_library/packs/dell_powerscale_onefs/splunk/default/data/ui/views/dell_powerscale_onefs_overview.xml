@@ -1,0 +1,180 @@
+<form version="1.1" theme="dark">
+  <label>Dell PowerScale OneFS audit - Overview</label>
+  <description>Fixture-backed onboarding and first-triage dashboard for Dell PowerScale OneFS protocol and configuration audit smoke events. This is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Splunk host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="family_tok" searchWhenChanged="true">
+      <label>OneFS audit family / sourcetype filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total OneFS audit events</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype IN ("dell:powerscale:onefs:protocol","dell:powerscale:onefs:config") host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Protocol audit rows</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="dell:powerscale:onefs:protocol" host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Configuration audit rows</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="dell:powerscale:onefs:config" host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Rename / modify actions</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype IN ("dell:powerscale:onefs:protocol","dell:powerscale:onefs:config") host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") eventType IN (rename,modify) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Audit volume over time</title>
+      <chart>
+        <search>
+          <query>index=infraops sourcetype IN ("dell:powerscale:onefs:protocol","dell:powerscale:onefs:config") host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Action / detailType coverage</title>
+      <chart>
+        <search>
+          <query>index=infraops sourcetype IN ("dell:powerscale:onefs:protocol","dell:powerscale:onefs:config") host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | stats count by eventType, detailType | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Protocol file access / rename context</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="dell:powerscale:onefs:protocol" host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | table _time host source protocol zoneName eventType detailType clientIPAddr src userID userSID user fileName newFileName marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Configuration audit context</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="dell:powerscale:onefs:config" host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | table _time host source topic eventType detailType actor object action signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Client and user context</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype IN ("dell:powerscale:onefs:protocol","dell:powerscale:onefs:config") host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | stats count, values(eventType) as actions, values(detailType) as detail_types, values(fileName) as files, values(newFileName) as new_files by clientIPAddr, userID, userSID, actor | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Onboarding coverage by host/source/sourcetype</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype IN ("dell:powerscale:onefs:protocol","dell:powerscale:onefs:config") host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | stats count, dc(marker) as markers, values(vendor_product) as vendor_product, values(eventType) as actions by host, source, sourcetype | sort -count | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Fixture smoke markers</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype IN ("dell:powerscale:onefs:protocol","dell:powerscale:onefs:config") host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") marker="SC4S_DELL_POWERSCALE_TEST_*" | table _time host sourcetype marker eventType detailType protocol topic clientIPAddr userID actor object | sort marker</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Recent raw OneFS audit context</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype IN ("dell:powerscale:onefs:protocol","dell:powerscale:onefs:config") host=$host_tok$ (sourcetype="$family_tok$" OR "$family_tok$"="*") | table _time host source sourcetype eventType detailType marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+</form>

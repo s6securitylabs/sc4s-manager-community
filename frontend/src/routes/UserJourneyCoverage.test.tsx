@@ -141,9 +141,9 @@ const { packsPayload, cataloguePayload, librarySourcesPayload, libraryImportsPay
   librarySourcesPayload: {
     sources: [
       {
-        source_id: 'official',
+        source_id: 'embedded',
         enabled: true,
-        catalogue_url: 'https://sechub.s6ops.com/data/catalogue.json',
+        snapshot: { source_revision: '839c21b2e8d2739b84eaf2075cad8a7d9ee0710f' },
       },
     ],
   },
@@ -151,7 +151,7 @@ const { packsPayload, cataloguePayload, librarySourcesPayload, libraryImportsPay
     imports: [
       {
         import_id: 'imp_pan_panos_20260603T000000Z',
-        source_id: 'official',
+        source_id: 'embedded',
         entry_id: 'pan_panos',
         created_at: '2026-06-03T00:00:00Z',
         apply_allowed: true,
@@ -171,9 +171,9 @@ const { packsPayload, cataloguePayload, librarySourcesPayload, libraryImportsPay
       running: true,
       status: 'running',
       health: 'healthy',
-      image: 'ghcr.io/splunk/sc4s:3.43.0',
-      image_version: '3.43.0',
-      supported_version: '3.43.0',
+      image: 'ghcr.io/splunk/sc4s:3.46.0',
+      image_version: '3.46.0',
+      supported_version: '3.46.0',
       version_drift: false,
     },
     listeners: [
@@ -261,7 +261,7 @@ describe('user journey route coverage', () => {
     );
 
     expect(markup).toContain('Dashboard');
-    expect(markup).toContain('SC4S Library sources');
+    expect(markup).toContain('Embedded SC4S Library');
     expect(markup).toContain('packs checked');
     expect(markup).toContain('Manager connection');
     expect(markup).toMatch(/Checking|Connected/);
@@ -302,11 +302,11 @@ describe('user journey route coverage', () => {
 
     expect(markup).toContain('Unable to load source catalogue');
     expect(markup).toContain('Manager could not load this operator view. Check the service health and retry.');
-    expect(markup).toContain('Could not load Library sources');
+    expect(markup).toContain('Could not load embedded Library');
     expect(markup).not.toContain('library sources contract parse failed');
     expect(markup).toContain('Could not load checked packs');
     expect(markup).not.toContain('imports contract parse failed');
-    expect(markup).toContain('Library source unavailable — check source health');
+    expect(markup).toContain('Library imports unavailable — check snapshot status');
     expect(markup).not.toContain('0 packs checked');
   });
 

@@ -1,0 +1,2 @@
+time="2026-06-04 12:00:01" fw=sonicwall.example.test sn=SONICWALL-EXAMPLE-001 id=firewall m=1770002001 msg="Connection Opened" src=192.0.2.10 dst=198.51.100.20 proto=tcp sport=51514 dport=443 app=https marker=SC4S_DELL_SONICWALL_FIREWALL_TEST_OPEN_001
+time="2026-06-04 12:00:02" fw=sonicwall.example.test sn=SONICWALL-EXAMPLE-001 id=firewall m=1770002002 msg="Connection Denied" src=192.0.2.11 dst=203.0.113.30 proto=udp sport=53000 dport=53 app=dns marker=SC4S_DELL_SONICWALL_FIREWALL_TEST_DENY_002

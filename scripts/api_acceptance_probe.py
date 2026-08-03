@@ -116,7 +116,7 @@ def main() -> int:
                 "/api/stats",
                 "/api/config",
                 "/api/templates",
-                "/api/products",
+                "/api/context-mappings",
                 "/api/source-catalog",
                 "/api/destinations",
                 "/api/metrics/syslog-ng",

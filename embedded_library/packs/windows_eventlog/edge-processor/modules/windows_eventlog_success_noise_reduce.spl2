@@ -1,0 +1,22 @@
+/*
+ * SecHub Resources Splunk Edge Processor pipeline template candidate: windows_eventlog_success_noise_reduce
+ * Source: Microsoft Windows Event XML relay
+ * Sourcetypes/source-type definitions: windows:eventlog:security, windows:eventlog:process, windows:eventlog:powershell, windows:eventlog:defender
+ * Status: conservative candidate only; NOT validated in Splunk Edge Processor.
+ * Default behavior: route unchanged events to $destination. No drops, masking, or field deletion are enabled.
+ * Optional reduction ideas (must be implemented only after preview/replay/read-back validation):
+ * - Candidate reduction should start with well-known high-volume successful logon/noise classes such as selected 4624 service-account or machine-account activity after allowlist approval.
+ * - Always retain 4625 failures, account changes, policy changes, object access under monitored paths, service installation, process creation, PowerShell script block, Defender detections, and unclassified event IDs by default.
+ * Rollback: disable this pipeline/template and route the source directly to the destination/index `oswinsec`.
+ */
+
+$source = ${source};
+$destination = ${destination};
+
+$pipeline =
+  | from $source
+  | eval sechub_edge_template_id = "windows_eventlog_success_noise_reduce"
+  | eval sechub_edge_template_status = "candidate_not_validated"
+  /* Insert local, approved reduction predicates here after Edge Processor preview/install/read-back validation. */
+  /* Example shape only: | where NOT (<local_allowlisted_low_value_condition>) */
+  | into $destination;

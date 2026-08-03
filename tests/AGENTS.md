@@ -7,7 +7,7 @@ Owns backend regression, contract, validation, exporter, control, pack, catalogu
 - `test_manager.py` - app/manager behavior smoke and integration-style checks.
 - `test_catalogue*.py` and `test_upstream_catalog.py` - catalogue merge, API, docs-index, and upstream behavior.
 - `test_packs*.py` and `test_pack_validation.py` - pack inventory/schema/fixture validation.
-- `test_library.py` - SecHub Resources sync/download/import/apply boundary tests.
+- `test_embedded_library.py` - pinned offline Library provenance, integrity, staging, and path-safety tests.
 - `test_control.py` - runtime-control boundary tests.
 - `test_exporters.py` and `test_packaging_foundations.py` - bundle/export behavior.
 - `test_acceptance_*` and `test_ci_functional*` - evidence/probe/functional acceptance helpers.

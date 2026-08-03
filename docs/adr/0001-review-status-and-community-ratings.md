@@ -37,6 +37,7 @@ Manager still owns local gates:
 - Community rating is never a validation signal.
 - Any local `verified`, `validated`, or `applied` wording must refer to Manager-generated local evidence, not public catalogue review status.
 - Contract docs should describe public Review status separately from local validation state.
+- Product Splunk TA releases remain advisory product-deployment artifacts under ADR 0002; their presence or checksum does not make a Library pack locally verified.
 
 ## Non-goals
 

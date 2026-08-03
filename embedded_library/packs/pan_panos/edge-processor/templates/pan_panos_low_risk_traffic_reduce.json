@@ -1,0 +1,91 @@
+{
+  "artifacts": {
+    "module": "edge-processor/modules/pan_panos_low_risk_traffic_reduce.spl2",
+    "parsed_sample": "edge-processor/samples/pan_panos_low_risk_traffic_reduce.parsed.jsonl",
+    "preflight": "edge-processor/validation/pan_panos_low_risk_traffic_reduce-preflight.md",
+    "raw_sample": "edge-processor/samples/pan_panos_low_risk_traffic_reduce.raw.txt"
+  },
+  "display_name": "PAN-OS low-risk traffic reduction candidate",
+  "lossy_behavior": {
+    "candidate_reduction_notes": [
+      "Consider reducing only validated, low-risk `pan:traffic` allow/end session records for sanctioned applications and trusted zones after confirming detections do not depend on them.",
+      "Always retain deny/block, threat, wildfire, system, config, auth, GlobalProtect, decryption, tunnel, correlation, and unknown/fallback families unless a local evidence-backed exception is approved."
+    ],
+    "default_lossy": false,
+    "enabled_by_default": false,
+    "must_retain_by_default": "security signals, denials/failures, privileged/admin changes, detections, unknown/unclassified event families, and raw vendor context unless local validation approves otherwise"
+  },
+  "notes": "PAN-OS traffic logs are typically very high volume; however threat/config/auth/system families are high-value and must be retained by default.",
+  "pack_id": "pan_panos",
+  "pipeline_taxonomy": {
+    "destinations": [
+      {
+        "default_index_hint": "netfw",
+        "placeholder": "$destination"
+      }
+    ],
+    "pipeline": "source-type definitions + transforms + destination(s)",
+    "source_type_definitions": [
+      "pan:traffic",
+      "pan:threat",
+      "pan:wildfire",
+      "pan:system",
+      "pan:config",
+      "pan:hipmatch",
+      "pan:userid",
+      "pan:globalprotect",
+      "pan:auth",
+      "pan:decryption",
+      "pan:tunnel",
+      "pan:correlation",
+      "pan:iptag",
+      "pan:gtp",
+      "pan:sctp",
+      "pan:log"
+    ],
+    "transforms": [
+      "annotate template id/status only by default",
+      "optional local allowlist/drop predicates require validation before enablement"
+    ]
+  },
+  "quality_posture": "curated_artifact_only_unverified",
+  "review_status": "candidate_not_edge_processor_validated",
+  "rollback": [
+    "Disable or detach the Edge Processor pipeline template",
+    "route source directly to the original Splunk destination/index",
+    "replay a held-out sample to verify full-fidelity ingestion restored",
+    "retain pre/post event counts and affected search evidence"
+  ],
+  "source": {
+    "default_index": "netfw",
+    "name": "Palo Alto Networks PAN-OS/Panorama syslog CSV",
+    "sample_source": "test-events/pan_panos_test_events.txt",
+    "sourcetypes": [
+      "pan:traffic",
+      "pan:threat",
+      "pan:wildfire",
+      "pan:system",
+      "pan:config",
+      "pan:hipmatch",
+      "pan:userid",
+      "pan:globalprotect",
+      "pan:auth",
+      "pan:decryption",
+      "pan:tunnel",
+      "pan:correlation",
+      "pan:iptag",
+      "pan:gtp",
+      "pan:sctp",
+      "pan:log"
+    ]
+  },
+  "template_id": "pan_panos_low_risk_traffic_reduce",
+  "template_type": "splunk_edge_processor_pipeline_candidate",
+  "validation_required": [
+    "Edge Processor preview parses module and sample source",
+    "non-production install/enable test",
+    "replay fixture and representative production-equivalent sample",
+    "destination read-back verifies event count, sourcetype/source/index, timestamps, required normalized fields, and retained raw context",
+    "compare detection/search results before and after reduction"
+  ]
+}

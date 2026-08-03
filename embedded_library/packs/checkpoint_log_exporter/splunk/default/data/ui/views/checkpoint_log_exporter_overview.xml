@@ -1,0 +1,155 @@
+<form version="1.1" theme="light">
+  <label>Check Point Log Exporter Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for Check Point Log Exporter RFC5424 structured-data syslog rows. Dashboard presence does not imply replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>netfw</default>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total Check Point events</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Accepted rows</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ action="accept" | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Dropped rows</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ action IN ("drop","reject","deny") | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Distinct rules</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | stats dc(rule_uid) as distinct_rules</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Volume over time by action</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | timechart count by action</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Blade / product distribution</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | eval checkpoint_blade=coalesce(blade,product,"unknown") | top limit=12 checkpoint_blade</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top source / destination pairs</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | stats count values(action) as actions values(proto) as protocols values(service) as services values(s_port) as source_ports values(rule_name) as rules values(protection_name) as protections values(user) as users values(administrator) as administrators by src dst | sort - count | head 25</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Dropped traffic review</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ action IN ("drop","reject","deny") | table _time host hostname vendor_raw_action action src src_ip s_port src_port dst dest dest_ip service dest_port proto rule_name rule_uid protection_id protection_name attack blade user administrator marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Firewall rule review</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | stats count values(vendor_raw_action) as raw_actions values(action) as actions values(src) as sources values(dst) as destinations values(service) as services values(proto) as protocols values(user) as users values(administrator) as administrators values(blade) as blades values(protection_name) as protections by rule_name rule_uid | sort - count | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>User and source context</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | stats count values(vendor_raw_action) as raw_actions values(action) as actions values(rule_name) as rules values(protection_name) as protections values(src) as sources values(dst) as destinations values(client_ip) as client_ips by user administrator | sort - count | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Onboarding coverage by source, host, and sourcetype</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | stats count dc(marker) as fixture_markers values(hostname) as checkpoint_hosts min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Recent raw Check Point Log Exporter events</title>
+        <search>
+          <query>index=$index$ sourcetype="cp_log:syslog" host=$host_filter$ | table _time host source vendor_raw_action action src src_ip s_port src_port dst dest_ip service dest_port proto transport rule_name rule_uid protection_id protection_name attack blade user administrator client_ip hostname marker _raw | sort - _time | head 100</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+</form>

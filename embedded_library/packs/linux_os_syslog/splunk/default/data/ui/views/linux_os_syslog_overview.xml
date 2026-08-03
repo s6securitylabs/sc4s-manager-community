@@ -1,0 +1,264 @@
+<form version="1.1" theme="dark">
+  <label>Linux Common OS Syslog - Overview</label>
+  <description>Fixture-backed Linux /var/log and syslog relay overview for sshd success/failure, sudo, su/PAM session/auth-failure, cron, kernel, systemd, syslog-wrapped package-manager, and shadow-utils account/group administration records. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Linux OS syslog events</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:auth:su" OR sourcetype="linux:os:cron" OR sourcetype="linux:os:kernel" OR sourcetype="linux:os:systemd" OR sourcetype="linux:os:package" OR sourcetype="linux:os:account") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>SSH / PAM authentication failures</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:auth:su") host=$host_tok$ result="failure" | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Privilege / PAM / service / kernel / package triage events</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:auth:su" OR sourcetype="linux:os:kernel" OR sourcetype="linux:os:systemd" OR sourcetype="linux:os:package" OR sourcetype="linux:os:account") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Linux OS syslog volume over time by family</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:auth:su" OR sourcetype="linux:os:cron" OR sourcetype="linux:os:kernel" OR sourcetype="linux:os:systemd" OR sourcetype="linux:os:package" OR sourcetype="linux:os:account") host=$host_tok$ | eval linux_os_family=case(sourcetype="linux:os:auth:sshd","sshd_auth",sourcetype="linux:os:auth:sudo","sudo",sourcetype="linux:os:auth:su","su_pam",sourcetype="linux:os:cron","cron",sourcetype="linux:os:kernel","kernel",sourcetype="linux:os:systemd","systemd",sourcetype="linux:os:package","package_manager",sourcetype="linux:os:account","account_mgmt",true(),sourcetype) | timechart count by linux_os_family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:auth:su" OR sourcetype="linux:os:cron" OR sourcetype="linux:os:kernel" OR sourcetype="linux:os:systemd" OR sourcetype="linux:os:package" OR sourcetype="linux:os:account") host=$host_tok$ | eval linux_os_family=case(sourcetype="linux:os:auth:sshd","sshd_auth",sourcetype="linux:os:auth:sudo","sudo",sourcetype="linux:os:auth:su","su_pam",sourcetype="linux:os:cron","cron",sourcetype="linux:os:kernel","kernel",sourcetype="linux:os:systemd","systemd",sourcetype="linux:os:package","package_manager",sourcetype="linux:os:account","account_mgmt",true(),sourcetype) | stats count by linux_os_family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Actions and results</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:auth:su" OR sourcetype="linux:os:cron" OR sourcetype="linux:os:kernel" OR sourcetype="linux:os:systemd" OR sourcetype="linux:os:package" OR sourcetype="linux:os:account") host=$host_tok$ | stats count by action result signature | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top users and target users</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:auth:su" OR sourcetype="linux:os:cron") host=$host_tok$ | eval linux_user=coalesce(user,dest_user) | stats count values(dest_user) as target_users values(action) as actions by linux_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top SSH and kernel source IPs</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:kernel") host=$host_tok$ src_ip=* | stats count values(src_port) as src_ports values(dest_ip) as dest_ips values(dest_port) as dest_ports values(transport) as transports by src_ip | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SSH authentication triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:os:auth:sshd" host=$host_tok$ | table _time host program process_id action result auth_method user src_ip src src_port transport signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Sudo and cron command triage</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:cron") host=$host_tok$ | table _time host sourcetype program process_id action result user dest_user terminal working_directory command signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+
+  <row>
+    <panel>
+      <title>su/PAM session triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:os:auth:su" host=$host_tok$ | table _time host program process_id action result user user_uid dest_user dest_user_uid pam_service pam_event pam_logname effective_uid terminal ruser rhost src_ip signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Package manager change triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:os:package" host=$host_tok$ | table _time host program process_id action result package_action package_name package_version package_arch signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Account and group administration triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:os:account" host=$host_tok$ | table _time host program process_id action result account_action account_name account_uid account_gid account_home account_shell account_source account_attribute account_old_value account_new_value signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Kernel packet / warning context</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:os:kernel" host=$host_tok$ | table _time host program action src_ip src src_port dest_ip dest dest_port transport signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Systemd service state triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:os:systemd" host=$host_tok$ | table _time host program process_id action service service_message signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:auth:su" OR sourcetype="linux:os:cron" OR sourcetype="linux:os:kernel" OR sourcetype="linux:os:systemd" OR sourcetype="linux:os:package" OR sourcetype="linux:os:account") host=$host_tok$ | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Linux OS syslog events</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="linux:os:auth:sshd" OR sourcetype="linux:os:auth:sudo" OR sourcetype="linux:os:auth:su" OR sourcetype="linux:os:cron" OR sourcetype="linux:os:kernel" OR sourcetype="linux:os:systemd" OR sourcetype="linux:os:package" OR sourcetype="linux:os:account") host=$host_tok$ | table _time host sourcetype program process_id action result user dest_user src src_ip src_port dest dest_ip dest_port transport service command auth_method pam_service pam_event pam_logname effective_uid terminal ruser rhost user_uid dest_user_uid package_action package_name package_version package_arch account_action account_name account_uid account_gid account_home account_shell account_source account_attribute account_old_value account_new_value signature signature_id marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

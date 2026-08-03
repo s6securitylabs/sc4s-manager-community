@@ -1,0 +1,3 @@
+field_or_pattern,recommendation,risk,notes
+raw,preserve,high,Raw event context is required for incident reconstruction
+health_chatter,review_only,medium,Consider local sampling before suppressing repetitive health/status messages

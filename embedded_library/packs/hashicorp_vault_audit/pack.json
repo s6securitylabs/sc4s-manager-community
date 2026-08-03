@@ -1,0 +1,1453 @@
+{
+  "schema_version": "0.1",
+  "id": "hashicorp_vault_audit",
+  "version": "0.1.8",
+  "url": "https://developer.hashicorp.com/vault/docs/audit/schema",
+  "description": "Curated SecHub Resources SC4S pack for HashiCorp Vault audit device JSON records relayed as one JSON object per line, with fixture-backed request, response, error response, auth, token lifecycle, secret, namespace, policy, policy-denied, and audit-device administration families.",
+  "display_name": "HashiCorp Vault Audit",
+  "vendor": "hashicorp",
+  "product": "vault_audit",
+  "default_index": "netauth",
+  "default_source": "hashicorp_vault_audit",
+  "listener": {
+    "source_id": "HASHICORP_VAULT_AUDIT",
+    "transport": "tcp",
+    "port": 20084,
+    "env": {
+      "SC4S_LISTEN_HASHICORP_VAULT_AUDIT_TCP_PORT": "20084",
+      "SOURCE_ALL_SET_APPEND": "HASHICORP_VAULT_AUDIT"
+    }
+  },
+  "sourcetypes": {
+    "request": "hashicorp:vault:audit",
+    "response": "hashicorp:vault:audit",
+    "response_error": "hashicorp:vault:audit",
+    "auth": "hashicorp:vault:audit",
+    "secret": "hashicorp:vault:audit",
+    "policy": "hashicorp:vault:audit",
+    "namespace": "hashicorp:vault:audit",
+    "policy_denied": "hashicorp:vault:audit",
+    "audit_device": "hashicorp:vault:audit",
+    "token_lifecycle": "hashicorp:vault:audit"
+  },
+  "event_families": [
+    {
+      "id": "request",
+      "label": "Vault audit request entries",
+      "match_engine": "pcre",
+      "match": "\"type\"\\s*:\\s*\"request\"",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "type",
+        "request.id",
+        "request.operation",
+        "request.path"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "response",
+      "label": "Vault audit response entries",
+      "match_engine": "pcre",
+      "match": "\"type\"\\s*:\\s*\"response\"",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "type",
+        "request.id",
+        "request.operation",
+        "request.path"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "response_error",
+      "label": "Vault error response entries",
+      "match_engine": "pcre",
+      "match": "\"type\"\\s*:\\s*\"response\".*\"error\"\\s*:",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "type",
+        "request.id",
+        "request.operation",
+        "request.path",
+        "error"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "policy_denied",
+      "label": "Vault policy-denied / override audit responses",
+      "match_engine": "pcre",
+      "match": "\"policy_results\"\\s*:\\s*\\{[^}]*\"allowed\"\\s*:\\s*false",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "type",
+        "request.id",
+        "request.operation",
+        "request.path",
+        "auth.policy_results.allowed",
+        "error"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "token_lifecycle",
+      "label": "Vault token lifecycle audit entries",
+      "match_engine": "pcre",
+      "match": "\"path\"\\s*:\\s*\"auth/token/(create|create-orphan|renew|renew-self|revoke|revoke-self|revoke-accessor|lookup|lookup-self)",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "type",
+        "request.id",
+        "request.operation",
+        "request.path",
+        "response.auth.lease_duration",
+        "response.auth.renewable"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "auth",
+      "label": "Vault auth/token audit entries",
+      "match_engine": "pcre",
+      "match": "\"path\"\\s*:\\s*\"auth/",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "request.id",
+        "request.operation",
+        "request.path",
+        "auth.display_name"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "namespace",
+      "label": "Vault enterprise namespace / mount-context audit entries",
+      "match_engine": "pcre",
+      "match": "\"namespace\"\\s*:\\s*\\{[^}]*\"path\"\\s*:",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "request.id",
+        "request.operation",
+        "request.path",
+        "request.namespace.path",
+        "request.mount_accessor",
+        "request.mount_type"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "secret",
+      "label": "Vault secret access audit entries",
+      "match_engine": "pcre",
+      "match": "\"path\"\\s*:\\s*\"(secret|kv)/",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "request.id",
+        "request.operation",
+        "request.path"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "audit_device",
+      "label": "Vault audit-device administration entries",
+      "match_engine": "pcre",
+      "match": "\"path\"\\s*:\\s*\"sys/audit",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "type",
+        "request.id",
+        "request.operation",
+        "request.path"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "policy",
+      "label": "Vault policy/system change audit entries",
+      "match_engine": "pcre",
+      "match": "\"path\"\\s*:\\s*\"sys/(policies|policy|auth|mounts)",
+      "expected_sourcetype": "hashicorp:vault:audit",
+      "primary_id_field": "request.id",
+      "required_fields": [
+        "time",
+        "request.id",
+        "request.operation",
+        "request.path",
+        "auth.policies"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "hashicorp",
+    "product": "vault_audit",
+    "vendor_product": "hashicorp:vault_audit",
+    "vault_type": "Vault audit entry type: request or response",
+    "vault_audit_family": "Derived family from request.path/type/error/namespace: request, response, response_error, auth, secret, namespace, audit_device, policy, or policy_denied",
+    "request_id": "Vault audit request.id used to correlate request and response entries",
+    "action": "Vault request.operation",
+    "signature": "Vault request.path or request_uri",
+    "signature_id": "Vault request.id",
+    "src": "Alias of src_ip",
+    "src_ip": "Vault request.remote_address",
+    "src_port": "Vault request.remote_port",
+    "user": "Vault auth.display_name, auth.metadata.username, or auth.entity_id",
+    "src_user": "Alias of user",
+    "status": "Derived success/failure based on error presence",
+    "result": "Error text or derived status",
+    "object": "Vault request.path",
+    "marker": "Synthetic fixture marker only",
+    "error_detail": "Vault top-level error string, when present; used for failure triage without stating complete error taxonomy",
+    "vault_namespace": "Vault request.namespace.path when present; fixture-backed enterprise namespace/mount context, not namespace feature validation",
+    "vault_namespace_id": "Vault request.namespace.id when present",
+    "vault_mount_type": "Vault request.mount_type, such as token, approle, kv, or system in fixtures",
+    "vault_mount_accessor": "Vault request.mount_accessor when present; useful for mount-level audit grouping",
+    "vault_policy_allowed": "Vault auth.policy_results.allowed value when present; fixture-backed policy-decision context, not complete policy-engine validation",
+    "vault_policy_override": "Vault request.policy_override value when present; indicates override request context only",
+    "vault_client_id": "Vault request.client_id when present; client identifier context from audit schema",
+    "vault_request_uri": "Vault request.request_uri when it differs from request.path or preserves original URI context",
+    "vault_wrap_ttl": "Vault request.wrap_ttl when response wrapping was requested",
+    "vault_audit_device": "Vault audit-device path component derived from request.path values under sys/audit; fixture-backed administration context, not audit-device option validation",
+    "vault_token_lifecycle": "Derived token lifecycle helper for auth/token create, renew, lookup, and revoke paths; fixture-backed only for token creation response context",
+    "vault_token_type": "Vault auth.token_type from response/auth context when present",
+    "vault_token_ttl": "Vault response.auth.lease_duration for token lifecycle response context",
+    "vault_token_renewable": "Vault response.auth.renewable flag for token lifecycle response context",
+    "vault_token_policies": "Vault response.auth.policies list for token lifecycle response context",
+    "vault_token_orphan": "Vault response.auth.orphan flag for token lifecycle response context"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-hashicorp_vault_audit.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/hashicorp_vault_audit_overview.xml"
+    ],
+    "test_events": [
+      "test-events/hashicorp_vault_audit_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20084.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/hashicorp_vault_audit_reduction_candidates.csv",
+      "validation/preflight-2026-06-13.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Vault audit JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20084,
+      "notes": "Dedicated TCP listener for one Vault audit JSON record per line from a file/socket/syslog audit device or collector relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20084,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "HashiCorp Vault audit JSON",
+    "min": "public Vault audit schema documentation current as of 2026-06-13",
+    "max": null,
+    "notes": "Grounded in public HashiCorp audit schema/device documentation and synthetic-equivalent fixtures; local Vault version, audit device options, prefixes, jsonx/raw modes, and collector wrapping must be validated before promotion."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-13",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "HashiCorp public audit schema/device documentation and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Vault audit JSON records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Vault audit relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for HashiCorp Vault audit JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "hashicorp_vault_audit_mixed"
+      ],
+      "event_count": 10,
+      "marker_prefix": "SC4S_HASHICORP_VAULT_AUDIT_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20084.sh"
+    },
+    "readback": {
+      "spl": "index=netauth sechub_fixture_marker=\"SC4S_HASHICORP_VAULT_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product vault_audit_family vault_type vault_mount_accessor vault_mount_type vault_namespace_id vault_namespace vault_audit_device vault_token_lifecycle vault_token_type vault_token_ttl vault_token_renewable vault_token_policies vault_token_orphan vault_policy_allowed vault_policy_override vault_client_id vault_request_uri vault_wrap_ttl request_id action signature signature_id src_ip src src_port user src_user status result error_detail object marker _raw",
+      "expected_count": 10,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "Vault audit type/family",
+        "request.id correlation",
+        "operation/action",
+        "path/object",
+        "actor/user",
+        "remote address/port",
+        "status/result",
+        "error detail",
+        "timestamp",
+        "namespace context",
+        "mount type/accessor context",
+        "policy decision/allowed flag",
+        "policy override/client/request URI context",
+        "audit-device administration context",
+        "token lifecycle context",
+        "token TTL/renewable/policy context"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-13",
+      "summary": "2026-06-13 local preflight found no available Vault audit TCP listener/Splunk TEST route in this repository run. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-13.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-13.md",
+        "summary": "Command-grounded local preflight evidence for missing HashiCorp Vault audit listener/testbed; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20084,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated HashiCorp Vault audit JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netauth"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netauth",
+        "Search role can read netauth"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "hashicorp_vault_audit_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/hashicorp_vault_audit/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/hashicorp_vault_audit/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/hashicorp_vault_audit/compose.yaml",
+      "compose_project": "sechub-hashicorp-vault-audit-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netauth index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/hashicorp_vault_audit/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/hashicorp_vault_audit/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/hashicorp_vault_audit/scripts/send_tcp_20084.sh 127.0.0.1 20084",
+        "splunk_summary_readback": "index=netauth sechub_fixture_marker=\"SC4S_HASHICORP_VAULT_AUDIT_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netauth sechub_fixture_marker=\"SC4S_HASHICORP_VAULT_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product vault_audit_family vault_type vault_mount_accessor vault_mount_type vault_namespace_id vault_namespace vault_audit_device vault_token_lifecycle vault_token_type vault_token_ttl vault_token_renewable vault_token_policies vault_token_orphan vault_policy_allowed vault_policy_override vault_client_id vault_request_uri vault_wrap_ttl request_id action signature signature_id src_ip src src_port user src_user status result error_detail object marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netauth",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/hashicorp_vault_audit/splunk -> /opt/splunk/etc/apps/sechub_hashicorp_vault_audit:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20084,
+          "host_port_env": "SC4S_HASHICORP_VAULT_AUDIT_PORT",
+          "source_id": "HASHICORP_VAULT_AUDIT"
+        },
+        "parser_mount": "packs/hashicorp_vault_audit/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "hashicorp_vault_audit",
+          "source_shape": "json_line_relay",
+          "event_families": [
+            "request",
+            "response",
+            "response_error",
+            "auth",
+            "token_lifecycle",
+            "secret",
+            "namespace",
+            "audit_device",
+            "policy",
+            "policy_denied"
+          ],
+          "expected_sourcetypes": [
+            "hashicorp:vault:audit"
+          ],
+          "data_structures": [
+            "Vault audit request and response JSON objects",
+            "Auth/token lifecycle and secret access rows",
+            "Namespace/mount, policy-denied, and audit-device administration context"
+          ],
+          "markers": [
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_REQUEST_001",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_RESPONSE_002",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_AUTH_003",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_SECRET_004",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_POLICY_005",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_ERROR_006",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_NAMESPACE_007",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_POLICY_DENIED_008",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_AUDIT_DEVICE_009",
+            "SC4S_HASHICORP_VAULT_AUDIT_TEST_TOKEN_CREATE_010"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Live Vault cluster audit-device output, syslog wrapper specifics, jsonx/custom prefix/raw-secret options, and collector envelope completeness are not proven by this harness",
+        "Token lifecycle, policy-denied, namespace/mount, and audit-device rows are fixture-backed API/schema context only, not local Vault behavior validation",
+        "Field validation with retained real product/source-version telemetry requires sanctioned samples or a non-production Vault test feed"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "hashicorp_vault_audit_mixed",
+      "label": "HashiCorp Vault audit synthetic-equivalent events",
+      "path": "test-events/hashicorp_vault_audit_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 10,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_REQUEST_001",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_RESPONSE_002",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_AUTH_003",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_SECRET_004",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_POLICY_005",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_ERROR_006",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_NAMESPACE_007",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_POLICY_DENIED_008",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_AUDIT_DEVICE_009",
+        "SC4S_HASHICORP_VAULT_AUDIT_TEST_TOKEN_CREATE_010"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "time",
+        "primary_timezone": "UTC Z in fixture time field",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Vault audit device timestamp policy"
+        ],
+        "notes": "Fixtures use ISO-8601 UTC timestamps from the documented top-level time field."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact Vault audit JSON with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "request",
+        "response",
+        "response_error",
+        "auth",
+        "token_lifecycle",
+        "secret",
+        "namespace",
+        "audit_device",
+        "policy",
+        "policy_denied"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-hashicorp_vault_audit.conf",
+      "target_path": "local/config/app_parsers/syslog/app-hashicorp_vault_audit.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/hashicorp_vault_audit.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/hashicorp_vault_audit_overview.xml",
+      "target_path": "splunk/default/data/ui/views/hashicorp_vault_audit_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/hashicorp_vault_audit_test_events.txt",
+      "target_path": "test-events/hashicorp_vault_audit_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20084.sh",
+      "target_path": "scripts/send_tcp_20084.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/hashicorp_vault_audit_reduction_candidates.csv",
+      "target_path": "docs/hashicorp_vault_audit_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_13",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-13.md",
+      "target_path": "validation/preflight-2026-06-13.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Official HashiCorp Vault audit schema/device documentation; ecosystem corroboration from Elastic, Datadog, Google SecOps/Chronicle, and HashiCorp Splunk tutorial; fixtures are synthetic-equivalent examples shaped to public documentation.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use documentation IP ranges, example identities, synthetic UUIDs, HMAC-looking placeholders, and synthetic markers; no customer, tenant, token, accessor, or production Vault data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-13",
+      "notes": "Selected from the 2026-06-13 hourly source-gap queue after Zeek; Vault had public audit JSON schema evidence sufficient for conservative fixture authoring."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "request.remote_address"
+          ],
+          "status": "partial",
+          "notes": "Vault client remote address."
+        },
+        "src_port": {
+          "source_fields": [
+            "request.remote_port"
+          ],
+          "status": "partial",
+          "notes": "Vault client remote port."
+        },
+        "user": {
+          "source_fields": [
+            "auth.display_name",
+            "auth.metadata.username",
+            "auth.entity_id"
+          ],
+          "status": "partial",
+          "notes": "Vault actor identity context."
+        },
+        "action": {
+          "source_fields": [
+            "request.operation"
+          ],
+          "status": "partial",
+          "notes": "Vault request operation."
+        },
+        "signature": {
+          "source_fields": [
+            "request.path",
+            "request.request_uri"
+          ],
+          "status": "partial",
+          "notes": "Vault path/object triage value."
+        },
+        "signature_id": {
+          "source_fields": [
+            "request.id"
+          ],
+          "status": "partial",
+          "notes": "Vault audit request correlation ID."
+        },
+        "status": {
+          "source_fields": [
+            "error",
+            "type"
+          ],
+          "status": "partial",
+          "notes": "Derived success/failure; needs live read-back for local semantics."
+        },
+        "result": {
+          "source_fields": [
+            "error",
+            "error_detail"
+          ],
+          "status": "partial",
+          "notes": "Vault error/failure text when present; partial status/result guidance."
+        },
+        "vault_namespace": {
+          "source_fields": [
+            "request.namespace.path",
+            "vault_namespace"
+          ],
+          "status": "partial",
+          "notes": "Vault namespace path for enterprise namespace/mount-context triage; profile-scoped field, not complete CIM certification."
+        },
+        "vault_mount_type": {
+          "source_fields": [
+            "request.mount_type",
+            "vault_mount_type"
+          ],
+          "status": "partial",
+          "notes": "Vault mount type for source/method grouping."
+        },
+        "vault_mount_accessor": {
+          "source_fields": [
+            "request.mount_accessor",
+            "vault_mount_accessor"
+          ],
+          "status": "partial",
+          "notes": "Vault mount accessor for mount-level audit grouping."
+        },
+        "vault_policy_allowed": {
+          "source_fields": [
+            "auth.policy_results.allowed",
+            "vault_policy_allowed"
+          ],
+          "status": "partial",
+          "notes": "Vault policy result allow/deny flag as profile-scoped audit context; not full CIM certification."
+        },
+        "vault_policy_override": {
+          "source_fields": [
+            "request.policy_override",
+            "vault_policy_override"
+          ],
+          "status": "partial",
+          "notes": "Vault policy override request flag as profile-scoped audit context."
+        },
+        "vault_client_id": {
+          "source_fields": [
+            "request.client_id",
+            "vault_client_id"
+          ],
+          "status": "partial",
+          "notes": "Vault client ID request context."
+        },
+        "vault_audit_device": {
+          "source_fields": [
+            "request.path",
+            "vault_audit_device"
+          ],
+          "status": "partial",
+          "notes": "Vault audit-device administration path component for sys/audit/* requests; profile-scoped audit context, not complete CIM certification."
+        },
+        "vault_token_ttl": {
+          "source_fields": [
+            "response.auth.lease_duration",
+            "vault_token_ttl"
+          ],
+          "status": "partial",
+          "notes": "Vault token lease duration/TTL response context; profile-scoped helper, not complete token lifecycle certification."
+        },
+        "vault_token_renewable": {
+          "source_fields": [
+            "response.auth.renewable",
+            "vault_token_renewable"
+          ],
+          "status": "partial",
+          "notes": "Vault token renewable flag from token lifecycle response context."
+        },
+        "vault_token_type": {
+          "source_fields": [
+            "response.auth.token_type",
+            "vault_token_type"
+          ],
+          "status": "partial",
+          "notes": "Vault token type from token lifecycle response context."
+        },
+        "vault_token_orphan": {
+          "source_fields": [
+            "response.auth.orphan",
+            "vault_token_orphan"
+          ],
+          "status": "partial",
+          "notes": "Vault token orphan flag from token lifecycle response context."
+        }
+      },
+      "notes": "Partial authentication/change/audit guidance only; not full CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "request.remote_address"
+          ],
+          "status": "partial",
+          "notes": "Client remote IP."
+        },
+        "src_endpoint.port": {
+          "source_fields": [
+            "request.remote_port"
+          ],
+          "status": "partial",
+          "notes": "Client remote port."
+        },
+        "actor.user.name": {
+          "source_fields": [
+            "auth.display_name",
+            "auth.metadata.username"
+          ],
+          "status": "partial",
+          "notes": "Vault actor display/metadata username."
+        },
+        "activity_name": {
+          "source_fields": [
+            "request.operation",
+            "type"
+          ],
+          "status": "partial",
+          "notes": "Vault operation and request/response type."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "request.id"
+          ],
+          "status": "partial",
+          "notes": "Vault request correlation ID."
+        },
+        "resource.name": {
+          "source_fields": [
+            "request.path",
+            "vault_audit_device"
+          ],
+          "status": "partial",
+          "notes": "Vault path/resource."
+        },
+        "status_detail": {
+          "source_fields": [
+            "error",
+            "error_detail"
+          ],
+          "status": "partial",
+          "notes": "Vault error detail when present."
+        },
+        "resource.group_name": {
+          "source_fields": [
+            "request.namespace.path",
+            "vault_namespace"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped namespace context mapped conservatively as resource grouping guidance."
+        },
+        "resource.type": {
+          "source_fields": [
+            "request.mount_type",
+            "vault_mount_type"
+          ],
+          "status": "partial",
+          "notes": "Vault mount type as resource type helper guidance."
+        },
+        "resource.uid": {
+          "source_fields": [
+            "request.mount_accessor",
+            "vault_mount_accessor"
+          ],
+          "status": "partial",
+          "notes": "Vault mount accessor as mount/resource UID helper guidance."
+        },
+        "policy.result": {
+          "source_fields": [
+            "auth.policy_results.allowed",
+            "vault_policy_allowed"
+          ],
+          "status": "partial",
+          "notes": "Policy allow/deny helper mapping; no complete OCSF policy-engine event class stated."
+        },
+        "actor.session.uid": {
+          "source_fields": [
+            "request.client_id",
+            "vault_client_id"
+          ],
+          "status": "partial",
+          "notes": "Vault client ID as actor/session helper context."
+        },
+        "http_request.url.path": {
+          "source_fields": [
+            "request.request_uri",
+            "vault_request_uri"
+          ],
+          "status": "partial",
+          "notes": "Original Vault request URI when present."
+        },
+        "actor.session.type": {
+          "source_fields": [
+            "response.auth.token_type",
+            "vault_token_type"
+          ],
+          "status": "partial",
+          "notes": "Vault token type as session helper context only."
+        },
+        "actor.session.expiration_time": {
+          "source_fields": [
+            "response.auth.lease_duration",
+            "vault_token_ttl"
+          ],
+          "status": "partial",
+          "notes": "Lease duration as TTL helper context; not an absolute expiration timestamp."
+        },
+        "policy.name": {
+          "source_fields": [
+            "response.auth.policies",
+            "vault_token_policies"
+          ],
+          "status": "partial",
+          "notes": "Token policy list as policy helper context."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "request.remote_address"
+          ],
+          "status": "partial",
+          "notes": "Client remote IP."
+        },
+        "source.port": {
+          "source_fields": [
+            "request.remote_port"
+          ],
+          "status": "partial",
+          "notes": "Client remote port."
+        },
+        "user.name": {
+          "source_fields": [
+            "auth.display_name",
+            "auth.metadata.username"
+          ],
+          "status": "partial",
+          "notes": "Vault actor display/metadata username."
+        },
+        "event.action": {
+          "source_fields": [
+            "request.operation"
+          ],
+          "status": "partial",
+          "notes": "Vault request operation."
+        },
+        "event.id": {
+          "source_fields": [
+            "request.id"
+          ],
+          "status": "partial",
+          "notes": "Vault request correlation ID."
+        },
+        "event.outcome": {
+          "source_fields": [
+            "error",
+            "auth.policy_results.allowed",
+            "vault_policy_allowed"
+          ],
+          "status": "partial",
+          "notes": "Derived from error presence."
+        },
+        "url.path": {
+          "source_fields": [
+            "request.path",
+            "request.request_uri",
+            "vault_request_uri",
+            "vault_audit_device"
+          ],
+          "status": "partial",
+          "notes": "Vault request path."
+        },
+        "error.message": {
+          "source_fields": [
+            "error",
+            "error_detail"
+          ],
+          "status": "partial",
+          "notes": "Vault top-level error string when present."
+        },
+        "hashicorp.vault.namespace": {
+          "source_fields": [
+            "request.namespace.path",
+            "vault_namespace"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault namespace path; no ECS standard field stated."
+        },
+        "hashicorp.vault.mount_type": {
+          "source_fields": [
+            "request.mount_type",
+            "vault_mount_type"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault mount type."
+        },
+        "hashicorp.vault.mount_accessor": {
+          "source_fields": [
+            "request.mount_accessor",
+            "vault_mount_accessor"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault mount accessor."
+        },
+        "hashicorp.vault.policy_allowed": {
+          "source_fields": [
+            "auth.policy_results.allowed",
+            "vault_policy_allowed"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault policy-decision flag."
+        },
+        "hashicorp.vault.policy_override": {
+          "source_fields": [
+            "request.policy_override",
+            "vault_policy_override"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault policy override flag."
+        },
+        "hashicorp.vault.client_id": {
+          "source_fields": [
+            "request.client_id",
+            "vault_client_id"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault client ID."
+        },
+        "hashicorp.vault.token_ttl": {
+          "source_fields": [
+            "response.auth.lease_duration",
+            "vault_token_ttl"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault token TTL/lease-duration helper."
+        },
+        "hashicorp.vault.token_renewable": {
+          "source_fields": [
+            "response.auth.renewable",
+            "vault_token_renewable"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault token renewable flag."
+        },
+        "hashicorp.vault.token_type": {
+          "source_fields": [
+            "response.auth.token_type",
+            "vault_token_type"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault token type."
+        },
+        "hashicorp.vault.token_orphan": {
+          "source_fields": [
+            "response.auth.orphan",
+            "vault_token_orphan"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Vault token orphan flag."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/hashicorp_vault_audit/README.md": "sha256:6decc3e4acc4f072033e9b8f7c13025bf5ac04d5b82e0066376485eeab4969b4",
+      "packs/hashicorp_vault_audit/docs/hashicorp_vault_audit_reduction_candidates.csv": "sha256:d04ed2d7ec037ed968209880bf1b79705480a879f327ea6be354e8f770ea157f",
+      "packs/hashicorp_vault_audit/sc4s/app_parsers/syslog/app-hashicorp_vault_audit.conf": "sha256:8cb4000f5d3280df925c776d41d36c993d81770ede7e72bc9596409fc668de41",
+      "packs/hashicorp_vault_audit/sc4s/env.example": "sha256:403794688fd5121dd9f24fae206926bce103981624741ff83b98858605558976",
+      "packs/hashicorp_vault_audit/scripts/send_tcp_20084.sh": "sha256:34432746a456108e827e11c29a3aa3e3463f5f00b36d17deced2a3964c2d2d0b",
+      "packs/hashicorp_vault_audit/splunk/default/eventtypes.conf": "sha256:7d9773aa3ee087f5815bd29f27ed899c8a381445c99816a69b15ab86a698e67c",
+      "packs/hashicorp_vault_audit/splunk/default/props.conf": "sha256:1a7398cb696e11ce1bddaab73e376811a5fd1a135e835e5d01bcbdafadfa2949",
+      "packs/hashicorp_vault_audit/splunk/default/tags.conf": "sha256:245c2ab561eee920447ce04634cdfa15c5472d38be140b7f0f7a9c9c57629139",
+      "packs/hashicorp_vault_audit/splunk/default/transforms.conf": "sha256:97c54ca9615d444d10d6fe327104a2bf8468dddb1e69d19b4df72b0627bddd05",
+      "packs/hashicorp_vault_audit/test-events/hashicorp_vault_audit_test_events.txt": "sha256:819c5381689a0a4f33a605a2feb77e051b5ab859e1802c1cf6d995de9462065d",
+      "packs/hashicorp_vault_audit/validation/preflight-2026-06-13.md": "sha256:eb05a343146ed6cf9a208427f08b56385929cccd8263bddd5988e321d9df7c49",
+      "packs/hashicorp_vault_audit/splunk/default/data/ui/views/hashicorp_vault_audit_overview.xml": "sha256:10df828d4dbe511dd68ff4c6c464fa11f4b0904df1c2a49087d1c9fc1d78c5b8",
+      "packs/hashicorp_vault_audit/scripts/e2e_docker_compose.sh": "sha256:5efc3741cd2f30df5529dde12d1f9661214cdd72b79eadfb6508cba39a3b268f"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-23",
+    "last_tested": "2026-06-23"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "identity",
+    "privileged_access",
+    "secrets_management",
+    "audit",
+    "json"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "audit_json_relay",
+      "label": "Vault audit JSON relay",
+      "description": "Default Vault audit JSON entries preserving request/response type, request ID, operation, path, actor, remote address, namespace/mount context, audit-device administration path context, token lifecycle response context, policy decision/override context, and error/status context including fixture-backed error and policy-denied responses.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "vault_file_audit_json",
+        "vault_socket_audit_json",
+        "vault_syslog_audit_json",
+        "fluent_bit_relay",
+        "vector_relay",
+        "cribl_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "request",
+        "response",
+        "response_error",
+        "auth",
+        "token_lifecycle",
+        "secret",
+        "namespace",
+        "audit_device",
+        "policy",
+        "policy_denied"
+      ],
+      "test_event_sets": [
+        "hashicorp_vault_audit_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Vault audit relay replay/read-back captured.",
+        "Only default JSON audit entries are fixture-backed; jsonx, prefix, log_raw=true, and exact syslog envelopes are out of scope.",
+        "Request, response, error response, auth, token lifecycle, secret, namespace/mount-context, audit-device administration, policy/system-change, and policy-denied families are fixture-backed; endpoint-specific data shapes, exact token lifecycle side effects, and exact audit-device option effects remain future coverage."
+      ],
+      "event_boundary": "One Vault audit JSON object per line. File/socket/collector relays should split records before SC4S; the fixture send helper wraps each JSON line as one TCP syslog message for the dedicated listener.",
+      "events_per_file_or_message": "Fixture file contains multiple records, but each line is one event; after relay wrapping, each TCP/syslog message carries one JSON audit object.",
+      "uniqueness_or_multiline": "Audit records are expected to be single-line JSON objects, not multiline payloads. Fixture markers are per-event JSON fields and each declared marker appears exactly once.",
+      "field_delimiting_or_escaping": "JSON field names and values use standard JSON escaping; no CSV or key=value delimiter is assumed. jsonx, custom prefix, and log_raw=true payload variants remain out of scope until exact source evidence is added.",
+      "timestamp_timezone": "Primary event time is the JSON time field, expected as ISO-8601/RFC3339 with timezone in the fixture-backed scope. Syslog wrapper/header timestamps are relay metadata and do not replace the Vault source time without replay/read-back evidence."
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/hashicorp_vault_audit_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "type",
+        "request.id",
+        "request.operation",
+        "request.path",
+        "request.remote_address",
+        "auth.display_name",
+        "error",
+        "request.namespace.path",
+        "request.mount_type",
+        "request.mount_accessor",
+        "auth.policy_results.allowed",
+        "request.policy_override",
+        "request.client_id",
+        "request.request_uri",
+        "request.wrap_ttl",
+        "request.path(sys/audit/*)",
+        "response.auth.lease_duration",
+        "response.auth.renewable",
+        "response.auth.token_type",
+        "response.auth.policies",
+        "response.auth.orphan"
+      ],
+      "notes": "Use only after sampling the local Vault audit feed. Do not drop time, type, request.id, request.operation, request.path, auth/entity context, remote address, error, or raw JSON by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Vault audit relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real Vault audit records.",
+    "Only default JSON audit entries are covered; jsonx, prefixes, raw-secret logging, exact syslog envelopes, additional enterprise namespace variants, exact token lifecycle side effects, exact audit-device option effects, complete policy-engine semantics, and endpoint-specific data shapes remain future coverage.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Vault audit JSON intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-hashicorp_vault_audit.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Vault audit analyst knowledge",
+      "description": "Adds eventtypes/tags for request, response, auth, secret, namespace/mount-context, policy/system-change, and policy-denied audit entries. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Vault audit reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/hashicorp_vault_audit_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "json_native_relay",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Vault audit devices can emit JSON log records without vendor API polling; a relay may still forward them to SC4S.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "hashicorp_vault_audit_overview_splunk_test",
+      "title": "HashiCorp Vault Audit — dashboard example",
+      "source_path": "dashboards/screenshots/hashicorp-vault-audit-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the HashiCorp Vault Audit dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

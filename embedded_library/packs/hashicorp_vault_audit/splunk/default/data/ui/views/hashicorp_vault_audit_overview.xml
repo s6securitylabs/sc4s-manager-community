@@ -1,0 +1,277 @@
+<form version="1.1" theme="dark">
+  <label>HashiCorp Vault Audit - Overview</label>
+  <description>Fixture-backed HashiCorp Vault audit JSON relay overview. Panels use fields proven by synthetic-equivalent fixtures and Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Vault audit events</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Auth and token activity</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ vault_audit_family="auth" | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Secret or policy changes</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ (vault_audit_family="secret" OR vault_audit_family="policy" OR match(signature, "^(secret|kv|sys)/")) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Failure/error responses</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ (status="failure" OR error=* OR error_detail=*) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by Vault audit family</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | eval family=coalesce(vault_audit_family, vault_type, type, "vault_audit") | timechart count by family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | eval family=coalesce(vault_audit_family, vault_type, type, "vault_audit") | stats count by family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Operations and status</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | eval vault_operation=coalesce(action, 'request.operation'), vault_result=coalesce(status, result, vault_type, type) | stats count by vault_operation vault_result | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top Vault actors</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | eval vault_actor=coalesce(user, src_user, 'auth.display_name', 'auth.metadata.username', 'auth.entity_id') | stats count by vault_actor | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top source IPs and ports</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | eval source_ip=coalesce(src_ip, src, 'request.remote_address'), source_port=coalesce(src_port, 'request.remote_port') | stats count by source_ip source_port | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Vault paths and objects</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | eval vault_path=coalesce(object, signature, 'request.path', 'request.request_uri') | stats count dc(request_id) as request_ids values(action) as operations values(vault_audit_family) as families values(vault_namespace) as namespaces values(vault_mount_type) as mount_types by vault_path | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">15</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Token lifecycle TTL and renewability context</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ vault_audit_family="token_lifecycle" | table _time host user src_ip action signature vault_token_lifecycle vault_token_type vault_token_ttl vault_token_renewable vault_token_policies vault_token_orphan request_id status result marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Secret access and policy/system changes</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ (vault_audit_family="secret" OR vault_audit_family="policy") | table _time host vault_audit_family vault_namespace vault_mount_type vault_mount_accessor user src_ip action object signature vault_policy_allowed vault_policy_override request_id status result marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Audit-device administration</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ (vault_audit_family="audit_device" OR match(signature, "^sys/audit")) | table _time host user src_ip action signature vault_audit_device request_id status result marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Namespaces and mount context</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | eval namespace=coalesce(vault_namespace, 'request.namespace.path', "root"), mount_type=coalesce(vault_mount_type, 'request.mount_type'), mount_accessor=coalesce(vault_mount_accessor, 'request.mount_accessor') | stats count values(action) as operations values(object) as paths values(user) as actors by namespace mount_type mount_accessor | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">15</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Request/response correlation by request_id</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | stats count values(vault_type) as types values(vault_audit_family) as families values(action) as operations values(object) as paths values(user) as actors values(src_ip) as source_ips values(vault_namespace) as namespaces values(vault_mount_type) as mount_types values(status) as statuses min(_time) as first_seen max(_time) as last_seen by request_id | where isnotnull(request_id) | convert ctime(first_seen) ctime(last_seen) | sort -last_seen | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">15</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Policy denied and override context</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ (vault_audit_family="policy_denied" OR vault_policy_allowed="false" OR vault_policy_override="true") | table _time host user src_ip action object vault_policy_allowed vault_policy_override vault_client_id vault_request_uri vault_wrap_ttl error_detail request_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host vault_audit_family vault_type vault_namespace | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Vault audit events</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="hashicorp:vault:audit" host=$host_tok$ | table _time host vault_audit_family vault_type vault_namespace vault_namespace_id vault_mount_type vault_mount_accessor vault_audit_device vault_token_lifecycle vault_token_type vault_token_ttl vault_token_renewable vault_token_policies vault_token_orphan vault_policy_allowed vault_policy_override vault_client_id vault_request_uri vault_wrap_ttl user src_user src_ip src src_port action signature signature_id request_id status result error_detail object marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

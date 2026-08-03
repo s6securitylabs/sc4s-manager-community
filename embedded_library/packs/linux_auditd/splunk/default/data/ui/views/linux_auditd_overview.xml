@@ -1,0 +1,301 @@
+<form version="1.1" theme="dark">
+  <label>Linux auditd Relay - Overview</label>
+  <description>Fixture-backed Linux auditd one-record-per-line relay overview. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total audit records</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:*" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Process execution records</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype IN ("linux:auditd:syscall","linux:auditd:execve") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Login/auth success-failure records</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype IN ("linux:auditd:user_login","linux:auditd:user_auth") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>SELinux AVC denials</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:avc" host=$host_tok$ result=denied | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Audit daemon lifecycle records</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype IN ("linux:auditd:daemon_start","linux:auditd:daemon_end","linux:auditd:daemon_config","linux:auditd:software_update") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Audit records over time by family</title>
+      <chart>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:*" host=$host_tok$ | eval audit_family=case(sourcetype="linux:auditd:syscall","syscall",sourcetype="linux:auditd:execve","execve",sourcetype="linux:auditd:user_login","user_login",sourcetype="linux:auditd:path","path",sourcetype="linux:auditd:cwd","cwd",sourcetype="linux:auditd:user_auth","user_auth",sourcetype="linux:auditd:config_change","config_change",sourcetype="linux:auditd:avc","avc",sourcetype="linux:auditd:daemon_start","daemon_start",sourcetype="linux:auditd:daemon_end","daemon_end",sourcetype="linux:auditd:daemon_config","daemon_config",sourcetype="linux:auditd:user_cmd","user_cmd",sourcetype="linux:auditd:tty","tty",sourcetype="linux:auditd:software_update","software_update",true(),sourcetype) | timechart count by audit_family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:*" host=$host_tok$ | eval audit_family=case(sourcetype="linux:auditd:syscall","syscall",sourcetype="linux:auditd:execve","execve",sourcetype="linux:auditd:user_login","user_login",sourcetype="linux:auditd:path","path",sourcetype="linux:auditd:cwd","cwd",sourcetype="linux:auditd:user_auth","user_auth",sourcetype="linux:auditd:config_change","config_change",sourcetype="linux:auditd:avc","avc",sourcetype="linux:auditd:daemon_start","daemon_start",sourcetype="linux:auditd:daemon_end","daemon_end",sourcetype="linux:auditd:daemon_config","daemon_config",sourcetype="linux:auditd:user_cmd","user_cmd",sourcetype="linux:auditd:tty","tty",sourcetype="linux:auditd:software_update","software_update",true(),sourcetype) | stats count by audit_family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Audit types and results</title>
+      <chart>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:*" host=$host_tok$ | stats count by audit_type result | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top audit users and IDs</title>
+      <chart>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:*" host=$host_tok$ | eval audit_user=coalesce(user, uid, auid) | stats count by audit_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top login source IPs</title>
+      <chart>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:user_login" host=$host_tok$ src_ip=* | stats count by src_ip terminal result | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Audit serial correlation</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:*" host=$host_tok$ audit_serial=* | stats count values(sourcetype) as sourcetypes values(audit_type) as audit_types values(action) as actions values(result) as results values(process) as processes values(process_path) as process_paths values(file_path) as file_paths values(src_ip) as src_ips values(marker) as markers by audit_serial | sort -count audit_serial | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Process execution triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype IN ("linux:auditd:syscall","linux:auditd:execve") host=$host_tok$ | table _time host sourcetype audit_serial audit_type syscall result auid uid process process_path process_command_line audit_key marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>User login triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:user_login" host=$host_tok$ | table _time host audit_serial audit_type action result auid uid user process_id process_path src_ip src terminal signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Path/CWD watch and file context</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype IN ("linux:auditd:path","linux:auditd:cwd") host=$host_tok$ | table _time host sourcetype audit_serial audit_type action cwd file_path inode file_mode file_owner_uid file_owner_gid name_type audit_key signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Authentication failure and audit configuration changes</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype IN ("linux:auditd:user_auth","linux:auditd:config_change") host=$host_tok$ | table _time host sourcetype audit_serial audit_type action operation result user auid uid src_ip process_path audit_key audit_rule_list marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SELinux AVC denial triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:avc" host=$host_tok$ | table _time host audit_serial audit_type action result process process_id file_path selinux_permission selinux_source_context selinux_target_context selinux_target_class marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Audit daemon lifecycle triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype IN ("linux:auditd:daemon_start","linux:auditd:daemon_end","linux:auditd:daemon_config") host=$host_tok$ | table _time host sourcetype audit_serial audit_type action result daemon_operation daemon_state daemon_version kernel_version audit_format auid uid session_id process_id security_subject signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+
+  <row>
+    <panel>
+      <title>User command, TTY, and software-update audit records</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype IN ("linux:auditd:user_cmd","linux:auditd:tty","linux:auditd:software_update") host=$host_tok$ | table _time host sourcetype audit_serial audit_type action result auid uid process process_id process_path user_command_cwd user_command_hex terminal tty_major tty_minor tty_data_hex software_package software_type key_enforce gpg_result root_dir marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:*" host=$host_tok$ | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Linux audit records</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:auditd:*" host=$host_tok$ | table _time host sourcetype audit_type audit_serial action operation result auid uid user src src_ip process process_id process_path process_command_line cwd file_path audit_key audit_rule_list selinux_permission selinux_source_context selinux_target_context selinux_target_class daemon_operation daemon_state daemon_version kernel_version audit_format user_command_cwd user_command_hex tty_major tty_minor tty_data_hex software_package software_type gpg_result key_enforce root_dir signature signature_id marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

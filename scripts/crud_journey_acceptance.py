@@ -452,15 +452,12 @@ class CrudJourneySuite:
 
     def j12_pack_import_route_apply(self) -> dict[str, Any]:
         evidence: dict[str, Any] = {}
-        self.api("POST", "/api/library/sync", {"source_id": "official"})
-        catalogue = self.api("GET", "/api/library/catalogue?source_id=official&downloadable_only=yes")
+        catalogue = self.api("GET", "/api/library/catalogue?source_id=embedded&downloadable_only=yes")
         entries = catalogue.get("entries") or []
         expect(bool(entries), "library catalogue returned no downloadable entries")
         entry_id = self.args.library_entry or str(entries[0].get("id"))
 
-        download = self.api("POST", "/api/library/download", {"source_id": "official", "entry_id": entry_id})
-        expect(download.get("ok") is True, f"library download failed for {entry_id}")
-        validate = self.api("POST", "/api/library/import/validate", {"source_id": "official", "entry_id": entry_id})
+        validate = self.api("POST", "/api/library/import/validate", {"source_id": "embedded", "entry_id": entry_id})
         expect(validate.get("ok") is True, f"library import validation failed for {entry_id}")
         import_id = str(validate.get("import_id"))
         expect(validate.get("apply_allowed") is True, f"library entry {entry_id} is reference-only; cannot prove apply")
@@ -514,8 +511,8 @@ class CrudJourneySuite:
             "id": "J12-pack-import-source-route-apply",
             "status": "covered",
             "persona": "SC4S operator",
-            "goal": "Import a curated Library pack, stage and apply its runtime artifacts, prove live ingestion, then roll back.",
-            "steps": ["sync library source", "download and verify bundle", "validate import", "stage preview of runtime targets",
+            "goal": "Stage an embedded Library pack, apply its runtime artifacts, prove live ingestion, then roll back.",
+            "steps": ["verify embedded catalogue", "validate local pack", "stage preview of runtime targets",
                       "apply with validation and reload", "confirm indexed marker post-apply", "roll back applied targets"],
             "evidence": evidence,
         }

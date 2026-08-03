@@ -1,0 +1,161 @@
+<form version="1.1" theme="light">
+  <label>Dell SonicWall Firewall Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for Dell SonicWall key=value firewall syslog records. Dashboard presence does not imply replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>netfw</default>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total SonicWall events</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Denied rows</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ (action="*Denied*" OR msg="*Denied*") | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Opened rows</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ (action="*Opened*" OR msg="*Opened*") | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Distinct appliances</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | stats dc(coalesce(dvc,fw,serial,sn,host)) as appliances</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Volume over time</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | timechart count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Action / message distribution</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | eval sonicwall_action=coalesce(action,msg,signature) | top limit=12 sonicwall_action</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top source/destination pairs</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | stats count values(action) as actions values(transport) as transports values(app) as apps values(dest_port) as dest_ports by src dest | sort - count | head 25</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Denied / blocked traffic review</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ (action="*Denied*" OR msg="*Denied*") | table _time host dvc serial src src_port dest dest_port transport app action signature signature_id marker _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Connection activity review</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | table _time host dvc serial id m src src_port dest dest_port transport app action signature marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Appliance, source, and host coverage</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | stats count min(_time) as first_seen max(_time) as last_seen dc(marker) as fixture_markers values(serial) as serials values(dvc) as appliances by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Protocol, application, and destination port coverage</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | eval protocol_app_port=coalesce(transport,"unknown") . " / " . coalesce(app,"unknown") . " / " . coalesce(dest_port,"unknown") | top limit=15 protocol_app_port</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+    <panel>
+      <table>
+        <title>Raw fixture/read-back context</title>
+        <search>
+          <query>index=$index$ sourcetype=dell:sonicwall host=$host_filter$ | table _time index sourcetype source host vendor product dvc serial id m msg src src_port dest dest_port sport dport transport proto app action signature signature_id marker _raw | sort - _time | head 100</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <p><strong>Scope and evidence boundary:</strong> This dashboard is limited to fixture-backed Dell SonicWall key=value firewall rows for connection-open and connection-denied smoke coverage. It does not prove full SonicWall firmware/event-category coverage, exact appliance timezone validation, collector health, or SC4S/Splunk replay/read-back validation.</p>
+      </html>
+    </panel>
+  </row>
+</form>

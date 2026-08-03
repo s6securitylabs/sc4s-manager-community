@@ -1,0 +1,1268 @@
+{
+  "schema_version": "0.1",
+  "id": "oracle_enterprise_apps",
+  "version": "0.1.3",
+  "url": "https://docs.oracle.com/en/applications/",
+  "description": "Oracle enterprise application audit and server telemetry covering PeopleSoft (signon/security audit, app server, process scheduler, integration broker), JD Edwards EnterpriseOne (security server, enterprise server, HTML server, batch jobs), and Siebel CRM (audit trail, component, gateway, web/SWSE logs). Typical forwarding: file-beat relay from application server log directories; DB export for audit tables. Source-shape acquisition is blocked; no relay envelope selected and no validated parser exists yet. Operator action required: provide fixture events before this source can be promoted.",
+  "display_name": "Oracle enterprise application logs",
+  "vendor": "oracle",
+  "product": "enterprise_apps",
+  "default_index": "main",
+  "default_source": "oracle_enterprise_apps",
+  "listener": {
+    "source_id": "ORACLE_ENTERPRISE_APPS",
+    "transport": "tcp",
+    "port": 20107,
+    "env": {
+      "SC4S_LISTEN_ORACLE_ENTERPRISE_APPS_TCP_PORT": "20107",
+      "SOURCE_ALL_SET_APPEND": "ORACLE_ENTERPRISE_APPS"
+    }
+  },
+  "sourcetypes": {
+    "oracle_peoplesoft_signon_audit": "oracle:peoplesoft:signon:audit",
+    "oracle_peoplesoft_security_audit": "oracle:peoplesoft:security:audit",
+    "oracle_peoplesoft_appserver": "oracle:peoplesoft:appserver",
+    "oracle_peoplesoft_process_scheduler": "oracle:peoplesoft:process_scheduler",
+    "oracle_peoplesoft_integration_broker": "oracle:peoplesoft:integration_broker",
+    "oracle_jde_security_server": "oracle:jde:security_server",
+    "oracle_jde_enterprise_server": "oracle:jde:enterprise_server",
+    "oracle_jde_html_server": "oracle:jde:html_server",
+    "oracle_jde_batch_jobs": "oracle:jde:batch_jobs",
+    "oracle_siebel_audit_trail": "oracle:siebel:audit_trail",
+    "oracle_siebel_component_log": "oracle:siebel:component",
+    "oracle_siebel_gateway": "oracle:siebel:gateway",
+    "oracle_siebel_web_swse": "oracle:siebel:web"
+  },
+  "event_families": [
+    {
+      "id": "oracle_peoplesoft_signon_audit",
+      "label": "PeopleSoft signon/authentication audit",
+      "match_engine": "pcre",
+      "match": "SC4S_ORACLE_ENTERPRISE_APPS_SOURCE_SHAPE_REQUIRED_001",
+      "expected_sourcetype": "oracle:peoplesoft:signon:audit",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_peoplesoft_security_audit",
+      "label": "PeopleSoft security audit",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_PEOPLESOFT_SECURITY_AUDIT_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:peoplesoft:security:audit",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_peoplesoft_appserver",
+      "label": "PeopleSoft application server logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_PEOPLESOFT_APPSERVER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:peoplesoft:appserver",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_peoplesoft_process_scheduler",
+      "label": "PeopleSoft process scheduler",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_PEOPLESOFT_PROCESS_SCHEDULER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:peoplesoft:process_scheduler",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_peoplesoft_integration_broker",
+      "label": "PeopleSoft Integration Broker",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_PEOPLESOFT_INTEGRATION_BROKER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:peoplesoft:integration_broker",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_jde_security_server",
+      "label": "JD Edwards Security Server",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_JDE_SECURITY_SERVER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:jde:security_server",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_jde_enterprise_server",
+      "label": "JD Edwards Enterprise Server",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_JDE_ENTERPRISE_SERVER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:jde:enterprise_server",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_jde_html_server",
+      "label": "JD Edwards HTML server",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_JDE_HTML_SERVER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:jde:html_server",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_jde_batch_jobs",
+      "label": "JD Edwards batch jobs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_JDE_BATCH_JOBS_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:jde:batch_jobs",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_siebel_audit_trail",
+      "label": "Siebel Audit Trail",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_SIEBEL_AUDIT_TRAIL_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:siebel:audit_trail",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_siebel_component_log",
+      "label": "Siebel component/Object Manager logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_SIEBEL_COMPONENT_LOG_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:siebel:component",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_siebel_gateway",
+      "label": "Siebel Gateway/name server logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_SIEBEL_GATEWAY_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:siebel:gateway",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_siebel_web_swse",
+      "label": "Siebel SWSE/web logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_ENTERPRISE_APPS_ORACLE_SIEBEL_WEB_SWSE_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:siebel:web",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "event_time": "Preserve event_time when present in the exact source shape; do not invent or derive without evidence.",
+    "user": "Preserve user when present in the exact source shape; do not invent or derive without evidence.",
+    "actor_user": "Preserve actor_user when present in the exact source shape; do not invent or derive without evidence.",
+    "target_user": "Preserve target_user when present in the exact source shape; do not invent or derive without evidence.",
+    "src_ip": "Preserve src_ip when present in the exact source shape; do not invent or derive without evidence.",
+    "session_id": "Preserve session_id when present in the exact source shape; do not invent or derive without evidence.",
+    "application": "Preserve application when present in the exact source shape; do not invent or derive without evidence.",
+    "component": "Preserve component when present in the exact source shape; do not invent or derive without evidence.",
+    "role": "Preserve role when present in the exact source shape; do not invent or derive without evidence.",
+    "permission_list": "Preserve permission_list when present in the exact source shape; do not invent or derive without evidence.",
+    "process_name": "Preserve process_name when present in the exact source shape; do not invent or derive without evidence.",
+    "request_id": "Preserve request_id when present in the exact source shape; do not invent or derive without evidence.",
+    "job_id": "Preserve job_id when present in the exact source shape; do not invent or derive without evidence.",
+    "status": "Preserve status when present in the exact source shape; do not invent or derive without evidence.",
+    "action": "Preserve action when present in the exact source shape; do not invent or derive without evidence.",
+    "result": "Preserve result when present in the exact source shape; do not invent or derive without evidence.",
+    "message": "Preserve message when present in the exact source shape; do not invent or derive without evidence."
+  },
+  "artifacts": {
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md",
+      "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "docs/research/oracle-official-peoplesoft-log-source-shape-evidence-20260703.md"
+    ],
+    "test_events": [
+      "test-events/source_shape_required.txt"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "collector_definition_only",
+      "label": "Collector/source definition only — routing disabled",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20107,
+      "notes": "Placeholder listener metadata required by current schema. No SC4S parser/listener is shipped; Manager/SecHub should keep routing disabled until a concrete relay envelope is selected.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "collector_definition_only",
+  "source_log_version": {
+    "name": "Oracle enterprise application logs",
+    "min": "public Oracle evidence scan 2026-06-08",
+    "max": null,
+    "notes": "Exact product version/source mode required before parser fixtures or deployment routing."
+  },
+  "validation": {
+    "date_validated": "not validated; catalogued 2026-06-08",
+    "validated_by": "Hermes source-definition curation only; no validated/verified status stated",
+    "source_log_version": "Public Oracle evidence scan only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Pack definition only. No parser artifacts, fixtures, SC4S replay, HEC delivery, Splunk read-back, Manager collector read-back, or production-equivalent validation captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "Source-shape then replay/readback gate for Oracle enterprise application logs",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "source_shape_required"
+      ],
+      "event_count": 1,
+      "marker_prefix": "SC4S_ORACLE_ENTERPRISE_APPS_TEST_",
+      "transport": "source_shape_required",
+      "framing": "source_shape_required"
+    },
+    "readback": {
+      "spl": "index=main sechub_fixture_marker=\"SC4S_ORACLE_ENTERPRISE_APPS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product action user src severity status message _raw",
+      "expected_count": 1,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "timestamp",
+        "required fields for selected variant",
+        "no sensitive values exposed"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "source_mapping",
+      "date": "2026-06-08",
+      "summary": "No exact emitted source shape or relay envelope has been selected for this Oracle source-family definition; parser fixtures and replay/read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Documents source-shape/replay blocker; not validation evidence."
+      },
+      {
+        "type": "source_shape_acquisition_plan",
+        "path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+        "summary": "Variant-specific evidence acquisition checklist; not validation evidence."
+      },
+      {
+        "type": "source_shape_reference",
+        "path": "docs/research/oracle-official-peoplesoft-log-source-shape-evidence-20260703.md",
+        "summary": "2026-07-03 Oracle-official PeopleSoft source-shape evidence pass: server-process logs (APPSRV/SCHDLR/ULOG/IB dispatcher) are file-tailable and promotable-with-sample; signon/security audit are DB tables (DB export only); IB gateway HTML blocked; no native syslog. Not validation evidence and no trust promotion."
+      }
+    ]
+  },
+  "test_event_sets": [
+    {
+      "id": "source_shape_required",
+      "label": "Source-shape evidence placeholder marker",
+      "path": "test-events/source_shape_required.txt",
+      "format": "raw",
+      "wire_format": "placeholder_not_product_log",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 1,
+      "events_per_file": "single",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ORACLE_ENTERPRISE_APPS_SOURCE_SHAPE_REQUIRED_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "unknown_requires_validation",
+        "primary_field": "not_applicable_source_shape_required",
+        "primary_timezone": "unknown_requires_validation",
+        "fallback_fields": [],
+        "fallback_time_mode": "unknown_requires_validation",
+        "fallback_timezone": "unknown_requires_validation",
+        "requires_source_timezone_when_fields_missing": [
+          "selected Oracle source variant timezone policy"
+        ],
+        "notes": "Placeholder only; no source timestamp exists until an emitted source shape is selected."
+      },
+      "field_delimiting": {
+        "style": "placeholder_not_product_log",
+        "field_separator": "none",
+        "quote_character": "none",
+        "escape_policy": "not applicable",
+        "notes": "This is not an Oracle event fixture; it prevents empty fixture requirementss while keeping routing disabled."
+      },
+      "expected_families": []
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "preflight",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "source_shape_required",
+      "group": "test_events",
+      "source_path": "test-events/source_shape_required.txt",
+      "target_path": "test-events/source_shape_required.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "source_shape_acquisition_plan",
+      "group": "docs",
+      "source_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "target_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "kind": "evidence_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "peoplesoft_log_source_shape_evidence_20260703",
+      "group": "docs",
+      "source_path": "docs/research/oracle-official-peoplesoft-log-source-shape-evidence-20260703.md",
+      "target_path": "docs/research/oracle-official-peoplesoft-log-source-shape-evidence-20260703.md",
+      "kind": "research_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "docs/evidence/oracle-platform-evidence-scan-20260608.md plus Oracle public product documentation listed there.",
+      "redistribution": "unknown",
+      "sanitisation_status": "unknown",
+      "notes": "No source samples are redistributed; pack definitions record source-shape requirements only."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent with subagent planning",
+      "reviewed_at": "2026-07-03",
+      "notes": "Created from Oracle platform backlog/subagent plan as catalogue-first definitions for Manager/SecHub; routing disabled until source evidence exists. 2026-07-03 Oracle-official PeopleSoft source-shape evidence pass classified each PeopleSoft variant (file-tailable server-process logs vs DB-export audit tables vs blocked gateway HTML) and recorded per-variant blockers; the pack remains catalogue-only because no sanitised sample or live replay/read-back was captured."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "catalogued",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "signature": {
+          "source_fields": [
+            "signature"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "status": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        }
+      },
+      "notes": "Planning note only; no parser/read-back evidence."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "unknown",
+          "notes": "Raw event retention required once source exists."
+        }
+      },
+      "notes": "Source-family planning only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires evidence."
+        }
+      },
+      "notes": "Optional helper mapping only."
+    }
+  },
+  "source_pack_kind": "generic_log_source_definition",
+  "source_categories": [
+    "business_application",
+    "application",
+    "identity",
+    "batch_processing"
+  ],
+  "supported_targets": [
+    "splunk",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "oracle_peoplesoft_signon_audit",
+      "label": "PeopleSoft signon/authentication audit",
+      "description": "PeopleSoft signon/authentication audit: PeopleSoft signon table/export/log.",
+      "default": true,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "PSPTLOGINAUDIT / PSACCESSLOG database tables (DB export)"
+      ],
+      "payload_formats": [
+        "database_table_rows_db_export_only_no_emitted_line"
+      ],
+      "envelopes": [
+        "db_query_export_collector_json_or_csv_not_syslog"
+      ],
+      "event_families": [
+        "oracle_peoplesoft_signon_audit"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "peoplesoft_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: signon audit is DATABASE TABLE data (PSPTLOGINAUDIT columns PT_AUTH_TYPE/OPRID/PT_SIGNON_STATUS/FAILEDLOGINS/LASTSIGNONDTTM; PSACCESSLOG signon/signout by OPRID), not an emitted log line. Collection is DB query export, not syslog.",
+        "PSPTLOGINAUDIT is volatile: a successful login clears the user's failure rows, so streaming-from-table loses failed-login history. Catalogue-only; a chosen collector's export schema (JSON/CSV) and read-back are required before promotion.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_peoplesoft_security_audit",
+      "label": "PeopleSoft security audit",
+      "description": "PeopleSoft security audit: PeopleTools security/user/role audit.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "PSAUDIT / record-level / DB-level trigger audit tables (DB export)"
+      ],
+      "payload_formats": [
+        "database_table_rows_db_export_only_no_emitted_line"
+      ],
+      "envelopes": [
+        "db_query_export_collector_json_or_csv_not_syslog"
+      ],
+      "event_families": [
+        "oracle_peoplesoft_security_audit"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "peoplesoft_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: record/field/DB-level audit is DATABASE TABLE / trigger data (PSAUDIT field audit, custom record-audit tables, trigger-based DB-level audit with AUDIT_* columns and AUDIT_STAMP), not an emitted log line. DB-level (trigger) audit captures changes made outside the PeopleSoft UI, including security-table changes.",
+        "Catalogue-only: DB export only; a chosen collector's export schema and read-back are required before promotion.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_peoplesoft_appserver",
+      "label": "PeopleSoft application server logs",
+      "description": "PeopleSoft application server logs: app server logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "APPSRV.LOG server-process log (file tail)",
+        "Tuxedo ULOG/TUXLOG companion (file tail)"
+      ],
+      "payload_formats": [
+        "peoplesoft_server_process_single_line_iso8601_ms_no_tz_configurable_separator"
+      ],
+      "envelopes": [
+        "file_tail_to_syslog_relay_no_native_syslog"
+      ],
+      "event_families": [
+        "oracle_peoplesoft_appserver"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "peoplesoft_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: documented single-line grammar `ServerProcess.PID (ServiceReqNum) [ISO8601.ms] SRID TOP OperatorID (LogLevel) Message`; timestamp has no UTC offset by default; correlation fields are positional but often `-`; field separator is configurable (LogFieldSeparator).",
+        "Promotable-with-sample: strongest PeopleSoft candidate, but a real sanitised sample is required to lock the separator variant and placeholder behaviour before a parser. File-tail only; no native syslog emitter.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_peoplesoft_process_scheduler",
+      "label": "PeopleSoft process scheduler",
+      "description": "PeopleSoft process scheduler: process scheduler logs/exports.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "SCHDLR.LOG process scheduler server log (file tail)"
+      ],
+      "payload_formats": [
+        "peoplesoft_server_process_single_line_logfence_0_5"
+      ],
+      "envelopes": [
+        "file_tail_to_syslog_relay_no_native_syslog"
+      ],
+      "event_families": [
+        "oracle_peoplesoft_process_scheduler"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "peoplesoft_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: SCHDLR.LOG shares the server-process logging framework (LOGFENCE 0-5, single-line); the full positional grammar is not re-printed, so confirm identical layout with a fixture.",
+        "Authoritative process/report failure status lives in DB tables (PSPRCSRQST etc.), not SCHDLR.LOG; the log is operational/diagnostic. Promotable-with-sample alongside the app-server slice; file-tail only.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_peoplesoft_integration_broker",
+      "label": "PeopleSoft Integration Broker",
+      "description": "PeopleSoft Integration Broker: IB logs/monitoring exports.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "IB dispatcher/handler server logs (file tail)",
+        "IB gateway msgLog/errorLog.html (file)"
+      ],
+      "payload_formats": [
+        "dispatcher_logs_server_process_single_line; gateway_logs_html_grammar_undocumented"
+      ],
+      "envelopes": [
+        "file_tail_dispatcher_yes; gateway_html_not_line_oriented_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_peoplesoft_integration_broker"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight",
+        "source_shape_acquisition_plan",
+        "peoplesoft_log_source_shape_evidence_20260703"
+      ],
+      "known_limitations": [
+        "2026-07-03 evidence: IB dispatcher/handler processes (PSBRKDSP, PSPUBDSP, PSSUBDSP...) log to the standard server-process single-line format and fold into the app-server grammar.",
+        "IB gateway logs are .html files (msgLog.html/errorLog.html), created only when logging occurs, with configurable path/level; the per-entry field grammar is not publicly documented and HTML is not line-oriented, so the gateway sub-source stays blocked pending a captured sample.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_jde_security_server",
+      "label": "JD Edwards Security Server",
+      "description": "JD Edwards Security Server: JDE Security Server/kernel logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "JDE Security Server/kernel logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_jde_security_server"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until auth/security event examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_jde_enterprise_server",
+      "label": "JD Edwards Enterprise Server",
+      "description": "JD Edwards Enterprise Server: Enterprise Server/kernel logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Enterprise Server/kernel logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_jde_enterprise_server"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until component/kernel examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_jde_html_server",
+      "label": "JD Edwards HTML server",
+      "description": "JD Edwards HTML server: HTML server/web-tier logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "HTML server/web-tier logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_jde_html_server"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked; partial coverage only via generic web/WebLogic/OHS if format matches.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_jde_batch_jobs",
+      "label": "JD Edwards batch jobs",
+      "description": "JD Edwards batch jobs: batch/job execution logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "batch/job execution logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_jde_batch_jobs"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until job/export shape and parameter redaction exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_siebel_audit_trail",
+      "label": "Siebel Audit Trail",
+      "description": "Siebel Audit Trail: Siebel audit trail table/export.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Siebel audit trail table/export"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_siebel_audit_trail"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until audit trail shape and sensitive value handling exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_siebel_component_log",
+      "label": "Siebel component/Object Manager logs",
+      "description": "Siebel component/Object Manager logs: component logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "component logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_siebel_component_log"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until component log examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_siebel_gateway",
+      "label": "Siebel Gateway/name server logs",
+      "description": "Siebel Gateway/name server logs: gateway/name server logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "gateway/name server logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_siebel_gateway"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until lifecycle/admin examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_siebel_web_swse",
+      "label": "Siebel SWSE/web logs",
+      "description": "Siebel SWSE/web logs: SWSE/web logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "SWSE/web logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_siebel_web_swse"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked; partial coverage only via generic web pack if format matches.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    }
+  ],
+  "adapters": {
+    "generic": {
+      "manager_visibility": "catalog_only",
+      "routing_enabled": false,
+      "sechub_detection_claims": "none",
+      "notes": "Manager/SecHub should surface this as a source-shape checklist, not a deployable parser."
+    },
+    "cribl": {
+      "default_behavior": "preserve_all_fields",
+      "notes": "Collector serialization and redaction policy required before route design."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "implementation_status": "catalogued_source_definition_source_shape_required",
+  "manager_visibility": "catalog_only",
+  "sechub_detection_claims": "none",
+  "routing_enabled": false,
+  "fixture_policy": "no fixtures until exact source-shape evidence exists",
+  "sc4s_adapter_enabled": false,
+  "known_limitations": [
+    "This is a catalogue/source definition, not a deployable SC4S parser pack.",
+    "No fixtures are shipped because exact emitted source shapes are not yet selected for the variants.",
+    "2026-07-03 PeopleSoft Oracle-official evidence pass (docs/research/oracle-official-peoplesoft-log-source-shape-evidence-20260703.md): the server-process log family (APPSRV.LOG, SCHDLR.LOG, Tuxedo ULOG, IB dispatcher logs) is file-tailable with a documented single-line grammar and is promotable-with-sample; signon/security audit (PSPTLOGINAUDIT/PSACCESSLOG/PSAUDIT) are DATABASE TABLES collected by DB export, not logs; IB gateway HTML logs stay blocked. PeopleSoft has no native syslog emitter.",
+    "PeopleSoft stays inside this pack (no standalone pack); PIA web-tier logs are covered by packs/oracle_weblogic and packs/oracle_ohs. JDE and Siebel follow the same file-tail-ops-log vs DB-table-audit pattern and remain catalogue-only.",
+    "Routing stays disabled because no sanitised sample or live SC4S TEST -> HEC -> Splunk TEST read-back was captured; documented shape evidence alone does not promote trust.",
+    "Trust remains unverified and quality remains catalogued; do not promote from CI or pack presence.",
+    "Oracle logs/exports may contain sensitive users, SQL text/binds, business data, OCIDs, hostnames, request parameters, or tenant identifiers; sample capture requires sanitisation."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "not applicable; no fixtures until source shape exists",
+    "tested_artifact_hashes": {
+      "packs/oracle_enterprise_apps/README.md": "sha256:b6516d3700e5f62672e43584f9b4413e32ef6230e51dd18d64fc6409182de83e",
+      "packs/oracle_enterprise_apps/docs/research/oracle-official-peoplesoft-log-source-shape-evidence-20260703.md": "sha256:fa53680aaeece755311c2b7fe29480846cbb39017f67a8c75655ce1c8beb268d",
+      "packs/oracle_enterprise_apps/test-events/source_shape_required.txt": "sha256:b7cbd5b785bc6ae3ca8c2db4e6d4f3d207b9dd8dc3bd6600880483c6408f3d2b",
+      "packs/oracle_enterprise_apps/validation/preflight-2026-06-08.md": "sha256:458013a6a0a531b07c8dc539e00842cfbd5bca6591ee8dbeab7ce3ea3b2219f7",
+      "packs/oracle_enterprise_apps/validation/source-shape-acquisition-plan-2026-06-20.md": "sha256:dccd742183b53adc163adf593aa61cc3c9a3e610d2e1bc56bcf32df0b6673996"
+    },
+    "tested_commit": "not_committed_yet",
+    "last_updated": "2026-07-08",
+    "last_tested": "2026-07-08 local CI pending final commit"
+  },
+  "source_delivery": {
+    "mode": "catalogue_definition_only",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "unknown_placeholder_raw",
+    "supported_transport_refs": [
+      "collector_definition_only"
+    ],
+    "notes": "Catalogue/source-definition only; no deployable SC4S parser/listener is shipped.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  }
+}

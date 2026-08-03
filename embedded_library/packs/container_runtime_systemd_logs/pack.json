@@ -1,0 +1,1306 @@
+{
+  "schema_version": "0.1",
+  "id": "container_runtime_systemd_logs",
+  "version": "0.1.3",
+  "url": "https://docs.docker.com/engine/logging/drivers/json-file/",
+  "description": "Curated SecHub Resources SC4S pack for Docker/container runtime logs and systemd/journald service relay records.",
+  "display_name": "Container runtime and systemd service logs",
+  "vendor": "container_runtime",
+  "product": "docker_cri_systemd_logs",
+  "default_index": "osnix",
+  "default_source": "container_runtime_systemd_logs",
+  "listener": {
+    "source_id": "CONTAINER_RUNTIME_SYSTEMD",
+    "transport": "tcp",
+    "port": 20080,
+    "env": {
+      "SC4S_LISTEN_CONTAINER_RUNTIME_SYSTEMD_TCP_PORT": "20080",
+      "SOURCE_ALL_SET_APPEND": "CONTAINER_RUNTIME_SYSTEMD"
+    }
+  },
+  "sourcetypes": {
+    "docker_json_stdout": "docker:container:json_file",
+    "docker_json_stderr": "docker:container:json_file",
+    "cri_stdout": "container:cri:runtime",
+    "cri_stderr": "container:cri:runtime",
+    "cri_partial": "container:cri:runtime",
+    "docker_engine_event": "docker:engine:event",
+    "journald_docker_service": "systemd:journald:service",
+    "journald_service": "systemd:journald:service",
+    "docker_journald_container": "docker:journald:container"
+  },
+  "event_families": [
+    {
+      "id": "docker_json_stdout",
+      "label": "Docker json-file stdout record",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDOUT_",
+      "expected_sourcetype": "docker:container:json_file",
+      "primary_id_field": "marker_family",
+      "required_fields": [
+        "time",
+        "stream",
+        "log"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "docker_json_stderr",
+      "label": "Docker json-file stderr record",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDERR_",
+      "expected_sourcetype": "docker:container:json_file",
+      "primary_id_field": "marker_family",
+      "required_fields": [
+        "time",
+        "stream",
+        "log"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "cri_stdout",
+      "label": "CRI stdout full-line record",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDOUT_",
+      "expected_sourcetype": "container:cri:runtime",
+      "primary_id_field": "marker_family",
+      "required_fields": [
+        "cri_time",
+        "stream",
+        "cri_flag",
+        "message"
+      ],
+      "timestamp_fields": [
+        "cri_time"
+      ]
+    },
+    {
+      "id": "cri_stderr",
+      "label": "CRI stderr full-line record",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDERR_",
+      "expected_sourcetype": "container:cri:runtime",
+      "primary_id_field": "marker_family",
+      "required_fields": [
+        "cri_time",
+        "stream",
+        "cri_flag",
+        "message"
+      ],
+      "timestamp_fields": [
+        "cri_time"
+      ]
+    },
+    {
+      "id": "cri_partial",
+      "label": "CRI partial-line record",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_PARTIAL_",
+      "expected_sourcetype": "container:cri:runtime",
+      "primary_id_field": "marker_family",
+      "required_fields": [
+        "cri_time",
+        "stream",
+        "cri_flag",
+        "message"
+      ],
+      "timestamp_fields": [
+        "cri_time"
+      ]
+    },
+    {
+      "id": "docker_engine_event",
+      "label": "Docker Engine lifecycle event JSON",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_EVENT_",
+      "expected_sourcetype": "docker:engine:event",
+      "primary_id_field": "Actor.ID",
+      "required_fields": [
+        "Type",
+        "Action",
+        "Actor.ID"
+      ],
+      "timestamp_fields": [
+        "timeNano",
+        "time"
+      ]
+    },
+    {
+      "id": "journald_docker_service",
+      "label": "Docker daemon systemd/journald service record",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_DOCKER_",
+      "expected_sourcetype": "systemd:journald:service",
+      "primary_id_field": "_SYSTEMD_UNIT",
+      "required_fields": [
+        "MESSAGE",
+        "_SYSTEMD_UNIT",
+        "SYSLOG_IDENTIFIER"
+      ],
+      "timestamp_fields": [
+        "__REALTIME_TIMESTAMP"
+      ]
+    },
+    {
+      "id": "journald_service",
+      "label": "Generic systemd/journald service stdout record",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_SERVICE_",
+      "expected_sourcetype": "systemd:journald:service",
+      "primary_id_field": "_SYSTEMD_UNIT",
+      "required_fields": [
+        "MESSAGE",
+        "_SYSTEMD_UNIT",
+        "SYSLOG_IDENTIFIER"
+      ],
+      "timestamp_fields": [
+        "__REALTIME_TIMESTAMP"
+      ]
+    },
+    {
+      "id": "docker_journald_container",
+      "label": "Docker journald-driver container metadata record",
+      "match_engine": "pcre",
+      "match": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JOURNALD_CONTAINER_",
+      "expected_sourcetype": "docker:journald:container",
+      "primary_id_field": "CONTAINER_ID",
+      "required_fields": [
+        "MESSAGE",
+        "CONTAINER_ID",
+        "CONTAINER_NAME",
+        "IMAGE_NAME"
+      ],
+      "timestamp_fields": [
+        "__REALTIME_TIMESTAMP"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "docker, kubernetes, or systemd depending on routed source mode",
+    "product": "json_file_container_logs, cri_container_logs, engine_events, journald_service_logs, or journald_container_logs",
+    "vendor_product": "source-mode specific vendor/product label",
+    "stream": "stdout/stderr transport stream from Docker/CRI/journald records",
+    "message": "application/service message body where preserved by source mode",
+    "container_log": "raw Docker json-file log payload",
+    "cri_time": "CRI line timestamp",
+    "cri_flag": "CRI full/partial line flag; F marks complete log records and P marks partial fragments preserved without reassembly.",
+    "event_type": "Docker Engine event Type",
+    "action": "raw stream/action/transport-derived analyst action field",
+    "container_id": "Docker container identifier where present",
+    "container_name": "Docker journald container name where present",
+    "image_name": "container image name where present",
+    "host": "journald host where present",
+    "service_unit": "systemd unit name from _SYSTEMD_UNIT",
+    "program": "SYSLOG_IDENTIFIER or service program token",
+    "severity": "journald PRIORITY numeric token where present",
+    "signature": "source-mode grouping such as event Type/Action, unit, image, or stream flag",
+    "signature_id": "synthetic marker family for fixture read-back",
+    "marker_family": "synthetic fixture marker family extracted from SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_* markers"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-container_runtime_systemd_logs.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    ],
+    "test_events": [
+      "test-events/container_runtime_systemd_logs_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20080.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/container_runtime_systemd_logs_reduction_candidates.csv",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / collector relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20080,
+      "notes": "Dedicated TCP listener for one container/runtime/systemd record per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Docker json-file, Docker Engine events, Kubernetes/CRI runtime logs, and systemd/journald JSON records",
+    "min": "public docs scanned 2026-06-08",
+    "max": null,
+    "notes": "Grounded in Docker, Kubernetes/CRI, systemd/journald, and parser-ecosystem evidence; exact deployment envelope must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-08",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Public Docker/Kubernetes/systemd docs and parser ecosystem evidence; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "Splunk Enterprise 9.3.2 local TEST dashboard harness; direct HEC fixture replay only",
+    "evidence": "Local Splunk TEST dashboard QA passed with safe pack fixtures indexed by direct HEC. Fixture readback returned 9/9 rows from osnix, all 13 dashboard panel exports returned rows with zero Splunk errors, and visual QA found no warning/error triangles. Full SC4S listener/container relay remains separate source-path validation."
+  },
+  "validation_harness": {
+    "status": "passed",
+    "required_for_quality_promotion": false,
+    "harness": "Supplemental Splunk TEST direct-HEC fixture replay/readback and dashboard panel-export harness for container runtime/systemd dashboard QA; not full SC4S listener-path promotion evidence",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "container_runtime_systemd_mixed_records"
+      ],
+      "event_count": 9,
+      "marker_prefix": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20080.sh"
+    },
+    "readback": {
+      "spl": "index=osnix sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product stream cri_flag event_type action container_id container_name image_name service_unit program severity message signature signature_id marker_family _raw",
+      "expected_count": 9,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "source-mode separation",
+        "container/service identity fields",
+        "eventtypes/tags",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "passed",
+      "date": "2026-06-26T06:22:19Z",
+      "summary": "Direct HEC fixture replay into local Splunk TEST passed: 9/9 fixture rows indexed in osnix, required readback fields present, 13/13 dashboard panel exports returned rows with zero Splunk errors, and refreshed screenshot passed visual QA with no warning/error triangles or no-results panels.",
+      "evidence_path": "validation/sechub_container_runtime_systemd_logs_runner.json",
+      "sc4s_listener_path": "not exercised in this supplemental dashboard QA run"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      },
+      {
+        "type": "splunk_test_dashboard_qa",
+        "path": "validation/sechub_container_runtime_systemd_logs_runner.json",
+        "summary": "Local Splunk TEST direct-HEC dashboard QA passed on 2026-06-26: fixture indexing, readback, panel exports, screenshot capture, and visual QA all green."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20080,
+          "protocol": "line_delimited_syslog_raw",
+          "purpose": "Dedicated container runtime/systemd relay listener"
+        }
+      ],
+      "required_indexes": [
+        "osnix"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to osnix",
+        "Search role can read osnix"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "container_runtime_systemd_logs_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/container_runtime_systemd_logs/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/container_runtime_systemd_logs/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/container_runtime_systemd_logs/compose.yaml",
+      "compose_project": "sechub-container-runtime-systemd-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "osnix index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/container_runtime_systemd_logs/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/container_runtime_systemd_logs/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/container_runtime_systemd_logs/scripts/send_tcp_20080.sh 127.0.0.1 20080",
+        "splunk_summary_readback": "index=osnix sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=osnix sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product stream cri_flag event_type action container_id container_name image_name service_unit program severity message signature signature_id marker_family _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "osnix",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/container_runtime_systemd_logs/splunk -> /opt/splunk/etc/apps/sechub_container_runtime_systemd_logs:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20080,
+          "host_port_env": "SC4S_CONTAINER_RUNTIME_SYSTEMD_PORT",
+          "source_id": "CONTAINER_RUNTIME_SYSTEMD"
+        },
+        "parser_mount": "packs/container_runtime_systemd_logs/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "container_runtime_systemd_logs",
+          "source_shape": "mixed_json_cri_journald_line_relay",
+          "event_families": [
+            "docker_json_stdout",
+            "docker_json_stderr",
+            "cri_stdout",
+            "cri_stderr",
+            "cri_partial",
+            "docker_engine_event",
+            "journald_docker_service",
+            "journald_service",
+            "docker_journald_container"
+          ],
+          "expected_sourcetypes": [
+            "docker:container:json_file",
+            "container:cri:runtime",
+            "docker:engine:event",
+            "systemd:journald:service",
+            "docker:journald:container"
+          ],
+          "data_structures": [
+            "Docker json-file stdout/stderr JSON objects",
+            "CRI one-line runtime records including P partial fragments preserved as records",
+            "Docker Engine event JSON and journald/systemd service/container metadata JSON objects"
+          ],
+          "markers": [
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDOUT_001",
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDERR_002",
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDOUT_003",
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDERR_004",
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_PARTIAL_009",
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_EVENT_005",
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_DOCKER_006",
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_SERVICE_007",
+            "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JOURNALD_CONTAINER_008"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Live Docker/containerd/Kubernetes/systemd output, collector wrapper enrichment, Docker syslog-driver serialization, Docker journald-driver complete export shape, and daemon-message text variants are not proven by this harness",
+        "CRI partial records are replayed as individual fixture records; multiline/stitching behavior requires a runtime/collector testbed",
+        "Field validation with retained real product/source-version telemetry requires sanctioned samples or a non-production runtime host feed"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "container_runtime_systemd_mixed_records",
+      "label": "Container runtime and systemd synthetic-equivalent fixtures",
+      "path": "test-events/container_runtime_systemd_logs_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "mixed_container_runtime_and_journald_payloads",
+      "envelope": "none",
+      "serialization": "json_lines_and_raw_cri_lines",
+      "event_count": 9,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDOUT_001",
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDERR_002",
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDOUT_003",
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDERR_004",
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_PARTIAL_009",
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_EVENT_005",
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_DOCKER_006",
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_SERVICE_007",
+        "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JOURNALD_CONTAINER_008"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "time, CRI timestamp, or __REALTIME_TIMESTAMP by source mode",
+        "primary_timezone": "UTC/RFC3339Nano for Docker/CRI; epoch microseconds for journald synthetic fixtures",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or receiver timezone policy"
+        ],
+        "notes": "Production journald/collector timestamp handling must be validated for the specific export mode before promotion."
+      },
+      "field_delimiting": {
+        "style": "mixed_json_and_cri_text",
+        "field_separator": "JSON keys for Docker/journald/event records; spaces for CRI timestamp stream flag message fields",
+        "quote_character": "JSON double quote where applicable",
+        "escape_policy": "Synthetic values avoid embedded control characters beyond Docker json-file newline escaping.",
+        "notes": "Mixed source modes are intentionally separated by sourcetype/family rather than treated as one parser shape. CRI P-flag partial records are preserved as individual records; this pack does not reassemble multi-fragment messages."
+      },
+      "expected_families": [
+        "docker_json_stdout",
+        "docker_json_stderr",
+        "cri_stdout",
+        "cri_stderr",
+        "cri_partial",
+        "docker_engine_event",
+        "journald_docker_service",
+        "journald_service",
+        "docker_journald_container"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-container_runtime_systemd_logs.conf",
+      "target_path": "local/config/app_parsers/syslog/app-container_runtime_systemd_logs.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/container_runtime_systemd_logs.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml",
+      "target_path": "splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/container_runtime_systemd_logs_test_events.txt",
+      "target_path": "test-events/container_runtime_systemd_logs_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20080.sh",
+      "target_path": "scripts/send_tcp_20080.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/container_runtime_systemd_logs_reduction_candidates.csv",
+      "target_path": "docs/container_runtime_systemd_logs_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "docs/evidence/docker-container-systemd-evidence-scan-20260608.md; Docker json-file and journald logging driver docs, Docker Engine API event docs, Kubernetes CRI log-line documentation, systemd journal field documentation, and Splunk/Elastic/Fluent Bit/Vector parser ecosystem evidence.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use documentation-shaped rows with synthetic IDs, hostnames, images, and messages; no customer/container logs or secrets are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-08",
+      "notes": "Created from Milestone 8 next build queue after evidence scan made conservative Docker/container runtime/systemd source modes actionable."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "vendor": {
+          "source_fields": [
+            "vendor"
+          ],
+          "status": "partial",
+          "notes": "Source-mode vendor label."
+        },
+        "product": {
+          "source_fields": [
+            "product"
+          ],
+          "status": "partial",
+          "notes": "Source-mode product label."
+        },
+        "action": {
+          "source_fields": [
+            "action",
+            "stream",
+            "Action",
+            "_TRANSPORT"
+          ],
+          "status": "partial",
+          "notes": "Raw stream/action/transport-derived value; not a complete CIM action taxonomy."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "event_type",
+            "cri_flag",
+            "service_unit",
+            "image_name"
+          ],
+          "status": "partial",
+          "notes": "Source-mode grouping for analyst discovery."
+        },
+        "severity": {
+          "source_fields": [
+            "severity",
+            "PRIORITY"
+          ],
+          "status": "partial",
+          "notes": "journald numeric priority where present."
+        },
+        "host": {
+          "source_fields": [
+            "host",
+            "_HOSTNAME"
+          ],
+          "status": "partial",
+          "notes": "Journal host where present."
+        },
+        "process": {
+          "source_fields": [
+            "program",
+            "SYSLOG_IDENTIFIER"
+          ],
+          "status": "partial",
+          "notes": "Service/program identifier for journald records."
+        }
+      },
+      "notes": "Partial endpoint/infrastructure mapping; not complete Splunk CIM compliance."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "activity_name": {
+          "source_fields": [
+            "action",
+            "Action",
+            "stream",
+            "cri_flag"
+          ],
+          "status": "partial",
+          "notes": "Raw source-mode action or stream token."
+        },
+        "container.uid": {
+          "source_fields": [
+            "container_id",
+            "CONTAINER_ID",
+            "Actor.ID"
+          ],
+          "status": "partial",
+          "notes": "Container identifier where source mode exposes one."
+        },
+        "container.name": {
+          "source_fields": [
+            "container_name",
+            "CONTAINER_NAME"
+          ],
+          "status": "partial",
+          "notes": "Container name where present."
+        },
+        "container.image.name": {
+          "source_fields": [
+            "image_name",
+            "IMAGE_NAME"
+          ],
+          "status": "partial",
+          "notes": "Container image name where present."
+        },
+        "device.hostname": {
+          "source_fields": [
+            "host",
+            "_HOSTNAME"
+          ],
+          "status": "partial",
+          "notes": "Journal host field."
+        },
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "partial",
+          "notes": "Raw payload retained."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action",
+            "Action",
+            "stream",
+            "cri_flag"
+          ],
+          "status": "partial",
+          "notes": "Raw action/stream token."
+        },
+        "event.code": {
+          "source_fields": [
+            "signature_id",
+            "marker_family"
+          ],
+          "status": "partial",
+          "notes": "Synthetic marker family for fixture checks only."
+        },
+        "container.id": {
+          "source_fields": [
+            "container_id",
+            "CONTAINER_ID",
+            "Actor.ID"
+          ],
+          "status": "partial",
+          "notes": "Container identifier where present."
+        },
+        "container.name": {
+          "source_fields": [
+            "container_name",
+            "CONTAINER_NAME"
+          ],
+          "status": "partial",
+          "notes": "Container name where present."
+        },
+        "container.image.name": {
+          "source_fields": [
+            "image_name",
+            "IMAGE_NAME"
+          ],
+          "status": "partial",
+          "notes": "Image name where present."
+        },
+        "host.hostname": {
+          "source_fields": [
+            "host",
+            "_HOSTNAME"
+          ],
+          "status": "partial",
+          "notes": "Journal host."
+        },
+        "process.name": {
+          "source_fields": [
+            "program",
+            "SYSLOG_IDENTIFIER"
+          ],
+          "status": "partial",
+          "notes": "Service/program identifier."
+        },
+        "message": {
+          "source_fields": [
+            "message",
+            "MESSAGE",
+            "container_log"
+          ],
+          "status": "partial",
+          "notes": "Message body where preserved."
+        }
+      },
+      "notes": "ECS mapping is partial field-name guidance only."
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "operating_system",
+    "containers",
+    "infrastructure",
+    "application_logs"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "elastic",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "docker_json_file",
+      "label": "Docker json-file container logs",
+      "description": "Docker json-file JSON records with documented log/stream/time keys.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "docker_json_file",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless"
+      ],
+      "event_families": [
+        "docker_json_stdout",
+        "docker_json_stderr"
+      ],
+      "test_event_sets": [
+        "container_runtime_systemd_mixed_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "elastic",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Docker relay replay/read-back captured.",
+        "Native json-file records do not always include collector-added container metadata."
+      ]
+    },
+    {
+      "id": "cri_runtime",
+      "label": "CRI/container runtime log lines",
+      "description": "Kubernetes/CRI log-line records using timestamp, stream, flag, and message fields.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "cri_log_file",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless"
+      ],
+      "event_families": [
+        "cri_stdout",
+        "cri_stderr",
+        "cri_partial"
+      ],
+      "test_event_sets": [
+        "container_runtime_systemd_mixed_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "elastic",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Partial-message records are preserved with the CRI P flag, but stitching/reassembly and Kubernetes metadata enrichment are deferred."
+      ]
+    },
+    {
+      "id": "docker_engine_events",
+      "label": "Docker Engine event stream JSON",
+      "description": "Narrow Docker Engine event records preserving Type, Action, Actor, scope, and time fields.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "docker_engine_events",
+        "api_or_collector_json_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless"
+      ],
+      "event_families": [
+        "docker_engine_event"
+      ],
+      "test_event_sets": [
+        "container_runtime_systemd_mixed_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Only one narrow lifecycle event shape is fixture-backed initially."
+      ]
+    },
+    {
+      "id": "journald_services",
+      "label": "systemd/journald service JSON",
+      "description": "Field-level journald JSON records for Docker daemon and generic systemd service messages.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "journald_json",
+        "systemd_service_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless"
+      ],
+      "event_families": [
+        "journald_docker_service",
+        "journald_service"
+      ],
+      "test_event_sets": [
+        "container_runtime_systemd_mixed_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "journalctl field presence/order varies by host, systemd version, and collector."
+      ]
+    },
+    {
+      "id": "docker_journald_driver",
+      "label": "Docker journald-driver container metadata",
+      "description": "Journald-style JSON records carrying Docker-documented CONTAINER_* and IMAGE_NAME metadata fields.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "docker_journald_driver",
+        "journald_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless"
+      ],
+      "event_families": [
+        "docker_journald_container"
+      ],
+      "test_event_sets": [
+        "container_runtime_systemd_mixed_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Docker documents metadata fields but not a single full journal export shape."
+      ]
+    },
+    {
+      "id": "docker_syslog_driver_future",
+      "label": "Docker syslog-driver future variant",
+      "description": "Docker syslog-driver exact emitted serialization is deferred until runtime capture exists.",
+      "default": false,
+      "evidence_status": "unknown",
+      "source_modes": [
+        "docker_syslog_driver"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "ietf_rfc5424",
+        "bsd_rfc3164_or_headerless"
+      ],
+      "event_families": [],
+      "test_event_sets": [],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards"
+      ],
+      "artifact_references": [],
+      "known_limitations": [
+        "No syslog-driver fixtures are shipped in this initial pack."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/container_runtime_systemd_logs_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "stream",
+        "event_type",
+        "action",
+        "container_id",
+        "container_name",
+        "image_name",
+        "service_unit",
+        "program",
+        "message",
+        "marker_family"
+      ],
+      "notes": "Preserve container/service identity and raw event context by default. Any suppression must be validated with replay/read-back."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Docker/containerd/systemd relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real host/container exports.",
+    "Docker syslog-driver exact serialization, Docker journald-driver complete export shape, daemon-message text, CRI partial-line stitching/reassembly beyond preserving the P flag, Kubernetes pod metadata enrichment, Docker Compose labels, CRI-O variants, and collector wrappers remain deferred.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic container runtime/systemd intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props for Docker json-file, CRI, Engine events, and journald-style records. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-container_runtime_systemd_logs.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard container/runtime analyst knowledge",
+      "description": "Adds eventtypes/tags for container logs, CRI records, Engine events, journald services, and error discovery. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed container/runtime reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/container_runtime_systemd_logs_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt": "sha256:d353e2bc0ce07da445c5890c9dc1a0e64b60c85f6edc923a8c64fb6e649f4d9d",
+      "packs/container_runtime_systemd_logs/sc4s/env.example": "sha256:86b33edf8b34ba371cd3f37b159420899d42ded46291f796b730c08277ec4df4",
+      "packs/container_runtime_systemd_logs/sc4s/app_parsers/syslog/app-container_runtime_systemd_logs.conf": "sha256:a3be0bf5625ec1c8bad745ffa830c5025707d1ec860335faf69ce6b87cc4eedf",
+      "packs/container_runtime_systemd_logs/splunk/default/props.conf": "sha256:2aa0416369070a44ad1113f697319e08c6320fccb4b6c1649dffa35300a1f5c0",
+      "packs/container_runtime_systemd_logs/splunk/default/transforms.conf": "sha256:85defa691f25b3a5dad292019a6ce72ba474de9027aa99c302ad17ada6dceeda",
+      "packs/container_runtime_systemd_logs/splunk/default/eventtypes.conf": "sha256:366f5b07dd9086edb9c1edbf3f06a1c096e8c072dc3dab7a6884c13c6e721e9d",
+      "packs/container_runtime_systemd_logs/splunk/default/tags.conf": "sha256:5979c2c045874d04d8be531cf7bff9138df2fae7130d42eca82f91f20b6c76a1",
+      "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml": "sha256:10d3ea9c96984b602aee465e877d65598b5bd72b42861b813f24916175f38023",
+      "packs/container_runtime_systemd_logs/docs/container_runtime_systemd_logs_reduction_candidates.csv": "sha256:33a95ebb7dbaa148f3cce87b51fa20c0b8bbeddc49487e9888fd454f0aa2513e",
+      "packs/container_runtime_systemd_logs/scripts/send_tcp_20080.sh": "sha256:8020ae7aac07334b9caea850ebcb2ede74412998384267ab1e8c7d9f92cb33e2",
+      "packs/container_runtime_systemd_logs/validation/preflight-2026-06-08.md": "sha256:66828c453198a6963ddb389a10058a242e18d252512816725db9f44ddc81768b",
+      "packs/container_runtime_systemd_logs/README.md": "sha256:4f0d56da127191ac7c4f7d9a1956515a4a05105bb71fba50041cb4fb5f7fcd8a",
+      "packs/container_runtime_systemd_logs/scripts/e2e_docker_compose.sh": "sha256:9e1cd90cf8a46e4da143b1e49dfcb1ea55b57ad2b8b97c62fd1cdf3babffecbf",
+      "packs/container_runtime_systemd_logs/dashboards/screenshots/container-runtime-systemd-logs-overview-splunk-test.png": "sha256:c1e057bedcd4b0a997842680026f992e9b64576ae10b23d8adb2985488a6df97"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-26",
+    "last_tested": "2026-06-26T06:22:19Z"
+  },
+  "source_delivery": {
+    "mode": "file_journald_log_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "mixed_raw_json_cri_journald",
+    "supported_transport_refs": [
+      "tcp_syslog"
+    ],
+    "notes": "Container/journald files or streams need an external tailer/collector relay into SC4S.",
+    "validation_status": "splunk_test_replay_readback_passed_for_fixture_scope; field validation requires real product/source-version evidence"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "container_runtime_systemd_logs_overview_splunk_test",
+      "title": "Container runtime and systemd service logs — dashboard example",
+      "source_path": "dashboards/screenshots/container-runtime-systemd-logs-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Container runtime and systemd service logs dashboard populated with safe pack fixture events.",
+      "provenance": "Captured from a disposable local Splunk TEST UI at 2026-06-26T06:20:30Z after loading current dashboard XML, installing current pack Splunk knowledge, indexing 9 safe pack fixtures by direct HEC, and passing fixture readback plus 13/13 dashboard panel export gates. No customer data or production Splunk data is present. Documentation example only; not full SC4S listener-path validation.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview",
+      "sha256": "sha256:c1e057bedcd4b0a997842680026f992e9b64576ae10b23d8adb2985488a6df97"
+    }
+  ]
+}

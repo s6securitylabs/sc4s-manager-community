@@ -1,0 +1,6 @@
+candidate_type,scope,retain_by_default,optional_candidate,requires_replay_readback,rollback_guidance,notes
+successful_statement_noise,High-volume successful general-query or statement-duration records,yes,yes,yes,Disable collector filter or enhanced rule and replay marked fixtures plus production sample window,"Retain auth/admin/error and slow-query context; do not drop failures."
+slow_query_payload_redaction,Long SQL statement bodies or literals in slow-query/general logs,yes,yes,yes,Restore full payload capture and re-run readback before incident use,"Redaction may remove indicators, table/object names, or injected payload context."
+operational_notice_noise,Repeated startup/checkpoint/heartbeat notices,yes,yes,yes,Disable trimming rule and confirm notice/error counts,"PostgreSQL/MySQL operational notices can explain outage windows."
+client_identity_fields,User, database, host, client IP, thread/process/session IDs,yes,no,yes,Not applicable,"Security-critical for auth/admin attribution and correlation."
+raw_message_context,Original log message text and marker/source context,yes,no,yes,Not applicable,"Needed to challenge parser decisions and reconstruct SQL/security events."

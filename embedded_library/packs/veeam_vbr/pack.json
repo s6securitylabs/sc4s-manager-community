@@ -1,0 +1,834 @@
+{
+  "schema_version": "0.1",
+  "id": "veeam_vbr",
+  "version": "0.1.3",
+  "url": "https://helpcenter.veeam.com/archive/backup/120/vsphere/syslog_servers_hiw.html",
+  "description": "Curated SecHub Resources SC4S pack for Veeam Backup & Replication syslog events. Extends the upstream SC4S Veeam_MP routing stub with conservative metadata, fixtures, Splunk knowledge, and explicit validation gaps grounded in public Veeam and Exabeam parser evidence.",
+  "display_name": "Veeam Backup & Replication",
+  "vendor": "veeam",
+  "product": "backup-replication",
+  "default_index": "infraops",
+  "default_source": "veeam_vbr",
+  "listener": {
+    "source_id": "VEEAM_VBR",
+    "transport": "tls",
+    "port": 20040,
+    "env": {
+      "SC4S_LISTEN_VEEAM_VBR_TLS_PORT": "20040",
+      "SOURCE_ALL_SET_APPEND": "VEEAM_VBR"
+    }
+  },
+  "sourcetypes": {
+    "vbr_syslog": "veeam:vbr:syslog"
+  },
+  "event_families": [
+    {
+      "id": "vbr_syslog",
+      "label": "Veeam Backup & Replication job/activity syslog events",
+      "match_engine": "pcre",
+      "match": "Veeam_MP.*\\[categoryId=[0-9]+ instanceId=[0-9]+.*Description=\"",
+      "expected_sourcetype": "veeam:vbr:syslog",
+      "primary_id_field": "instanceId",
+      "required_fields": [
+        "categoryId",
+        "instanceId",
+        "Description"
+      ],
+      "timestamp_fields": [
+        "rfc5424_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Veeam",
+    "product": "Backup & Replication",
+    "vendor_product": "veeam:backup-replication",
+    "action": "ActivityType or Description",
+    "signature": "Description",
+    "signature_id": "instanceId",
+    "session_id": "JobSessionID or TaskSessionID",
+    "user": "UserName",
+    "src_host": "SourceHostName",
+    "job_id": "Veeam JobID structured-data value where present",
+    "job_type": "Veeam JobType structured-data value where present",
+    "job_description": "Veeam JobDescription structured-data value where present",
+    "platform": "Veeam Platform structured-data value where present",
+    "veeam_flags": "Veeam Flags structured-data value where present",
+    "veeam_event_version": "Veeam Version structured-data value where present"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-veeam_vbr.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/veeam_vbr_overview.xml"
+    ],
+    "test_events": [
+      "test-events/veeam_vbr_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tls_20040.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425",
+      "transport": "tls",
+      "recommended": true,
+      "default_port": 20040,
+      "notes": "Recommended production transport; Veeam documents TLS and optional octet-counted framing.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "raw"
+    },
+    {
+      "id": "tcp_rfc5424",
+      "label": "TCP syslog RFC5424",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Supported by Veeam; use only when TLS is unavailable or terminated elsewhere.",
+      "syslog_protocol": "rfc5424_over_tcp",
+      "framing": "line_delimited",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "raw"
+    },
+    {
+      "id": "udp_rfc5424",
+      "label": "UDP syslog",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Veeam supports UDP, but it should be treated as lab/legacy due to event loss risk.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "tls_rfc5425",
+  "source_log_version": {
+    "name": "Veeam Backup & Replication syslog integration",
+    "min": "12.0",
+    "max": null,
+    "notes": "Official archived 12.x documentation current for build 12.3.2.4465 provides the event example and field table. Additional real-version replay evidence is required before validated promotion."
+  },
+  "validation": {
+    "date_validated": "not lab validated; curated 2026-06-05",
+    "validated_by": "Hermes autonomous curation (documentation-grounded only)",
+    "source_log_version": "Veeam Backup & Replication 12.x official syslog documentation plus public parser schema evidence; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Pack artifacts and fixtures are curated from public Veeam Help Center syslog documentation, upstream SC4S veeam_vbr parser/docs inventory, and ExabeamLabs public Veeam_MP parser schema. Live Veeam replay and Splunk read-back evidence is not yet captured; keep quality_status=curated and trust_level=unverified."
+  },
+  "test_event_sets": [
+    {
+      "id": "veeam_vbr_rfc5424_structured_data",
+      "label": "Veeam Backup & Replication RFC5424 structured-data fixtures",
+      "path": "test-events/veeam_vbr_test_events.txt",
+      "format": "ietf",
+      "wire_format": "rfc5424_structured_data",
+      "envelope": "ietf_rfc5424",
+      "serialization": "structured_data_kv",
+      "event_count": 2,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_VEEAM_VBR_TEST_JOB_START_001",
+        "SC4S_VEEAM_VBR_TEST_JOB_SUCCESS_002"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "syslog_header_timezone",
+        "primary_field": "rfc5424_header",
+        "primary_timezone": "offset included in fixture timestamps; source-defined in production",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "rfc5424_header"
+        ],
+        "notes": "Official Veeam documentation states TIMESTAMP follows RFC3339. Fixtures include explicit offsets."
+      },
+      "field_delimiting": {
+        "style": "rfc5424_structured_data_key_values",
+        "field_separator": "space between key=value pairs",
+        "quote_character": "double quote for string values",
+        "escape_policy": "Synthetic fixtures exercise quoted strings, apostrophes, GUIDs, and backslash user names; additional real-event escaping edge cases are needed before validated status.",
+        "notes": "Treat each physical line as one event; Veeam may omit MSG when details are present in structured data."
+      },
+      "expected_families": [
+        "vbr_syslog"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-veeam_vbr.conf",
+      "target_path": "local/config/app_parsers/syslog/app-veeam_vbr.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/veeam_vbr.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/veeam_vbr_overview.xml",
+      "target_path": "splunk/default/data/ui/views/veeam_vbr_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/veeam_vbr_test_events.txt",
+      "target_path": "test-events/veeam_vbr_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tls_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tls_20040.sh",
+      "target_path": "scripts/send_tls_20040.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Upstream SC4S generated entries veeam_veeam_md and veeam_vbr; Veeam Help Center syslog integration documentation; ExabeamLabs Content-Library-CIM2 public Veeam_MP parser schema.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are synthetic-equivalent and use documentation/sample GUIDs plus example.test/RFC-safe identities. No proprietary or customer samples are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes autonomous curation",
+      "reviewed_at": "2026-06-05",
+      "notes": "Selected as a high-value backup/security operations source from upstream SC4S inventory, rotating away from recent firewall pack additions. Public official example events and parser schema are sufficient for conservative curation but not validation wording."
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "action": {
+          "source_fields": [
+            "ActivityType",
+            "Description"
+          ],
+          "status": "partial",
+          "notes": "ActivityType is present in public parser evidence; Description is used as fallback."
+        },
+        "signature": {
+          "source_fields": [
+            "Description"
+          ],
+          "status": "partial",
+          "notes": "Human-readable Veeam event description."
+        },
+        "signature_id": {
+          "source_fields": [
+            "instanceId"
+          ],
+          "status": "partial",
+          "notes": "Veeam event instance identifier from structured data."
+        },
+        "user": {
+          "source_fields": [
+            "UserName"
+          ],
+          "status": "partial",
+          "notes": "May be absent on system-generated events."
+        },
+        "session_id": {
+          "source_fields": [
+            "session_id",
+            "JobSessionID",
+            "TaskSessionID"
+          ],
+          "status": "partial",
+          "notes": "Job or task session identifier used for VBR activity correlation."
+        },
+        "object": {
+          "source_fields": [
+            "object",
+            "ObjectName",
+            "JobDescription"
+          ],
+          "status": "partial",
+          "notes": "Veeam job/object context where present; may be a display label rather than a globally unique object identifier."
+        },
+        "change_type": {
+          "source_fields": [
+            "job_type",
+            "JobType",
+            "platform",
+            "Platform",
+            "veeam_flags",
+            "Flags",
+            "veeam_event_version",
+            "Version"
+          ],
+          "status": "partial",
+          "notes": "Structured Veeam job/platform/version context preserved for analyst triage; not a complete Veeam event taxonomy."
+        }
+      },
+      "notes": "CIM mapping is intentionally partial and focused on job/activity observability."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "activity_name": {
+          "source_fields": [
+            "ActivityType",
+            "Description"
+          ],
+          "status": "partial",
+          "notes": "Mapped from Veeam activity type when present, otherwise the event description."
+        },
+        "actor.user.name": {
+          "source_fields": [
+            "UserName"
+          ],
+          "status": "partial",
+          "notes": "May be absent on system-generated events."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "signature_id",
+            "instanceId"
+          ],
+          "status": "partial",
+          "notes": "Veeam structured-data instance identifier."
+        },
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "partial",
+          "notes": "Raw SC4S/Splunk event should remain available for source-shape review."
+        },
+        "metadata.product.version": {
+          "source_fields": [
+            "veeam_event_version",
+            "Version"
+          ],
+          "status": "partial",
+          "notes": "Veeam structured-data Version token when emitted by the source event."
+        },
+        "metadata.labels": {
+          "source_fields": [
+            "job_id",
+            "JobID",
+            "job_type",
+            "JobType",
+            "platform",
+            "Platform",
+            "veeam_flags",
+            "Flags"
+          ],
+          "status": "partial",
+          "notes": "Veeam job and platform context retained as helper metadata; not normalized to a complete OCSF class."
+        }
+      },
+      "notes": "Optional OCSF mapping is not complete."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "ActivityType",
+            "Description"
+          ],
+          "status": "partial",
+          "notes": "Best-effort action label for job/activity events."
+        },
+        "event.code": {
+          "source_fields": [
+            "instanceId"
+          ],
+          "status": "partial",
+          "notes": "Veeam instance identifier."
+        },
+        "user.name": {
+          "source_fields": [
+            "UserName"
+          ],
+          "status": "partial",
+          "notes": "May be absent on system-generated events."
+        },
+        "event.id": {
+          "source_fields": [
+            "signature_id",
+            "instanceId"
+          ],
+          "status": "partial",
+          "notes": "Veeam instance identifier."
+        },
+        "related.id": {
+          "source_fields": [
+            "session_id",
+            "JobSessionID",
+            "TaskSessionID",
+            "job_id",
+            "JobID"
+          ],
+          "status": "partial",
+          "notes": "Veeam job/task correlation identifiers."
+        },
+        "event.dataset": {
+          "source_fields": [
+            "vendor_product"
+          ],
+          "status": "partial",
+          "notes": "Pack-scoped Veeam Backup & Replication dataset identity."
+        },
+        "event.kind": {
+          "source_fields": [
+            "job_type",
+            "JobType",
+            "platform",
+            "Platform",
+            "veeam_flags",
+            "Flags",
+            "veeam_event_version",
+            "Version"
+          ],
+          "status": "partial",
+          "notes": "Preserved Veeam structured-data context for analyst filtering; not a full ECS categorization."
+        }
+      },
+      "notes": "Optional ECS mapping is not complete."
+    }
+  },
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Veeam VBR syslog ingestion",
+      "description": "Parser, listener env example, fixtures, and minimal Splunk props. No drops or reductions.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-veeam_vbr.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; preserves events."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Veeam VBR knowledge",
+      "description": "Adds eventtypes and tags for VBR job/activity searches. No drops or reductions.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Still non-lossy."
+    }
+  ],
+  "ci": {
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25",
+    "tested_commit": null,
+    "tested_artifact_hashes": {
+      "packs/veeam_vbr/README.md": "sha256:87721af108782b3deb9af3ab26e50bcd64d609a6ff696edf457f755687e93eeb",
+      "packs/veeam_vbr/sc4s/app_parsers/syslog/app-veeam_vbr.conf": "sha256:1b203a27e21e04bcbf15096be2b82f7a69e2fcd81afb5adf95c17ee793adb22e",
+      "packs/veeam_vbr/sc4s/env.example": "sha256:38d8f5b8d63a1018da962c4d2612863e496d306a62b8e19d488e5d15fefda788",
+      "packs/veeam_vbr/splunk/default/props.conf": "sha256:8586dcc6464664177af357ddde1cd911db27dbd02a60803b8a5fac91bde47e1d",
+      "packs/veeam_vbr/splunk/default/transforms.conf": "sha256:e952ab112ae4319e23419d9451c9dcb27b8eee19e88409b3c11d03ddf3a8a477",
+      "packs/veeam_vbr/splunk/default/eventtypes.conf": "sha256:de29546035c973111b096376d2bf5bfebd6a23f534cb6b5f9259915d7d5964d7",
+      "packs/veeam_vbr/splunk/default/tags.conf": "sha256:c86220cb4b16c010ed98a28b014dc97c1d6b8825433b45682521ea374125f879",
+      "packs/veeam_vbr/test-events/veeam_vbr_test_events.txt": "sha256:795f61351f74b0e7d8265ad268f5191cfdcb555d0029549470788757625d6fcf",
+      "packs/veeam_vbr/scripts/send_tls_20040.sh": "sha256:1f727853e0b58017b3b0d88bc1bc48ac6782b226690b4842a3f61d26afc2185b",
+      "packs/veeam_vbr/validation/preflight-2026-06-08.md": "sha256:4b3b95a9c4ae83206b12ab975158be9d1578caa76b2d77fbe984dd27677fada9",
+      "packs/veeam_vbr/splunk/default/data/ui/views/veeam_vbr_overview.xml": "sha256:cc57ee95b14e6aaa626d082c7a15f75823842650a1ed1147bd4ec6a88ec537b1",
+      "packs/veeam_vbr/scripts/e2e_docker_compose.sh": "sha256:f86d2bab87ea135393c039b4cde4ea5e744e0e5f5dcb48a87b37b31191ad9a81"
+    }
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Veeam VBR syslog",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "veeam_vbr_rfc5424_structured_data"
+      ],
+      "event_count": 2,
+      "marker_prefix": "SC4S_VEEAM_VBR_TEST_",
+      "transport": "tls_rfc5425",
+      "framing": "octet_counted",
+      "script": "scripts/send_tls_20040.sh"
+    },
+    "readback": {
+      "spl": "index=infraops sechub_fixture_marker=\"SC4S_VEEAM_VBR_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product vendor_product action signature signature_id session_id job_id job_type job_description platform veeam_flags veeam_event_version result user src_host object values.categoryId values.instanceId values.Description values.JobSessionID values.JobID values.JobType values.Platform values.Flags values.Version values.TaskSessionID values.JobDescription values.Status values.ActivityType values.UserName values.SourceHostName values.ObjectName marker _raw",
+      "expected_count": 2,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "Veeam structured data category/instance",
+        "description marker",
+        "job/task session correlation",
+        "status/activity/user/source host",
+        "RFC5424 timestamp",
+        "job/session identifiers",
+        "job type/platform/flags/version context",
+        "object/job description context"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TLS listener on 127.0.0.1:20040 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing Veeam VBR TLS listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tls",
+          "port": 20040,
+          "protocol": "rfc5425_octet_counted_syslog",
+          "purpose": "Dedicated Veeam VBR TLS/RFC5425 listener"
+        }
+      ],
+      "required_indexes": [
+        "infraops"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to required index(es)",
+        "Search role can read required index(es)"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "veeam_vbr_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/veeam_vbr/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/veeam_vbr/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/veeam_vbr/compose.yaml",
+      "compose_project": "sechub-veeam-vbr-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "infraops index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/veeam_vbr/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/veeam_vbr/scripts/e2e_docker_compose.sh run",
+        "replay_only": "SC4S_HOST=127.0.0.1 SC4S_LISTEN_VEEAM_VBR_TLS_PORT=20040 packs/veeam_vbr/scripts/send_tls_20040.sh",
+        "splunk_summary_readback": "index=infraops sechub_fixture_marker=\"SC4S_VEEAM_VBR_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=infraops sechub_fixture_marker=\"SC4S_VEEAM_VBR_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product vendor_product action signature signature_id session_id job_id job_type job_description platform veeam_flags veeam_event_version result user src_host object values.categoryId values.instanceId values.Description values.JobSessionID values.JobID values.JobType values.Platform values.Flags values.Version values.TaskSessionID values.JobDescription values.Status values.ActivityType values.UserName values.SourceHostName values.ObjectName marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "infraops",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/veeam_vbr/splunk -> /opt/splunk/etc/apps/sechub_veeam_vbr:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tls",
+          "container_port": 20040,
+          "host_port_env": "SC4S_VEEAM_VBR_PORT",
+          "source_id": "VEEAM_VBR"
+        },
+        "parser_mount": "packs/veeam_vbr/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "veeam_vbr",
+          "source_shape": "veeam_rfc5424_structured_data_wrapped_as_tls_rfc5425",
+          "event_families": [
+            "vbr_syslog"
+          ],
+          "expected_sourcetypes": [
+            "veeam:vbr:syslog"
+          ],
+          "data_structures": [
+            "Veeam Backup & Replication job started structured-data event",
+            "Veeam Backup & Replication job completed structured-data event"
+          ],
+          "markers": [
+            "SC4S_VEEAM_VBR_TEST_JOB_START_001",
+            "SC4S_VEEAM_VBR_TEST_JOB_SUCCESS_002"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Real Veeam Backup & Replication server, product build, backup job estate, collector wrapper delivery, and source-local timezone behavior are not proven by this harness",
+        "TCP/UDP syslog production variants remain deployment variants; this disposable harness exercises the included dedicated TLS/RFC5425 listener helper",
+        "Field validation with retained real product/source-version telemetry requires sanctioned Veeam samples or a non-production VBR test feed"
+      ]
+    }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "raw_syslog",
+    "supported_transport_refs": [
+      "tls_rfc5425",
+      "tcp_rfc5424",
+      "udp_rfc5424"
+    ],
+    "notes": "Veeam documents syslog integration; native SC4S-compatible delivery.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "veeam_vbr_overview_splunk_test",
+      "title": "Veeam Backup & Replication — dashboard example",
+      "source_path": "dashboards/screenshots/veeam-vbr-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Veeam Backup & Replication dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  }
+}

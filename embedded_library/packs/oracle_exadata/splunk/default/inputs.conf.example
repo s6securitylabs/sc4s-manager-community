@@ -1,0 +1,123 @@
+# Oracle Exadata engineered systems — conservative Splunk file/collector onboarding examples
+#
+# Status: EXAMPLE-ONLY, disabled by default. These are NOT validated SecHub/S6
+# runtime inputs. This pack is catalogue/source-definition only: routing is
+# disabled and no emitted source shape, fixture, SC4S replay, or Splunk
+# read-back has been captured. Enable a stanza only after confirming, on the
+# target estate, the exact Exadata System Software / ILOM / OCI version, the
+# file/path layout, record boundaries, timezone policy, and the destination
+# sourcetype with local replay/read-back.
+#
+# Per-variant collection posture is derived from the 2026-07-03 Oracle-official
+# source-shape evidence pass
+# (docs/research/oracle-official-exadata-log-source-shape-evidence-20260703.md):
+#   - Storage cell / DB node OS syslog .... RELAYABLE (RFC3164/5424). Prefer a
+#     native rsyslog relay (cell `syslogconf`/`syslogInput`) to the SecHub SC4S
+#     listener (this pack's source id ORACLE_EXADATA, tcp/20105) rather than a
+#     forwarder file monitor. This overlaps packs/linux_os_syslog; the
+#     Exadata-specific value is cell/component identity and cell-service tags.
+#   - Storage cell ALERTHISTORY alerts ..... STRONG-PARTIAL. No native single-line
+#     syslog wire format; delivery is SMTP / SNMP trap / cell+MS alert-log file
+#     tail. The file-tail stanza below assumes the file-tail channel; an
+#     SNMP-trap-derived record would need a different collector, not inputs.conf.
+#   - ILOM / service processor ............. BLOCKED. Fields known, wire format
+#     undocumented; ILOM forwards via syslog or SNMP trap, not a forwarder file.
+#   - RoCE/InfiniBand switch ............... BLOCKED. Generation-dependent
+#     (Cisco NX-OS on X8M+, Sun/ILOM pre-X8M); Exadata config sets up no logging
+#     host. No Exadata-specific emitted-log format. No stanza is shipped.
+#   - OCI Audit / Exadata C@C events ....... RELAYABLE JSON (CloudEvents 0.1, one
+#     record per event, eventTime RFC3339 UTC). Prefer the OCI Logging /
+#     Service Connector path; the file-drop stanza below is for a site collector
+#     that has already staged one JSON record per line. Overlaps packs/oracle_oci.
+#   - ExaWatcher/OSWatcher, EXAchk/ORAchk .. NOT a stream (bzip2 diagnostic
+#     archives / periodic report bundles). Not onboardable via inputs.conf; a
+#     batch/archive collector is required. No stanza is shipped.
+#   - Auto Service Request (ASR) .......... SNMP traps to an ASR Manager; the
+#     onward leg is a closed API/email path. Not a syslog/file source. No stanza.
+#
+# Prefer an official/community Splunk add-on for a component where one exists and
+# is compatible (see docs/collection/oracle_exadata_splunk_onboarding.md). Do not
+# copy add-on content. Use these SecHub `oracle:exadata:*` sourcetypes only as
+# conservative onboarding scaffolding until a tested sourcetype bridge exists.
+#
+# Replace every placeholder path (/opt/oracle/..., /var/spool/sechub/...) with the
+# site-confirmed layout. Do not enable broad recursive monitors before volume,
+# multiline, and timezone behavior are tested. index=oracle is the pack default.
+
+# --- Storage cell ALERTHISTORY via Management Server alert-log file tail -------
+# Strong-partial: documented ALERTHISTORY attributes (alertSequenceID, alertType,
+# severity, alertMessage, metricObjectName, beginTime/endTime, examinedBy) with
+# ISO8601-with-offset or legacy "Sat May 18 10:14:16 PDT 2009" timestamps. There
+# is NO native syslog-line emission of the alert object; this stanza assumes the
+# cell/MS alert-log file-tail channel. Confirm the exact alert-log path for the
+# installed Exadata System Software release before enabling. Alert records are
+# multiline; line-breaking/timestamp props must be validated locally before any
+# props.conf is written for this sourcetype.
+[monitor:///opt/oracle/cell/log/diag/asm/cell/*/trace/alert.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:exadata:cell:alert
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- Storage cell OS syslog (forwarder file-monitor fallback) -----------------
+# PREFERRED path is a native rsyslog relay (cell `syslogconf`/`syslogInput`) to
+# the SecHub SC4S listener, not a forwarder file monitor. Use this stanza only
+# where a Universal Forwarder already runs on the cell and syslog relay is not
+# available. Overlaps generic Oracle Linux syslog (packs/linux_os_syslog).
+[monitor:///var/log/messages]
+disabled = 1
+index = oracle
+sourcetype = oracle:exadata:cell:syslog
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- DB (compute) node Oracle Linux syslog (forwarder file-monitor fallback) --
+# DB nodes run Oracle Linux rsyslog (RFC3164/5424); prefer syslog relay to SC4S.
+# For Linux OS parsing use packs/linux_os_syslog or packs/linux_auditd; keep this
+# Exadata sourcetype only when node/rack identity and cell correlation must be
+# preserved and have been validated. auditd records (if forwarded) belong to the
+# auditd pack, not here.
+[monitor:///var/log/messages]
+disabled = 1
+index = oracle
+sourcetype = oracle:exadata:dbnode:syslog
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- ILOM / service processor (guidance only; no forwarder file path) ---------
+# BLOCKED: ILOM forwards event-log records (Class/Type/Severity/Description) via
+# remote syslog or SNMP trap, and the exact wire format (RFC3164 vs 5424, tag,
+# timestamp precision/timezone) is not published. Onboard by pointing ILOM syslog
+# forwarding at the SecHub SC4S listener and capturing a sanitized sample before
+# any parser is written. There is no forwarder file-monitor stanza for ILOM.
+
+# --- Exadata Cloud@Customer / OCI Audit (staged JSON file drop) ---------------
+# CloudEvents 0.1 JSON, one record per event (eventType
+# com.oraclecloud.databaseservice.*, eventTime RFC3339 UTC). PREFERRED path is
+# OCI Logging + a Service Connector or the OCI Audit API via a site collector,
+# not a file monitor. Use this stanza only for a collector that has already
+# staged one JSON object per line. Overlaps packs/oracle_oci; prefer that pack's
+# generic OCI Audit coverage until Exadata databaseservice payload examples and
+# read-back exist. JSON KV/timestamp handling must be validated locally before a
+# props.conf is written; do not assume line-breaking here.
+[monitor:///var/spool/sechub/oracle_exadata/oci_audit/*.json]
+disabled = 1
+index = oracle
+sourcetype = oracle:exadata:oci:audit
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+# --- Not onboardable via inputs.conf (record for operator awareness) ----------
+# oracle:exadata:switch:syslog   RoCE/IB switch: no Exadata logging-host format;
+#                                point NX-OS/ILOM syslog at SC4S if required.
+# oracle:exadata:exawatcher      ExaWatcher/OSWatcher: bzip2 archive bundles;
+#                                needs a batch/archive collector, not a monitor.
+# oracle:exadata:exachk          EXAchk/ORAchk (AHF): periodic HTML/JSON/XML
+#                                report bundle; needs a batch/API pull of JSON.
+# oracle:exadata:asr             ASR: SNMP traps to an ASR Manager; closed onward
+#                                leg. Needs an SNMP-trap collector, not syslog.
+
+# Validation SPL template after enabling any stanza (prove before promoting):
+# index=oracle sourcetype="oracle:exadata:*" source="<enabled path>" earliest=-15m
+# | stats count min(_time) as first max(_time) as last values(host) as host by sourcetype source

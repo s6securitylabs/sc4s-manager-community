@@ -1,0 +1,614 @@
+{
+  "schema_version": "0.1",
+  "id": "ptc_windchill_flexplm",
+  "version": "0.1.0",
+  "url": "https://www.ptc.com/en/about/trust-center/advisory-center/active-advisories/windchill-flexplm-critical-vulnerability",
+  "description": "Conservative SecHub Resources pack for PTC Windchill / FlexPLM CVE-2026-4681 exploitation-focused MethodServer log4j telemetry and provenance-pinned Splunk search content.",
+  "display_name": "PTC Windchill / FlexPLM exploitation telemetry",
+  "vendor": "ptc",
+  "product": "windchill_flexplm",
+  "default_index": "infraops",
+  "default_source": "ptc_windchill_flexplm",
+  "listener": {
+    "source_id": "PTC_WINDCHILL_FLEXPLM",
+    "transport": "tcp",
+    "port": 20126,
+    "env": {
+      "SC4S_LISTEN_PTC_WINDCHILL_FLEXPLM_TCP_PORT": "20126",
+      "SOURCE_ALL_SET_APPEND": "PTC_WINDCHILL_FLEXPLM"
+    }
+  },
+  "sourcetypes": {
+    "gw_ready_ok_probe": "log4j",
+    "gateway_command_execution": "log4j"
+  },
+  "event_families": [
+    {
+      "id": "gw_ready_ok_probe",
+      "label": "Windchill GW_READY_OK exploitation probe",
+      "match_engine": "pcre",
+      "match": "GW_READY_OK",
+      "expected_sourcetype": "log4j",
+      "primary_id_field": "signature_id",
+      "required_fields": [
+        "logger",
+        "src_ip",
+        "uri_path",
+        "query_string"
+      ],
+      "timestamp_fields": [
+        "outer log4j timestamp",
+        "embedded Windchill event timestamp"
+      ]
+    },
+    {
+      "id": "gateway_command_execution",
+      "label": "Windchill gateway command or file-read style request",
+      "match_engine": "pcre",
+      "match": "c=whoami|run\\?p=|\\.jsp\\?c=|\\.jsp\\?p=",
+      "expected_sourcetype": "log4j",
+      "primary_id_field": "signature_id",
+      "required_fields": [
+        "logger",
+        "src_ip",
+        "uri_path",
+        "query_string",
+        "status"
+      ],
+      "timestamp_fields": [
+        "outer log4j timestamp",
+        "embedded Windchill event timestamp"
+      ]
+    }
+  ],
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-ptc_windchill_flexplm.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/macros.conf",
+      "splunk/default/savedsearches.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/inputs.conf.example"
+    ],
+    "test_events": [
+      "test-events/windchill_exploitation.log"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20126.sh"
+    ],
+    "docs": [
+      "README.md",
+      "production-logging-playbook.md",
+      "docs/research/ptc-windchill-flexplm-exploitation-20260714.md",
+      "docs/evidence/upstream-provenance.md",
+      "validation/preflight-2026-07-14.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP relay of MethodServer log4j lines",
+      "transport": "tcp",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw",
+      "recommended": true,
+      "default_port": 20126,
+      "notes": "Dedicated raw line relay for Windchill MethodServer log4j records."
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "PTC Windchill / FlexPLM MethodServer log4j exploit telemetry",
+    "min": "public PTC/Splunk evidence reviewed 2026-07-14",
+    "max": null,
+    "notes": "Grounded in the PTC advisory, Splunk Research story/detections, and the public Splunk attack_data corpus for CVE-2026-4681."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-07-14",
+    "validated_by": "Hermes curation only; no replay/read-back or field validation claimed",
+    "source_log_version": "Public replay corpus only; no retained native Windchill/FlexPLM telemetry",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository packaging, schema checks, provenance pinning, and focused tests cover the exact public 16-line Splunk attack_data corpus only. No SC4S replay, HEC delivery, or Splunk indexed read-back evidence is retained for this pack."
+  },
+  "test_event_sets": [
+    {
+      "id": "windchill_exploitation_public_corpus",
+      "label": "Public Splunk Windchill exploitation corpus",
+      "path": "test-events/windchill_exploitation.log",
+      "format": "raw",
+      "wire_format": "file_line_log",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 16,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "2026-03-26 19:12:00,053 ERROR [ajp-nio-127.0.0.1-10660-exec-2] wt.servlet.ServletRequestMonitor.request  - 2026-03-26 19:12:00.049 +0530, q4io1jf;mn7i98pd;62288;2anc4x;4122",
+        "2026-03-26 19:12:56,117 ERROR [ajp-nio-127.0.0.1-10660-exec-7] wt.method.MethodContextMonitor.contexts.servletRequest  - 2026-03-26 19:12:56.113 +0530, q4io1jf;mn7i98pd;62288;2anc4x;4164",
+        "2026-03-26 19:12:56,121 ERROR [ajp-nio-127.0.0.1-10660-exec-7] wt.servlet.ServletRequestMonitor.request  - 2026-03-26 19:12:56.113 +0530, q4io1jf;mn7i98pd;62288;2anc4x;4163",
+        "2026-03-26 01:58:25,257 ERROR [ajp-nio-127.0.0.1-10660-exec-4] wt.method.MethodContextMonitor.contexts.servletRequest  - 2026-03-26 01:58:25.254 +0530, q4io1jf;mn6hlfuf;24340;2anc4x;3479",
+        "2026-03-26 01:58:25,261 ERROR [ajp-nio-127.0.0.1-10660-exec-4] wt.servlet.ServletRequestMonitor.request  - 2026-03-26 01:58:25.254 +0530, q4io1jf;mn6hlfuf;24340;2anc4x;3478",
+        "2026-03-26 01:58:26,427 ERROR [ajp-nio-127.0.0.1-10660-exec-3] wt.method.MethodContextMonitor.contexts.servletRequest  - 2026-03-26 01:58:26.424 +0530, q4io1jf;mn6hlfuf;24340;2anc4x;3512",
+        "2026-03-26 01:58:26,428 ERROR [ajp-nio-127.0.0.1-10660-exec-3] wt.servlet.ServletRequestMonitor.request  - 2026-03-26 01:58:26.424 +0530, q4io1jf;mn6hlfuf;24340;2anc4x;3511",
+        "2026-03-26 02:04:05,507 ERROR [ajp-nio-127.0.0.1-10660-exec-7] wt.method.MethodContextMonitor.contexts.servletRequest  - 2026-03-26 02:04:05.504 +0530, q4io1jf;mn6hlfuf;24340;2anc4x;3898",
+        "2026-03-26 02:04:05,509 ERROR [ajp-nio-127.0.0.1-10660-exec-7] wt.servlet.ServletRequestMonitor.request  - 2026-03-26 02:04:05.503 +0530, q4io1jf;mn6hlfuf;24340;2anc4x;3897",
+        "2026-03-26 02:04:07,054 ERROR [ajp-nio-127.0.0.1-10660-exec-2] wt.method.MethodContextMonitor.contexts.servletRequest  - 2026-03-26 02:04:07.051 +0530, q4io1jf;mn6hlfuf;24340;2anc4x;3915",
+        "2026-03-26 02:04:07,055 ERROR [ajp-nio-127.0.0.1-10660-exec-2] wt.servlet.ServletRequestMonitor.request  - 2026-03-26 02:04:07.051 +0530, q4io1jf;mn6hlfuf;24340;2anc4x;3914",
+        "2026-03-26 19:01:59,256 ERROR [ajp-nio-127.0.0.1-10660-exec-4] wt.method.MethodContextMonitor.contexts.servletRequest  - 2026-03-26 19:01:59.252 +0530, q4io1jf;mn7i98pd;62288;2anc4x;3432",
+        "2026-03-26 19:01:59,257 ERROR [ajp-nio-127.0.0.1-10660-exec-4] wt.servlet.ServletRequestMonitor.request  - 2026-03-26 19:01:59.251 +0530, q4io1jf;mn7i98pd;62288;2anc4x;3431",
+        "2026-03-26 19:02:00,650 ERROR [ajp-nio-127.0.0.1-10660-exec-6] wt.method.MethodContextMonitor.contexts.servletRequest  - 2026-03-26 19:02:00.648 +0530, q4io1jf;mn7i98pd;62288;2anc4x;3488",
+        "2026-03-26 19:02:00,651 ERROR [ajp-nio-127.0.0.1-10660-exec-6] wt.servlet.ServletRequestMonitor.request  - 2026-03-26 19:02:00.647 +0530, q4io1jf;mn7i98pd;62288;2anc4x;3487",
+        "2026-03-26 19:11:38,522 ERROR [ajp-nio-127.0.0.1-10660-exec-3] wt.method.MethodContextMonitor.contexts.servletRequest  - 2026-03-26 19:11:38.519 +0530, q4io1jf;mn7i98pd;62288;2anc4x;3908"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "embedded Windchill event timestamp",
+        "primary_timezone": "explicit numeric offset in payload",
+        "fallback_fields": [
+          "outer log4j timestamp"
+        ],
+        "fallback_time_mode": "field_without_timezone_source_local",
+        "fallback_timezone": "application server local timezone",
+        "requires_source_timezone_when_fields_missing": []
+      },
+      "field_delimiting": {
+        "style": "comma_space_fields_after_log4j_prefix",
+        "field_separator": ", ",
+        "quote_character": "none",
+        "escape_policy": "Request URI and query material are retained as-is from the public replay corpus.",
+        "notes": "Each line contains an optional filename prefix, outer log4j prefix, and embedded comma-delimited Windchill request context."
+      },
+      "expected_families": [
+        "gw_ready_ok_probe",
+        "gateway_command_execution"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-ptc_windchill_flexplm.conf",
+      "target_path": "local/config/app_parsers/syslog/app-ptc_windchill_flexplm.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/ptc_windchill_flexplm.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_macros",
+      "group": "splunk",
+      "source_path": "splunk/default/macros.conf",
+      "target_path": "splunk/default/macros.conf",
+      "kind": "splunk_macros",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_savedsearches",
+      "group": "splunk",
+      "source_path": "splunk/default/savedsearches.conf",
+      "target_path": "splunk/default/savedsearches.conf",
+      "kind": "splunk_savedsearches",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_inputs_example",
+      "group": "splunk",
+      "source_path": "splunk/default/inputs.conf.example",
+      "target_path": "splunk/default/inputs.conf.example",
+      "kind": "splunk_inputs_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/windchill_exploitation.log",
+      "target_path": "test-events/windchill_exploitation.log",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20126.sh",
+      "target_path": "scripts/send_tcp_20126.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "production_logging_playbook",
+      "group": "docs",
+      "source_path": "production-logging-playbook.md",
+      "target_path": "production-logging-playbook.md",
+      "kind": "product_logging_playbook",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "research_note",
+      "group": "docs",
+      "source_path": "docs/research/ptc-windchill-flexplm-exploitation-20260714.md",
+      "target_path": "docs/research/ptc-windchill-flexplm-exploitation-20260714.md",
+      "kind": "research_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "upstream_provenance",
+      "group": "docs",
+      "source_path": "docs/evidence/upstream-provenance.md",
+      "target_path": "docs/evidence/upstream-provenance.md",
+      "kind": "provenance_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_note",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-07-14.md",
+      "target_path": "validation/preflight-2026-07-14.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "lab",
+      "reference": "PTC advisory, Splunk Research story/detections, and the public Splunk attack_data Windchill corpus pinned in docs/evidence/upstream-provenance.md.",
+      "redistribution": "commit_safe",
+      "sanitisation_status": "not_required",
+      "notes": "The vendored fixture is a public Apache-2.0-style replay corpus with synthetic/lab characteristics; it is suitable for provenance retention and search regression only."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-07-14",
+      "notes": "Created from the parent research brief for conservative exploit-telemetry coverage without native validation claims."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Remote client IP extracted from the Windchill request context where present."
+        },
+        "url": {
+          "source_fields": [
+            "uri_path"
+          ],
+          "status": "partial",
+          "notes": "Windchill servlet or gateway request path."
+        },
+        "http_method": {
+          "source_fields": [
+            "http_method"
+          ],
+          "status": "partial",
+          "notes": "HTTP method from servlet request rows only."
+        },
+        "status": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "partial",
+          "notes": "HTTP response status where present on servlet request rows."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "query_param"
+          ],
+          "status": "partial",
+          "notes": "Analyst grouping for GW_READY_OK probe vs command/file-read style activity."
+        },
+        "signature_id": {
+          "source_fields": [
+            "signature_id",
+            "query_string",
+            "uri_path"
+          ],
+          "status": "partial",
+          "notes": "Derived from the request query or path; not a globally stable product event identifier."
+        }
+      }
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Remote client IP."
+        },
+        "http_request.url.path": {
+          "source_fields": [
+            "uri_path"
+          ],
+          "status": "partial",
+          "notes": "Windchill request path."
+        },
+        "http_request.http_method": {
+          "source_fields": [
+            "http_method"
+          ],
+          "status": "partial",
+          "notes": "Method from servlet request rows."
+        },
+        "http_response.code": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "partial",
+          "notes": "HTTP status where present."
+        },
+        "activity_name": {
+          "source_fields": [
+            "signature",
+            "activity"
+          ],
+          "status": "partial",
+          "notes": "Derived exploit activity label."
+        },
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "partial",
+          "notes": "Original MethodServer log4j line is retained."
+        }
+      }
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Remote client IP."
+        },
+        "url.path": {
+          "source_fields": [
+            "uri_path"
+          ],
+          "status": "partial",
+          "notes": "Windchill request path."
+        },
+        "http.request.method": {
+          "source_fields": [
+            "http_method"
+          ],
+          "status": "partial",
+          "notes": "Method from servlet request rows."
+        },
+        "http.response.status_code": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "partial",
+          "notes": "HTTP status where present."
+        },
+        "event.action": {
+          "source_fields": [
+            "activity",
+            "signature"
+          ],
+          "status": "partial",
+          "notes": "Derived exploit activity."
+        },
+        "log.logger": {
+          "source_fields": [
+            "logger"
+          ],
+          "status": "partial",
+          "notes": "MethodServer logger name."
+        }
+      }
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "application",
+    "web",
+    "security",
+    "vulnerability_response"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as conservative metadata only. Preserve MethodServer raw payloads, logger context, query values, and sourcetype routing; validate listener framing locally before any deployment."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as conservative metadata only. Preserve MethodServer raw payloads, logger context, query values, and sourcetype routing; validate local parser and relay behavior before use."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with a disposable pipeline and confirm startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as conservative metadata only. Preserve MethodServer raw payloads, logger context, query values, and sourcetype routing; validate locally before any OpenSearch ingestion claim."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import saved objects into a disposable OpenSearch Dashboards space and confirm data-view resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is metadata only. Splunk dashboards have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "ci": {
+    "last_updated": "2026-07-14",
+    "last_tested": "2026-07-14",
+    "tested_commit": null,
+    "tested_artifact_hashes": {}
+  },
+  "source_delivery": {
+    "mode": "file_text_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "raw",
+    "supported_transport_refs": [
+      "tcp_syslog"
+    ],
+    "notes": "This first-pass pack assumes collector or file-tail relay of MethodServer log4j text lines into a dedicated TCP listener or equivalent ingest path. Front-end web logs are documented as corroboration sources only.",
+    "validation_status": "Research-backed public replay corpus only; not validation evidence and field validation requires real product/source-version evidence."
+  },
+  "known_limitations": [
+    "No native Windchill or FlexPLM validation is claimed.",
+    "The current vendored corpus covers GW_READY_OK probes and c=whoami command style requests only.",
+    "Front-end IIS path coverage is not validated from current public evidence.",
+    "Saved searches are provenance-backed translations of public Splunk detections, not proof of local deployment efficacy."
+  ]
+}

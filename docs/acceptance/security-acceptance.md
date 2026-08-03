@@ -1,24 +1,56 @@
-# SC4S Manager security acceptance
+# Security Acceptance
 
 ## Scope
 
-This acceptance note records the security boundaries expected for the public community release package. It is not live production proof and must not contain real secrets, tokens, credentials, customer identifiers, proxy shared secrets, OAuth headers, or HEC values.
+This template records evidence for Gate 3 security acceptance. Do not include
+real HEC tokens, API tokens, proxy shared secrets, private keys, or full
+credential-bearing environment files.
 
-## Required boundaries
+## Environment
 
-- Manager mutation paths require an intended trusted proxy header, local API token, or manual login flow.
-- Health/read-only static frontend routes may be reachable so the application can render, but API mutation routes must fail closed without authorization.
-- Runtime control is limited to fixed SC4S Manager actions and does not expose arbitrary shell, Docker socket, compose paths, container names, or host paths.
-- Archive/import operations must enforce path containment and reject traversal or unsafe member paths.
-- Evidence, logs, JSON reports, screenshots, and release artifacts must redact secret-like settings while preserving typed metadata such as booleans and arrays.
+- Date:
+- Tester:
+- Host:
+- sc4s-manager version:
+- SC4S image:
+- Public route:
+- Auth provider:
 
-## Template values
+## Automated Dry Run
 
-Example configuration files use placeholders only, such as `<set-a-long-random-value>` or `<provide-via-secret-store>`. They must never ship live credential values.
+Command:
 
-## Release checklist
+```bash
+security/acceptance.sh --report /tmp/sc4s-manager-security-acceptance.md
+```
 
-- [ ] Compose and systemd templates contain no literal secret assignments.
-- [ ] Package/install dry-run evidence uses redacted values.
-- [ ] Public/community material states that local validation and operator approval are required before apply.
-- [ ] Any live route proof distinguishes public route protection from authenticated UI/API behavior.
+Result:
+
+- Overall:
+- Report path:
+
+## Required Checks
+
+| Check | Expected Result | Evidence |
+| --- | --- | --- |
+| Manager has no Docker socket access | Manager cannot read or mount `/var/run/docker.sock` | |
+| Unsupported control action rejected | Control daemon rejects anything outside the fixed action allowlist | |
+| Config path traversal rejected | `../` and sibling-prefix probes return 400 | |
+| Template import traversal rejected | Unsafe ZIP paths and outside template paths fail | |
+| Backup diff/restore traversal rejected | Backup names cannot escape backup directory | |
+| Secret redaction in schema/env/diff/backup/audit/logs/destination APIs | Secret values are replaced with `[REDACTED]` | |
+| Auth enforced on mutating APIs | Requests without trusted proxy header or API token fail | |
+| CSRF/origin enforcement | Mismatched origin is rejected | |
+| TLS cert/key mismatch rejected | Mismatched bundle is rejected before restart | |
+| No real secrets in reports | Evidence contains placeholders only | |
+
+## Live Probe Notes
+
+Record only HTTP status, endpoint name, sanitized response shape, and timestamps.
+Do not paste raw responses if they include environment dumps or logs.
+
+## Decision
+
+- Accepted:
+- Exceptions:
+- Follow-up issues:

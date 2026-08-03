@@ -1,0 +1,7 @@
+Jun  8 10:15:01 mail-a postfix/smtp[12345]: A1B2C3D4E5: to=<alice@example.test>, relay=mx.example.test[203.0.113.25]:25, delay=1.2, delays=0.1/0.02/0.5/0.58, dsn=2.0.0, status=sent (250 2.0.0 Ok) sc4s_marker="SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_DELIVERY_001"
+Jun  8 10:15:02 mail-a postfix/postscreen[12346]: NOQUEUE: reject: CONNECT from [198.51.100.23]:4242: too many connections sc4s_marker="SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_REJECT_002"
+Jun  8 10:15:03 mail-a postfix/cleanup[12347]: F1E2D3C4B5: message-id=<20260608101503.F1E2D3C4B5@example.test> sc4s_marker="SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_CLEANUP_003"
+Jun  8 10:15:04 mail-b dovecot: imap-login: Login: user=<bob@example.test>, method=PLAIN, rip=198.51.100.44, lip=203.0.113.10, mpid=2255, TLS, session=<MAILSESSION001> sc4s_marker="SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_LOGIN_004"
+Jun  8 10:15:05 mail-b dovecot: imap(bob@example.test): copy: uid=42, msgid=<20260608101505.42@example.test>, box=Archive sc4s_marker="SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_MAILLOG_005"
+Jun  8 10:15:06 mail-b dovecot: imap-login: Disconnected: auth failed, user=<carol@example.test>, method=PLAIN, rip=198.51.100.45, lip=203.0.113.10, TLS, session=<MAILSESSION006> sc4s_marker="SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_AUTH_FAILURE_006"
+Jun  8 10:15:07 mail-b dovecot: imap(carol@example.test): Logged out in=1024 out=4096 deleted=0 expunged=1 trashed=0 hdr_count=2 hdr_bytes=512 body_count=1 body_bytes=2048 session=<MAILSESSION007> sc4s_marker="SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_LOGOUT_007"

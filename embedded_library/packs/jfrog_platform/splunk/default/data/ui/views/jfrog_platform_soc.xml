@@ -1,0 +1,270 @@
+<form version="1.1" theme="dark">
+  <label>JFrog Platform - SOC Overview</label>
+  <description>Ingestion health, Artifactory request/access activity, security audit events, Artifactory traffic, router requests, narrow Distribution request/access records, and narrowly evidenced Xray request/service/webhook records for JFrog Platform sourcetypes. Not field-validated: panels are conservative and based on synthetic-equivalent fixture evidence only. All sourcetypes require a dedicated syslog listener (port 20070) with JFROG_PLATFORM source tag.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total JFrog events</title>
+      <single>
+        <search>
+          <query>index=main vendor="jfrog" product="platform" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Security audit events</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="jfrog:access:security_audit" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,50]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Artifactory HTTP errors (4xx/5xx)</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="jfrog:artifactory:request" (status>=400 OR http_status>=400) host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,100]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Unique authenticated users (24h)</title>
+      <single>
+        <search>
+          <query>index=main sourcetype IN ("jfrog:artifactory:request","jfrog:artifactory:access","jfrog:distribution:request","jfrog:distribution:access","jfrog:access:security_audit") user=* NOT user="anonymous" host=$host_tok$ | stats dc(user) AS unique_users</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events by sourcetype over time</title>
+      <chart>
+        <search>
+          <query>index=main vendor="jfrog" product="platform" host=$host_tok$ | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Security audit - admin and token events</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="jfrog:access:security_audit" host=$host_tok$ | eval who=coalesce(user, "unknown") | table _time host who src_ip logged_principal entity_name event_type event data_changed | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Artifactory access events (repo operations)</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="jfrog:artifactory:access" host=$host_tok$ | eval who=coalesce(user, "unknown") | table _time host who src_ip action_response repo_path trace_id | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top accessed repos by user</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="jfrog:artifactory:access" host=$host_tok$ | stats count by user, repo_path | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Artifactory request status (errors visible when present)</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="jfrog:artifactory:request" host=$host_tok$ | eval http_stat=coalesce(status, http_status), error_flag=if(http_stat&gt;=400,"error","non_error") | table _time host user src_ip http_method url http_stat error_flag duration_ms user_agent | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Artifactory traffic bytes by direction</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="jfrog:artifactory:traffic" host=$host_tok$ | stats count, sum(transfer_bytes) AS total_bytes by traffic_direction | sort -total_bytes</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top artifact download activity (by user/IP)</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="jfrog:artifactory:request" http_method=GET host=$host_tok$ | stats count, sum(response_size) AS total_bytes by user, src_ip | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Artifactory traffic by repository path</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="jfrog:artifactory:traffic" host=$host_tok$ | stats count, sum(transfer_bytes) AS total_bytes by traffic_direction, repo_path, src_ip | sort -total_bytes | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Router request status (errors visible when present)</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="jfrog:router:request" host=$host_tok$ | eval http_stat=coalesce(status, http_status), error_flag=if(http_stat&gt;=400,"error","non_error") | table _time host src_ip remote_addr request_method request_url http_stat error_flag trace_id | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Upload/distribution request activity (PUT/POST)</title>
+      <table>
+        <search>
+          <query>index=main sourcetype IN ("jfrog:artifactory:request","jfrog:distribution:request","jfrog:xray:request") http_method IN (PUT, POST) host=$host_tok$ | stats count, sum(request_size) AS total_bytes by sourcetype, user, src_ip, http_method | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Distribution request/access coverage</title>
+      <table>
+        <search>
+          <query>index=main sourcetype IN ("jfrog:distribution:request","jfrog:distribution:access") host=$host_tok$ | table _time host sourcetype user src_ip action_response http_method url status repo_path trace_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Xray request/service/webhook coverage</title>
+      <table>
+        <search>
+          <query>index=main sourcetype IN ("jfrog:xray:request","jfrog:xray:service","jfrog:xray:webhook") host=$host_tok$ | table _time host sourcetype jfrog_log_family trace_id alert_id top_severity severity policy_name policy_rule watch_name user src_ip http_method url status xray_service message marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SPL for manual triage (copy and run)</title>
+      <html>
+        <![CDATA[
+        <div style="font-family:monospace;font-size:12px;padding:8px;">
+          <b>All JFrog events drilldown:</b><br/>
+          <code>index=main vendor="jfrog" product="platform" | table _time sourcetype host user src_ip action signature traffic_direction transfer_bytes event_type alert_id top_severity policy_name policy_rule _raw</code><br/><br/>
+          <b>Security audit - unusual token activity:</b><br/>
+          <code>index=main sourcetype="jfrog:access:security_audit" event_type="token" | stats count by user, event, entity_name | sort -count</code><br/><br/>
+          <b>Distribution request/access review:</b><br/>
+          <code>index=main sourcetype IN ("jfrog:distribution:request","jfrog:distribution:access") | table _time user src_ip http_method url status action_response repo_path trace_id</code><br/><br/>
+          <b>Xray webhook alerts by severity:</b><br/>
+          <code>index=main sourcetype="jfrog:xray:webhook" | stats count by top_severity, policy_name, policy_rule, watch_name | sort -count</code><br/><br/>
+          <b>Slow Artifactory requests (>5000ms):</b><br/>
+          <code>index=main sourcetype="jfrog:artifactory:request" | where duration_ms&gt;5000 | table _time user src_ip http_method url status duration_ms</code><br/><br/>
+          <b>NOTE: All sourcetypes require a dedicated listener on port 20070 with JFROG_PLATFORM source tag in SC4S.</b><br/><br/>
+          <i>Note: panels use synthetic-equivalent fixture evidence; not field-validated on live JFrog Platform sources.</i>
+        </div>
+        ]]>
+      </html>
+    </panel>
+  </row>
+
+</form>

@@ -8,7 +8,7 @@ Owns the Python Manager API, catalogue/pack model, validation/export logic, runt
 - `sc4s_manager/control.py` - narrow runtime-control client/boundary.
 - `sc4s_manager/catalogue.py` and `upstream_catalog.py` - catalogue merge/import/upstream inventory logic.
 - `sc4s_manager/packs.py` and `pack_validation.py` - pack inventory and validation behavior.
-- `sc4s_manager/library.py` - SecHub Resources sync/download/import/apply boundary.
+- `sc4s_manager/embedded_library.py` - pinned offline Library discovery/staging/import/apply boundary; snapshot refresh is not a runtime feature.
 - `sc4s_manager/exporters.py` - SC4S/Splunk/pack export handling.
 - `sc4s_manager/ci_functional.py` and `test_paths.py` - acceptance/test support paths.
 

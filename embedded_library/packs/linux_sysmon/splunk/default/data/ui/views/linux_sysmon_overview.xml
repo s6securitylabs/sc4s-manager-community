@@ -1,0 +1,229 @@
+<form version="1.1" theme="dark">
+  <label>Microsoft Sysmon for Linux - Overview</label>
+  <description>Fixture-backed Sysmon for Linux XML relay overview for process, network, file, configuration, and DNS query records. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Linux Sysmon events</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:network" OR sourcetype="linux:sysmon:process_terminate" OR sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:config" OR sourcetype="linux:sysmon:dns_query" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:file_delete_detected") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Process creation / termination</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:process_terminate") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Network / DNS activity</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:network" OR sourcetype="linux:sysmon:dns_query") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>File / config changes</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:file_delete_detected" OR sourcetype="linux:sysmon:config") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Linux Sysmon volume over time by family</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:network" OR sourcetype="linux:sysmon:process_terminate" OR sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:config" OR sourcetype="linux:sysmon:dns_query" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:file_delete_detected") host=$host_tok$ | timechart count by action</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:network" OR sourcetype="linux:sysmon:process_terminate" OR sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:config" OR sourcetype="linux:sysmon:dns_query" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:file_delete_detected") host=$host_tok$ | stats count by action sourcetype | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top users and endpoints</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:network" OR sourcetype="linux:sysmon:process_terminate" OR sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:dns_query" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:file_delete_detected") host=$host_tok$ | stats count values(action) as actions values(computer) as computers by user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top processes</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:network" OR sourcetype="linux:sysmon:process_terminate" OR sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:dns_query") host=$host_tok$ process_path=* | stats count values(action) as actions values(user) as users by process_name process_path | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top network destinations</title>
+      <chart>
+        <search>
+          <query>index=osnix sourcetype="linux:sysmon:network" host=$host_tok$ dest_ip=* | stats count values(dest_host) as destination_hosts values(dest_port) as dest_ports values(transport) as transports values(process_name) as processes by dest_ip | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Process creation and termination triage</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:process_terminate") host=$host_tok$ | table _time host computer user action event_id record_id process_guid process_id process_name process_path command_line parent_process_guid parent_process_path parent_command_line hashes sha256 md5 signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Network connection triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:sysmon:network" host=$host_tok$ | table _time host computer user action event_id process_guid process_id process_name process_path src src_ip src_port dest dest_ip dest_host dest_port transport initiated signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>DNS query triage</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="linux:sysmon:dns_query" host=$host_tok$ | table _time host computer user action event_id process_guid process_id process_name process_path query_name query_status query_results dns_question dns_answers transport signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>File and configuration change triage</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:file_delete_detected" OR sourcetype="linux:sysmon:config") host=$host_tok$ | table _time host computer user action event_id process_guid process_id process_name process_path target_filename file_path file_name creation_utc_time previous_creation_utc_time configuration configuration_hash hashes sha256 md5 is_executable archived signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:network" OR sourcetype="linux:sysmon:process_terminate" OR sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:config" OR sourcetype="linux:sysmon:dns_query" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:file_delete_detected") host=$host_tok$ | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Linux Sysmon events</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="linux:sysmon:process" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:network" OR sourcetype="linux:sysmon:process_terminate" OR sourcetype="linux:sysmon:file_create" OR sourcetype="linux:sysmon:config" OR sourcetype="linux:sysmon:dns_query" OR sourcetype="linux:sysmon:file_time" OR sourcetype="linux:sysmon:file_delete" OR sourcetype="linux:sysmon:file_delete_detected") host=$host_tok$ | table _time host sourcetype computer user action event_id provider channel record_id process_guid process_id process_name process_path src_ip src_port dest_ip dest_host dest_port transport query_name target_filename previous_creation_utc_time is_executable archived configuration signature signature_id marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,1547 @@
+{
+  "schema_version": "0.1",
+  "id": "linux_os_syslog",
+  "version": "0.1.7",
+  "url": "https://www.rsyslog.com/doc/configuration/templates.html",
+  "description": "Curated SecHub Resources SC4S pack for common Linux /var/log and syslog relay records, with fixture-backed routing for sshd authentication failure/success, sudo command execution, su/PAM session and authentication failure, cron execution, kernel messages, systemd service state, syslog-wrapped package-manager changes, and shadow-utils account/group lifecycle rows.",
+  "display_name": "Linux common OS syslog relay",
+  "vendor": "linux",
+  "product": "os_syslog",
+  "default_index": "osnix",
+  "default_source": "linux_os_syslog",
+  "listener": {
+    "source_id": "LINUX_OS_SYSLOG",
+    "transport": "tcp",
+    "port": 20065,
+    "env": {
+      "SC4S_LISTEN_LINUX_OS_SYSLOG_TCP_PORT": "20065",
+      "SOURCE_ALL_SET_APPEND": "LINUX_OS_SYSLOG"
+    }
+  },
+  "sourcetypes": {
+    "sshd_auth": "linux:os:auth:sshd",
+    "sudo": "linux:os:auth:sudo",
+    "cron": "linux:os:cron",
+    "kernel": "linux:os:kernel",
+    "systemd": "linux:os:systemd",
+    "sshd_auth_success": "linux:os:auth:sshd",
+    "su_pam": "linux:os:auth:su",
+    "package_manager": "linux:os:package",
+    "pam_auth_failure": "linux:os:auth:su",
+    "account_mgmt": "linux:os:account"
+  },
+  "event_families": [
+    {
+      "id": "sshd_auth",
+      "label": "Linux sshd authentication messages",
+      "match_engine": "pcre",
+      "match": "\\bsshd\\[\\d+\\]: Failed password\\b",
+      "expected_sourcetype": "linux:os:auth:sshd",
+      "primary_id_field": "process_id",
+      "required_fields": [
+        "program",
+        "process_id",
+        "user",
+        "src_ip",
+        "src_port",
+        "transport"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "sudo",
+      "label": "Linux sudo command messages",
+      "match_engine": "pcre",
+      "match": "\\bsudo: \\S+ : TTY=.* COMMAND=",
+      "expected_sourcetype": "linux:os:auth:sudo",
+      "primary_id_field": "user",
+      "required_fields": [
+        "program",
+        "user",
+        "dest_user",
+        "command"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "cron",
+      "label": "Linux cron command messages",
+      "match_engine": "pcre",
+      "match": "\\bCRON\\[\\d+\\]: \\([^)]+\\) CMD \\(",
+      "expected_sourcetype": "linux:os:cron",
+      "primary_id_field": "process_id",
+      "required_fields": [
+        "program",
+        "process_id",
+        "user",
+        "command"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "kernel",
+      "label": "Linux kernel messages",
+      "match_engine": "pcre",
+      "match": "\\bkernel: .*\\bPROTO=",
+      "expected_sourcetype": "linux:os:kernel",
+      "primary_id_field": "program",
+      "required_fields": [
+        "program",
+        "src_ip",
+        "dest_ip",
+        "transport"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "systemd",
+      "label": "Linux systemd service state messages",
+      "match_engine": "pcre",
+      "match": "\\bsystemd\\[\\d+\\]: .*\\.service:",
+      "expected_sourcetype": "linux:os:systemd",
+      "primary_id_field": "service",
+      "required_fields": [
+        "program",
+        "process_id",
+        "service"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "sshd_auth_success",
+      "label": "Linux sshd successful authentication messages",
+      "match_engine": "pcre",
+      "match": "\\bsshd\\[\\d+\\]: Accepted (?:password|publickey|keyboard-interactive/pam) for \\S+ from \\d+\\.\\d+\\.\\d+\\.\\d+ port \\d+ \\S+\\b",
+      "expected_sourcetype": "linux:os:auth:sshd",
+      "primary_id_field": "process_id",
+      "required_fields": [
+        "program",
+        "process_id",
+        "user",
+        "src_ip",
+        "src_port",
+        "transport",
+        "auth_method"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "su_pam",
+      "label": "Linux su PAM session messages",
+      "match_engine": "pcre",
+      "match": "\\bsu\\[\\d+\\]: pam_unix\\(su:session\\): session (?:opened|closed) for user",
+      "expected_sourcetype": "linux:os:auth:su",
+      "primary_id_field": "process_id",
+      "required_fields": [
+        "program",
+        "process_id",
+        "pam_service",
+        "pam_event",
+        "user",
+        "dest_user"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "package_manager",
+      "label": "Linux syslog-wrapped package manager change messages",
+      "match_engine": "pcre",
+      "match": "\\b(?:apt|apt-get|dpkg|dnf|yum|rpm)\\[\\d+\\]: (?:Installed|Upgraded|Removed) package\\b",
+      "expected_sourcetype": "linux:os:package",
+      "primary_id_field": "package_name",
+      "required_fields": [
+        "program",
+        "process_id",
+        "package_action",
+        "package_name",
+        "package_version"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "pam_auth_failure",
+      "label": "Linux su/PAM authentication failure messages",
+      "match_engine": "pcre",
+      "match": "\\bsu\\[\\d+\\]: pam_unix\\(su:auth\\): authentication failure;",
+      "expected_sourcetype": "linux:os:auth:su",
+      "primary_id_field": "process_id",
+      "required_fields": [
+        "program",
+        "process_id",
+        "pam_service",
+        "user",
+        "dest_user",
+        "effective_uid",
+        "terminal",
+        "src_ip"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "account_mgmt",
+      "label": "Linux local account and group lifecycle messages",
+      "match_engine": "pcre",
+      "match": "\\b(?:useradd|groupadd|userdel|usermod)\\[\\d+\\]: (?:new (?:user|group): name=|delete user '|change user ')",
+      "expected_sourcetype": "linux:os:account",
+      "primary_id_field": "account_name",
+      "required_fields": [
+        "program",
+        "process_id",
+        "account_action",
+        "account_name"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Linux",
+    "product": "os_syslog",
+    "vendor_product": "linux:os_syslog",
+    "syslog_timestamp": "RFC3164-style payload timestamp",
+    "host": "Source host token from payload",
+    "program": "Syslog program such as sshd, sudo, CRON, kernel, or systemd",
+    "process_id": "Program process ID where present",
+    "message": "Program message text",
+    "action": "Fixture-backed analyst action derived from program/family",
+    "result": "Result token where known",
+    "signature": "Family-specific grouping label",
+    "signature_id": "Program or service identifier",
+    "user": "Source user for sshd/sudo/cron records",
+    "dest_user": "Target user for sudo records",
+    "src": "Alias for src_ip where present",
+    "src_ip": "Source IP for sshd/kernel packet context",
+    "dest": "Alias for dest_ip where present",
+    "dest_ip": "Destination IP for kernel packet context",
+    "src_port": "Source port for sshd/kernel packet context",
+    "dest_port": "Destination port for kernel packet context",
+    "transport": "Transport/protocol token such as ssh2/TCP",
+    "terminal": "TTY/terminal for sudo records",
+    "working_directory": "PWD value for sudo records",
+    "command": "Command string from sudo or cron records",
+    "service": "systemd unit name",
+    "service_message": "systemd service state text",
+    "marker": "Synthetic fixture marker only",
+    "auth_method": "SSH authentication method such as publickey or password",
+    "pam_service": "PAM service context such as su:session",
+    "pam_event": "PAM session event such as opened or closed",
+    "user_uid": "Source user UID where emitted by PAM session records",
+    "dest_user_uid": "Target user UID where emitted by PAM session records",
+    "package_action": "Package-manager action such as Installed, Upgraded, or Removed",
+    "package_name": "Package name from syslog-wrapped package-manager records",
+    "package_version": "Package version from syslog-wrapped package-manager records",
+    "package_arch": "Package architecture where present",
+    "pam_logname": "PAM logname value from authentication-failure records where emitted",
+    "effective_uid": "Effective UID from PAM authentication-failure records where emitted",
+    "ruser": "PAM remote/requesting user value from authentication-failure records where emitted",
+    "rhost": "PAM remote host value from authentication-failure records where emitted",
+    "account_action": "Local account/group lifecycle action from shadow-utils syslog rows such as new user, new group, delete user, or change shell",
+    "account_name": "Local user or group name from account/group lifecycle records",
+    "account_uid": "UID from useradd records where emitted",
+    "account_gid": "GID from useradd/groupadd records where emitted",
+    "account_home": "Home directory from useradd records where emitted",
+    "account_shell": "Login shell from useradd records where emitted",
+    "account_source": "Source/origin token from useradd records where emitted",
+    "account_attribute": "Changed account attribute from usermod records where emitted",
+    "account_old_value": "Previous account attribute value from usermod change records where emitted",
+    "account_new_value": "New account attribute value from usermod change records where emitted"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-linux_os_syslog.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/linux_os_syslog_overview.xml"
+    ],
+    "test_events": [
+      "test-events/linux_os_syslog_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20065.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/linux_os_syslog_reduction_candidates.csv",
+      "validation/preflight-2026-06-07.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Linux OS relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20065,
+      "notes": "Dedicated TCP listener for one Linux syslog record per line from rsyslog, syslog-ng, journald-to-syslog, or collector relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20065,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Linux common syslog / RFC3164-style program messages",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in common public Linux syslog conventions; exact distro/collector variants must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-07",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Common Linux syslog conventions and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Linux syslog records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Linux syslog relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Linux common OS syslog relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "linux_os_syslog_records"
+      ],
+      "event_count": 13,
+      "marker_prefix": "SC4S_LINUX_OS_SYSLOG_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20065.sh"
+    },
+    "readback": {
+      "spl": "index=osnix sechub_fixture_marker=\"SC4S_LINUX_OS_SYSLOG_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product program process_id action signature signature_id result user auth_method src src_ip src_port dest_port transport dest_user pam_service pam_event pam_logname effective_uid terminal ruser rhost user_uid dest_user_uid package_action package_name package_version package_arch account_action account_name account_uid account_gid account_home account_shell account_source account_attribute account_old_value account_new_value service command marker _raw",
+      "expected_count": 13,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "program",
+        "action",
+        "signature/signature_id",
+        "family-specific fields",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-07",
+      "summary": "2026-06-07 local preflight found no TCP listener on 127.0.0.1:20065 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-07.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-07.md",
+        "summary": "Command-grounded local preflight evidence for missing Linux common OS syslog TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20065,
+          "protocol": "line_delimited_syslog",
+          "purpose": "Dedicated Linux common OS syslog relay listener"
+        }
+      ],
+      "required_indexes": [
+        "osnix"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to osnix",
+        "Search role can read osnix"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "linux_os_syslog_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/linux_os_syslog/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/linux_os_syslog/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/linux_os_syslog/compose.yaml",
+      "compose_project": "sechub-linux-os-syslog-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "osnix index preflight/create"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/linux_os_syslog/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/linux_os_syslog/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/linux_os_syslog/scripts/send_tcp_20065.sh 127.0.0.1 20065",
+        "splunk_summary_readback": "index=osnix sechub_fixture_marker=\"SC4S_LINUX_OS_SYSLOG_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=osnix sechub_fixture_marker=\"SC4S_LINUX_OS_SYSLOG_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product program process_id action signature signature_id result user auth_method src src_ip src_port dest dest_ip dest_port transport dest_user pam_service pam_event pam_logname effective_uid terminal ruser rhost user_uid dest_user_uid package_action package_name package_version package_arch account_action account_name account_uid account_gid account_home account_shell account_source account_attribute account_old_value account_new_value service command marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "osnix",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/linux_os_syslog/splunk -> /opt/splunk/etc/apps/sechub_linux_os_syslog (writable in disposable TEST for first-boot ownership setup)"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20065,
+          "host_port_env": "SC4S_LINUX_OS_SYSLOG_PORT",
+          "source_id": "LINUX_OS_SYSLOG"
+        },
+        "parser_mount": "packs/linux_os_syslog/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "rfc3164_style_program_relay",
+          "event_family": "sshd_auth",
+          "sourcetype": "linux:os:auth:sshd",
+          "data_structures": [
+            "failed-password auth"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_SSHD_001"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "rfc3164_style_program_relay",
+          "event_family": "sshd_auth_success",
+          "sourcetype": "linux:os:auth:sshd",
+          "data_structures": [
+            "accepted SSH auth"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_SSHD_SUCCESS_006"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "rfc3164_style_program_relay",
+          "event_family": "sudo",
+          "sourcetype": "linux:os:auth:sudo",
+          "data_structures": [
+            "sudo command execution"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_SUDO_002"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "rfc3164_style_program_relay",
+          "event_family": "su_pam",
+          "sourcetype": "linux:os:auth:su",
+          "data_structures": [
+            "PAM su session"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_SU_PAM_007"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "rfc3164_style_program_relay",
+          "event_family": "pam_auth_failure",
+          "sourcetype": "linux:os:auth:su",
+          "data_structures": [
+            "PAM su authentication failure"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_PAM_AUTH_FAILURE_009"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "rfc3164_style_program_relay",
+          "event_family": "cron",
+          "sourcetype": "linux:os:cron",
+          "data_structures": [
+            "cron command execution"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_CRON_003"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "rfc3164_style_program_relay",
+          "event_family": "kernel",
+          "sourcetype": "linux:os:kernel",
+          "data_structures": [
+            "kernel packet/warning context"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_KERNEL_004"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "rfc3164_style_program_relay",
+          "event_family": "systemd",
+          "sourcetype": "linux:os:systemd",
+          "data_structures": [
+            "systemd service state"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_SYSTEMD_005"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "syslog_wrapped_package_change",
+          "event_family": "package_manager",
+          "sourcetype": "linux:os:package",
+          "data_structures": [
+            "package manager install/update/remove"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_PACKAGE_008"
+          ]
+        },
+        {
+          "source": "linux_os_syslog",
+          "source_shape": "shadow_utils_syslog",
+          "event_family": "account_mgmt",
+          "sourcetype": "linux:os:account",
+          "data_structures": [
+            "user/group create/delete/change"
+          ],
+          "markers": [
+            "SC4S_LINUX_OS_SYSLOG_TEST_USERADD_010",
+            "SC4S_LINUX_OS_SYSLOG_TEST_GROUPADD_011",
+            "SC4S_LINUX_OS_SYSLOG_TEST_USERDEL_012",
+            "SC4S_LINUX_OS_SYSLOG_TEST_USERMOD_013"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "distro-specific wrappers and collector envelopes are not proven by this harness",
+        "journald JSON and native package-log files are separate source shapes",
+        "broader PAM/shadow-utils variants and multiline application logs remain deferred"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "linux_os_syslog_records",
+      "label": "Linux common OS syslog synthetic-equivalent records",
+      "path": "test-events/linux_os_syslog_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "rfc3164_style_linux_program_message_payload",
+      "envelope": "none",
+      "serialization": "plain_text",
+      "event_count": 13,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_LINUX_OS_SYSLOG_TEST_SSHD_001",
+        "SC4S_LINUX_OS_SYSLOG_TEST_SUDO_002",
+        "SC4S_LINUX_OS_SYSLOG_TEST_CRON_003",
+        "SC4S_LINUX_OS_SYSLOG_TEST_KERNEL_004",
+        "SC4S_LINUX_OS_SYSLOG_TEST_SYSTEMD_005",
+        "SC4S_LINUX_OS_SYSLOG_TEST_SSHD_SUCCESS_006",
+        "SC4S_LINUX_OS_SYSLOG_TEST_SU_PAM_007",
+        "SC4S_LINUX_OS_SYSLOG_TEST_PACKAGE_008",
+        "SC4S_LINUX_OS_SYSLOG_TEST_PAM_AUTH_FAILURE_009",
+        "SC4S_LINUX_OS_SYSLOG_TEST_USERADD_010",
+        "SC4S_LINUX_OS_SYSLOG_TEST_GROUPADD_011",
+        "SC4S_LINUX_OS_SYSLOG_TEST_USERDEL_012",
+        "SC4S_LINUX_OS_SYSLOG_TEST_USERMOD_013"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "receiver_time",
+        "primary_field": "syslog payload timestamp",
+        "primary_timezone": "not present in RFC3164-style fixture payload",
+        "fallback_fields": [
+          "RFC5424 relay envelope timestamp when using send helper"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or receiver time policy"
+        ],
+        "notes": "Fixtures use RFC3164-style month/day/time payload timestamps with no timezone/year. The send helper wraps fixtures with timezone-qualified RFC5424 timestamps for replay."
+      },
+      "field_delimiting": {
+        "style": "plain_text_with_program_specific_tokens",
+        "field_separator": "space and program-specific punctuation",
+        "quote_character": "double quote around synthetic marker; sudo uses semicolon-separated key/value segments",
+        "escape_policy": "Synthetic values avoid secrets and use RFC5737 documentation addresses",
+        "notes": "Each line is one OS syslog message. Multiline application logs are outside this initial pack."
+      },
+      "expected_families": [
+        "sshd_auth",
+        "sudo",
+        "cron",
+        "kernel",
+        "systemd",
+        "sshd_auth_success",
+        "su_pam",
+        "package_manager",
+        "pam_auth_failure",
+        "account_mgmt"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-linux_os_syslog.conf",
+      "target_path": "local/config/app_parsers/syslog/app-linux_os_syslog.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/linux_os_syslog.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/linux_os_syslog_overview.xml",
+      "target_path": "splunk/default/data/ui/views/linux_os_syslog_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/linux_os_syslog_test_events.txt",
+      "target_path": "test-events/linux_os_syslog_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20065.sh",
+      "target_path": "scripts/send_tcp_20065.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_compose_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_compose_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/linux_os_syslog_reduction_candidates.csv",
+      "target_path": "docs/linux_os_syslog_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_07",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-07.md",
+      "target_path": "validation/preflight-2026-06-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Public Linux/OpenSSH/sudo/cron/systemd/kernel syslog conventions, Linux-PAM templates, Debian/Red Hat package log docs, and shadow-utils account/group lifecycle syslog templates.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use generic hostnames/users/groups and RFC5737 documentation IP addresses; no customer Linux syslog records or proprietary TA content are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-07",
+      "notes": "Selected from Milestone 8 P0 operating-system telemetry backlog after Windows Event Log and Linux auditd. Initial scope is conservative common syslog relay coverage, not full Linux TA compatibility or field validation."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "ruser",
+            "pam_logname"
+          ],
+          "status": "partial",
+          "notes": "Source user for sshd/sudo/cron and PAM source-user records where extracted."
+        },
+        "dest_user": {
+          "source_fields": [
+            "dest_user"
+          ],
+          "status": "partial",
+          "notes": "Target sudo user or PAM target user where present."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "rhost"
+          ],
+          "status": "partial",
+          "notes": "Source IP for sshd/kernel packet messages."
+        },
+        "dest": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Destination IP for kernel packet messages."
+        },
+        "action": {
+          "source_fields": [
+            "program",
+            "message",
+            "action",
+            "package_action",
+            "pam_event",
+            "pam_service",
+            "rhost",
+            "account_action",
+            "account_attribute",
+            "account_old_value",
+            "account_new_value"
+          ],
+          "status": "partial",
+          "notes": "Derived family action for SSH, sudo, PAM, cron, kernel, systemd, and package changes; not a complete normalized action taxonomy."
+        },
+        "signature_id": {
+          "source_fields": [
+            "program",
+            "service",
+            "pam_service",
+            "package_name",
+            "account_name",
+            "account_action",
+            "account_attribute",
+            "account_old_value",
+            "account_new_value"
+          ],
+          "status": "partial",
+          "notes": "Program or service token."
+        },
+        "signature": {
+          "source_fields": [
+            "program",
+            "service_message",
+            "pam_service",
+            "package_action",
+            "account_name",
+            "account_action",
+            "account_attribute",
+            "account_old_value",
+            "account_new_value"
+          ],
+          "status": "partial",
+          "notes": "Family-specific grouping label."
+        },
+        "process_id": {
+          "source_fields": [
+            "process_id"
+          ],
+          "status": "partial",
+          "notes": "Program PID where present."
+        },
+        "command": {
+          "source_fields": [
+            "command"
+          ],
+          "status": "partial",
+          "notes": "Sudo/cron command retained by default."
+        },
+        "package_name": {
+          "source_fields": [
+            "package_name"
+          ],
+          "status": "partial",
+          "notes": "Package name from syslog-wrapped package manager fixture records."
+        },
+        "package_version": {
+          "source_fields": [
+            "package_version"
+          ],
+          "status": "partial",
+          "notes": "Package version from syslog-wrapped package manager fixture records."
+        },
+        "terminal": {
+          "source_fields": [
+            "terminal"
+          ],
+          "status": "partial",
+          "notes": "TTY from sudo and PAM authentication-failure records where emitted."
+        },
+        "effective_uid": {
+          "source_fields": [
+            "effective_uid"
+          ],
+          "status": "partial",
+          "notes": "Effective UID from PAM authentication-failure records."
+        },
+        "account_name": {
+          "source_fields": [
+            "account_name"
+          ],
+          "status": "partial",
+          "notes": "Local account or group object name from shadow-utils create/delete/change syslog rows."
+        },
+        "account_uid": {
+          "source_fields": [
+            "account_uid"
+          ],
+          "status": "partial",
+          "notes": "UID for useradd account-administration rows where emitted."
+        },
+        "account_gid": {
+          "source_fields": [
+            "account_gid"
+          ],
+          "status": "partial",
+          "notes": "GID for useradd/groupadd account-administration rows where emitted."
+        },
+        "account_attribute": {
+          "source_fields": [
+            "account_attribute"
+          ],
+          "status": "partial",
+          "notes": "Changed shadow-utils account attribute for fixture-backed usermod rows."
+        },
+        "account_old_value": {
+          "source_fields": [
+            "account_old_value"
+          ],
+          "status": "partial",
+          "notes": "Previous value from fixture-backed usermod account-change rows."
+        },
+        "account_new_value": {
+          "source_fields": [
+            "account_new_value"
+          ],
+          "status": "partial",
+          "notes": "New value from fixture-backed usermod account-change rows."
+        }
+      },
+      "notes": "Partial Authentication/Change/Network/Endpoint mapping only; not complete Splunk Unix/Linux TA compatibility."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "user",
+            "ruser",
+            "pam_logname"
+          ],
+          "status": "partial",
+          "notes": "User token from auth/sudo/cron records."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip",
+            "rhost"
+          ],
+          "status": "partial",
+          "notes": "Source IP when present."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Destination IP for kernel packet messages."
+        },
+        "process.pid": {
+          "source_fields": [
+            "process_id"
+          ],
+          "status": "partial",
+          "notes": "Syslog program PID."
+        },
+        "process.cmd_line": {
+          "source_fields": [
+            "command"
+          ],
+          "status": "partial",
+          "notes": "Sudo/cron command string."
+        },
+        "service.name": {
+          "source_fields": [
+            "service"
+          ],
+          "status": "partial",
+          "notes": "systemd service unit."
+        },
+        "auth_protocol": {
+          "source_fields": [
+            "auth_method",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "SSH auth method and transport tokens from fixture-backed sshd records."
+        },
+        "actor.user.uid": {
+          "source_fields": [
+            "user_uid",
+            "effective_uid"
+          ],
+          "status": "partial",
+          "notes": "PAM source user UID where emitted."
+        },
+        "user.uid": {
+          "source_fields": [
+            "account_uid"
+          ],
+          "status": "partial",
+          "notes": "Target local UID for useradd rows where emitted."
+        },
+        "software.package.name": {
+          "source_fields": [
+            "package_name"
+          ],
+          "status": "partial",
+          "notes": "Package name from syslog-wrapped package manager fixture records."
+        },
+        "software.package.version": {
+          "source_fields": [
+            "package_version"
+          ],
+          "status": "partial",
+          "notes": "Package version from syslog-wrapped package manager fixture records."
+        },
+        "user.name": {
+          "source_fields": [
+            "account_name"
+          ],
+          "status": "partial",
+          "notes": "Target local user name for account lifecycle rows when the row addresses a user."
+        },
+        "group.name": {
+          "source_fields": [
+            "account_name"
+          ],
+          "status": "partial",
+          "notes": "Target local group name for group lifecycle rows when the row addresses a group."
+        },
+        "group.uid": {
+          "source_fields": [
+            "account_gid"
+          ],
+          "status": "partial",
+          "notes": "Target local GID for groupadd/useradd rows where emitted."
+        },
+        "entity.attribute": {
+          "source_fields": [
+            "account_attribute"
+          ],
+          "status": "partial",
+          "notes": "Changed account attribute from fixture-backed usermod rows."
+        },
+        "entity.previous_value": {
+          "source_fields": [
+            "account_old_value"
+          ],
+          "status": "partial",
+          "notes": "Previous usermod value; helper mapping only."
+        },
+        "entity.new_value": {
+          "source_fields": [
+            "account_new_value"
+          ],
+          "status": "partial",
+          "notes": "New usermod value; helper mapping only."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "user",
+            "ruser",
+            "pam_logname",
+            "account_name"
+          ],
+          "status": "partial",
+          "notes": "User token."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip",
+            "rhost"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Destination IP."
+        },
+        "source.port": {
+          "source_fields": [
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Source port."
+        },
+        "destination.port": {
+          "source_fields": [
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Destination port."
+        },
+        "network.transport": {
+          "source_fields": [
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "Protocol token as emitted/extracted."
+        },
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived family action."
+        },
+        "process.pid": {
+          "source_fields": [
+            "process_id"
+          ],
+          "status": "partial",
+          "notes": "Program PID."
+        },
+        "process.command_line": {
+          "source_fields": [
+            "command"
+          ],
+          "status": "partial",
+          "notes": "Command string from sudo/cron."
+        },
+        "service.name": {
+          "source_fields": [
+            "service"
+          ],
+          "status": "partial",
+          "notes": "systemd service unit."
+        },
+        "user.id": {
+          "source_fields": [
+            "user_uid",
+            "effective_uid",
+            "account_uid"
+          ],
+          "status": "partial",
+          "notes": "PAM source user UID where emitted."
+        },
+        "user.target.name": {
+          "source_fields": [
+            "dest_user"
+          ],
+          "status": "partial",
+          "notes": "PAM or sudo target user where emitted."
+        },
+        "user.target.id": {
+          "source_fields": [
+            "dest_user_uid"
+          ],
+          "status": "partial",
+          "notes": "PAM target user UID where emitted."
+        },
+        "package.name": {
+          "source_fields": [
+            "package_name"
+          ],
+          "status": "partial",
+          "notes": "Package name from syslog-wrapped package manager records."
+        },
+        "package.version": {
+          "source_fields": [
+            "package_version"
+          ],
+          "status": "partial",
+          "notes": "Package version from syslog-wrapped package manager records."
+        },
+        "group.name": {
+          "source_fields": [
+            "account_name"
+          ],
+          "status": "partial",
+          "notes": "Target local group name for groupadd rows when the row creates a group."
+        },
+        "group.id": {
+          "source_fields": [
+            "account_gid"
+          ],
+          "status": "partial",
+          "notes": "Target local GID for groupadd/useradd rows where emitted."
+        },
+        "user.home": {
+          "source_fields": [
+            "account_home"
+          ],
+          "status": "partial",
+          "notes": "Home directory from useradd rows where emitted."
+        },
+        "user.shell": {
+          "source_fields": [
+            "account_shell"
+          ],
+          "status": "partial",
+          "notes": "Login shell from useradd rows where emitted."
+        },
+        "user.changes.name": {
+          "source_fields": [
+            "account_attribute"
+          ],
+          "status": "partial",
+          "notes": "Changed account attribute from fixture-backed usermod rows."
+        },
+        "user.changes.old_value": {
+          "source_fields": [
+            "account_old_value"
+          ],
+          "status": "partial",
+          "notes": "Previous usermod value; profile-scoped helper mapping."
+        },
+        "user.changes.new_value": {
+          "source_fields": [
+            "account_new_value"
+          ],
+          "status": "partial",
+          "notes": "New usermod value; profile-scoped helper mapping."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/linux_os_syslog/README.md": "sha256:9955c1ec453486f13cbbb7395e53f89dda2200457ac6018715b8dec66827210f",
+      "packs/linux_os_syslog/sc4s/app_parsers/syslog/app-linux_os_syslog.conf": "sha256:89da064e908d08a51769197109b54fa4ec58f5e0989ed987f1c06b4a337566b4",
+      "packs/linux_os_syslog/sc4s/env.example": "sha256:1483d1a6aeecfd3c39f52909bd40281cf6bceb445ec269c4ba284bbe57d8469f",
+      "packs/linux_os_syslog/splunk/default/props.conf": "sha256:9ee3cdc73b66a5f3698707cfa82651ba4e147ee8d9f6c8bd866d506e79219fbf",
+      "packs/linux_os_syslog/splunk/default/transforms.conf": "sha256:c2b79dae304d25aa4fd4b8a04d52ddd7ebee1a872be1bcbb2495c008953e6b5a",
+      "packs/linux_os_syslog/splunk/default/eventtypes.conf": "sha256:697dc4e47f9999578b4ab5414a1f6ff1cc58c08ecb4206a6741cc53eb61106ac",
+      "packs/linux_os_syslog/splunk/default/tags.conf": "sha256:9af4dff6386f4fcce3fa977ceffcc62c933287dcdbd4a09916c3ce83d0b7ff03",
+      "packs/linux_os_syslog/test-events/linux_os_syslog_test_events.txt": "sha256:67834ad01f8858587a5fc14d00ef8c96678d4bedae1a32ce51610756b0ca4f9c",
+      "packs/linux_os_syslog/scripts/send_tcp_20065.sh": "sha256:a888bbd6913c350de3fe6ce05eb35dc58a6ced35b2bb1b49e850736fb56c8a71",
+      "packs/linux_os_syslog/docs/linux_os_syslog_reduction_candidates.csv": "sha256:6bb2ecd55296a569b7b61f00ffe658510706cf89641253a81f858b68e2420e6b",
+      "packs/linux_os_syslog/validation/preflight-2026-06-07.md": "sha256:49877a4cf45b2ca0a3fa6a81295ce2ce8ff7ca91b124f31df687b30b7441e479",
+      "packs/linux_os_syslog/splunk/default/data/ui/views/linux_os_syslog_overview.xml": "sha256:00d587c2bb021c2d37a7596244506e4f35620fccc163d5cabc9de8f1bb0a663a",
+      "packs/linux_os_syslog/scripts/e2e_docker_compose.sh": "sha256:b26ca91b4ace1bd9e7361b6b1c363aefc2ff214832f996a7774d1d3a07733655"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-07-17",
+    "last_tested": "2026-07-17"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "linux",
+    "endpoint",
+    "os",
+    "authentication",
+    "system",
+    "syslog"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "rfc3164_program_relay",
+      "label": "RFC3164-style Linux program syslog relay",
+      "description": "Default initial variant for one common Linux OS syslog message per line, optionally syslog-wrapped by a collector relay.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "rsyslog_relay",
+        "syslog_ng_relay",
+        "journald_to_syslog",
+        "file_agent_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "plain_text",
+        "rfc3164_style"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "sshd_auth",
+        "sudo",
+        "cron",
+        "kernel",
+        "systemd",
+        "sshd_auth_success",
+        "su_pam",
+        "package_manager",
+        "pam_auth_failure",
+        "account_mgmt"
+      ],
+      "test_event_sets": [
+        "linux_os_syslog_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "syslog_ng",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent fixtures only; no live Linux syslog relay capture or Splunk read-back.",
+        "Distro/collector variants, PAM modules beyond documented `su` session/auth-failure examples, broader shadow-utils variants beyond the fixture-backed create/delete/shell-change rows, native non-syslog package log files, journald JSON, and multiline application logs are not covered in this pack."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/linux_os_syslog_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "program",
+        "host",
+        "user",
+        "src_ip",
+        "service",
+        "command",
+        "sc4s_marker"
+      ],
+      "notes": "Use only after sampling the actual Linux syslog relay schema. Do not drop command, user, host, source, service, or marker context by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Linux syslog relay, SC4S runtime replay, HEC delivery, Splunk read-back, Manager apply, or production evidence captured.",
+    "Synthetic-equivalent fixtures are documentation-shaped and do not prove source validation.",
+    "Parser routes selected common OS families only; PAM modules beyond the documented `su` session/auth-failure examples, broader shadow-utils variants beyond the fixture-backed create/delete/shell-change rows, native non-syslog package log files, journald JSON, distro-specific wrappers, and multiline application logs remain future work.",
+    "RFC3164-style payload timestamps lack timezone/year unless wrapped by a timezone-qualified relay envelope."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Linux common OS syslog intake",
+      "description": "Dedicated listener, SC4S parser, common OS fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-linux_os_syslog.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Linux common OS analyst knowledge",
+      "description": "Adds eventtypes/tags for fixture-backed sshd, sudo, su/PAM session/auth-failure, cron, kernel, systemd, package-change, and account/group-administration discovery. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Linux common OS reduction candidates",
+      "description": "Review-only candidate list for future collector/Cribl reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/linux_os_syslog_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local replay/read-back validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "custom_application_syslog",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Linux OS logs are native syslog-style records.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "linux_os_syslog_overview_splunk_test",
+      "title": "Linux common OS syslog relay — dashboard example",
+      "source_path": "dashboards/screenshots/linux-os-syslog-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Linux common OS syslog relay dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

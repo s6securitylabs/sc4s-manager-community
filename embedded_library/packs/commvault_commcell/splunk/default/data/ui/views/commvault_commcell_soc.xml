@@ -1,0 +1,384 @@
+<form version="1.1" theme="dark">
+  <label>Commvault CommCell - SOC Overview</label>
+  <description>Detections, anomalies, authentication, privileged audit activity, and backup health for index=commvault (SC4S commvault:commcell:* sourcetypes). Backup infrastructure is a primary ransomware target: watch the anomaly, failed-login, and destructive-operation panels first.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="user_tok" searchWhenChanged="true">
+      <label>Username filter (audit panels)</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total events</title>
+      <single>
+        <search>
+          <query>index=commvault | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Anomaly alerts</title>
+      <single>
+        <search>
+          <query>index=commvault Alertcriteria="Anomaly*" | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Critical severity</title>
+      <single>
+        <search>
+          <query>index=commvault (Alertseverity="Critical" OR Eventseverity="Critical" OR Severitylevel="Critical") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Failed logins</title>
+      <single>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" (Operation="Login Failed" OR Details="*Login failed*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Failed-job alerts</title>
+      <single>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:alert" (Alertname="*fail*" OR Alertcriteria="*fail*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,20]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Distinct users logged in</title>
+      <single>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" Operation="User Logged in" | stats dc(Username)</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Event volume by family</title>
+      <chart>
+        <search>
+          <query>index=commvault | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Severity distribution (all families, Major folded into Critical, Minor into Low)</title>
+      <chart>
+        <search>
+          <query>index=commvault | eval Severity=coalesce(Alertseverity, Eventseverity, Severitylevel, "Unknown") | eval Severity=case(Severity=="Major", "Critical", Severity=="Minor", "Low", true(), Severity) | stats count by Severity</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Volume by CommCell and forwarding host</title>
+      <table>
+        <search>
+          <query>index=commvault | stats count by Commcellname host sourcetype | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>DETECTION: Commvault anomaly indicators (unusual activity; can include ransomware)</title>
+      <chart>
+        <search>
+          <query>index=commvault Alertcriteria="Anomaly*" | timechart count by Alertcriteria</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Anomaly alert detail (file activity, event-rate, and failed-job anomalies)</title>
+      <table>
+        <search>
+          <query>index=commvault Alertcriteria="Anomaly*" | sort -_time | table _time Commcellname Alertcriteria Alertname Companyname Jobid Alertseverity Alertdescription | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Login activity by user</title>
+      <chart>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" Operation="User Logged in" Username="$user_tok$" | timechart count by Username limit=20 useother=true</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Login sources: who is logging in from where</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" Operation="User Logged in" Username="$user_tok$" | stats count earliest(_time) as first_seen latest(_time) as last_seen by Username cv_login_src cv_login_from | eval first_seen=strftime(first_seen, "%F %T"), last_seen=strftime(last_seen, "%F %T") | sort -count | rename cv_login_src as "Source host/IP" cv_login_from as "Console"</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>DETECTION: Failed logins (5+ failures flagged red)</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" (Operation="Login Failed" OR Details="*Login failed*") Username="$user_tok$" | stats count latest(_time) as last_attempt values(cv_login_machine) as machines latest(cv_login_reason) as latest_reason by Username | eval last_attempt=strftime(last_attempt, "%F %T") | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <format type="color" field="count">
+          <colorPalette type="list">[#53a051,#f8be34,#dc4e41]</colorPalette>
+          <scale type="threshold">3,5</scale>
+        </format>
+      </table>
+    </panel>
+    <panel>
+      <title>DETECTION: New login source per user (first seen in last 24h, 30d baseline)</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" Operation="User Logged in" | stats earliest(_time) as first_seen count by Username cv_login_src cv_login_from | where first_seen &gt;= relative_time(now(), "-24h") | eval first_seen=strftime(first_seen, "%F %T") | sort -count | rename cv_login_src as "Source host/IP" cv_login_from as "Console"</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">cell</option>
+      </table>
+    </panel>
+    <panel>
+      <title>DETECTION: After-hours audit activity (21:00-06:00, excludes logouts)</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" Username="$user_tok$" Operation!="User Logged out" | eval hour=tonumber(strftime(_time, "%H")) | where hour &lt; 6 OR hour &gt;= 21 | stats count values(Operation) as operations latest(_time) as last_seen by Username | eval last_seen=strftime(last_seen, "%F %T") | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>DETECTION: Privileged / destructive audit operations (delete, retention, security, policy, kill, credential changes)</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" Username="$user_tok$" Operation!="User Logged in" Operation!="User Logged out" (Operation="*delete*" OR Operation="*user*" OR Operation="*security*" OR Operation="*password*" OR Operation="*retention*" OR Operation="*aging*" OR Operation="*kill*" OR Operation="*erase*" OR Operation="*activity*" OR Operation="*policy*" OR Operation="*plan*" OR Operation="*credential*" OR Operation="*workflow*" OR Operation="*schedule*") | stats count latest(_time) as last_seen latest(Details) as latest_detail by Username Operation | eval last_seen=strftime(last_seen, "%F %T") | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Audit operations over time</title>
+      <chart>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" | timechart count by Operation limit=10 useother=true</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Elevated-severity audit events</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:audittrail" Severitylevel!="Low" | sort -_time | table _time Severitylevel Username Operation Details | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top event codes (enriched from commvault_eventcodes lookup)</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:event" Eventcode=* | stats count latest(Description) as latest_example by Eventcode | lookup commvault_eventcodes event_code as Eventcode OUTPUTNEW event_string | eval event_string=coalesce(event_string, eventcode_description, "(not in lookup - regenerate commvault_eventcodes.csv)") | sort -count | head 20 | table Eventcode event_string count latest_example</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Events severity trend</title>
+      <chart>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:event" | timechart count by Eventseverity</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Job duration distribution (per Jobid, first event to last event)</title>
+      <chart>
+        <search>
+          <query>index=commvault Jobid=* | rename Jobid as jobid | makemv jobid | stats earliest(_time) as StartTime latest(_time) as EndTime by jobid | eval TimeTakenMin=ceiling((EndTime - StartTime) / 60) | eval TimeTakenHr=ceiling(TimeTakenMin / 60) | eval CompletedIn=case(TimeTakenHr&lt;=1, "0-1 hr", TimeTakenHr&lt;=2, "1-2 hrs", TimeTakenHr&lt;=4, "2-4 hrs", TimeTakenHr&lt;=8, "4-8 hrs", true(), "8+ hrs") | stats count as jobs by CompletedIn | eval sort_key=case(CompletedIn="0-1 hr", 1, CompletedIn="1-2 hrs", 2, CompletedIn="2-4 hrs", 3, CompletedIn="4-8 hrs", 4, true(), 5) | sort sort_key | fields - sort_key</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Failed-job alerts by company</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell:alert" (Alertname="*fail*" OR Alertcriteria="*fail*") | fillnull value="unknown" Companyname | stats count latest(_time) as last_seen latest(Alertdescription) as latest_description by Companyname Alertname | eval last_seen=strftime(last_seen, "%F %T") | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Tape media import/export activity (media barcode by IE port, base sourcetype)</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell" | rex field=message "^(?&lt;media_barcode&gt;[A-Za-z0-9]+)\s*-\s*(?&lt;ie_port&gt;IEPort\d+)\s*$" | where isnotnull(media_barcode) | stats count earliest(_time) as first_seen latest(_time) as last_seen by media_barcode ie_port | eval first_seen=strftime(first_seen, "%F %T"), last_seen=strftime(last_seen, "%F %T") | sort -last_seen</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Tape movements per IE port</title>
+      <chart>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell" | rex field=message "^(?&lt;media_barcode&gt;[A-Za-z0-9]+)\s*-\s*(?&lt;ie_port&gt;IEPort\d+)\s*$" | where isnotnull(ie_port) | timechart count by ie_port</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Unclassified base-sourcetype events (no family match, not tape movement)</title>
+      <table>
+        <search>
+          <query>index=commvault sourcetype="commvault:commcell" | rex field=message "^(?&lt;media_barcode&gt;[A-Za-z0-9]+)\s*-\s*(?&lt;ie_port&gt;IEPort\d+)\s*$" | where isnull(media_barcode) | sort -_time | table _time host message | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">cell</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>

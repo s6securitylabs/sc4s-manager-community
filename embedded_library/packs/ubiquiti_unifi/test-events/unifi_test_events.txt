@@ -1,0 +1,6 @@
+2026-06-14T00:10:00Z unifi-console UniFiNetwork[1234]: firewall event action=blocked rule="Block IoT to LAN" src=192.0.2.10 dst=198.51.100.20 proto=tcp dpt=445 marker=SC4S_UNIFI_TEST_FIREWALL_BLOCK_001
+2026-06-14T00:11:00Z unifi-console UniFiNetwork[1234]: client connected user="laptop-01" mac=00:11:22:33:44:55 ap="U6-Pro-Lab" ssid="CorpWiFi" marker=SC4S_UNIFI_TEST_CLIENT_CONNECT_002
+2026-06-14T00:12:00Z unifi-console UniFiNetwork[1234]: admin login success user=admin@example.test src=203.0.113.10 marker=SC4S_UNIFI_TEST_ADMIN_LOGIN_003
+2026-06-14T00:13:00Z unifi-console UniFiNetwork[1234]: device adopted device="USW-24" mac=66:77:88:99:aa:bb ip=192.0.2.50 marker=SC4S_UNIFI_TEST_DEVICE_ADOPT_004
+2026-06-14T00:14:00Z unifi-console UniFiNetwork[1234]: threat detected signature="ET SCAN" severity=high src=192.0.2.60 dst=198.51.100.80 marker=SC4S_UNIFI_TEST_THREAT_005
+2026-06-14T00:15:00Z unifi-console UniFiNetwork[1234]: vpn session established user=remote@example.test src=203.0.113.22 marker=SC4S_UNIFI_TEST_VPN_006

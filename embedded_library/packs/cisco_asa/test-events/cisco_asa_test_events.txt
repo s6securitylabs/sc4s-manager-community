@@ -1,0 +1,6 @@
+Oct 10 2018 12:34:56 firewall-a CiscoASA[999]: %ASA-6-305011: Built dynamic TCP translation from inside:192.0.2.10/1772 to outside:198.51.100.44/8256 SC4S_CISCO_ASA_TEST_TRANSLATION_001
+Oct 10 2018 12:34:57 firewall-a CiscoASA[999]: %ASA-6-302013: Built outbound TCP connection 11757 for outside:198.51.100.104/80 (198.51.100.104/80) to inside:192.0.2.25/54321 (192.0.2.25/54321) SC4S_CISCO_ASA_TEST_CONN_002
+Oct 10 2018 12:35:07 firewall-a CiscoASA[999]: %ASA-6-302014: Teardown TCP connection 11757 for outside:198.51.100.104/80 to inside:192.0.2.25/54321 duration 0:00:10 bytes 1234 SC4S_CISCO_ASA_TEST_TEARDOWN_003
+Oct 10 2018 12:35:11 firewall-a CiscoASA[999]: %ASA-4-106023: Deny tcp src outside:198.51.100.77/44444 dst inside:192.0.2.77/22 by access-group "outside_access_in" [0x0, 0x0] SC4S_CISCO_ASA_TEST_DENY_004
+Oct 10 2018 12:35:12 firewall-a CiscoASA[999]: %ASA-4-106023: Deny icmp src outside:198.51.100.88 dst inside:192.0.2.88 (type 8, code 0) by access-group "outside_access_in" [0x0, 0x0] SC4S_CISCO_ASA_TEST_DENY_ICMP_005
+Oct 10 2018 12:35:13 firewall-a CiscoFTD[999]: %FTD-6-302015: Built inbound UDP connection 223344 for outside:198.51.100.53/53 to inside:192.0.2.53/53000 SC4S_CISCO_ASA_TEST_FTD_UDP_006

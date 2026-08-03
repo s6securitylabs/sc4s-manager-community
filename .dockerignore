@@ -1,0 +1,13 @@
+.git
+.github
+.pytest_cache
+.coverage
+**/__pycache__
+**/*.pyc
+frontend/node_modules
+frontend/dist
+frontend/tsconfig.tsbuildinfo
+/tmp
+/dist
+.env
+*.env

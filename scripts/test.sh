@@ -52,4 +52,4 @@ if [ "$TARGETED_TEST_RUN" -eq 1 ] && [ "$EXPLICIT_COVERAGE_ARGS" -eq 0 ]; then
   # without writing repo-local coverage or failing on unrelated modules.
   PYTEST_ARGS=(--no-cov "${PYTEST_ARGS[@]}")
 fi
-COVERAGE_FILE="${SC4S_MANAGER_COVERAGE_FILE:-$(resolve_default_test_path coverage_file)}" PYTHONDONTWRITEBYTECODE=1 python -m pytest -o cache_dir="$PYTEST_CACHE_DIR" "${PYTEST_ARGS[@]}"
+PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}" COVERAGE_FILE="${SC4S_MANAGER_COVERAGE_FILE:-$(resolve_default_test_path coverage_file)}" PYTHONDONTWRITEBYTECODE=1 python -m pytest -o cache_dir="$PYTEST_CACHE_DIR" "${PYTEST_ARGS[@]}"

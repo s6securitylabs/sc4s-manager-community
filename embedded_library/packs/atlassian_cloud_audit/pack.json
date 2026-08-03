@@ -1,0 +1,1029 @@
+{
+  "schema_version": "0.1",
+  "id": "atlassian_cloud_audit",
+  "version": "0.1.2",
+  "url": "https://developer.atlassian.com/cloud/admin/organization/rest/api-group-events/",
+  "description": "Curated SecHub Resources SC4S pack for Atlassian Cloud Jira, Confluence, and organization audit API JSON records relayed as one event per line.",
+  "display_name": "Atlassian Cloud Audit",
+  "vendor": "atlassian",
+  "product": "cloud_audit",
+  "default_index": "gitops",
+  "default_source": "atlassian_cloud_audit",
+  "listener": {
+    "source_id": "ATLASSIAN_CLOUD_AUDIT",
+    "transport": "tcp",
+    "port": 20100,
+    "env": {
+      "SC4S_LISTEN_ATLASSIAN_CLOUD_AUDIT_TCP_PORT": "20100",
+      "SOURCE_ALL_SET_APPEND": "ATLASSIAN_CLOUD_AUDIT"
+    }
+  },
+  "sourcetypes": {
+    "jira_cloud_audit": "atlassian:cloud:audit:json",
+    "confluence_cloud_audit": "atlassian:cloud:audit:json",
+    "organization_audit_event": "atlassian:cloud:audit:json"
+  },
+  "event_families": [
+    {
+      "id": "jira_cloud_audit",
+      "label": "Jira Cloud audit records",
+      "match_engine": "pcre",
+      "match": "\\\"source_product\\\"\\s*:\\s*\\\"jira_cloud\\\"",
+      "expected_sourcetype": "atlassian:cloud:audit:json",
+      "primary_id_field": "id",
+      "required_fields": [
+        "id",
+        "created",
+        "summary",
+        "category",
+        "authorAccountId",
+        "remoteAddress"
+      ],
+      "timestamp_fields": [
+        "created"
+      ]
+    },
+    {
+      "id": "confluence_cloud_audit",
+      "label": "Confluence Cloud audit records",
+      "match_engine": "pcre",
+      "match": "\\\"source_product\\\"\\s*:\\s*\\\"confluence_cloud\\\"",
+      "expected_sourcetype": "atlassian:cloud:audit:json",
+      "primary_id_field": "marker",
+      "required_fields": [
+        "creationDate",
+        "summary",
+        "category",
+        "author",
+        "remoteAddress",
+        "affectedObject"
+      ],
+      "timestamp_fields": [
+        "creationDate"
+      ]
+    },
+    {
+      "id": "organization_audit_event",
+      "label": "Atlassian Admin organization audit events",
+      "match_engine": "pcre",
+      "match": "\\\"source_product\\\"\\s*:\\s*\\\"atlassian_admin_org\\\"",
+      "expected_sourcetype": "atlassian:cloud:audit:json",
+      "primary_id_field": "id",
+      "required_fields": [
+        "id",
+        "type",
+        "attributes",
+        "message"
+      ],
+      "timestamp_fields": [
+        "attributes.time"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "atlassian",
+    "product": "cloud_audit",
+    "vendor_product": "atlassian:cloud_audit",
+    "source_product": "Collector-supplied or preserved source-mode discriminator: jira_cloud, confluence_cloud, or atlassian_admin_org",
+    "atlassian_audit_family": "Derived family for Jira, Confluence, or organization audit events",
+    "id": "Native event id where provided",
+    "event_id": "Event id alias for read-back/dedupe",
+    "created": "Jira audit timestamp",
+    "creationDate": "Confluence audit timestamp",
+    "attributes.time": "Atlassian Admin organization event timestamp",
+    "summary": "Jira/Confluence audit summary",
+    "category": "Jira/Confluence audit category",
+    "action": "Derived audit action/signature token",
+    "signature": "Audit action/category triage signature",
+    "signature_id": "Event id/signature id",
+    "user": "Actor/user alias",
+    "src_user": "Actor/user alias",
+    "remoteAddress": "Jira/Confluence source IP",
+    "src_ip": "Source IP alias",
+    "src": "Source IP alias",
+    "object": "Affected object/site/space target",
+    "object_type": "Affected object type",
+    "change": "Changed field/name where present",
+    "from": "Previous value where present",
+    "to": "New value where present",
+    "location_country": "Organization event location country where present",
+    "location_region": "Organization event location region where present",
+    "location_city": "Organization event location city where present",
+    "marker": "Synthetic fixture marker only"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-atlassian_cloud_audit.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/atlassian_cloud_audit_overview.xml"
+    ],
+    "test_events": [
+      "test-events/atlassian_cloud_audit_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20100.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/atlassian_cloud_audit_reduction_candidates.csv",
+      "validation/preflight-2026-06-21.md",
+      "dashboards/screenshots/atlassian-cloud-audit-overview-splunk-test.png"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Atlassian Cloud audit JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20100,
+      "notes": "Dedicated TCP listener for one collector-unwrapped Atlassian audit JSON record per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20100,
+      "notes": "Preferred for production if SC4S provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Atlassian Cloud audit API JSON",
+    "min": "Atlassian Jira/Confluence/Admin official schemas current as of 2026-06-21",
+    "max": null,
+    "notes": "Grounded in official Jira Cloud audit OpenAPI, Confluence Cloud audit OpenAPI, and Atlassian Admin organization Events API schema evidence. API result pages must be unwrapped by a collector before this relay path."
+  },
+  "source_delivery": {
+    "mode": "api_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Collector owns Atlassian credentials, OAuth scopes, API polling/streaming, pagination, rate-limit handling, retry/dedup/checkpoint state, and relays one JSON object per line; SC4S does not poll Atlassian APIs.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-21",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Atlassian public schemas and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Atlassian Cloud audit JSON records only. Local replay preflight is blocked by missing listener/Splunk search path; no live Atlassian API relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Atlassian Cloud audit JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "atlassian_cloud_audit_json"
+      ],
+      "event_count": 3,
+      "marker_prefix": "SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20100.sh"
+    },
+    "readback": {
+      "spl": "index=gitops \\\"SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_\\\" earliest=-2h | table _time index sourcetype source vendor product source_product atlassian_audit_family event_id created creationDate attributes.time action summary category user src_user src_ip object object_type change from to location_country location_region location_city marker _raw",
+      "expected_count": 3,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "source_product/family",
+        "event_id",
+        "timestamp",
+        "actor/user fields",
+        "source IP",
+        "object/change fields",
+        "raw JSON"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-21",
+      "summary": "Local preflight found no Atlassian Cloud audit SC4S TEST listener on TCP 20100 and no authenticated Splunk management/search path; replay/read-back not attempted.",
+      "evidence_path": "validation/preflight-2026-06-21.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-21.md",
+        "summary": "Command-grounded blocker note for missing listener/testbed; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20100,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Atlassian Cloud audit JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "gitops"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to gitops",
+        "Search role can read gitops"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "atlassian_cloud_audit_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/atlassian_cloud_audit/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/atlassian_cloud_audit/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/atlassian_cloud_audit/compose.yaml",
+      "compose_project": "sechub-atlassian-cloud-audit-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "gitops index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/atlassian_cloud_audit/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/atlassian_cloud_audit/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/atlassian_cloud_audit/scripts/send_tcp_20100.sh 127.0.0.1 20100",
+        "splunk_summary_readback": "index=gitops \\\"SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_\\\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=gitops \\\"SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_\\\" earliest=-2h | table _time index sourcetype source vendor product source_product atlassian_audit_family event_id created creationDate attributes.time action summary category user src_user src_ip object object_type change from to location_country location_region location_city marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "gitops",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/atlassian_cloud_audit/splunk -> /opt/splunk/etc/apps/sechub_atlassian_cloud_audit:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20100,
+          "host_port_env": "SC4S_ATLASSIAN_CLOUD_AUDIT_PORT",
+          "source_id": "ATLASSIAN_CLOUD_AUDIT"
+        },
+        "parser_mount": "packs/atlassian_cloud_audit/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "jira_cloud_audit_api",
+          "source_shape": "json_relay",
+          "event_family": "jira_cloud_audit",
+          "sourcetype": "atlassian:cloud:audit:json",
+          "data_structures": [
+            "Jira audit record"
+          ],
+          "markers": [
+            "SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_JIRA_001"
+          ]
+        },
+        {
+          "source": "confluence_cloud_audit_api",
+          "source_shape": "json_relay",
+          "event_family": "confluence_cloud_audit",
+          "sourcetype": "atlassian:cloud:audit:json",
+          "data_structures": [
+            "Confluence audit record"
+          ],
+          "markers": [
+            "SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_CONFLUENCE_002"
+          ]
+        },
+        {
+          "source": "atlassian_admin_org_events_api",
+          "source_shape": "json_relay",
+          "event_family": "organization_audit_event",
+          "sourcetype": "atlassian:cloud:audit:json",
+          "data_structures": [
+            "Atlassian Admin organization event"
+          ],
+          "markers": [
+            "SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_ORG_003"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live Atlassian tenant/API or Events API stream replay/read-back.",
+        "No collector pagination/checkpoint or JSON page/array unwrapping proof.",
+        "No Bitbucket, Trello, Opsgenie, Statuspage, or Atlassian Guard/Access-specific event-family coverage.",
+        "No production or field validation; synthetic-equivalent fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for the declared JSON relay shape, not live Atlassian tenant/API/collector validation or field validation."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "atlassian_cloud_audit_json",
+      "label": "Atlassian Cloud audit synthetic-equivalent JSON events",
+      "path": "test-events/atlassian_cloud_audit_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 3,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_JIRA_001",
+        "SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_CONFLUENCE_002",
+        "SC4S_ATLASSIAN_CLOUD_AUDIT_TEST_ORG_003"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "created/creationDate/attributes.time",
+        "primary_timezone": "UTC",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Atlassian Cloud audit timestamp policy"
+        ],
+        "notes": "Fixtures use timezone-qualified timestamps from the relevant source schema."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact JSON with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "jira_cloud_audit",
+        "confluence_cloud_audit",
+        "organization_audit_event"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-atlassian_cloud_audit.conf",
+      "target_path": "local/config/app_parsers/syslog/app-atlassian_cloud_audit.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/atlassian_cloud_audit.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/atlassian_cloud_audit_overview.xml",
+      "target_path": "splunk/default/data/ui/views/atlassian_cloud_audit_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/atlassian_cloud_audit_test_events.txt",
+      "target_path": "test-events/atlassian_cloud_audit_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20100.sh",
+      "target_path": "scripts/send_tcp_20100.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/atlassian_cloud_audit_reduction_candidates.csv",
+      "target_path": "docs/atlassian_cloud_audit_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_21",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-21.md",
+      "target_path": "validation/preflight-2026-06-21.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "dashboard_screenshot_atlassian_cloud_audit_overview_splunk_test",
+      "group": "docs",
+      "source_path": "dashboards/screenshots/atlassian-cloud-audit-overview-splunk-test.png",
+      "target_path": "dashboards/screenshots/atlassian-cloud-audit-overview-splunk-test.png",
+      "kind": "dashboard_screenshot",
+      "rendered": true,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Official Atlassian Jira Cloud audit OpenAPI, Confluence Cloud audit OpenAPI, Atlassian Admin organization Events API schema, and docs/evidence/atlassian-cloud-audit-evidence-scan-20260621.md; fixtures are synthetic-equivalent examples shaped to public documentation.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test users, documentation IP ranges, synthetic IDs, and synthetic markers; no tenant, token, or production account data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-21",
+      "notes": "Initial conservative Atlassian Cloud audit JSON relay pack built from public evidence without trust promotion."
+    },
+    "upstream": {
+      "repo": null,
+      "ref": null,
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "src_user",
+            "authorKey",
+            "author.displayName",
+            "attributes.actor.email",
+            "attributes.actor.name"
+          ],
+          "status": "partial",
+          "notes": "Actor/user context."
+        },
+        "src_user": {
+          "source_fields": [
+            "src_user",
+            "authorKey",
+            "authorAccountId",
+            "author.accountId",
+            "attributes.actor.id",
+            "attributes.actor.email"
+          ],
+          "status": "partial",
+          "notes": "Actor context."
+        },
+        "action": {
+          "source_fields": [
+            "action",
+            "summary",
+            "attributes.action",
+            "category"
+          ],
+          "status": "partial",
+          "notes": "Audit action/category token."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "summary",
+            "attributes.action",
+            "category"
+          ],
+          "status": "partial",
+          "notes": "Triage signature only."
+        },
+        "signature_id": {
+          "source_fields": [
+            "id",
+            "event_id",
+            "signature_id"
+          ],
+          "status": "partial",
+          "notes": "Atlassian audit id/event id where present."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "remoteAddress",
+            "attributes.location.ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP where present."
+        },
+        "object": {
+          "source_fields": [
+            "object",
+            "objectItem.name",
+            "affectedObject.name",
+            "attributes.object.attributes.name",
+            "attributes.object.id"
+          ],
+          "status": "partial",
+          "notes": "Affected object context."
+        }
+      },
+      "notes": "Partial audit/change guidance only; not CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "src_user",
+            "authorKey",
+            "author.displayName",
+            "attributes.actor.name",
+            "attributes.actor.email"
+          ],
+          "status": "partial",
+          "notes": "Actor context."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action",
+            "summary",
+            "attributes.action",
+            "category"
+          ],
+          "status": "partial",
+          "notes": "Audit activity token."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "id",
+            "event_id",
+            "marker"
+          ],
+          "status": "partial",
+          "notes": "Atlassian audit event id or fixture marker."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip",
+            "remoteAddress",
+            "attributes.location.ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        },
+        "resource.name": {
+          "source_fields": [
+            "object",
+            "objectItem.name",
+            "affectedObject.name",
+            "attributes.object.attributes.name"
+          ],
+          "status": "partial",
+          "notes": "Target/object context."
+        }
+      },
+      "notes": "OCSF helper mapping only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action",
+            "summary",
+            "attributes.action",
+            "category"
+          ],
+          "status": "partial",
+          "notes": "Audit action token."
+        },
+        "event.id": {
+          "source_fields": [
+            "id",
+            "event_id",
+            "marker"
+          ],
+          "status": "partial",
+          "notes": "Atlassian audit event id or fixture marker."
+        },
+        "event.category": {
+          "source_fields": [
+            "atlassian_audit_family",
+            "category"
+          ],
+          "status": "partial",
+          "notes": "Derived family/category."
+        },
+        "user.email": {
+          "source_fields": [
+            "attributes.actor.email"
+          ],
+          "status": "partial",
+          "notes": "Synthetic fixture emails only."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip",
+            "remoteAddress",
+            "attributes.location.ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/atlassian_cloud_audit/sc4s/app_parsers/syslog/app-atlassian_cloud_audit.conf": "sha256:ee6fc003aceceb00aa8cb4d9474006106c886b02a05bdc28deb1fd480f9ebe44",
+      "packs/atlassian_cloud_audit/sc4s/env.example": "sha256:36056eb0e890c2746cb09b6c49b8b22e39e8acdb644a079439d66933b03d4b80",
+      "packs/atlassian_cloud_audit/splunk/default/props.conf": "sha256:d02261bf90f2ee981d44f45d7550e3e0ed7ffa2948c741c35882b871829f857d",
+      "packs/atlassian_cloud_audit/splunk/default/transforms.conf": "sha256:4fb51591cfa6debb86c4202f2750aa0a29c448d477f8b74cf6c9a4cb13fcd84f",
+      "packs/atlassian_cloud_audit/splunk/default/eventtypes.conf": "sha256:c04876be819ae4b8a3d8da4c32d46702046899febdd59a2590ff1baa7a3f64e5",
+      "packs/atlassian_cloud_audit/splunk/default/tags.conf": "sha256:0482d27c70192be1dd409e09a990a220b045ca09d9714e13693ee030f28f8c5b",
+      "packs/atlassian_cloud_audit/splunk/default/data/ui/views/atlassian_cloud_audit_overview.xml": "sha256:99a2f21927ecc3c2b3c862792ca4b4f814dc6548cd265992b970176540927622",
+      "packs/atlassian_cloud_audit/test-events/atlassian_cloud_audit_test_events.txt": "sha256:516abaec2cb5d097d181141438c6d941afd5f2edfc38dc283080f435316499e5",
+      "packs/atlassian_cloud_audit/scripts/send_tcp_20100.sh": "sha256:8e94c3d9201cbbacd2522f26372e5cee3572237a4dac6efd77a6d964e2ccd620",
+      "packs/atlassian_cloud_audit/scripts/e2e_docker_compose.sh": "sha256:2e36941666c3ec33bfd53060bf9c140b34751bbc544cf7463c790bb7c17ae7c9",
+      "packs/atlassian_cloud_audit/README.md": "sha256:be6dfa5616b29846d4821767247037acb88225caa3cbab9a1fae8a591f12e6fb",
+      "packs/atlassian_cloud_audit/docs/atlassian_cloud_audit_reduction_candidates.csv": "sha256:cf8f3e4e62b0e0b7fd83b38d861efcf8e8fe6594b8b5fc139bbf6b3d02b54f5f",
+      "packs/atlassian_cloud_audit/validation/preflight-2026-06-21.md": "sha256:e8491d19f4a2bcc7abcdab54f1f9d84690314f6c08ef08a86f82ea5630c5137c"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-27",
+    "last_tested": "2026-06-27"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "saas",
+    "audit",
+    "identity",
+    "security_operations",
+    "json"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "atlassian_cloud_audit_json_relay",
+      "label": "Atlassian Cloud audit JSON relay",
+      "description": "One Jira, Confluence, or organization audit JSON object per record after a collector unwraps API pages/arrays.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "jira_cloud_audit_api",
+        "confluence_cloud_audit_api",
+        "organization_events_api",
+        "collector_relay",
+        "cribl_or_siem_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "jira_cloud_audit",
+        "confluence_cloud_audit",
+        "organization_audit_event"
+      ],
+      "test_event_sets": [
+        "atlassian_cloud_audit_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Atlassian API relay replay/read-back captured.",
+        "Only collector-relayed one-line JSON records are fixture-backed; native API pages and arrays need collector splitting.",
+        "Coverage is narrow and does not prove complete Atlassian Cloud product audit coverage."
+      ],
+      "event_boundary": "one Jira, Confluence, or organization audit JSON object per physical line after API page/array or JSON:API envelope unwrapping; native result pages and arrays are collector input, not the SC4S event boundary",
+      "events_per_file_or_message": "one source audit record per relayed syslog/message line; API pages, paginated result sets, and event-stream batches may contain many records but collector/relay logic must split before SC4S",
+      "uniqueness_or_multiline": "fixture-backed records are unique single-line JSON events; multiline JSON, batched arrays, and nested collector envelopes require local normalization before relay",
+      "field_delimiting_or_escaping": "JSON object syntax with standard quoting/escaping; preserve nested changedValues, associatedItems, affectedObject, attributes.actor, attributes.location, and attributes.object context without lossy flattening",
+      "timestamp_timezone": "Jira created, Confluence creationDate, and organization attributes.time fixture fields are timezone-qualified UTC/ISO-8601 values; syslog wrapper time is relay metadata only until local read-back verifies precedence"
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/atlassian_cloud_audit_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "source_product",
+        "created",
+        "creationDate",
+        "attributes.time",
+        "id",
+        "summary",
+        "category",
+        "authorAccountId",
+        "remoteAddress",
+        "attributes.actor.email",
+        "attributes.location.ip"
+      ],
+      "notes": "Cribl/collector should relay one Atlassian audit event per record and preserve nested arrays/objects by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Atlassian tenant/API replay or Splunk indexed read-back captured.",
+    "SC4S does not poll Atlassian APIs, manage OAuth/API credentials, or maintain API pagination/checkpoints.",
+    "Native API pages, arrays, and JSON:API envelopes are not the default SC4S event boundary; collector splitting is required.",
+    "Fixture-backed coverage is narrow and does not include Bitbucket, Trello, Opsgenie, Statuspage, Atlassian Guard/Access-specific event families, or product access logs."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Atlassian Cloud audit JSON relay",
+      "description": "Parser and required Splunk JSON knowledge only; no drops or masking.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-atlassian_cloud_audit.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Atlassian analyst knowledge",
+      "description": "Adds fixture-backed eventtypes, tags, and dashboard example; no drops or masking.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced Atlassian reduction review candidates",
+      "description": "Advisory privacy/noise reduction candidates only. No lossy reduction artifact is shipped or enabled by default.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/atlassian_cloud_audit_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling, approval, and replay/read-back."
+    }
+  ],
+  "reduction_rules": [],
+  "dashboard_screenshots": [
+    {
+      "id": "atlassian_cloud_audit_overview_splunk_test",
+      "title": "Atlassian Cloud Audit — dashboard example",
+      "source_path": "dashboards/screenshots/atlassian-cloud-audit-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Atlassian Cloud Audit dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-21 during run SECHUB_DASH_SCREENSHOT_20260621T221746Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

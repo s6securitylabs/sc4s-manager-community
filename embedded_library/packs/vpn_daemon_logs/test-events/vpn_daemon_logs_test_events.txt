@@ -1,0 +1,8 @@
+Jun  8 10:00:01 vpn-a openvpn[2410]: client-cn/198.51.100.10:54000 Peer Connection Initiated with [AF_INET]198.51.100.10:54000 sc4s_marker="SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_PEER_001"
+Jun  8 10:00:02 vpn-a openvpn[2410]: client-cn/198.51.100.10:54000 VERIFY OK: depth=0, CN=alice.example sc4s_marker="SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_VERIFY_002"
+Jun  8 10:00:03 vpn-a openvpn[2410]: client-cn/198.51.100.10:54000 Initialization Sequence Completed sc4s_marker="SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_INIT_003"
+Jun  8 10:00:04 vpn-a openvpn[2410]: client-cn/198.51.100.10:54000 MULTI: primary virtual IP for client-cn/198.51.100.10:54000: 10.8.0.10 sc4s_marker="SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_VIP_004"
+Jun  8 10:00:05 vpn-a openvpn[2410]: MULTI_sva: pool returned IPv4=10.8.0.11, IPv6=(Not enabled) sc4s_marker="SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_POOL_005"
+Jun  8 10:00:06 vpn-a openvpn[2410]: client-cn/198.51.100.10:54000 AUTH: Received control message: AUTH_FAILED,Data channel cipher negotiation failed (no shared cipher) sc4s_marker="SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_AUTH_FAILED_006"
+Jun  8 10:01:01 ipsec-a vpn: + alice.example  192.0.2.10 -- 192.0.2.1 == 10.10.0.0/16 sc4s_marker="SC4S_VPN_DAEMON_LOGS_TEST_STRONGSWAN_UP_007"
+Jun  8 10:31:01 ipsec-a vpn: - alice.example  192.0.2.10 -- 192.0.2.1 == 10.10.0.0/16 sc4s_marker="SC4S_VPN_DAEMON_LOGS_TEST_STRONGSWAN_DOWN_008"

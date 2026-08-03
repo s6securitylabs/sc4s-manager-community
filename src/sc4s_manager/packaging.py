@@ -6,6 +6,7 @@ Does not create tarballs, run builds, or access external services.
 from __future__ import annotations
 
 import hashlib
+import tarfile
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,10 @@ REQUIRED_ARTIFACT_PATHS = [
     "deploy/systemd/sc4s-manager-control.socket",
     "deploy/install/install.sh",
     "deploy/upgrade/upgrade.sh",
+    "deploy/rollback/rollback.sh",
+    "scripts/preflight.py",
+    "scripts/validate_package_install.py",
+    "LICENSE",
     "frontend/dist/index.html",
 ]
 
@@ -71,4 +76,35 @@ def build_manifest(
         "paths": paths,
         "frontend_dist_present": frontend_dist.exists(),
         "missing_required_paths": missing,
+    }
+
+
+def build_archive_manifest(
+    *, version: str, git_commit: str, created_at: str, archive: Path
+) -> dict[str, Any]:
+    """Describe every regular archive member exactly once and bind the manifest to it."""
+    paths: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    with tarfile.open(archive) as tf:
+        members = sorted((member for member in tf.getmembers() if member.isfile()), key=lambda member: member.name)
+        for member in members:
+            rel = member.name.removeprefix("sc4s-manager/")
+            if rel in seen:
+                raise ValueError(f"duplicate archive member: {rel}")
+            seen.add(rel)
+            source = tf.extractfile(member)
+            if source is None:
+                raise ValueError(f"cannot read archive member: {rel}")
+            data = source.read()
+            paths.append({"path": rel, "size_bytes": len(data), "sha256": hashlib.sha256(data).hexdigest()})
+
+    return {
+        "version": version,
+        "git_commit": git_commit,
+        "created_at": created_at,
+        "archive": archive.name,
+        "archive_sha256": _sha256(archive),
+        "paths": paths,
+        "frontend_dist_present": "frontend/dist/index.html" in seen,
+        "missing_required_paths": sorted(set(REQUIRED_ARTIFACT_PATHS) - seen),
     }

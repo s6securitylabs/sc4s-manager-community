@@ -1,0 +1,24 @@
+<form version="1.1" theme="light">
+  <label>Legacy OpenClaw Audit Security Review</label>
+  <description>Critical-review dashboard for unexpected logins, foreign IPs, channel changes, legacy OpenClaw-to-Hermes cutover controls, credential/provider activity, tool execution, and blocked/policy events.</description>
+  <fieldset submitButton="true">
+    <input type="time" token="time_range"><label>Time range</label><default><earliest>-24h@h</earliest><latest>now</latest></default></input>
+    <input type="text" token="home_countries"><label>Expected country allowlist (comma text for review)</label><default>AU,NZ</default></input>
+  </fieldset>
+  <row>
+    <panel><title>Unexpected / foreign source IP login review</title><table><search><query>index=netauth sourcetype="openclaw:legacy:audit" hermes_openclaw_family="identity_session" src_ip=* | iplocation src_ip | eval geo=coalesce(Country,"unknown") | stats count min(_time) as first_seen max(_time) as last_seen values(action) as actions values(user_agent) as user_agents values(platform) as platforms by actor_user src_ip geo | convert ctime(first_seen) ctime(last_seen) | sort - count</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+  <row>
+    <panel><title>Channel/thread binding and handoff changes</title><table><search><query>index=netauth sourcetype="openclaw:legacy:audit" hermes_openclaw_family="gateway_channel" | table _time action actor_user platform channel_id thread_id object policy_decision risk_reason marker</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+    <panel><title>Credential, provider, and model configuration activity</title><table><search><query>index=netauth sourcetype="openclaw:legacy:audit" hermes_openclaw_family="credential_secret" OR provider=* OR model=* | table _time action actor_user src_ip component provider model object object_type policy_decision risk_reason marker</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+  <row>
+    <panel><title>Legacy OpenClaw → Hermes cutover controls</title><table><search><query>index=netauth sourcetype="openclaw:legacy:audit" hermes_openclaw_family="legacy_cutover_runtime" OR action IN ("migration.dual_polling.risk","gateway.owner_allowlist.updated","gateway.require_mention.changed","gateway.bind.changed","hook.command_logger.changed","hook.session_memory.changed") | table _time action actor_user component runtime legacy_component migration_phase dual_polling_risk gateway_bind gateway_port owner_allowlist_state require_mention hook_name policy_decision risk_reason marker</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+  <row>
+    <panel><title>High-risk tool execution and side-effect requests</title><table><search><query>index=netauth sourcetype="openclaw:legacy:audit" hermes_openclaw_family="tool_execution" | search tool_name IN (terminal,process,cronjob,memory,write_file,patch,browser) OR action="*delete*" OR action="*deploy*" OR action="*credential*" | table _time actor_user src_ip component tool_name tool_result action object policy_decision risk_reason marker</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+  <row>
+    <panel><title>Blocked prompt-injection, permission, and policy events</title><table><search><query>index=netauth sourcetype="openclaw:legacy:audit" hermes_openclaw_family="safety_policy" OR policy_decision IN (block,blocked,require_approval,redact) | stats count values(action) as actions values(risk_reason) as reasons values(object) as objects by actor_user src_ip component policy_decision | sort - count</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+</form>

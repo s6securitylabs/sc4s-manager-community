@@ -1,0 +1,200 @@
+<form version="1.1" theme="dark">
+  <label>Container runtime and systemd service logs - Overview</label>
+  <description>Fixture-backed overview for Docker json-file, CRI runtime, Docker Engine event, systemd/journald service, and Docker journald-driver container records. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total container/runtime events</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="docker:container:json_file" OR sourcetype="container:cri:runtime" OR sourcetype="docker:engine:event" OR sourcetype="systemd:journald:service" OR sourcetype="docker:journald:container") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>stderr / error records</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="docker:container:json_file" OR sourcetype="container:cri:runtime") host=$host_tok$ (stream=stderr OR message="*error*" OR container_log="*error*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Docker Engine events</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype="docker:engine:event" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Journald service/container records</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="systemd:journald:service" OR sourcetype="docker:journald:container") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Volume over time by sourcetype</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="docker:container:json_file" OR sourcetype="container:cri:runtime" OR sourcetype="docker:engine:event" OR sourcetype="systemd:journald:service" OR sourcetype="docker:journald:container") host=$host_tok$ | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Source-mode distribution</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="docker:container:json_file" OR sourcetype="container:cri:runtime" OR sourcetype="docker:engine:event" OR sourcetype="systemd:journald:service" OR sourcetype="docker:journald:container") host=$host_tok$ | stats count by sourcetype vendor product action | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Stream / action distribution</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="docker:container:json_file" OR sourcetype="container:cri:runtime" OR sourcetype="docker:engine:event" OR sourcetype="systemd:journald:service" OR sourcetype="docker:journald:container") host=$host_tok$ | eval action=coalesce(action,"-"), stream=coalesce(stream,"-"), event_type=coalesce(event_type,"-"), service_unit=coalesce(service_unit,"-"), program=coalesce(program,"-") | stats count by action stream event_type service_unit program | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Container log stderr/error triage</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="docker:container:json_file" OR sourcetype="container:cri:runtime") host=$host_tok$ (stream=stderr OR message="*error*" OR container_log="*error*") | table _time host sourcetype source vendor product stream cri_flag action message container_log signature signature_id marker_family _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Docker Engine lifecycle events</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="docker:engine:event" host=$host_tok$ | table _time host sourcetype source vendor product event_type action container_id signature signature_id marker_family Type Action Actor.ID Actor.Attributes.name Actor.Attributes.image scope time timeNano _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>systemd/journald service review</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="systemd:journald:service" host=$host_tok$ | table _time host sourcetype source vendor product service_unit program severity action message signature signature_id marker_family _HOSTNAME _SYSTEMD_UNIT SYSLOG_IDENTIFIER PRIORITY _TRANSPORT MESSAGE _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Docker journald-driver container context</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="docker:journald:container" host=$host_tok$ | table _time host sourcetype source vendor product container_id container_name image_name stream action message signature signature_id marker_family CONTAINER_ID CONTAINER_ID_FULL CONTAINER_NAME IMAGE_NAME _HOSTNAME SYSLOG_IDENTIFIER MESSAGE _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage by source/sourcetype/host</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="docker:container:json_file" OR sourcetype="container:cri:runtime" OR sourcetype="docker:engine:event" OR sourcetype="systemd:journald:service" OR sourcetype="docker:journald:container") host=$host_tok$ | stats count dc(marker_family) as fixture_markers values(vendor) as vendors values(product) as products min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw container/runtime events</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="docker:container:json_file" OR sourcetype="container:cri:runtime" OR sourcetype="docker:engine:event" OR sourcetype="systemd:journald:service" OR sourcetype="docker:journald:container") host=$host_tok$ | table _time host sourcetype source vendor product stream cri_flag event_type action container_id container_name image_name service_unit program severity message container_log signature signature_id marker_family _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

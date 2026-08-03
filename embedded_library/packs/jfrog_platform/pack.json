@@ -1,0 +1,1555 @@
+{
+  "schema_version": "0.1",
+  "id": "jfrog_platform",
+  "version": "0.1.5",
+  "url": "https://jfrog.com/help/r/jfrog-platform-administration-documentation/system-logs",
+  "description": "Curated SecHub Resources SC4S pack for JFrog Platform relay logs, covering Artifactory request/access/traffic records, Access security-audit records, router request JSON, narrow Distribution request/access records, and narrowly evidenced Xray request/service/webhook records from public documentation/parser evidence.",
+  "display_name": "JFrog Platform",
+  "vendor": "jfrog",
+  "product": "platform",
+  "default_index": "main",
+  "default_source": "jfrog_platform",
+  "listener": {
+    "source_id": "JFROG_PLATFORM",
+    "transport": "tcp",
+    "port": 20070,
+    "env": {
+      "SC4S_LISTEN_JFROG_PLATFORM_TCP_PORT": "20070",
+      "SOURCE_ALL_SET_APPEND": "JFROG_PLATFORM"
+    }
+  },
+  "sourcetypes": {
+    "artifactory_request": "jfrog:artifactory:request",
+    "artifactory_access": "jfrog:artifactory:access",
+    "access_security_audit": "jfrog:access:security_audit",
+    "router_request": "jfrog:router:request",
+    "artifactory_traffic": "jfrog:artifactory:traffic",
+    "xray_request": "jfrog:xray:request",
+    "xray_service": "jfrog:xray:service",
+    "xray_webhook": "jfrog:xray:webhook",
+    "distribution_request": "jfrog:distribution:request",
+    "distribution_access": "jfrog:distribution:access"
+  },
+  "event_families": [
+    {
+      "id": "artifactory_request",
+      "label": "Artifactory request records",
+      "match_engine": "pcre",
+      "match": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|(?:GET|POST|PUT|DELETE|PATCH|HEAD)\\|[^|]+\\|[0-9]{3}\\|[^|]+\\|[^|]+\\|[^|]+\\|.*SC4S_JFROG_PLATFORM_TEST_REQUEST_",
+      "expected_sourcetype": "jfrog:artifactory:request",
+      "primary_id_field": "trace_id",
+      "required_fields": [
+        "timestamp",
+        "trace_id",
+        "src_ip",
+        "user",
+        "http_method",
+        "url",
+        "status"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "artifactory_access",
+      "label": "Artifactory access/action records",
+      "match_engine": "pcre",
+      "match": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[^ ]+ \\[[^]]+\\] \\[[^]]+\\].* for client : .*SC4S_JFROG_PLATFORM_TEST_ACCESS_",
+      "expected_sourcetype": "jfrog:artifactory:access",
+      "primary_id_field": "trace_id",
+      "required_fields": [
+        "timestamp",
+        "trace_id",
+        "action_response",
+        "repo_path",
+        "user",
+        "src_ip"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "artifactory_traffic",
+      "label": "Artifactory traffic records",
+      "match_engine": "pcre",
+      "match": "^[0-9]{14}\\|[^|]+\\|[^|]+\\|(?:UPLOAD|DOWNLOAD|DELETE|CACHE|REMOTE_DOWNLOAD)\\|[^|]+\\|[^|]+\\|[0-9]+\\|marker=SC4S_JFROG_PLATFORM_TEST_TRAFFIC_",
+      "expected_sourcetype": "jfrog:artifactory:traffic",
+      "primary_id_field": "trace_id",
+      "required_fields": [
+        "traffic_time",
+        "trace_id",
+        "traffic_direction",
+        "src_ip",
+        "repo_path",
+        "transfer_bytes"
+      ],
+      "timestamp_fields": [
+        "traffic_time"
+      ]
+    },
+    {
+      "id": "access_security_audit",
+      "label": "JFrog Access security-audit records",
+      "match_engine": "pcre",
+      "match": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|.*SC4S_JFROG_PLATFORM_TEST_SECURITY_AUDIT_",
+      "expected_sourcetype": "jfrog:access:security_audit",
+      "primary_id_field": "token_id",
+      "required_fields": [
+        "timestamp",
+        "token_id",
+        "src_ip",
+        "user",
+        "logged_principal",
+        "entity_name",
+        "event_type",
+        "event"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "router_request",
+      "label": "JFrog router request JSON records",
+      "match_engine": "pcre",
+      "match": "^\\{.*\"time\"\\s*:\\s*\"[0-9]{4}-[0-9]{2}-[0-9]{2}T.*\".*\"request_method\"\\s*:.*SC4S_JFROG_PLATFORM_TEST_ROUTER_",
+      "expected_sourcetype": "jfrog:router:request",
+      "primary_id_field": "trace_id",
+      "required_fields": [
+        "time",
+        "trace_id",
+        "remote_addr",
+        "request_method",
+        "request_url",
+        "status"
+      ],
+      "timestamp_fields": [
+        "time"
+      ]
+    },
+    {
+      "id": "distribution_request",
+      "label": "JFrog Distribution request records",
+      "match_engine": "pcre",
+      "match": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|(?:GET|POST|PUT|DELETE|PATCH|HEAD)\\|/distribution/[^|]+\\|[0-9]{3}\\|[^|]+\\|[^|]+\\|[^|]+\\|.*SC4S_JFROG_PLATFORM_TEST_DISTRIBUTION_REQUEST_",
+      "expected_sourcetype": "jfrog:distribution:request",
+      "primary_id_field": "trace_id",
+      "required_fields": [
+        "timestamp",
+        "trace_id",
+        "src_ip",
+        "user",
+        "http_method",
+        "url",
+        "status"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "distribution_access",
+      "label": "JFrog Distribution access/action records",
+      "match_engine": "pcre",
+      "match": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[^ ]+ \\[[^]]+\\] \\[[^]]+\\] (?:dist-|distribution|release-bundles).* for client : .*SC4S_JFROG_PLATFORM_TEST_DISTRIBUTION_ACCESS_",
+      "expected_sourcetype": "jfrog:distribution:access",
+      "primary_id_field": "trace_id",
+      "required_fields": [
+        "timestamp",
+        "trace_id",
+        "action_response",
+        "repo_path",
+        "user",
+        "src_ip"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "xray_request",
+      "label": "JFrog Xray request log records",
+      "match_engine": "pcre",
+      "match": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[^|]+\\|[^|]+\\|[^|]+\\|[^|]+\\|(?:GET|POST|PUT|DELETE|PATCH|HEAD)\\|/xray/[^|]+\\|[0-9]{3}\\|.*SC4S_JFROG_PLATFORM_TEST_XRAY_REQUEST_",
+      "expected_sourcetype": "jfrog:xray:request",
+      "primary_id_field": "trace_id",
+      "required_fields": [
+        "timestamp",
+        "trace_id",
+        "src_ip",
+        "user",
+        "http_method",
+        "url",
+        "status"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "xray_service",
+      "label": "JFrog Xray service log records",
+      "match_engine": "pcre",
+      "match": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[^ ]+ \\[jfx[a-z]+\\] \\[[A-Z]+\\] \\[[^\\]]+\\] \\[[^\\]]+\\] \\[[^\\]]+\\] - .*SC4S_JFROG_PLATFORM_TEST_XRAY_SERVICE_",
+      "expected_sourcetype": "jfrog:xray:service",
+      "primary_id_field": "trace_id",
+      "required_fields": [
+        "timestamp",
+        "xray_service",
+        "severity",
+        "trace_id",
+        "message"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "xray_webhook",
+      "label": "JFrog Xray webhook policy/violation alerts",
+      "match_engine": "pcre",
+      "match": "^\\{.*\"schema_version\"\\s*:\\s*\"1\\.1\".*\"alert_id\"\\s*:.*\"issues\"\\s*:.*SC4S_JFROG_PLATFORM_TEST_XRAY_WEBHOOK_",
+      "expected_sourcetype": "jfrog:xray:webhook",
+      "primary_id_field": "alert_id",
+      "required_fields": [
+        "schema_version",
+        "alert_id",
+        "created",
+        "top_severity",
+        "watch_name",
+        "policy_name",
+        "policy_rule",
+        "issues"
+      ],
+      "timestamp_fields": [
+        "created"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "jfrog",
+    "product": "platform",
+    "vendor_product": "jfrog:platform",
+    "jfrog_component": "Component such as artifactory, access, router, distribution, or xray",
+    "jfrog_log_family": "Derived family such as artifactory_request, artifactory_access, access_security_audit, router_request, distribution_request, distribution_access, or Xray family values",
+    "trace_id": "JFrog request/trace correlation identifier where present",
+    "token_id": "Synthetic or sanitized Access token identifier where present",
+    "user": "JFrog username or principal actor",
+    "src": "Source endpoint alias",
+    "src_ip": "Source IP or remote address",
+    "action": "Raw HTTP method, Artifactory action_response, or Access event value depending on sourcetype",
+    "vendor_raw_action": "Raw JFrog action/event token preserved before any future analyst normalization",
+    "signature": "Repository path, entity name, or request URL grouping",
+    "signature_id": "Trace or token identifier used for fixture-backed correlation",
+    "repo_path": "Artifactory repository/artifact path context",
+    "entity_name": "JFrog Access security-audit target entity",
+    "event_type": "JFrog Access security-audit event type",
+    "event": "JFrog Access security-audit raw event token",
+    "http_method": "HTTP method from Artifactory/router request records",
+    "http_status": "HTTP status from request records",
+    "url": "Request URL/path",
+    "user_agent": "Request user agent where present",
+    "marker": "Synthetic fixture marker only",
+    "traffic_direction": "Artifactory traffic direction token such as DOWNLOAD or UPLOAD",
+    "transfer_bytes": "Artifactory traffic byte count for the repository path in the traffic log",
+    "ordinal": "Traffic log ordinal/sequence field where present",
+    "xray_service": "Xray service identifier such as jfxr or jfxana in Xray service logs",
+    "severity": "Xray service log severity token or webhook top severity alias where present",
+    "message": "Xray service-log message payload",
+    "alert_id": "Xray webhook alert identifier",
+    "top_severity": "Xray webhook top severity value",
+    "watch_name": "Xray watch name from webhook payload",
+    "policy_name": "Xray policy name from webhook payload",
+    "policy_rule": "Xray policy rule from webhook payload",
+    "schema_version": "Xray webhook payload schema version",
+    "issues": "Xray webhook issue array preserved as JSON/search-time context"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-jfrog_platform.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/jfrog_platform_soc.xml"
+    ],
+    "test_events": [
+      "test-events/jfrog_platform_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20070.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/jfrog_platform_reduction_candidates.csv",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / JFrog relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20070,
+      "notes": "Dedicated TCP listener for one JFrog Platform record per line from file, Kubernetes sidecar, Fluent Bit, Cribl, or another relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20070,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "JFrog Platform Artifactory/Access/router/Distribution/Xray log records",
+    "min": "public parser/sample evidence through 2026-06-22",
+    "max": null,
+    "notes": "Grounded in public integration/parser evidence and synthetic-equivalent fixtures, including JFrog-maintained Distribution request/access parser shapes; local JFrog version, SaaS/on-prem mode, collector wrapping, and multiline access/service behaviour must be validated before promotion."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-22",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "JFrog public parser/sample evidence and synthetic-equivalent fixtures only, including narrow Distribution request/access parser evidence",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent JFrog records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live JFrog relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for JFrog Platform relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "jfrog_platform_mixed"
+      ],
+      "event_count": 10,
+      "marker_prefix": "SC4S_JFROG_PLATFORM_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20070.sh"
+    },
+    "readback": {
+      "spl": "index=main sechub_fixture_marker=\"SC4S_JFROG_PLATFORM_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product jfrog_component jfrog_log_family trace_id user src_ip action vendor_raw_action traffic_direction transfer_bytes event_type event entity_name repo_path url http_method http_status status xray_service severity alert_id top_severity watch_name policy_name policy_rule marker _raw",
+      "expected_count": 10,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "JFrog component/family",
+        "trace/token correlation",
+        "actor/source IP",
+        "raw action/event",
+        "artifact/entity/request URL context",
+        "timestamp",
+        "Xray request/service/webhook context",
+        "Distribution request/access context"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TCP listener on 127.0.0.1:20070 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing JFrog Platform TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20070,
+          "protocol": "line_delimited_mixed_syslog",
+          "purpose": "Dedicated JFrog Platform relay listener"
+        }
+      ],
+      "required_indexes": [
+        "main"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to main",
+        "Search role can read main"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "jfrog_platform_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/jfrog_platform/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/jfrog_platform/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/jfrog_platform/compose.yaml",
+      "compose_project": "sechub-jfrog-platform-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "main index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/jfrog_platform/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/jfrog_platform/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/jfrog_platform/scripts/send_tcp_20070.sh 127.0.0.1 20070",
+        "splunk_summary_readback": "index=main \"SC4S_JFROG_PLATFORM_TEST_\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=main \"SC4S_JFROG_PLATFORM_TEST_\" earliest=-2h | table _time index sourcetype source vendor product jfrog_component jfrog_log_family trace_id user src_ip action vendor_raw_action traffic_direction transfer_bytes event_type event entity_name repo_path url http_method http_status status xray_service severity alert_id top_severity watch_name policy_name policy_rule marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "main",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/jfrog_platform/splunk -> /opt/splunk/etc/apps/sechub_jfrog_platform:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20070,
+          "host_port_env": "SC4S_JFROG_PLATFORM_PORT",
+          "source_id": "JFROG_PLATFORM"
+        },
+        "parser_mount": "packs/jfrog_platform/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "jfrog_artifactory",
+          "source_shape": "pipe_delimited_request",
+          "event_family": "artifactory_request",
+          "sourcetype": "jfrog:artifactory:request",
+          "data_structures": [
+            "Artifactory request log row"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_REQUEST_001"
+          ]
+        },
+        {
+          "source": "jfrog_artifactory",
+          "source_shape": "bracketed_access",
+          "event_family": "artifactory_access",
+          "sourcetype": "jfrog:artifactory:access",
+          "data_structures": [
+            "Artifactory access/action log row"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_ACCESS_002"
+          ]
+        },
+        {
+          "source": "jfrog_artifactory",
+          "source_shape": "pipe_delimited_traffic",
+          "event_family": "artifactory_traffic",
+          "sourcetype": "jfrog:artifactory:traffic",
+          "data_structures": [
+            "Artifactory traffic log row"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_TRAFFIC_005"
+          ]
+        },
+        {
+          "source": "jfrog_access",
+          "source_shape": "pipe_delimited_security_audit",
+          "event_family": "access_security_audit",
+          "sourcetype": "jfrog:access:security_audit",
+          "data_structures": [
+            "JFrog Access security-audit log row"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_SECURITY_AUDIT_003"
+          ]
+        },
+        {
+          "source": "jfrog_router",
+          "source_shape": "json_request",
+          "event_family": "router_request",
+          "sourcetype": "jfrog:router:request",
+          "data_structures": [
+            "JFrog router request JSON record"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_ROUTER_004"
+          ]
+        },
+        {
+          "source": "jfrog_distribution",
+          "source_shape": "pipe_delimited_request",
+          "event_family": "distribution_request",
+          "sourcetype": "jfrog:distribution:request",
+          "data_structures": [
+            "Distribution request log row"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_DISTRIBUTION_REQUEST_009"
+          ]
+        },
+        {
+          "source": "jfrog_distribution",
+          "source_shape": "bracketed_access",
+          "event_family": "distribution_access",
+          "sourcetype": "jfrog:distribution:access",
+          "data_structures": [
+            "Distribution access/action log row"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_DISTRIBUTION_ACCESS_010"
+          ]
+        },
+        {
+          "source": "jfrog_xray",
+          "source_shape": "pipe_delimited_request",
+          "event_family": "xray_request",
+          "sourcetype": "jfrog:xray:request",
+          "data_structures": [
+            "Xray request log row"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_XRAY_REQUEST_006"
+          ]
+        },
+        {
+          "source": "jfrog_xray",
+          "source_shape": "bracketed_service",
+          "event_family": "xray_service",
+          "sourcetype": "jfrog:xray:service",
+          "data_structures": [
+            "Xray service log row"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_XRAY_SERVICE_007"
+          ]
+        },
+        {
+          "source": "jfrog_xray",
+          "source_shape": "json_webhook",
+          "event_family": "xray_webhook",
+          "sourcetype": "jfrog:xray:webhook",
+          "data_structures": [
+            "Xray webhook alert payload"
+          ],
+          "markers": [
+            "SC4S_JFROG_PLATFORM_TEST_XRAY_WEBHOOK_008"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live JFrog Platform source-version emission, JFrog Cloud Log Collection, or SaaS/on-prem export replay/read-back.",
+        "No collector credential custody, API pagination/checkpoint, Kubernetes sidecar/file-tail, object-store archive decompression, or retry/deduplication proof.",
+        "No multiline Artifactory access/service log proof; fixtures are one record per line.",
+        "No Distribution lifecycle/business-event, Pipelines structured event, or complete JFrog Platform module coverage proof.",
+        "No production or field validation; synthetic-equivalent fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for declared one-line JFrog relay shapes, not live JFrog source/collector validation or field validation."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "jfrog_platform_mixed",
+      "label": "JFrog Platform synthetic-equivalent mixed records including Artifactory traffic, Distribution request/access, and Xray request/service/webhook rows",
+      "path": "test-events/jfrog_platform_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "mixed_line_payload",
+      "envelope": "none",
+      "serialization": "mixed_pipe_delimited_and_json",
+      "event_count": 10,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_JFROG_PLATFORM_TEST_REQUEST_001",
+        "SC4S_JFROG_PLATFORM_TEST_ACCESS_002",
+        "SC4S_JFROG_PLATFORM_TEST_SECURITY_AUDIT_003",
+        "SC4S_JFROG_PLATFORM_TEST_ROUTER_004",
+        "SC4S_JFROG_PLATFORM_TEST_TRAFFIC_005",
+        "SC4S_JFROG_PLATFORM_TEST_XRAY_REQUEST_006",
+        "SC4S_JFROG_PLATFORM_TEST_XRAY_SERVICE_007",
+        "SC4S_JFROG_PLATFORM_TEST_XRAY_WEBHOOK_008",
+        "SC4S_JFROG_PLATFORM_TEST_DISTRIBUTION_REQUEST_009",
+        "SC4S_JFROG_PLATFORM_TEST_DISTRIBUTION_ACCESS_010"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "timestamp/time",
+        "primary_timezone": "UTC ISO-8601 Z",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "JFrog collector timestamp normalization policy"
+        ],
+        "notes": "Pipe-delimited request/access/security-audit, Distribution request/access, and Xray request fixtures start with UTC ISO-8601 timestamps; traffic fixtures use the public numeric timestamp shape; router JSON uses the UTC `time` field; Xray webhook JSON uses `created`."
+      },
+      "field_delimiting": {
+        "style": "mixed",
+        "field_separator": "pipe for Artifactory request, traffic, Access security-audit, Distribution request, and Xray request records; bracketed text for Artifactory access, Distribution access, and Xray service records; JSON object for router request and Xray webhook records",
+        "quote_character": "double quote in JSON records; none for pipe records",
+        "escape_policy": "JSON escaping for router records; local collector must preserve delimiters in pipe records",
+        "notes": "Each record includes one synthetic marker token for fixture validation only."
+      },
+      "expected_families": [
+        "artifactory_request",
+        "artifactory_access",
+        "artifactory_traffic",
+        "access_security_audit",
+        "router_request",
+        "xray_request",
+        "xray_service",
+        "xray_webhook",
+        "distribution_request",
+        "distribution_access"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-jfrog_platform.conf",
+      "target_path": "local/config/app_parsers/syslog/app-jfrog_platform.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/jfrog_platform.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_soc",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/jfrog_platform_soc.xml",
+      "target_path": "splunk/default/data/ui/views/jfrog_platform_soc.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/jfrog_platform_test_events.txt",
+      "target_path": "test-events/jfrog_platform_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20070.sh",
+      "target_path": "scripts/send_tcp_20070.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/jfrog_platform_reduction_candidates.csv",
+      "target_path": "docs/jfrog_platform_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "docs/evidence/jfrog-platform-evidence-scan-20260608.md; public JFrog/Sumo Logic/Datadog/JFrog-maintained collector evidence for Artifactory request/access/traffic, Access security-audit, router request, narrow Distribution request/access, and narrow Xray request/service/webhook shapes.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use EXAMPLE users, synthetic trace/token IDs, example repository paths, and RFC5737 documentation IP ranges; no customer or tenant data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-22",
+      "notes": "Initial 2026-06-08 curation, 2026-06-18 Xray evidence-unblock hardening, and 2026-06-22 Distribution request/access hardening from official JFrog docs and JFrog-maintained parser evidence."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "logged_principal"
+          ],
+          "status": "partial",
+          "notes": "JFrog actor/principal context."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "remote_addr"
+          ],
+          "status": "partial",
+          "notes": "Request or audit source IP."
+        },
+        "action": {
+          "source_fields": [
+            "http_method",
+            "action_response",
+            "event",
+            "traffic_direction",
+            "severity",
+            "policy_rule"
+          ],
+          "status": "partial",
+          "notes": "Native JFrog method/action/event token; not normalized to a complete taxonomy."
+        },
+        "signature": {
+          "source_fields": [
+            "url",
+            "repo_path",
+            "entity_name",
+            "request_url",
+            "alert_id",
+            "watch_name",
+            "policy_name",
+            "policy_rule",
+            "message"
+          ],
+          "status": "partial",
+          "notes": "Artifact/entity/request grouping."
+        },
+        "signature_id": {
+          "source_fields": [
+            "trace_id",
+            "token_id",
+            "alert_id"
+          ],
+          "status": "partial",
+          "notes": "Trace/token identifier for correlation."
+        },
+        "status": {
+          "source_fields": [
+            "status",
+            "http_status",
+            "action_response",
+            "traffic_direction",
+            "top_severity",
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "HTTP status or raw action outcome context."
+        },
+        "bytes": {
+          "source_fields": [
+            "transfer_bytes"
+          ],
+          "status": "partial",
+          "notes": "Traffic log byte count; not complete transfer accounting across all JFrog request/access families."
+        }
+      },
+      "notes": "Partial Web, Change, Authentication/Audit, and software-supply-chain guidance only; not full Splunk TA parity."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "user",
+            "logged_principal"
+          ],
+          "status": "partial",
+          "notes": "JFrog actor/principal."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip",
+            "remote_addr"
+          ],
+          "status": "partial",
+          "notes": "Request/audit source IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "http_method",
+            "action_response",
+            "event",
+            "traffic_direction",
+            "policy_rule",
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Native method/action/event."
+        },
+        "api.operation": {
+          "source_fields": [
+            "http_method",
+            "request_url",
+            "url"
+          ],
+          "status": "partial",
+          "notes": "Request method and path."
+        },
+        "resource.name": {
+          "source_fields": [
+            "repo_path",
+            "entity_name",
+            "url",
+            "watch_name",
+            "policy_name",
+            "policy_rule",
+            "message"
+          ],
+          "status": "partial",
+          "notes": "Artifact repository path or Access entity."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "trace_id",
+            "token_id",
+            "alert_id"
+          ],
+          "status": "partial",
+          "notes": "Correlation identifier; token_id fixture value is synthetic."
+        },
+        "traffic.bytes": {
+          "source_fields": [
+            "transfer_bytes"
+          ],
+          "status": "partial",
+          "notes": "Artifactory traffic byte count."
+        },
+        "finding.severity": {
+          "source_fields": [
+            "top_severity",
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Xray webhook/service severity context; not complete OCSF finding taxonomy."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "user",
+            "logged_principal"
+          ],
+          "status": "partial",
+          "notes": "JFrog actor/principal."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip",
+            "remote_addr"
+          ],
+          "status": "partial",
+          "notes": "Request/audit source IP."
+        },
+        "event.action": {
+          "source_fields": [
+            "http_method",
+            "action_response",
+            "event",
+            "traffic_direction",
+            "policy_rule",
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Native action/method/event."
+        },
+        "event.id": {
+          "source_fields": [
+            "trace_id",
+            "token_id",
+            "alert_id"
+          ],
+          "status": "partial",
+          "notes": "Trace/token correlation ID."
+        },
+        "url.path": {
+          "source_fields": [
+            "url",
+            "request_url"
+          ],
+          "status": "partial",
+          "notes": "Request or artifact path."
+        },
+        "http.response.status_code": {
+          "source_fields": [
+            "status",
+            "http_status"
+          ],
+          "status": "partial",
+          "notes": "Request HTTP response status."
+        },
+        "network.bytes": {
+          "source_fields": [
+            "transfer_bytes"
+          ],
+          "status": "partial",
+          "notes": "Artifactory traffic byte count from traffic logs."
+        },
+        "vulnerability.id": {
+          "source_fields": [
+            "issues{}.vulnerability_id",
+            "cve"
+          ],
+          "status": "partial",
+          "notes": "Xray webhook issue identifiers where JSON search-time extraction exposes them."
+        },
+        "rule.name": {
+          "source_fields": [
+            "policy_name",
+            "policy_rule",
+            "watch_name"
+          ],
+          "status": "partial",
+          "notes": "Xray watch/policy/rule context."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/jfrog_platform/sc4s/app_parsers/syslog/app-jfrog_platform.conf": "sha256:04e46484a8150569ef24d41e5b007150697ebc015c3f58e7ab73d70036a70180",
+      "packs/jfrog_platform/sc4s/env.example": "sha256:ea9d75d750f18e539ec5beabca6e7c84756ed91ef2b5189b0d536da101cb1c88",
+      "packs/jfrog_platform/splunk/default/props.conf": "sha256:d1c4ea068288fa812f701ac025682969ba5eeb3366e0221c5f84cc6bfa119f73",
+      "packs/jfrog_platform/splunk/default/transforms.conf": "sha256:ce4e184795136549109dd0dba2d7cb2168c1044a8619eeef58134443d7dde65a",
+      "packs/jfrog_platform/splunk/default/eventtypes.conf": "sha256:a568adc835c2eb61cd5b8963c778c19e9a08d53daa574dfdc073851979761c0f",
+      "packs/jfrog_platform/splunk/default/tags.conf": "sha256:c22d5271669d5d31a92aa45a857b8df9f43bdd3b861d045e677af65b83515b7f",
+      "packs/jfrog_platform/test-events/jfrog_platform_test_events.txt": "sha256:2bec9b767ef9d094edccef9ba5c42fb656c9356c7dccba6061480e0ff8eef910",
+      "packs/jfrog_platform/scripts/send_tcp_20070.sh": "sha256:607ae610116d8740d4a7b4ce597ea7860a2193ec39c4a6364feb9d6acbda791b",
+      "packs/jfrog_platform/docs/jfrog_platform_reduction_candidates.csv": "sha256:4127c909d4f455d48508ebc24d6d315de4b76e36131dd1c5f94e7d1c5959ddc7",
+      "packs/jfrog_platform/validation/preflight-2026-06-08.md": "sha256:8bd17b567b8762814751e56b4dafddb148f5d6cb54e857fd2ee46067974754de",
+      "packs/jfrog_platform/README.md": "sha256:91d71f3f779425faae0e9b45b26780dcd6248aeb766fd392811d36ced5288316",
+      "packs/jfrog_platform/splunk/default/data/ui/views/jfrog_platform_soc.xml": "sha256:fb8f0fa36d6eb76bdfeff503a42607f4a7a32c02a4cf93204076b453fd316da7",
+      "packs/jfrog_platform/scripts/e2e_docker_compose.sh": "sha256:565bbaab1949b21af6d19cd701cd5690901d721483cafb7265c5bf3b88981ef0"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-26",
+    "last_tested": "2026-06-26"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "software_supply_chain",
+    "artifact_repository",
+    "identity",
+    "audit",
+    "application"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "artifactory_access_request_relay",
+      "label": "Artifactory request/access/traffic relay",
+      "description": "Artifactory request, access, and traffic records preserving trace, actor/source IP, method/action/direction, artifact path, status, sizes, byte count, duration, and user-agent where present.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "artifactory_request_log",
+        "artifactory_access_log",
+        "fluent_bit_relay",
+        "cribl_relay",
+        "syslog_wrapped_text"
+      ],
+      "payload_formats": [
+        "pipe_delimited",
+        "bracketed_text",
+        "pipe_delimited_numeric_traffic"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "artifactory_request",
+        "artifactory_access",
+        "artifactory_traffic"
+      ],
+      "test_event_sets": [
+        "jfrog_platform_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live JFrog relay replay/read-back captured.",
+        "Access logs may be multiline or line-wrapped in some deployments; fixture coverage is one-line only."
+      ]
+    },
+    {
+      "id": "access_security_audit_relay",
+      "label": "JFrog Access security-audit relay",
+      "description": "Access security-audit records preserving synthetic/sanitized token, user, principal, entity, event type, event, and data-changed context.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "access_security_audit_log",
+        "log_streamer",
+        "fluent_bit_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "pipe_delimited"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "access_security_audit"
+      ],
+      "test_event_sets": [
+        "jfrog_platform_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Token/data_changed values are sensitive and must be sanitized in fixtures/evidence.",
+        "No live Access replay/read-back captured."
+      ]
+    },
+    {
+      "id": "router_request_json_relay",
+      "label": "JFrog router request JSON relay",
+      "description": "Router JSON request records preserving time, trace ID, remote address, method, URL, status, sizes, duration, and user agent.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "router_request_log",
+        "json_log_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "router_request"
+      ],
+      "test_event_sets": [
+        "jfrog_platform_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live router request replay/read-back captured."
+      ]
+    },
+    {
+      "id": "xray_request_service_webhook_relay",
+      "label": "JFrog Xray request/service/webhook relay",
+      "description": "Narrow Xray coverage for generic JFrog request-log shape on /xray paths, Xray service-log records, and Xray webhook JSON policy/violation alerts from official JFrog documentation/KB evidence.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "xray_request_log",
+        "xray_service_log",
+        "xray_webhook_json",
+        "fluent_bit_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "pipe_delimited",
+        "bracketed_text",
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "xray_request",
+        "xray_service",
+        "xray_webhook"
+      ],
+      "test_event_sets": [
+        "jfrog_platform_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "splunk_eventtypes",
+        "splunk_tags",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Xray request fixture is scoped to generic request-log records whose URL begins /xray/; it is not exhaustive Xray API coverage.",
+        "Xray webhook fixture is synthetic-equivalent from official payload-format docs, not live webhook delivery evidence.",
+        "JFrog Cloud Log Collection currently documents Artifactory/Audit support only; do not imply Cloud Log Collection exports Xray logs without local proof."
+      ]
+    },
+    {
+      "id": "distribution_request_access_relay",
+      "label": "JFrog Distribution request/access relay",
+      "description": "Narrow Distribution request/access log coverage preserving trace ID, actor/source IP, HTTP method, URL/status, action response, and repository path from JFrog-maintained parser-shaped records.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "distribution_request_log",
+        "distribution_access_log",
+        "fluent_bit_relay",
+        "cribl_relay",
+        "syslog_wrapped_text"
+      ],
+      "payload_formats": [
+        "pipe_delimited",
+        "bracketed_text"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "distribution_request",
+        "distribution_access"
+      ],
+      "test_event_sets": [
+        "jfrog_platform_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "splunk_eventtypes",
+        "splunk_tags",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Distribution relay replay/read-back captured.",
+        "Covers request/access operational records only; release-bundle lifecycle/status/business-event semantics remain blocked without exact samples or schemas.",
+        "Content-length column naming differs between generic official request-log docs and one JFrog-maintained parser; preserve raw sizes and verify local field semantics before promotion."
+      ]
+    },
+    {
+      "id": "pipelines_and_distribution_business_events_blocked",
+      "label": "Pipelines and Distribution business-event telemetry blocked",
+      "description": "Distribution request/access source-shapes are implemented narrowly, but release-bundle lifecycle/status/business events and Pipelines build provenance remain blocked until exact public samples, official schemas, or sanitized examples are available.",
+      "default": false,
+      "evidence_status": "unknown",
+      "source_modes": [
+        "distribution_release_bundle_business_events",
+        "pipelines_logs"
+      ],
+      "payload_formats": [],
+      "envelopes": [],
+      "event_families": [],
+      "test_event_sets": [],
+      "supported_targets": [
+        "vector",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [],
+      "known_limitations": [
+        "Do not invent Distribution release-bundle status/activity fields without exact schema/sample evidence.",
+        "Do not invent Pipelines build provenance fields without exact schema/sample evidence.",
+        "Pipelines public evidence currently supports path/logger inventory only, source-shape fixture coverage notes."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/jfrog_platform_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "source_file",
+        "trace_id",
+        "request_method",
+        "action_response",
+        "event_type",
+        "event",
+        "time",
+        "request_url",
+        "url"
+      ],
+      "notes": "Use after sampling the local JFrog feed. Do not drop token/user/principal/entity, repository/artifact path, source IP, trace ID, status, user agent, raw action/event, or timestamp fields by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live JFrog relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real JFrog deployment records.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included.",
+    "Xray request/service/webhook coverage is narrow and synthetic-equivalent from public docs/KB/parser evidence; no live Xray webhook or log relay read-back has been captured.",
+    "Distribution request/access source-shapes are implemented narrowly from JFrog-maintained parser evidence; Distribution release-bundle business events and Pipelines structured parsing remain blocked until exact sample/schema evidence exists."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic JFrog Platform intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props for Artifactory, Access security-audit, router request, narrow Distribution request/access, and narrow Xray request/service/webhook families. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-jfrog_platform.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard JFrog Platform analyst knowledge",
+      "description": "Adds eventtypes/tags for Artifactory request/access/traffic, Access security-audit, router request, Distribution request/access, and Xray request/service/webhook records. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed JFrog reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/jfrog_platform_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "file_api_export_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "mixed_text_json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "JFrog records typically come from file/API/export/Kubernetes sidecar or collector relay; SC4S does not own credentials/checkpoints.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "jfrog_platform_soc_splunk_test",
+      "title": "JFrog Platform — dashboard example",
+      "source_path": "dashboards/screenshots/jfrog_platform_soc-splunk-test.png",
+      "artifact_id": "splunk_dashboard_soc",
+      "caption": "Real Splunk TEST UI screenshot of the JFrog Platform dashboard populated with safe pack fixture events.",
+      "alt": "Splunk TEST dashboard screenshot for JFrog Platform using safe fixture events.",
+      "format": "png",
+      "sanitized": true,
+      "example_only": true,
+      "scope": "splunk_test_documentation_example_only",
+      "sha256": "sha256:f2141068dda90a3528f8eb53cebcee0b7353b512522387ed67b7c015e6322700",
+      "dimensions": {
+        "width": 1920,
+        "height": 7663
+      },
+      "provenance": "Captured from a disposable Splunk TEST UI on 2026-06-27 after loading the pack dashboard XML in the pack app, installing current pack Splunk knowledge, indexing safe pack-local fixture events in the same runner invocation, and passing fixture read-back plus dashboard panel export gates. No customer data or production Splunk data is present. This screenshot is a documentation example only, not source validation or replay/read-back evidence.",
+      "notes": "Documentation example only; not evidence that JFrog Platform source data has been live replay/read-back or field validated."
+    }
+  ]
+}

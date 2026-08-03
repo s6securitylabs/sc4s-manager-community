@@ -42,7 +42,7 @@ results=[]
 def check(name, cond, detail):
     results.append((name, bool(cond), detail))
 try:
-    for path in ["/health","/api/health","/api/stats","/api/config","/api/templates","/api/products","/api/audit","/api/tls","/api/schema","/api/metrics/syslog-ng","/api/backups","/api/validate"]:
+    for path in ["/health","/api/health","/api/stats","/api/config","/api/templates","/api/context-mappings","/api/audit","/api/tls","/api/schema","/api/metrics/syslog-ng","/api/backups","/api/validate"]:
         code,txt,obj=req("GET",path)
         check("GET "+path, code==200, code)
     code,txt,obj=req("GET","/api/config/file?path=../env_file")
@@ -63,9 +63,10 @@ try:
     code,txt,obj=req("POST","/api/templates/export", {"name":"e2e-smoke"})
     check("template export", code==200 and obj and pathlib.Path(obj.get("template","")).exists(), code)
     if obj and obj.get("template"): created.append(pathlib.Path(obj["template"]))
-    code,txt,obj=req("POST","/api/products/export", {"name":"e2e-products"})
-    check("products export alias", code==200, code)
-    if obj and obj.get("template"): created.append(pathlib.Path(obj["template"]))
+    for stale_path in ["/api/products", "/api/products/download", "/api/products/export", "/api/products/import"]:
+        method = "GET" if stale_path in ["/api/products", "/api/products/download"] else "POST"
+        code,txt,obj=req(method, stale_path, {} if method == "POST" else None)
+        check(stale_path + " removed", code==404, code)
     code,txt,obj=req("GET","/metrics")
     check("prometheus metrics", code==200 and "sc4s_manager_syslogng" in txt, code)
     code,txt,obj=req("POST","/api/env/secret", {"key":"SC4S_QA_E2E_TOKEN","value":"temporary-e2e-secret"})

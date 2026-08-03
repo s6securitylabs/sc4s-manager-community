@@ -1,0 +1,173 @@
+<form version="1.1" theme="light">
+  <label>Fortinet FortiGate/FortiOS Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for FortiGate/FortiOS key=value traffic, UTM, and VPN rows. Dashboard presence does not imply replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>netfw</default>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total FortiGate events</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Traffic rows</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ type=traffic | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>UTM blocked / threat rows</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ (type=utm OR threat=* OR virus=*) (action=blocked OR action=block OR action=deny OR threat=* OR virus=*) | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>VPN rows</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ (subtype=vpn OR tunnelid=* OR tunneltype=*) | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Volume over time by family</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ | eval fortinet_family=case(type="traffic","traffic", type="utm" OR isnotnull(threat) OR isnotnull(virus),"utm", subtype="vpn" OR isnotnull(tunnelid) OR isnotnull(tunneltype),"vpn", true(),"other") | timechart count by fortinet_family</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Action / status distribution</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ | eval fortinet_action=coalesce(action,status) | top limit=12 fortinet_action</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top source / destination pairs</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ | stats count values(action) as actions values(transport) as transports values(service) as services values(appcat) as app_categories values(dest_port) as dest_ports by src dest | sort - count | head 25</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>UTM / threat review</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ (type=utm OR threat=* OR virus=*) | table _time host dvc serial type subtype level action src dest dest_port transport service threat virus file signature signature_id marker _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Traffic session context</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ type=traffic | table _time host dvc serial logid sessionid policyid src srcport src dest dstip dest_port dstport transport proto service action signature signature_id sentbyte rcvdbyte marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>VPN tunnel review</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ (subtype=vpn OR tunnelid=* OR tunneltype=*) | table _time host dvc serial user remip src action status result tunnelid tunneltype signature signature_id marker _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Device, policy, and service coverage</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ | eval coverage=coalesce(dvc,devname,"unknown_device") . " / policy=" . coalesce(policyid,"unknown") . " / service=" . coalesce(service,"unknown") | top limit=15 coverage</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+    <panel>
+      <table>
+        <title>Source, sourcetype, and host coverage</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ | stats count min(_time) as first_seen max(_time) as last_seen dc(marker) as fixture_markers values(dvc) as devices values(serial) as serials by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Raw fixture/read-back context</title>
+        <search>
+          <query>index=$index$ sourcetype=fortinet:fortigate host=$host_filter$ | table _time index sourcetype source host vendor product dvc serial devname devid type subtype level logid eventid action status src srcip remip dest dstip dest_port dstport transport proto service policyid sessionid threat virus tunnelid tunneltype signature signature_id marker msg _raw | sort - _time | head 100</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <p><strong>Scope and evidence boundary:</strong> This dashboard is limited to fixture-backed FortiGate/FortiOS key=value traffic, UTM/threat, and VPN tunnel smoke rows. It does not prove full FortiOS log-family coverage, Fortinet TA parity, firmware-specific field completeness, collector health, exact timezone validation, or SC4S/Splunk replay/read-back validation.</p>
+      </html>
+    </panel>
+  </row>
+</form>

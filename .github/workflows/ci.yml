@@ -15,22 +15,28 @@ permissions:
 
 jobs:
   test-package-and-docker:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     env:
       RELEASE_VERSION: 0.0.0-ci
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.11'
+      - name: Verify Python tooling
+        run: |
+          python3 --version
+          APT=(apt-get)
+          if [ "$(id -u)" -ne 0 ]; then APT=(sudo apt-get); fi
+          if ! python3 -m pip --version >/dev/null 2>&1 || ! python3 -m venv /tmp/sc4s-manager-ci-venv-check >/dev/null 2>&1; then
+            "${APT[@]}" update
+            DEBIAN_FRONTEND=noninteractive "${APT[@]}" install -y python3-pip python3-venv
+          fi
+          rm -rf /tmp/sc4s-manager-ci-venv-check
 
       - name: Set up Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -56,10 +62,10 @@ jobs:
             --evidence-out "dist/release/package-install-dry-run.json"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image without push
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: false
@@ -71,7 +77,7 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       - name: Upload package dry-run evidence
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: package-install-dry-run
           path: dist/release/package-install-dry-run.json

@@ -75,7 +75,7 @@ def test_pack_transport_source_version_and_validation_fields_are_explicit():
 
 def test_commvault_pack_curated_metadata_fields_are_explicit():
     commvault = commvault_pack()
-    assert commvault["provenance"]["origin"] == "sechub-resource"
+    assert commvault["provenance"]["origin"] == "sechub-resources-pack"
     assert commvault["provenance"]["source"]["redistribution"] == "commit_safe"
     assert commvault["relationship_to_upstream"] == "new_pack"
     assert commvault["trust_level"] == "s6_verified"
@@ -133,6 +133,15 @@ def test_pack_accepts_noncommunity_upstream_curated_pack_without_promotion_gate(
 
 
 
+def test_pack_accepts_legacy_sechub_resource_origin_for_compatibility():
+    curated = copy.deepcopy(commvault_pack())
+    curated["provenance"]["origin"] = "sechub-resource"
+    curated["provenance"]["pack_class"] = "sechub-resource"
+
+    validate_pack(curated, curated["pack_dir"])
+
+
+
 def test_pack_accepts_promoted_community_pack_with_release_evidence():
     promoted = copy.deepcopy(commvault_pack())
     promoted["provenance"]["source"]["type"] = "mixed"
@@ -150,7 +159,7 @@ def test_pack_accepts_promoted_community_pack_with_release_evidence():
 
 def test_pack_summary_includes_curated_metadata_for_api_consumers():
     summary = pack_summary(commvault_pack())
-    assert summary["provenance"]["origin"] == "sechub-resource"
+    assert summary["provenance"]["origin"] == "sechub-resources-pack"
     assert summary["relationship_to_upstream"] == "new_pack"
     assert summary["trust_level"] == "s6_verified"
     assert summary["quality_status"] == "validated"

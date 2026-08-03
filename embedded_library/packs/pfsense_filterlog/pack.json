@@ -1,0 +1,872 @@
+{
+  "schema_version": "0.1",
+  "id": "pfsense_filterlog",
+  "version": "0.1.4",
+  "url": "https://docs.netgate.com/pfsense/en/latest/monitoring/logs/raw-filter-format.html",
+  "description": "Curated SecHub Resources SC4S pack for pfSense filterlog firewall records. Parses documented CSV common/transport fields, routes TCP/UDP/ICMP families, ships Splunk props/eventtypes/tags, and includes synthetic-equivalent fixtures with explicit validation gaps.",
+  "display_name": "pfSense Filterlog",
+  "vendor": "pfsense",
+  "product": "filterlog",
+  "default_index": "netfw",
+  "default_source": "pfsense_filterlog",
+  "listener": {
+    "source_id": "PFSENSE_FILTERLOG",
+    "transport": "tls",
+    "port": 20030,
+    "env": {
+      "SC4S_LISTEN_PFSENSE_FILTERLOG_TLS_PORT": "20030",
+      "SOURCE_ALL_SET_APPEND": "PFSENSE_FILTERLOG"
+    }
+  },
+  "sourcetypes": {
+    "filterlog_tcp": "pfsense:filterlog:tcp",
+    "filterlog_udp": "pfsense:filterlog:udp",
+    "filterlog_icmp": "pfsense:filterlog:icmp"
+  },
+  "event_families": [
+    {
+      "id": "filterlog_tcp",
+      "label": "pfSense filterlog TCP firewall events",
+      "match_engine": "pcre",
+      "match": "^[0-9]+,[0-9]*,[^,]*,[0-9]+,[^,]+,match,(pass|block),(in|out),[46],.*,(6|tcp),",
+      "expected_sourcetype": "pfsense:filterlog:tcp",
+      "primary_id_field": "tracker",
+      "required_fields": [
+        "tracker",
+        "interface",
+        "action",
+        "direction",
+        "protocol",
+        "src_ip",
+        "dest_ip"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "filterlog_udp",
+      "label": "pfSense filterlog UDP firewall events",
+      "match_engine": "pcre",
+      "match": "^[0-9]+,[0-9]*,[^,]*,[0-9]+,[^,]+,match,(pass|block),(in|out),[46],.*,(17|udp),",
+      "expected_sourcetype": "pfsense:filterlog:udp",
+      "primary_id_field": "tracker",
+      "required_fields": [
+        "tracker",
+        "interface",
+        "action",
+        "direction",
+        "protocol",
+        "src_ip",
+        "dest_ip"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "filterlog_icmp",
+      "label": "pfSense filterlog ICMP firewall events",
+      "match_engine": "pcre",
+      "match": "^[0-9]+,[0-9]*,[^,]*,[0-9]+,[^,]+,match,(pass|block),(in|out),[46],.*,(1|58|icmp),",
+      "expected_sourcetype": "pfsense:filterlog:icmp",
+      "primary_id_field": "tracker",
+      "required_fields": [
+        "tracker",
+        "interface",
+        "action",
+        "direction",
+        "protocol",
+        "src_ip",
+        "dest_ip"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "pfSense",
+    "product": "filterlog",
+    "vendor_product": "pfsense:filterlog",
+    "action": "action",
+    "signature_id": "tracker",
+    "signature": "reason",
+    "src": "src_ip",
+    "dest": "dest_ip",
+    "dest_port": "dest_port",
+    "transport": "protocol",
+    "direction": "direction"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-pfsense_filterlog.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/pfsense_filterlog_overview.xml"
+    ],
+    "test_events": [
+      "test-events/pfsense_filterlog_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tls_20030.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md",
+      "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "validation/e2e-lab-2026-06-27.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425",
+      "transport": "tls",
+      "recommended": true,
+      "default_port": 20030,
+      "notes": "Recommended production transport for pfSense filterlog into SC4S.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "csv"
+    },
+    {
+      "id": "tcp_rfc5424",
+      "label": "TCP syslog RFC5424/BSD",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 20030,
+      "notes": "Use when TLS termination is handled elsewhere or source cannot use TLS.",
+      "syslog_protocol": "rfc5424_over_tcp",
+      "framing": "line_delimited",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "csv"
+    },
+    {
+      "id": "udp_bsd",
+      "label": "UDP syslog BSD/headerless",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Supported for lab/legacy use only; avoid for production where event loss matters.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "csv"
+    }
+  ],
+  "recommended_transport": "tls_rfc5425",
+  "source_log_version": {
+    "name": "pfSense raw filter log format",
+    "min": null,
+    "max": null,
+    "notes": "Field order is grounded in Netgate raw filter log documentation current as of 2026-06-04. Exact appliance/version validation and protocol-specific tail-field coverage remain evidence gaps."
+  },
+  "validation": {
+    "date_validated": "not lab validated; curated 2026-06-04",
+    "validated_by": "Hermes autonomous curation (documentation-grounded only)",
+    "source_log_version": "Netgate raw filter log documentation current as of 2026-06-04; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Pack artifacts and fixtures are curated from public Netgate documentation and community catalogue candidate community_pfsense_filterlog_issue. Live pfSense replay and Splunk read-back evidence is not yet captured; keep quality_status=curated and trust_level=unverified."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for pfSense filterlog",
+    "pack_aware": true,
+    "testbed": {
+      "sc4s_target": "SC4S TEST",
+      "splunk_target": "Splunk TEST",
+      "allow_production": false
+    },
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tls",
+          "port": 20030,
+          "protocol": "rfc5425_octet_counted_syslog",
+          "purpose": "Dedicated pfSense filterlog listener"
+        }
+      ],
+      "required_indexes": [
+        "netfw"
+      ],
+      "required_splunk_capabilities": [
+        "HEC or SC4S HEC path can write to netfw",
+        "Search role can read netfw"
+      ]
+    },
+    "replay": {
+      "fixture_sets": [
+        "pfsense_filterlog_headerless_csv"
+      ],
+      "event_count": 3,
+      "marker_prefix": "SC4S_PFSENSE_FILTERLOG_TEST",
+      "payload_marker_tokens": [
+        "1770001001",
+        "1770001002",
+        "1770001003"
+      ],
+      "transport": "tls_rfc5425",
+      "framing": "octet_counted",
+      "script": "scripts/send_tls_20030.sh"
+    },
+    "readback": {
+      "spl": "index=netfw (sechub_fixture_marker=\"SC4S_PFSENSE_FILTERLOG_TEST*\" OR signature_id IN (1770001001,1770001002,1770001003) OR tracker IN (1770001001,1770001002,1770001003)) earliest=-2h | table _time index sourcetype source host vendor product vendor_product action direction src src_ip src_interface dest dest_ip dest_port transport protocol signature signature_id tracker interface rule reason marker _raw",
+      "expected_count": 3,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype per protocol family",
+        "source",
+        "host/fromhost",
+        "vendor/product",
+        "action/direction",
+        "src/dest/port",
+        "transport/protocol",
+        "tracker/signature_id",
+        "timestamp",
+        "raw preservation"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-27",
+      "summary": "Dedicated lab run reached healthy-looking Splunk TEST and SC4S container states, but syslog-ng aborted before replay with cfg_tree_compile_junction assertion failure; TLS send returned write:errno=104. No fixture replay, HEC delivery, syslog-ng movement, or indexed read-back evidence was captured. Harness health was hardened to require a real syslog-ng process and usable stats socket.",
+      "evidence_path": "validation/e2e-lab-2026-06-27.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing pfSense filterlog TLS listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      },
+      {
+        "type": "dashboard_fixture_validation",
+        "path": "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+        "summary": "Splunk TEST dashboard XML and fixture-backed panel SPL validation only; not full SC4S listener/HEC/source validation."
+      },
+      {
+        "type": "blocked_lab_attempt",
+        "path": "validation/e2e-lab-2026-06-27.md",
+        "summary": "Dedicated lab attempt blocked at SC4S/syslog-ng listener startup; no replay/read-back validation or trust promotion."
+      }
+    ],
+    "e2e_docker_harness": {
+      "id": "pfsense_filterlog_compose_e2e",
+      "status": "blocked_listener",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/pfsense_filterlog/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/pfsense_filterlog/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/pfsense_filterlog/compose.yaml",
+      "compose_project": "sechub-pfsense-filterlog-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netfw index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/pfsense_filterlog/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/pfsense_filterlog/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/pfsense_filterlog/scripts/send_tls_20030.sh 127.0.0.1 20030",
+        "splunk_summary_readback": "index=netfw (\"SC4S_PFSENSE_FILTERLOG_TEST\" OR tracker IN (1770001001,1770001002,1770001003) OR signature_id IN (1770001001,1770001002,1770001003)) earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netfw (\"SC4S_PFSENSE_FILTERLOG_TEST\" OR tracker IN (1770001001,1770001002,1770001003) OR signature_id IN (1770001001,1770001002,1770001003)) earliest=-2h | table _time index sourcetype source host vendor product vendor_product eventtype action direction src src_ip src_interface dest dest_ip dest_port transport protocol signature signature_id tracker interface rule reason marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netfw",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/pfsense_filterlog/splunk -> /opt/splunk/etc/apps/sechub_pfsense_filterlog"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tls",
+          "container_port": 20030,
+          "host_port_env": "SC4S_PFSENSE_FILTERLOG_PORT",
+          "source_id": "PFSENSE_FILTERLOG"
+        },
+        "parser_mount": "packs/pfsense_filterlog/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "pfsense_filterlog",
+          "source_shape": "headerless_filterlog_csv_payload_wrapped_as_tls_rfc5425",
+          "event_family": "filterlog_tcp",
+          "sourcetype": "pfsense:filterlog:tcp",
+          "data_structures": [
+            "IPv4 TCP pass filterlog CSV row"
+          ],
+          "markers": [
+            "1770001001"
+          ]
+        },
+        {
+          "source": "pfsense_filterlog",
+          "source_shape": "headerless_filterlog_csv_payload_wrapped_as_tls_rfc5425",
+          "event_family": "filterlog_udp",
+          "sourcetype": "pfsense:filterlog:udp",
+          "data_structures": [
+            "IPv4 UDP block filterlog CSV row"
+          ],
+          "markers": [
+            "1770001002"
+          ]
+        },
+        {
+          "source": "pfsense_filterlog",
+          "source_shape": "headerless_filterlog_csv_payload_wrapped_as_tls_rfc5425",
+          "event_family": "filterlog_icmp",
+          "sourcetype": "pfsense:filterlog:icmp",
+          "data_structures": [
+            "IPv4 ICMP block filterlog CSV row"
+          ],
+          "markers": [
+            "1770001003"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Real pfSense/Netgate appliance, pfSense version, syslog forwarding configuration, collector wrapper delivery, and source-local timezone behavior are not proven by this harness",
+        "Protocol-specific CSV tail fields beyond the fixture-backed TCP, UDP, and ICMP examples require additional emitted-record evidence before parser expansion or field validation",
+        "Field validation with retained real product/source-version telemetry requires sanctioned pfSense samples or a non-production appliance feed"
+      ],
+      "last_lab_attempt": {
+        "date": "2026-06-27",
+        "status": "blocked",
+        "blocked_layer": "listener",
+        "evidence_path": "validation/e2e-lab-2026-06-27.md",
+        "summary": "SC4S container health previously passed while syslog-ng was absent; stricter healthcheck now fails closed on missing syslog-ng/control socket."
+      }
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "pfsense_filterlog_headerless_csv",
+      "label": "pfSense filterlog headerless CSV TCP/UDP/ICMP fixtures",
+      "path": "test-events/pfsense_filterlog_test_events.txt",
+      "format": "csv",
+      "wire_format": "headerless_filterlog_csv_payload",
+      "envelope": "none",
+      "serialization": "csv",
+      "event_count": 3,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "1770001001",
+        "1770001002",
+        "1770001003"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "syslog_header_timezone",
+        "primary_field": "syslog_header",
+        "primary_timezone": "UTC in TLS send helper; source-defined in production syslog envelope",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog_header"
+        ],
+        "notes": "The fixture file is intentionally headerless CSV. The TLS send helper wraps payloads in RFC5424/RFC5425 with a timezone-qualified UTC timestamp."
+      },
+      "field_delimiting": {
+        "style": "csv",
+        "field_separator": ",",
+        "quote_character": "none in supplied fixtures",
+        "escape_policy": "Netgate documents CSV data; additional quoted/escaped edge fixtures are needed before stating full tail-field coverage.",
+        "notes": "Common fields are followed by IP-version/protocol-specific tail fields. Treat each physical line as one event."
+      },
+      "expected_families": [
+        "filterlog_tcp",
+        "filterlog_udp",
+        "filterlog_icmp"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-pfsense_filterlog.conf",
+      "target_path": "local/config/app_parsers/syslog/app-pfsense_filterlog.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/pfsense_filterlog.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/pfsense_filterlog_overview.xml",
+      "target_path": "splunk/default/data/ui/views/pfsense_filterlog_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "dashboard_screenshot_pfsense_filterlog_overview_splunk_test",
+      "group": "docs",
+      "source_path": "dashboards/screenshots/pfsense-filterlog-overview-splunk-test.png",
+      "target_path": "dashboards/screenshots/pfsense-filterlog-overview-splunk-test.png",
+      "kind": "dashboard_screenshot",
+      "rendered": true,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/pfsense_filterlog_test_events.txt",
+      "target_path": "test-events/pfsense_filterlog_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tls_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tls_20030.sh",
+      "target_path": "scripts/send_tls_20030.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_lab_2026_06_27",
+      "group": "docs",
+      "source_path": "validation/e2e-lab-2026-06-27.md",
+      "target_path": "validation/e2e-lab-2026-06-27.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "dashboard_splunk_fixture_validation_2026_06_16",
+      "group": "docs",
+      "source_path": "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "target_path": "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "kind": "pack_validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": true,
+    "source": {
+      "type": "mixed",
+      "reference": "Netgate raw filter log documentation plus catalogue/generated/community/community-extra.json entry community_pfsense_filterlog_issue (https://github.com/splunk/splunk-connect-for-syslog/issues/1234).",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are synthetic-equivalent and use RFC5737 documentation IP addresses. No proprietary or customer samples are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes autonomous curation",
+      "reviewed_at": "2026-06-04",
+      "notes": "Selected as a high-value firewall source from the community catalogue. Public Netgate documentation is sufficient for a conservative curated pack, but not for validated/field-validated statements."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Mapped for documented IP packet fields."
+        },
+        "dest": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Mapped for documented IP packet fields."
+        },
+        "dest_port": {
+          "source_fields": [
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Present for TCP/UDP fixtures; not applicable for all protocols."
+        },
+        "transport": {
+          "source_fields": [
+            "protocol"
+          ],
+          "status": "partial",
+          "notes": "Protocol text from filterlog CSV."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "pfSense pass/block action."
+        },
+        "signature": {
+          "source_fields": [
+            "reason"
+          ],
+          "status": "partial",
+          "notes": "Reason is used as a lightweight signature until rule labels are available."
+        },
+        "signature_id": {
+          "source_fields": [
+            "tracker"
+          ],
+          "status": "partial",
+          "notes": "Tracker is Netgate's unique rule tracking ID for user-added rules."
+        }
+      },
+      "notes": "Network Traffic mapping is partial and focused on common packet-filter fields."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Direct source IP mapping."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Direct destination IP mapping."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "pass/block action only."
+        }
+      },
+      "notes": "Optional OCSF mapping is not complete."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Direct source IP mapping."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Direct destination IP mapping."
+        },
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "pass/block action only."
+        }
+      },
+      "notes": "Optional ECS mapping is not complete."
+    }
+  },
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic pfSense filterlog ingestion",
+      "description": "Parser, listener env example, fixtures, and minimal Splunk props. No drops or reductions.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-pfsense_filterlog.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; preserves events."
+    },
+    {
+      "id": "standard",
+      "label": "Standard pfSense filterlog knowledge",
+      "description": "Adds eventtypes and tags for pass/block network traffic. No drops or reductions.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Still non-lossy."
+    }
+  ],
+  "ci": {
+    "last_updated": "2026-06-27",
+    "last_tested": "2026-06-04",
+    "tested_commit": "cd464c1",
+    "tested_artifact_hashes": {
+      "packs/pfsense_filterlog/README.md": "sha256:ecee18e34bd32b87e31c54b7027790dffe7128c1004f4907540f4fb21b6ece37",
+      "packs/pfsense_filterlog/sc4s/app_parsers/syslog/app-pfsense_filterlog.conf": "sha256:0eb5eeecaa2f0eab79356bff696666a3c69035f7cbcefcbcc535455395d88613",
+      "packs/pfsense_filterlog/sc4s/env.example": "sha256:d954bd0a73258ad714f2036c3256e4cdf59fdd8857222989f6d95197eb5c2b33",
+      "packs/pfsense_filterlog/splunk/default/props.conf": "sha256:dd7a5b9cdfc657e08a7ea30e74757be89aa75f7fcb0d3dde89ca9835cf08da7a",
+      "packs/pfsense_filterlog/splunk/default/transforms.conf": "sha256:847f642f996f087173813d62feae613fa33ea692df469a96b220b8012b6a3b31",
+      "packs/pfsense_filterlog/splunk/default/eventtypes.conf": "sha256:599a49b895cda33e3e6a9e39713b41f51423b46aafb8d94728e3c24c080d8f00",
+      "packs/pfsense_filterlog/splunk/default/tags.conf": "sha256:a4d6ad4ec93e80246723ad2231a09eee9ccd845ce956334f5cda03a7b7e70646",
+      "packs/pfsense_filterlog/test-events/pfsense_filterlog_test_events.txt": "sha256:dd87c3d423e8f5069ee6cc128778b1119ad7f9bdcbe1a7a32bbbea17da7f549b",
+      "packs/pfsense_filterlog/scripts/send_tls_20030.sh": "sha256:a7e814200839629ed7f422bcca00833c52750ec8de0b305107b8d482eb13ce9d",
+      "packs/pfsense_filterlog/validation/preflight-2026-06-08.md": "sha256:f09626108adf88d740579fed2b7252385ce1727d1acd07643993435df42a38da",
+      "packs/pfsense_filterlog/splunk/default/data/ui/views/pfsense_filterlog_overview.xml": "sha256:413e06dbaa7d40558183cf250bb04dfe41d08d4ddee867f0472a28895eb66d9c",
+      "packs/pfsense_filterlog/validation/dashboard-splunk-fixture-validation-2026-06-16.md": "sha256:d007555b104c98eec4c3b05ba16c0834f436081d5033f28c4a8297b8a50adc91",
+      "packs/pfsense_filterlog/scripts/e2e_docker_compose.sh": "sha256:c5dda04fddb5d3005ba0dc2e38dec2fe3f194d9cc0334ffaeb11adbcdba53b3f",
+      "packs/pfsense_filterlog/validation/e2e-lab-2026-06-27.md": "sha256:e6720a6626af423bca49f3065883e88f80733fbab5a75aaba72de1e17f0e4831"
+    }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "csv",
+    "supported_transport_refs": [
+      "tls_rfc5425",
+      "tcp_rfc5424",
+      "udp_bsd"
+    ],
+    "notes": "pfSense filterlog can be forwarded as syslog CSV records.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "pfsense_filterlog_overview_splunk_test",
+      "title": "pfSense Filterlog Overview — dashboard example",
+      "source_path": "dashboards/screenshots/pfsense-filterlog-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "artifact_id": "splunk_dashboard_overview",
+      "caption": "Real Splunk TEST UI screenshot of the pfSense filterlog overview dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on Proxmox LXC 1027 after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true
+    }
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  }
+}

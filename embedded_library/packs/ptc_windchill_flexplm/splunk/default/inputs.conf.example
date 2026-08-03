@@ -1,0 +1,36 @@
+# PTC Windchill / FlexPLM disabled-by-default collection examples
+#
+# Replace the sample paths and indexes with approved local values before enablement.
+# The MethodServer log4j path is the primary evidence-backed source for this bundle.
+# Front-end Apache logs are optional corroboration sources. IIS deployments should use
+# the official IIS add-on for parsing/search-time knowledge and require local path review.
+
+###############################################################################
+# 01 - Windchill MethodServer log4j
+###############################################################################
+[monitor:///opt/ptc/Windchill/logs/MethodServer-*-log4j.log]
+disabled = 1
+index = infraops
+sourcetype = log4j
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+###############################################################################
+# 02 - Optional Windchill-bundled Apache access logs
+###############################################################################
+[monitor:///opt/ptc/Windchill/apache/logs/*access*.log]
+disabled = 1
+index = infraops
+sourcetype = access_combined
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+
+###############################################################################
+# 03 - Optional Windchill-bundled Apache error logs
+###############################################################################
+[monitor:///opt/ptc/Windchill/apache/logs/*error*.log]
+disabled = 1
+index = infraops
+sourcetype = apache:error
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d

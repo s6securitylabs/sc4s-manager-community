@@ -1,0 +1,22 @@
+/*
+ * SecHub Resources Splunk Edge Processor pipeline template candidate: suricata_eve_flow_reduce
+ * Source: Suricata EVE JSON line relay
+ * Sourcetypes/source-type definitions: suricata:eve
+ * Status: conservative candidate only; NOT validated in Splunk Edge Processor.
+ * Default behavior: route unchanged events to $destination. No drops, masking, or field deletion are enabled.
+ * Optional reduction ideas (must be implemented only after preview/replay/read-back validation):
+ * - Consider reducing high-volume `flow`/`stats`/routine protocol metadata only when equivalent NetFlow/Zeek/EDR coverage and detection impact have been validated.
+ * - Always retain alerts, anomalies, fileinfo, and protocol events tied to alerts or watched assets by default.
+ * Rollback: disable this pipeline/template and route the source directly to the destination/index `netids`.
+ */
+
+$source = ${source};
+$destination = ${destination};
+
+$pipeline =
+  | from $source
+  | eval sechub_edge_template_id = "suricata_eve_flow_reduce"
+  | eval sechub_edge_template_status = "candidate_not_validated"
+  /* Insert local, approved reduction predicates here after Edge Processor preview/install/read-back validation. */
+  /* Example shape only: | where NOT (<local_allowlisted_low_value_condition>) */
+  | into $destination;

@@ -1,0 +1,1139 @@
+{
+  "schema_version": "0.1",
+  "id": "okta_system_log",
+  "version": "0.1.5",
+  "url": "https://developer.okta.com/docs/reference/system-log-query/",
+  "description": "Curated SecHub Resources SC4S pack for Okta System Log JSON relays, covering fixture-backed authentication/session, MFA, user lifecycle, policy/admin, API token/OAuth, application assignment, and user risk events.",
+  "display_name": "Okta System Log",
+  "vendor": "okta",
+  "product": "system_log",
+  "default_index": "netauth",
+  "default_source": "okta_system_log",
+  "listener": {
+    "source_id": "OKTA_SYSTEM_LOG",
+    "transport": "tcp",
+    "port": 20066,
+    "env": {
+      "SC4S_LISTEN_OKTA_SYSTEM_LOG_TCP_PORT": "20066",
+      "SOURCE_ALL_SET_APPEND": "OKTA_SYSTEM_LOG"
+    }
+  },
+  "sourcetypes": {
+    "authn": "okta:system:authn",
+    "mfa": "okta:system:mfa",
+    "lifecycle": "okta:system:lifecycle",
+    "policy": "okta:system:policy",
+    "api_token": "okta:system:api_token",
+    "app": "okta:system:app",
+    "risk": "okta:system:risk"
+  },
+  "event_families": [
+    {
+      "id": "authn",
+      "label": "Okta authentication and session events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"user\\.(authentication|session)\\.",
+      "expected_sourcetype": "okta:system:authn",
+      "primary_id_field": "uuid",
+      "required_fields": [
+        "published",
+        "eventType",
+        "actor",
+        "outcome"
+      ],
+      "timestamp_fields": [
+        "published"
+      ]
+    },
+    {
+      "id": "mfa",
+      "label": "Okta MFA events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"user\\.mfa\\.",
+      "expected_sourcetype": "okta:system:mfa",
+      "primary_id_field": "uuid",
+      "required_fields": [
+        "published",
+        "eventType",
+        "actor",
+        "outcome"
+      ],
+      "timestamp_fields": [
+        "published"
+      ]
+    },
+    {
+      "id": "lifecycle",
+      "label": "Okta user lifecycle events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"user\\.lifecycle\\.",
+      "expected_sourcetype": "okta:system:lifecycle",
+      "primary_id_field": "uuid",
+      "required_fields": [
+        "published",
+        "eventType",
+        "actor",
+        "target",
+        "outcome"
+      ],
+      "timestamp_fields": [
+        "published"
+      ]
+    },
+    {
+      "id": "policy",
+      "label": "Okta policy and rule administration events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"policy\\.",
+      "expected_sourcetype": "okta:system:policy",
+      "primary_id_field": "uuid",
+      "required_fields": [
+        "published",
+        "eventType",
+        "actor",
+        "target",
+        "outcome"
+      ],
+      "timestamp_fields": [
+        "published"
+      ]
+    },
+    {
+      "id": "api_token",
+      "label": "Okta API token and OAuth client/token administration events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"(system\\.api_token|app\\.oauth2)\\.",
+      "expected_sourcetype": "okta:system:api_token",
+      "primary_id_field": "uuid",
+      "required_fields": [
+        "published",
+        "eventType",
+        "actor",
+        "target",
+        "outcome"
+      ],
+      "timestamp_fields": [
+        "published"
+      ]
+    },
+    {
+      "id": "app",
+      "label": "Okta application assignment and membership events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"application\\.user_membership\\.",
+      "expected_sourcetype": "okta:system:app",
+      "primary_id_field": "uuid",
+      "required_fields": [
+        "published",
+        "eventType",
+        "actor",
+        "target",
+        "outcome"
+      ],
+      "timestamp_fields": [
+        "published"
+      ]
+    },
+    {
+      "id": "risk",
+      "label": "Okta user risk signal events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"user\\.risk\\.",
+      "expected_sourcetype": "okta:system:risk",
+      "primary_id_field": "uuid",
+      "required_fields": [
+        "published",
+        "eventType",
+        "actor",
+        "target",
+        "outcome"
+      ],
+      "timestamp_fields": [
+        "published"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Okta",
+    "product": "system_log",
+    "vendor_product": "okta:system_log",
+    "event_type": "Okta System Log eventType",
+    "event_id": "Okta System Log uuid",
+    "published": "Okta event timestamp",
+    "user": "Actor alternateId",
+    "actor_id": "Actor id",
+    "actor_display_name": "Actor displayName",
+    "src": "Alias for client.ipAddress",
+    "src_ip": "Client IP address",
+    "action": "Outcome result for conservative smoke searches",
+    "result": "Okta outcome.result",
+    "result_reason": "Okta outcome.reason",
+    "signature": "Okta displayMessage",
+    "severity": "Okta severity token",
+    "object": "Target displayName",
+    "object_type": "Target type",
+    "target_user": "Target alternateId for lifecycle, application-assignment, and risk rows when present",
+    "credential_type": "MFA credential type",
+    "authentication_provider": "Authentication provider",
+    "policy_id": "Policy ID in debug data when present",
+    "request_id": "Okta request ID",
+    "marker": "Synthetic fixture marker only",
+    "session_id": "Okta transaction.id for session/OAuth correlation when present",
+    "user_agent": "Client user-agent string when present",
+    "oauth_client_id": "OAuth client ID from debugContext.debugData.clientId when present",
+    "grant_type": "OAuth grant type from debugContext.debugData.grantType when present",
+    "scopes": "OAuth scopes from debugContext.debugData.scopes when present",
+    "object_id": "Target object ID from target array when present",
+    "app_assignment": "Application user-membership event context from application.user_membership.* events",
+    "risk_event": "User risk event context from user.risk.* events"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-okta_system_log.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/okta_system_log_overview.xml"
+    ],
+    "test_events": [
+      "test-events/okta_system_log_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20066.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/okta_system_log_reduction_candidates.csv",
+      "validation/preflight-2026-06-07.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Okta JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20066,
+      "notes": "Dedicated TCP listener for one Okta System Log JSON record per line from an API/Event Hook/Cribl relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20066,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Okta System Log API JSON object",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in public Okta System Log API/object documentation and synthetic-equivalent fixtures; collector wrapping must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-07",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Okta System Log public API/object documentation and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Okta System Log JSON records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Okta relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Okta System Log JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "okta_system_log_json"
+      ],
+      "event_count": 9,
+      "marker_prefix": "SC4S_OKTA_SYSTEM_LOG_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20066.sh"
+    },
+    "readback": {
+      "spl": "index=netauth sechub_fixture_marker=\"SC4S_OKTA_SYSTEM_LOG_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product event_type event_id user actor_id actor_display_name src_ip action result result_reason signature severity object object_id object_type target_user credential_type authentication_provider policy_id request_id session_id user_agent oauth_client_id grant_type scopes marker _raw",
+      "expected_count": 9,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "event_type/event_id",
+        "user and actor identity fields",
+        "src_ip",
+        "result/action",
+        "timestamp",
+        "target_user/object/object_id context",
+        "credential_type/authentication_provider",
+        "policy_id",
+        "session_id",
+        "oauth_client_id/grant_type/scopes",
+        "application assignment/risk sourcetypes"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-07",
+      "summary": "2026-06-07 local preflight found no TCP listener on 127.0.0.1:20066 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-07.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-07.md",
+        "summary": "Command-grounded local preflight evidence for missing Okta TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20066,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Okta System Log relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netauth"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netauth",
+        "Search role can read netauth"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "okta_system_log_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/okta_system_log/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/okta_system_log/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/okta_system_log/compose.yaml",
+      "compose_project": "sechub-okta-system-log-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netauth index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/okta_system_log/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/okta_system_log/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/okta_system_log/scripts/send_tcp_20066.sh 127.0.0.1 20066",
+        "splunk_summary_readback": "index=netauth sechub_fixture_marker=\"SC4S_OKTA_SYSTEM_LOG_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netauth sechub_fixture_marker=\"SC4S_OKTA_SYSTEM_LOG_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product event_type event_id user actor_id actor_display_name src_ip action result result_reason signature severity object object_id object_type target_user credential_type authentication_provider policy_id request_id session_id user_agent oauth_client_id grant_type scopes marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netauth",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/okta_system_log/splunk -> /opt/splunk/etc/apps/sechub_okta_system_log:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20066,
+          "host_port_env": "SC4S_OKTA_SYSTEM_LOG_PORT",
+          "source_id": "OKTA_SYSTEM_LOG"
+        },
+        "parser_mount": "packs/okta_system_log/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "okta_identity_system_log",
+          "source_shape": "json_relay",
+          "event_families": [
+            "authn",
+            "mfa",
+            "lifecycle",
+            "policy"
+          ],
+          "expected_sourcetypes": [
+            "okta:system:authn",
+            "okta:system:mfa",
+            "okta:system:lifecycle",
+            "okta:system:policy"
+          ],
+          "data_structures": [
+            "authentication/session record",
+            "MFA record",
+            "user lifecycle record",
+            "policy/admin record"
+          ],
+          "markers": [
+            "SC4S_OKTA_SYSTEM_LOG_TEST_AUTHN_001",
+            "SC4S_OKTA_SYSTEM_LOG_TEST_MFA_002",
+            "SC4S_OKTA_SYSTEM_LOG_TEST_LIFECYCLE_003",
+            "SC4S_OKTA_SYSTEM_LOG_TEST_POLICY_004",
+            "SC4S_OKTA_SYSTEM_LOG_TEST_SESSION_006"
+          ]
+        },
+        {
+          "source": "okta_access_and_app_system_log",
+          "source_shape": "json_relay",
+          "event_families": [
+            "api_token",
+            "app",
+            "risk"
+          ],
+          "expected_sourcetypes": [
+            "okta:system:api_token",
+            "okta:system:app",
+            "okta:system:risk"
+          ],
+          "data_structures": [
+            "API token/OAuth event",
+            "application assignment event",
+            "user-risk signal event"
+          ],
+          "markers": [
+            "SC4S_OKTA_SYSTEM_LOG_TEST_TOKEN_005",
+            "SC4S_OKTA_SYSTEM_LOG_TEST_OAUTH_007",
+            "SC4S_OKTA_SYSTEM_LOG_TEST_APP_008",
+            "SC4S_OKTA_SYSTEM_LOG_TEST_RISK_009"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live Okta tenant export, API/Event Hook delivery, or collector relay was exercised by adding this harness.",
+        "The harness uses synthetic-equivalent fixture JSON and does not prove API pagination, checkpoint custody, Event Hook delivery guarantees, collector envelope metadata, authorization-server policy behaviour, token contents, or export completeness.",
+        "Passing the harness would be lab replay/read-back evidence for this fixture route only, not field validation for a real Okta tenant."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "okta_system_log_json",
+      "label": "Okta System Log synthetic-equivalent JSON records",
+      "path": "test-events/okta_system_log_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 9,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_OKTA_SYSTEM_LOG_TEST_AUTHN_001",
+        "SC4S_OKTA_SYSTEM_LOG_TEST_MFA_002",
+        "SC4S_OKTA_SYSTEM_LOG_TEST_LIFECYCLE_003",
+        "SC4S_OKTA_SYSTEM_LOG_TEST_POLICY_004",
+        "SC4S_OKTA_SYSTEM_LOG_TEST_TOKEN_005",
+        "SC4S_OKTA_SYSTEM_LOG_TEST_SESSION_006",
+        "SC4S_OKTA_SYSTEM_LOG_TEST_OAUTH_007",
+        "SC4S_OKTA_SYSTEM_LOG_TEST_APP_008",
+        "SC4S_OKTA_SYSTEM_LOG_TEST_RISK_009"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "published",
+        "primary_timezone": "UTC when ISO-8601 Z suffix is present",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Okta/collector timestamp normalization policy"
+        ],
+        "notes": "Fixtures use UTC ISO-8601 published timestamps. Production collectors must preserve or map this field."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping; fixtures use example domains and RFC5737 documentation IPs",
+        "notes": "Nested actor/client/outcome/target/debugContext/transaction objects are retained for reduction review, including session, OAuth token-grant, application assignment, and risk-event context."
+      },
+      "expected_families": [
+        "authn",
+        "mfa",
+        "lifecycle",
+        "policy",
+        "api_token",
+        "app",
+        "risk"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-okta_system_log.conf",
+      "target_path": "local/config/app_parsers/syslog/app-okta_system_log.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/okta_system_log.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/okta_system_log_overview.xml",
+      "target_path": "splunk/default/data/ui/views/okta_system_log_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/okta_system_log_test_events.txt",
+      "target_path": "test-events/okta_system_log_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20066.sh",
+      "target_path": "scripts/send_tcp_20066.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/okta_system_log_reduction_candidates.csv",
+      "target_path": "docs/okta_system_log_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_07",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-07.md",
+      "target_path": "validation/preflight-2026-06-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Okta Developer System Log API/query/event-types public documentation; fixtures are synthetic-equivalent examples shaped to the public System Log object model.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test identities and RFC5737 documentation IP ranges; no customer or tenant data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-07",
+      "notes": "Created from the v1 high-value pack backlog as a conservative identity-control-plane pack."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "actor.alternateId"
+          ],
+          "status": "partial",
+          "notes": "Actor identity."
+        },
+        "src": {
+          "source_fields": [
+            "client.ipAddress"
+          ],
+          "status": "partial",
+          "notes": "Client IP when present."
+        },
+        "action": {
+          "source_fields": [
+            "outcome.result",
+            "eventType"
+          ],
+          "status": "partial",
+          "notes": "Native result/event type; not normalized to a complete action taxonomy."
+        },
+        "result": {
+          "source_fields": [
+            "outcome.result",
+            "outcome.reason"
+          ],
+          "status": "partial",
+          "notes": "Okta outcome fields."
+        },
+        "signature": {
+          "source_fields": [
+            "displayMessage",
+            "eventType"
+          ],
+          "status": "partial",
+          "notes": "Display message and event type grouping."
+        },
+        "object": {
+          "source_fields": [
+            "target[].displayName",
+            "target[].type",
+            "target[].id"
+          ],
+          "status": "partial",
+          "notes": "Target object context."
+        },
+        "app": {
+          "source_fields": [
+            "target[].displayName",
+            "debugContext.debugData.clientId"
+          ],
+          "status": "partial",
+          "notes": "OAuth/client application context when present."
+        },
+        "session_id": {
+          "source_fields": [
+            "transaction.id"
+          ],
+          "status": "partial",
+          "notes": "Okta transaction/session correlation value; not a Splunk sessionization guarantee."
+        },
+        "change_type": {
+          "source_fields": [
+            "eventType",
+            "target[].id",
+            "target[].alternateId"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper mapping for fixture-backed app-assignment and risk events; not a complete Okta taxonomy."
+        }
+      },
+      "notes": "Partial identity/change CIM guidance only; not full Okta TA parity."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "actor.alternateId"
+          ],
+          "status": "partial",
+          "notes": "Actor identity."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "client.ipAddress"
+          ],
+          "status": "partial",
+          "notes": "Client IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "eventType",
+            "displayMessage"
+          ],
+          "status": "partial",
+          "notes": "Okta event type/name."
+        },
+        "status": {
+          "source_fields": [
+            "outcome.result",
+            "outcome.reason"
+          ],
+          "status": "partial",
+          "notes": "Outcome status."
+        },
+        "session.uid": {
+          "source_fields": [
+            "transaction.id"
+          ],
+          "status": "partial",
+          "notes": "Okta transaction ID for session/OAuth correlation when present."
+        },
+        "api.request.uid": {
+          "source_fields": [
+            "debugContext.debugData.requestId"
+          ],
+          "status": "partial",
+          "notes": "Okta request ID."
+        },
+        "resource.uid": {
+          "source_fields": [
+            "eventType",
+            "target[].id",
+            "target[].alternateId"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper mapping for fixture-backed app-assignment and risk events; not a complete Okta taxonomy."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "actor.alternateId"
+          ],
+          "status": "partial",
+          "notes": "Actor identity."
+        },
+        "source.ip": {
+          "source_fields": [
+            "client.ipAddress"
+          ],
+          "status": "partial",
+          "notes": "Client IP."
+        },
+        "event.action": {
+          "source_fields": [
+            "eventType"
+          ],
+          "status": "partial",
+          "notes": "Native Okta event type."
+        },
+        "event.outcome": {
+          "source_fields": [
+            "outcome.result"
+          ],
+          "status": "partial",
+          "notes": "Okta outcome result."
+        },
+        "event.id": {
+          "source_fields": [
+            "uuid"
+          ],
+          "status": "partial",
+          "notes": "Okta System Log uuid."
+        },
+        "session.id": {
+          "source_fields": [
+            "transaction.id"
+          ],
+          "status": "partial",
+          "notes": "Okta transaction/session correlation value when present."
+        },
+        "oauth2.grant_type": {
+          "source_fields": [
+            "debugContext.debugData.grantType"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper mapping for OAuth grant type."
+        },
+        "oauth2.scopes": {
+          "source_fields": [
+            "debugContext.debugData.scopes"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper mapping for OAuth scope string."
+        },
+        "related.user": {
+          "source_fields": [
+            "eventType",
+            "target[].id",
+            "target[].alternateId"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper mapping for fixture-backed app-assignment and risk events; not a complete Okta taxonomy."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/okta_system_log/sc4s/app_parsers/syslog/app-okta_system_log.conf": "sha256:d52e72bfe500b4e44c2ab5566a89c6781be3eff9df40e6e65fcf4e2c56cc42a3",
+      "packs/okta_system_log/sc4s/env.example": "sha256:1c0778167c5ef13d012a538661e77c34765630505841831b17fe538b3df00423",
+      "packs/okta_system_log/splunk/default/props.conf": "sha256:55254ae7a4f4dd88461071d33c61e1e766e0fb9cb59039c47c7cba3ed92662bc",
+      "packs/okta_system_log/splunk/default/transforms.conf": "sha256:41828445012f1b23f544cc4325cd77b203dc06f25af51ac3e59b075da8eaa62e",
+      "packs/okta_system_log/splunk/default/eventtypes.conf": "sha256:7fcba91b14cce719586205cded23405e4191536fcc5c825118a0b40adcbe8e6b",
+      "packs/okta_system_log/splunk/default/tags.conf": "sha256:2ca489ef74d18ae86846e30ab0dfa948acd521ac16b67a42a229d7c9897a5f07",
+      "packs/okta_system_log/test-events/okta_system_log_test_events.txt": "sha256:4a1c532b4bdd1395b86be9b3a82d56bfb73b68f626c53b6c6aaa5cf899957f9d",
+      "packs/okta_system_log/scripts/send_tcp_20066.sh": "sha256:26371720fdb478e0b353a427410796d84ab594f5f316f39cede66b0148719259",
+      "packs/okta_system_log/README.md": "sha256:9813c24d6775157a3b2f857e18a81e3830597e78daa8e0c3fb6b4a30e797af27",
+      "packs/okta_system_log/docs/okta_system_log_reduction_candidates.csv": "sha256:0e8279d34ddfee048cf0992830532e068cb013ee063b8550d458b798c4d0db36",
+      "packs/okta_system_log/validation/preflight-2026-06-07.md": "sha256:eaa75d5735c7b9ab356d385f271f5ad0d51d623d6ad12d3a8f5d5ba62701fb96",
+      "packs/okta_system_log/splunk/default/data/ui/views/okta_system_log_overview.xml": "sha256:fc1f535b15600e1b32c13851285cf3b2cd0579b09b17cc80d8fac50c87231798",
+      "packs/okta_system_log/scripts/e2e_docker_compose.sh": "sha256:c41967bf7b62ef33e13877e7746121132e7bff4b56b591bf0f228493b653d09d"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-24",
+    "last_tested": "2026-06-24"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "identity",
+    "authentication",
+    "audit",
+    "saas",
+    "security"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "json_relay",
+      "label": "Okta System Log JSON relay",
+      "description": "Default variant for Okta API/Event Hook/System Log streaming relays that preserve one JSON object per event, including authentication/session, OAuth token-grant, application assignment, and risk rows when present.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "system_log_api",
+        "event_hook",
+        "cribl_relay",
+        "hec_style_json_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "authn",
+        "mfa",
+        "lifecycle",
+        "policy",
+        "api_token",
+        "app",
+        "risk"
+      ],
+      "test_event_sets": [
+        "okta_system_log_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Okta relay replay/read-back captured.",
+        "Collector wrappers may rename or nest fields and must be compared locally."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/okta_system_log_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "eventType",
+        "actor.type",
+        "outcome.result",
+        "target.type"
+      ],
+      "notes": "Use after sampling the local Okta feed. Do not drop debugContext or target arrays by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Okta relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real tenant records.",
+    "SC4S emits pack-defined family sourcetypes; exact collector wrapping/source names need local comparison.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included.",
+    "OAuth token-grant fixture coverage is limited to public event-type/object-shape documentation and does not validate local authorization-server policy, token contents, or collector envelopes.",
+    "Application assignment and user-risk fixtures are grounded in public Okta event-type/object-shape documentation only; local collector envelopes and tenant-specific optional fields require replay/read-back before promotion."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Okta System Log intake",
+      "description": "Dedicated listener, parser, fixtures, and JSON Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-okta_system_log.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Okta analyst knowledge",
+      "description": "Adds eventtypes/tags for Okta authentication/session, MFA, lifecycle, policy, API token/OAuth, application assignment, and risk families. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Okta reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/okta_system_log_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "api_eventhook_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Okta System Log is SaaS API/Event Hook JSON collected and relayed to SC4S.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "okta_system_log_overview_splunk_test",
+      "title": "Okta System Log — dashboard example",
+      "source_path": "dashboards/screenshots/okta-system-log-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Okta System Log dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

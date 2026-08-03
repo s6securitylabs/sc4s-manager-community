@@ -5,6 +5,7 @@ import re
 import subprocess
 import sys
 import tarfile
+import tomllib
 from pathlib import Path
 
 
@@ -61,9 +62,6 @@ def test_release_compose_matches_sc4s_docker_first_layout():
     compose_text = (ROOT / "deploy" / "compose" / "compose.yaml").read_text(encoding="utf-8")
 
     assert "/opt/sc4s/env_file" in compose_text
-    assert "/opt/sc4s/env:/opt/sc4s/env" in compose_text
-    assert "SC4S_ENV_FILE: /opt/sc4s/env/env_file" in compose_text
-    assert "sc4s-manager-run" not in compose_text
     assert "/opt/sc4s/local:/etc/syslog-ng/conf.d/local" in compose_text
     assert "/opt/sc4s/archive:/var/lib/syslog-ng/archive" in compose_text
     assert "/opt/sc4s/tls:/etc/syslog-ng/tls" in compose_text
@@ -71,12 +69,9 @@ def test_release_compose_matches_sc4s_docker_first_layout():
     assert "/opt/sc4s/manager.env" in compose_text
     assert "- /var/run/docker.sock" not in compose_text
     assert "source: /var/run/docker.sock" not in compose_text
-    assert "container3:3.43.0" in compose_text
+    assert "container3:3.46.0" in compose_text
     assert (ROOT / "deploy" / "compose" / "env_file.example").exists()
     assert (ROOT / "deploy" / "compose" / "manager.env.example").exists()
-    install_runbook = (ROOT / "docs" / "runbooks" / "install.md").read_text(encoding="utf-8")
-    assert "/opt/sc4s/env/env_file" in install_runbook
-    assert "ln -sfn env/env_file /opt/sc4s/env_file" in install_runbook
 
 
 def test_release_manifest_does_not_include_secret_values(tmp_path):
@@ -225,3 +220,74 @@ def test_build_release_artifact_does_not_invoke_npm(tmp_path):
     )
 
     assert not npm_marker.exists(), "build_release_artifact.py must not invoke npm"
+
+
+def test_compose_runtime_topology_and_secure_defaults():
+    compose = (ROOT / "deploy/compose/compose.yaml").read_text()
+    manager_env = (ROOT / "deploy/compose/manager.env.example").read_text()
+    compose_env = (ROOT / "deploy/compose/.env.example").read_text()
+    assert "/opt/sc4s/manager:/opt/sc4s-manager" not in compose
+    assert "/opt/sc4s/manager/state:/opt/sc4s-manager/state" in compose
+    assert "/opt/sc4s/env:/opt/sc4s-manager-env" in compose
+    assert "SC4S_HEALTH_URL: http://sc4s:8080/health" in compose
+    assert "SC4S_MANAGER_VERSION:-3.46.0-beta" in compose
+    assert "host_ip: ${SC4S_MANAGER_BIND_ADDRESS:-127.0.0.1}" in compose
+    assert "SC4S_MANAGER_AUTH_MODE=" in manager_env
+    assert "change-me" not in manager_env.lower()
+    assert "SC4S_MANAGER_VERSION=3.46.0-beta" in compose_env
+    assert "latest" not in compose_env.lower()
+
+
+def test_release_manifest_covers_every_regular_archive_member(tmp_path):
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/build_release_artifact.py"), "--version", "9.8.7",
+         "--output-dir", str(tmp_path), "--allow-missing-frontend"],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=str(ROOT),
+    )
+    assert result.returncode == 0, result.stderr
+    artifact = tmp_path / "sc4s-manager-9.8.7.tar.gz"
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    with tarfile.open(artifact) as tf:
+        members = sorted(member.name.removeprefix("sc4s-manager/") for member in tf.getmembers() if member.isfile())
+        env_member = tf.extractfile("sc4s-manager/deploy/compose/.env.example")
+        assert env_member is not None
+        bundled_env = env_member.read().decode()
+    paths = sorted(entry["path"] for entry in manifest["paths"])
+    assert paths == members
+    assert len(paths) == len(set(paths))
+    assert "LICENSE" in paths
+    assert len(manifest["archive_sha256"]) == 64
+    assert "SC4S_MANAGER_VERSION=9.8.7" in bundled_env
+
+
+def test_release_version_sources_and_packaged_templates_agree(tmp_path):
+    """The app, package metadata, template defaults, and release artifact share one version."""
+    release_version = "3.46.0-beta"
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    frontend = json.loads((ROOT / "frontend/package.json").read_text())
+    frontend_lock = json.loads((ROOT / "frontend/package-lock.json").read_text())
+    app_text = (ROOT / "src/sc4s_manager/app.py").read_text()
+    compose = (ROOT / "deploy/compose/compose.yaml").read_text()
+    compose_env = (ROOT / "deploy/compose/.env.example").read_text()
+
+    assert pyproject["project"]["version"] == release_version
+    assert frontend["version"] == release_version
+    assert frontend_lock["version"] == release_version
+    assert frontend_lock["packages"][""]["version"] == release_version
+    assert f'APP_VERSION = "{release_version}"' in app_text
+    assert f"SC4S_MANAGER_VERSION:-{release_version}" in compose
+    assert f"SC4S_MANAGER_VERSION={release_version}" in compose_env
+
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/build_release_artifact.py"), "--version", release_version,
+         "--output-dir", str(tmp_path), "--allow-missing-frontend"],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=str(ROOT),
+    )
+    assert result.returncode == 0, result.stderr
+    artifact = tmp_path / f"sc4s-manager-{release_version}.tar.gz"
+    with tarfile.open(artifact) as tf:
+        packaged_compose = tf.extractfile("sc4s-manager/deploy/compose/compose.yaml")
+        packaged_env = tf.extractfile("sc4s-manager/deploy/compose/.env.example")
+        assert packaged_compose is not None and packaged_env is not None
+        assert f"SC4S_MANAGER_VERSION:-{release_version}" in packaged_compose.read().decode()
+        assert f"SC4S_MANAGER_VERSION={release_version}" in packaged_env.read().decode()

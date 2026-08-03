@@ -1,0 +1,201 @@
+<form version="1.1" theme="light">
+  <label>Palo Alto Networks PAN-OS Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for PAN-OS CSV syslog families routed to pan:* sourcetypes. Dashboard presence does not imply SC4S/Splunk replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>netfw</default>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total PAN-OS events</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ vendor="Palo Alto Networks" product="PAN-OS" | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Blocked / denied actions</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ action IN (block,block-url,deny,drop,reset-both,reset-client,reset-server) | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>High / critical severity</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ severity IN (high,critical) | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Config / auth / GlobalProtect rows</title>
+        <search>
+          <query>index=$index$ (sourcetype="pan:config" OR sourcetype="pan:auth" OR sourcetype="pan:globalprotect" OR sourcetype="pan:userid") host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Volume over time by PAN-OS sourcetype</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ | timechart count by sourcetype</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Action / result distribution</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ | eval action_result=coalesce(action,result,pan_subtype,"unknown") | top limit=15 action_result</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Severity distribution</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ | eval severity=coalesce(severity,"unknown") | top limit=10 severity</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Application / protocol coverage</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ | eval application_or_protocol=coalesce(app,transport,pan_subtype,"unknown") | top limit=15 application_or_protocol</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top source / destination pairs</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ | eval src=coalesce(src,src_ip), dest=coalesce(dest,dest_ip) | stats count values(action) as actions values(app) as apps values(transport) as transports values(dest_port) as dest_ports values(rule) as rules by src dest | sort - count | head 25</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Blocked or high-severity security review</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("pan:traffic","pan:threat","pan:wildfire","pan:decryption","pan:tunnel","pan:correlation") host=$host_filter$ (action IN (block,block-url,deny,drop,alert) OR severity IN (high,critical)) | table _time host sourcetype pan_type pan_subtype action severity src src_ip src_port dest dest_ip dest_port app transport rule user category signature signature_id threat_id url marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Traffic, decryption, GTP, and SCTP flow context</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("pan:traffic","pan:decryption","pan:gtp","pan:sctp","pan:tunnel") host=$host_filter$ | table _time sourcetype action src src_ip src_port dest dest_ip dest_port app transport rule user session_id bytes bytes_in bytes_out packets session_end_reason source_zone destination_zone marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Threat / WildFire / correlation context</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("pan:threat","pan:wildfire","pan:correlation") host=$host_filter$ | table _time sourcetype action severity src src_ip dest dest_ip app url file_name category threat_id signature signature_id user direction correlation_name object marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Configuration and system changes</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("pan:config","pan:system") host=$host_filter$ | table _time sourcetype user client result command admin_role config_path object event_id module severity pan_message action signature signature_id dvc serial marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Identity, auth, HIP, and GlobalProtect context</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("pan:auth","pan:globalprotect","pan:userid","pan:hipmatch","pan:iptag") host=$host_filter$ | table _time sourcetype user src src_ip dest dest_ip action result auth_profile portal gateway server host_name os hip_profile tag object signature signature_id marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Onboarding coverage by source, host, and sourcetype</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ | stats count dc(marker) as fixture_markers values(action) as actions values(severity) as severities min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Recent raw PAN-OS CSV events</title>
+        <search>
+          <query>index=$index$ sourcetype="pan:*" host=$host_filter$ | table _time host source sourcetype pan_type pan_subtype serial action result severity src src_ip src_port dest dest_ip dest_port app rule user signature signature_id marker _raw | sort - _time | head 100</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+</form>

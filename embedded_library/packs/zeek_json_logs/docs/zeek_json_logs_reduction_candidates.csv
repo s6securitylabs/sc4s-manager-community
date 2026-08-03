@@ -1,0 +1,6 @@
+scope,candidate,default,required_pre_enable_validation,rollback
+all,long optional enrichment arrays and unset fields,preserve,Replay all fixture families and representative production samples; prove count/source/sourcetype/uid/network tuple/signature fields before trimming,Disable collector trim rule and replay markers
+conn,high-volume successful SF flow summaries,preserve,Sample local baselines and prove alerts/DNS/HTTP/SSL/notice correlation is unaffected; keep uid/tuple/bytes/state,Disable enhanced filter and restore raw conn rows
+http,URI query strings and user-agent verbosity,preserve,Confirm local privacy policy and prove detection/readback requirements with sanitized replay; never drop method/host/uri/status/uid,Remove redaction/trim rule and replay markers
+ssl,certificate chain arrays and subject/issuer strings,preserve,Prove SNI/version/cipher/cert identity retained for local detections,Disable trim rule and replay markers
+notice,notice suppression/repeated messages,preserve,Prove notice count/action/note/msg/src/dst are still searchable after any suppression,Disable suppression and replay notice markers

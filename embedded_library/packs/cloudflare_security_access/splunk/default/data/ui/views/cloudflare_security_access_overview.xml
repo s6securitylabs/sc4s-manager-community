@@ -1,0 +1,230 @@
+<form version="1.1" theme="dark">
+  <label>Cloudflare Security and Access - Overview</label>
+  <description>Fixture-backed overview for Cloudflare Logpush and Zero Trust JSON relay events. Panels use fields proven by synthetic-equivalent fixtures plus Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Cloudflare events</title>
+      <single>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:http:request","cloudflare:waf:event","cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Blocked / isolated decisions</title>
+      <single>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:waf:event","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network") host=$host_tok$ action IN ("block","blocked","isolate") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>WAF / firewall events</title>
+      <single>
+        <search>
+          <query>index=netwaf sourcetype="cloudflare:waf:event" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Audit and Access events</title>
+      <single>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:access:request","cloudflare:audit") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by Cloudflare family</title>
+      <chart>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:http:request","cloudflare:waf:event","cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | eval family=coalesce(cloudflare_family, sourcetype) | timechart count by family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:http:request","cloudflare:waf:event","cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | eval family=coalesce(cloudflare_family, sourcetype) | stats count by family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Actions / decisions</title>
+      <chart>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:http:request","cloudflare:waf:event","cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | eval cf_action=coalesce(action, SecurityAction, ResolverDecision) | stats count by cf_action | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top users / actors</title>
+      <chart>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | eval cf_user=coalesce(user, UserEmail, Email, ActorEmail) | stats count by cf_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top client / source IPs</title>
+      <chart>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:http:request","cloudflare:waf:event","cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | eval cf_src_ip=coalesce(src_ip, ClientIP, SourceIP, IPAddress, ActorIP) | stats count by cf_src_ip | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>WAF/firewall triage</title>
+      <table>
+        <search>
+          <query>index=netwaf sourcetype="cloudflare:waf:event" host=$host_tok$ | table _time host action src_ip dest uri http_method rule_id rule_message ruleset_id ray_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Access, Gateway and audit context</title>
+      <table>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | eval cf_target=coalesce(dest, url, query, sni, dest_ip, resource_name, resource_id) | table _time sourcetype host user src_ip src_port dest_ip dest_port transport action cf_target policy_id policy_name resource_type signature signature_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Gateway network session triage</title>
+      <table>
+        <search>
+          <query>index=netwaf sourcetype="cloudflare:gateway:network" host=$host_tok$ | table _time host user src_ip src_port src_internal_ip dest_ip dest_port sni transport app action policy_id policy_name session_id device_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>HTTP request status and host coverage</title>
+      <table>
+        <search>
+          <query>index=netwaf sourcetype="cloudflare:http:request" host=$host_tok$ | stats count by dest uri http_method status cache_status action | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:http:request","cloudflare:waf:event","cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | eval family=coalesce(cloudflare_family, sourcetype) | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host family | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Cloudflare events</title>
+      <table>
+        <search>
+          <query>index=netwaf sourcetype IN ("cloudflare:http:request","cloudflare:waf:event","cloudflare:access:request","cloudflare:gateway:dns","cloudflare:gateway:http","cloudflare:gateway:network","cloudflare:audit") host=$host_tok$ | table _time host sourcetype cloudflare_family ray_id user src_ip dest uri url http_method action signature signature_id rule_id policy_id session_id dest_ip dest_port transport resource_id marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

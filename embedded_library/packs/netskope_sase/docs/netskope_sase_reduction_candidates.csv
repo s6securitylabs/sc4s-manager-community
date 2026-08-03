@@ -1,0 +1,7 @@
+field,default_action,risk_if_dropped,review_requirement,notes
+_raw,retain,critical,replay_readback_required,Raw JSON is required for SOC challenge and parser regression.
+user,retain,high,replay_readback_required,User identity is security-critical for CASB/SASE investigations.
+url,retain,high,replay_readback_required,URL may be sensitive but explains web/proxy incidents; mask only with approval.
+object,retain,high,replay_readback_required,Object/file context supports DLP and app-activity triage.
+policy,retain,medium,replay_readback_required,Policy names explain enforcement decisions and must be retained by default.
+bytes,retain,medium,replay_readback_required,Volume context supports exfiltration triage; aggregate only after local validation.

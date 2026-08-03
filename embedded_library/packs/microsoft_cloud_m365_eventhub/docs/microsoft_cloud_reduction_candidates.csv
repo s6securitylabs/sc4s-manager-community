@@ -1,0 +1,11 @@
+field,default_action,scope,safety,notes
+_raw_copy,consider_remove_after_readback,all,review_required,Remove only duplicate raw-payload copies created by upstream collectors; keep Splunk _raw intact.
+EventData,consider_remove_after_field_extraction,azure_resource,review_required,Large nested object; safe only after confirming required child fields are extracted or retained elsewhere.
+ExtendedProperties,consider_remove_after_field_extraction,o365_management,review_required,Often noisy but can contain investigation-critical values.
+ModifiedProperties,retain_by_default,entra_audit,high_risk,Do not drop by default; commonly needed to understand what changed.
+Parameters,retain_by_default,exchange_admin,high_risk,Noisy but often the only source of changed setting names and values.
+SensitiveInfoTypeData,retain_or_hash_only,purview_dlp,high_risk,May contain sensitive metadata; reduce only under approved privacy policy.
+AdditionalDetails,consider_remove_after_field_extraction,entra_signin,review_required,Can be bulky; validate use cases first.
+ingestion_time,consider_remove_if_duplicate,cribl_metadata,low_risk,Collector-added duplicate of _indextime or time fields.
+cribl_pipe,retain_by_default,cribl_metadata,low_risk,Useful for pipeline troubleshooting and route evidence.
+cribl_source,retain_by_default,cribl_metadata,low_risk,Useful to prove which source/source type emitted the event.

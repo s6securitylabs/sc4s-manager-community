@@ -1,0 +1,929 @@
+{
+  "schema_version": "0.1",
+  "id": "hermes_agent_audit",
+  "version": "0.1.0",
+  "url": "https://hermes-agent.nousresearch.com/docs",
+  "description": "Curated SecHub Resources pack for Hermes Agent gateway/runtime audit events, with analyst dashboards for authentication, foreign IP, channel routing, tool execution, credential/provider risk, approvals, and blocked-action review.",
+  "display_name": "Hermes Agent Audit Logs",
+  "vendor": "nousresearch",
+  "product": "hermes_agent",
+  "default_index": "netauth",
+  "default_source": "hermes_agent_audit",
+  "listener": {
+    "source_id": "HERMES_AGENT_AUDIT",
+    "transport": "tcp",
+    "port": 20131,
+    "env": {
+      "SC4S_LISTEN_HERMES_AGENT_AUDIT_TCP_PORT": "20131",
+      "SOURCE_ALL_SET_APPEND": "HERMES_AGENT_AUDIT"
+    }
+  },
+  "sourcetypes": {
+    "identity_session": "hermes:agent:audit",
+    "gateway_channel": "hermes:agent:audit",
+    "tool_execution": "hermes:agent:audit",
+    "credential_secret": "hermes:agent:audit",
+    "admin_config": "hermes:agent:audit",
+    "safety_policy": "hermes:agent:audit"
+  },
+  "event_families": [
+    {
+      "id": "identity_session",
+      "label": "Hermes/OpenClaw identity and session events",
+      "match_engine": "pcre",
+      "match": "(login|logout|session|oauth|sso|auth)",
+      "expected_sourcetype": "hermes:agent:audit",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "actor.user.name",
+        "client.ip"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "gateway_channel",
+      "label": "Gateway channel binding and delivery-route changes",
+      "match_engine": "pcre",
+      "match": "(channel|handoff|delivery|telegram|slack|signal|webhook)",
+      "expected_sourcetype": "hermes:agent:audit",
+      "primary_id_field": "channel_id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "channel.id",
+        "platform"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "tool_execution",
+      "label": "Agent tool execution and side-effect requests",
+      "match_engine": "pcre",
+      "match": "(tool|terminal|browser|file|cron|process|delegate)",
+      "expected_sourcetype": "hermes:agent:audit",
+      "primary_id_field": "tool.name",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "tool.name",
+        "actor.user.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "credential_secret",
+      "label": "Credential, token, secret, and provider configuration events",
+      "match_engine": "pcre",
+      "match": "(credential|token|secret|provider|model|api_key)",
+      "expected_sourcetype": "hermes:agent:audit",
+      "primary_id_field": "credential.id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "actor.user.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "admin_config",
+      "label": "Administrative configuration, profile, skill, cron, and plugin changes",
+      "match_engine": "pcre",
+      "match": "(config|profile|skill|plugin|cron|admin)",
+      "expected_sourcetype": "hermes:agent:audit",
+      "primary_id_field": "object.id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "actor.user.name",
+        "object.type"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "safety_policy",
+      "label": "Safety, prompt-injection, permission, and blocked-action events",
+      "match_engine": "pcre",
+      "match": "(safety|policy|blocked|prompt_injection|permission|approval)",
+      "expected_sourcetype": "hermes:agent:audit",
+      "primary_id_field": "rule.id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "rule.id"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "nousresearch or openclaw depending on producer",
+    "product": "hermes_agent, hermes_gateway, or openclaw",
+    "vendor_product": "nousresearch:hermes_agent",
+    "hermes_openclaw_family": "Derived SOC family from event.action, event.category, component, and marker",
+    "event_id": "Source event identifier where present",
+    "trace_id": "Request/run trace identifier where present",
+    "request_id": "Gateway/API request identifier",
+    "run_id": "Hermes agent run identifier",
+    "session_id": "Human/agent session identifier",
+    "profile": "Hermes profile name where present",
+    "component": "gateway, agent, scheduler, tool, provider, openclaw bridge, or channel adapter",
+    "actor_user": "Authenticated human or service actor",
+    "user": "Actor alias",
+    "src_user": "Actor alias",
+    "target_user": "Affected user/bot/account where present",
+    "src_ip": "Client or upstream source IP",
+    "src": "Source IP alias",
+    "country": "GeoIP country/region derived downstream, not trusted source truth",
+    "user_agent": "HTTP/API user agent",
+    "platform": "telegram, slack, signal, local, api, web, or other channel",
+    "channel_id": "Messaging channel/thread identifier; sensitive deployment metadata",
+    "thread_id": "Messaging thread/topic identifier",
+    "event_action": "Source action token",
+    "action": "Action alias",
+    "object": "Affected channel, skill, profile, cron job, tool, credential, provider, or policy object",
+    "object_type": "Affected object class",
+    "tool_name": "Hermes tool invoked",
+    "tool_result": "Outcome/status for tool invocation",
+    "provider": "Model/provider/credential provider label",
+    "model": "Model name where present",
+    "risk_reason": "Analyst-readable reason for risk/blocked/policy event",
+    "policy_decision": "allow, block, require_approval, redact, or similar policy result",
+    "marker": "Synthetic fixture marker only",
+    "runtime": "Runtime side such as hermes-gateway, hermes-agent, legacy-openclaw-gateway, openclaw-browser, cron, or collector",
+    "legacy_component": "Legacy OpenClaw component when the event was sourced from pre-Hermes config/logs",
+    "gateway_port": "Gateway/control port if logged; publish only non-secret listener metadata and prefer local/internal addresses",
+    "gateway_bind": "Gateway bind scope such as loopback/local/private/public; analysts should review anything beyond loopback/private",
+    "owner_allowlist_state": "Summary state for owner/chat allowlists without publishing real IDs in public fixtures",
+    "require_mention": "Whether group/channel use requires bot mention or equivalent explicit trigger",
+    "dual_polling_risk": "True/reason when Hermes and legacy OpenClaw may both poll the same messaging token/channel",
+    "migration_phase": "discovered, dry_run, cutover, rollback, validated, or blocked",
+    "hook_name": "OpenClaw/Hermes internal hook such as command-logger, session-memory, or compaction-notifier"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-hermes_agent_audit.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/hermes_agent_audit_overview.xml",
+      "splunk/default/data/ui/views/hermes_agent_audit_security_review.xml"
+    ],
+    "opensearch": [
+      "opensearch/dashboards/hermes_agent_audit_security.ndjson"
+    ],
+    "test_events": [
+      "test-events/hermes_agent_audit_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20131.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/hermes_agent_audit_reduction_candidates.csv",
+      "validation/preflight-2026-07-07.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Hermes Agent JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20131,
+      "notes": "Dedicated TCP listener for one normalized Hermes Agent JSON audit event per line from journald, gateway, webhook, or collector relays.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20131,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Hermes Agent Audit Logs normalized JSON audit envelope",
+    "min": "Hermes Agent current public docs plus locally observed legacy OpenClaw config shape: gateway loopback control, Telegram channel policy, owner allowlist, command-logger/session-memory hooks, model/provider config, and migration dry-run/cutover states.",
+    "max": null,
+    "notes": "This is a conservative normalized audit-envelope pack for one product/application. Do not combine Hermes Agent and legacy OpenClaw events unless a downstream correlation view explicitly joins both products."
+  },
+  "source_delivery": {
+    "mode": "api_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "A local collector or journald/gateway relay must emit one audit JSON object per event for this product. SC4S must not own messaging-platform tokens, provider credentials, profile secrets, checkpoints, or raw message bodies.",
+    "validation_status": "metadata_classification_only; does not imply replay/read-back or field validation"
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-07-07",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Synthetic normalized Hermes Agent Audit Logs envelope only; no live replay/read-back.",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic audit JSON records only. No live deployment replay, SC4S route, HEC delivery, OpenSearch indexing, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk/OpenSearch TEST replay/readback for Hermes Agent Audit Logs",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "hermes_agent_audit_json"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_HERMES_AGENT_AUDIT_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20131.sh"
+    },
+    "readback": {
+      "spl": "index=netauth sourcetype=\"hermes:agent:audit\" sechub_fixture_marker=\"SC4S_HERMES_AGENT_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product event_action action actor_user user src_ip user_agent platform channel_id thread_id component object object_type tool_name provider model policy_decision risk_reason marker _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor/product",
+        "family/action routing",
+        "actor/user fields",
+        "source IP and user-agent",
+        "channel/thread context",
+        "tool/provider/policy fields",
+        "raw JSON preservation"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "no_testbed",
+      "date": "2026-07-07",
+      "summary": "Initial pack creation did not have a live Hermes Agent audit relay, SC4S listener, Splunk search path, or OpenSearch test index available for replay/read-back.",
+      "evidence_path": "validation/preflight-2026-07-07.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-07-07.md",
+        "summary": "Creation-time blocked preflight; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20131,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Hermes Agent audit JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netauth"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netauth",
+        "Search role can read netauth"
+      ],
+      "required_opensearch_capabilities": [
+        "Data stream or index can receive hermes-agent-audit-* records",
+        "OpenSearch Dashboards space can import saved objects and resolve the data view"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "hermes_agent_audit_json",
+      "label": "Hermes Agent synthetic normalized JSON audit events",
+      "path": "test-events/hermes_agent_audit_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_HERMES_AGENT_AUDIT_TEST_LOGIN_001",
+        "SC4S_HERMES_AGENT_AUDIT_TEST_FOREIGN_IP_002",
+        "SC4S_HERMES_AGENT_AUDIT_TEST_CHANNEL_003",
+        "SC4S_HERMES_AGENT_AUDIT_TEST_TOOL_004",
+        "SC4S_HERMES_AGENT_AUDIT_TEST_CREDENTIAL_005",
+        "SC4S_HERMES_AGENT_AUDIT_TEST_POLICY_006"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "timestamp",
+        "primary_timezone": "UTC with explicit Z offset in fixtures",
+        "fallback_fields": [
+          "@timestamp",
+          "time"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Hermes Agent audit timestamp policy"
+        ],
+        "notes": "Fixtures use RFC3339 UTC timestamps with Z suffix."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact normalized JSON with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "identity_session",
+        "gateway_channel",
+        "tool_execution",
+        "credential_secret",
+        "admin_config",
+        "safety_policy"
+      ],
+      "source_file": "test-events/hermes_agent_audit_test_events.txt",
+      "expected_sourcetype": "hermes:agent:audit"
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-hermes_agent_audit.conf",
+      "target_path": "local/config/app_parsers/syslog/app-hermes_agent_audit.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/hermes_agent_audit.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/hermes_agent_audit_overview.xml",
+      "target_path": "splunk/default/data/ui/views/hermes_agent_audit_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_security_review",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/hermes_agent_audit_security_review.xml",
+      "target_path": "splunk/default/data/ui/views/hermes_agent_audit_security_review.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "opensearch_dashboard_security",
+      "group": "docs",
+      "source_path": "opensearch/dashboards/hermes_agent_audit_security.ndjson",
+      "target_path": "opensearch/dashboards/hermes_agent_audit_security.ndjson",
+      "kind": "opensearch_dashboard_ndjson",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/hermes_agent_audit_test_events.txt",
+      "target_path": "test-events/hermes_agent_audit_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20131.sh",
+      "target_path": "scripts/send_tcp_20131.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/hermes_agent_audit_reduction_candidates.csv",
+      "target_path": "docs/hermes_agent_audit_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_07_07",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-07-07.md",
+      "target_path": "validation/preflight-2026-07-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Hermes Agent public documentation plus S6/OpenClaw deployment audit requirements; fixtures are synthetic normalized examples, not product logs.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example users, documentation IP ranges, synthetic channel IDs, synthetic trace IDs, and no real tokens, private chat content, customer hostnames, or production credentials."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-07-07",
+      "notes": "Initial analyst-oriented pack for Hermes Agent audit ingestion and dashboarding."
+    },
+    "upstream": {
+      "repo": null,
+      "ref": null,
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "actor_user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Authenticated actor/service account."
+        },
+        "src_user": {
+          "source_fields": [
+            "actor_user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Actor alias."
+        },
+        "src_ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Client/upstream IP."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP alias."
+        },
+        "user_agent": {
+          "source_fields": [
+            "user_agent"
+          ],
+          "status": "partial",
+          "notes": "HTTP/API user agent."
+        },
+        "action": {
+          "source_fields": [
+            "event_action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Audit action token."
+        },
+        "signature": {
+          "source_fields": [
+            "event_action",
+            "risk_reason"
+          ],
+          "status": "partial",
+          "notes": "Triage action/reason."
+        },
+        "signature_id": {
+          "source_fields": [
+            "event_id",
+            "trace_id",
+            "request_id"
+          ],
+          "status": "partial",
+          "notes": "Event/trace identifier."
+        },
+        "object": {
+          "source_fields": [
+            "object",
+            "object_type",
+            "channel_id",
+            "tool_name"
+          ],
+          "status": "partial",
+          "notes": "Affected object."
+        }
+      },
+      "notes": "Partial authentication/change/audit mapping only; not full CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "actor_user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Actor user/service."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Client IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "event_action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Source action."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "event_id",
+            "trace_id",
+            "request_id"
+          ],
+          "status": "partial",
+          "notes": "Event identifier."
+        }
+      },
+      "notes": "OCSF helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "event_action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Action token."
+        },
+        "event.category": {
+          "source_fields": [
+            "hermes_openclaw_family"
+          ],
+          "status": "partial",
+          "notes": "Derived family."
+        },
+        "user.name": {
+          "source_fields": [
+            "actor_user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Actor."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Client IP."
+        },
+        "user_agent.original": {
+          "source_fields": [
+            "user_agent"
+          ],
+          "status": "partial",
+          "notes": "User agent."
+        },
+        "service.name": {
+          "source_fields": [
+            "component"
+          ],
+          "status": "partial",
+          "notes": "Hermes Agent component."
+        }
+      },
+      "notes": "ECS helper mapping for OpenSearch/Data Prepper."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/hermes_agent_audit/sc4s/app_parsers/syslog/app-hermes_agent_audit.conf": "sha256:683d8a33cacbfcc2677630181f2943857c24b9f9708d926e48b2eca7ae2baf68",
+      "packs/hermes_agent_audit/sc4s/env.example": "sha256:d57d1ed037de39005aa7a94b087fc10aaaf3d9c9b66e33ba4ec973d125b44c4d",
+      "packs/hermes_agent_audit/splunk/default/props.conf": "sha256:1a2796dddda95a27584d25b7d143c94817bc0fae3fd544a61484e72e4b44b73c",
+      "packs/hermes_agent_audit/splunk/default/transforms.conf": "sha256:fdb8c4af768e4da4711351e68ae93a5c0e5c06701bb90ea3f8a7ba8154f9fbf3",
+      "packs/hermes_agent_audit/splunk/default/eventtypes.conf": "sha256:f194c9ee46884f3af05cdce80012dc400eeb2c67083e8804c0642348be9d061d",
+      "packs/hermes_agent_audit/splunk/default/tags.conf": "sha256:68a7482d68752ee8d16ec295d4fdc6faa54a18070fba023f1fe1faa08e29184d",
+      "packs/hermes_agent_audit/splunk/default/data/ui/views/hermes_agent_audit_overview.xml": "sha256:b5d3411b8bbfccf22e14c6a4d763817d63d7a388dc1bc6daac65e4b89ee26e30",
+      "packs/hermes_agent_audit/splunk/default/data/ui/views/hermes_agent_audit_security_review.xml": "sha256:ef736d00facb8e26d5c1a0ae85f343d59652ce0fc7c23e854a34de6c2e9d55c4",
+      "packs/hermes_agent_audit/opensearch/dashboards/hermes_agent_audit_security.ndjson": "sha256:4084be91c8265c192444e0887f77ca1c61be8eeb62f145f728b124cbbf19ebe2",
+      "packs/hermes_agent_audit/test-events/hermes_agent_audit_test_events.txt": "sha256:98b73a2e24992f7fc3c8e4ce93dce7394328f640176737f79bf6ce70cb89cb88",
+      "packs/hermes_agent_audit/scripts/send_tcp_20131.sh": "sha256:25f966557bd71089ef64c3d42fa56a15e4fdb98fbcfaa6a16f0815fae0f00393",
+      "packs/hermes_agent_audit/README.md": "sha256:85b9204bf646470bae0d7dc1072dc713e0e89cdf1dd3d67913de84e833ad051f",
+      "packs/hermes_agent_audit/docs/hermes_agent_audit_reduction_candidates.csv": "sha256:993e8c860a52f50cfea3f6f6bee8860cafbced44f040fcb65b830ff219ddd8cf",
+      "packs/hermes_agent_audit/validation/preflight-2026-07-07.md": "sha256:a6d6deaf84fc5344adb913c58dd9b4e1d5872ed887cd548b329e6d76200ed667"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-07-07",
+    "last_tested": "2026-07-07"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "ai_agent_platform",
+    "gateway",
+    "identity",
+    "security_operations",
+    "json",
+    "audit"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "audit_json_relay",
+      "label": "Hermes Agent normalized audit JSON relay",
+      "description": "One normalized audit event per JSON record from Hermes gateway/runtime/OpenClaw collectors.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "hermes_gateway_json",
+        "hermes_runtime_json",
+        "openclaw_channel_audit",
+        "collector_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "identity_session",
+        "gateway_channel",
+        "tool_execution",
+        "credential_secret",
+        "admin_config",
+        "safety_policy"
+      ],
+      "test_event_sets": [
+        "hermes_agent_audit_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "splunk_dashboard_security_review",
+        "opensearch_dashboard_security",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Hermes Agent replay/read-back captured.",
+        "Actual deployment log field names must be mapped into this normalized envelope before claims of compatibility.",
+        "Messaging platform channel IDs and thread IDs may be sensitive and require local retention/access decisions."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/hermes_agent_audit_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "event.action",
+        "actor.user.name",
+        "client.ip",
+        "component",
+        "platform",
+        "channel.id",
+        "tool.name",
+        "policy.decision"
+      ],
+      "notes": "Relay should preserve audit context by default and never drop prompt/policy/action evidence silently."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "Start Data Prepper in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Keep Hermes Agent credentials and checkpoints outside this pack."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import opensearch/dashboards/hermes_agent_audit_security.ndjson into a disposable OpenSearch Dashboards space and confirm data-view resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards have not been automatically translated to OpenSearch saved objects or live-tested; the included NDJSON starter must be treated as unvalidated design scaffolding until imported into a disposable space and read back against real indexed events."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative metadata mapping only; keep Hermes Agent credentials, messaging-platform tokens, checkpoints, channel state, and raw prompt/message content outside this pack unless explicitly approved and validated."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative metadata mapping only; keep Hermes Agent credentials, messaging-platform tokens, checkpoints, channel state, and raw prompt/message content outside this pack unless explicitly approved and validated."
+    }
+  },
+  "known_limitations": [
+    "No live Hermes Agent deployment capture, SC4S replay, Splunk read-back, or OpenSearch import validation is present.",
+    "This pack defines a normalized audit envelope; deployments must map their actual Hermes Agent log schema, journald fields, or gateway JSON into it.",
+    "SC4S does not collect Telegram/Slack/Signal tokens, Hermes provider keys, channel state, or model-provider credentials.",
+    "Geo/foreign-IP review depends on downstream enrichment such as Splunk iplocation or OpenSearch geoip processors; private/VPN/NAT ranges need local allowlist context."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "dashboard_screenshots": []
+}

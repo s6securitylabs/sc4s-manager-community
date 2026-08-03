@@ -1,0 +1,1161 @@
+{
+  "schema_version": "0.1",
+  "id": "netskope_sase",
+  "version": "0.1.1",
+  "url": "https://github.com/netskopeoss/Data-Schema",
+  "description": "Curated SecHub Resources SC4S pack for Netskope Security Cloud / SASE Data Export and transaction log-streaming JSON relay records.",
+  "display_name": "Netskope SASE / Security Cloud JSON Relay",
+  "vendor": "netskope",
+  "product": "security_cloud",
+  "default_index": "netproxy",
+  "default_source": "netskope_sase",
+  "listener": {
+    "source_id": "NETSKOPE_SASE",
+    "transport": "tcp",
+    "port": 20101,
+    "env": {
+      "SC4S_LISTEN_NETSKOPE_SASE_TCP_PORT": "20101",
+      "SOURCE_ALL_SET_APPEND": "NETSKOPE_SASE"
+    }
+  },
+  "sourcetypes": {
+    "page": "netskope:events:page",
+    "application": "netskope:events:application",
+    "alert": "netskope:alerts",
+    "audit": "netskope:audit",
+    "network": "netskope:events:network",
+    "transaction": "netskope:transaction"
+  },
+  "event_families": [
+    {
+      "id": "page",
+      "label": "Netskope page/web events",
+      "match_engine": "pcre",
+      "match": "\\\"type\\\"\\s*:\\s*\\\"page\\\"",
+      "expected_sourcetype": "netskope:events:page",
+      "primary_id_field": "_id",
+      "required_fields": [
+        "timestamp",
+        "type",
+        "user",
+        "srcip",
+        "app",
+        "site",
+        "action",
+        "marker"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "application",
+      "label": "Netskope application events",
+      "match_engine": "pcre",
+      "match": "\\\"type\\\"\\s*:\\s*\\\"application\\\"",
+      "expected_sourcetype": "netskope:events:application",
+      "primary_id_field": "_id",
+      "required_fields": [
+        "timestamp",
+        "type",
+        "user",
+        "app",
+        "activity",
+        "object",
+        "marker"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "alert",
+      "label": "Netskope alerts",
+      "match_engine": "pcre",
+      "match": "\\\"type\\\"\\s*:\\s*\\\"alert\\\"",
+      "expected_sourcetype": "netskope:alerts",
+      "primary_id_field": "_id",
+      "required_fields": [
+        "timestamp",
+        "type",
+        "alert",
+        "alert_type",
+        "severity",
+        "policy",
+        "marker"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "audit",
+      "label": "Netskope audit events",
+      "match_engine": "pcre",
+      "match": "\\\"type\\\"\\s*:\\s*\\\"audit\\\"",
+      "expected_sourcetype": "netskope:audit",
+      "primary_id_field": "_id",
+      "required_fields": [
+        "timestamp",
+        "type",
+        "user",
+        "activity",
+        "object",
+        "marker"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "network",
+      "label": "Netskope network events",
+      "match_engine": "pcre",
+      "match": "\\\"type\\\"\\s*:\\s*\\\"network\\\"",
+      "expected_sourcetype": "netskope:events:network",
+      "primary_id_field": "_id",
+      "required_fields": [
+        "timestamp",
+        "type",
+        "user",
+        "srcip",
+        "dstip",
+        "action",
+        "marker"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "transaction",
+      "label": "Netskope transaction log-streaming events",
+      "match_engine": "pcre",
+      "match": "\\\"x-transaction-id\\\"\\s*:",
+      "expected_sourcetype": "netskope:transaction",
+      "primary_id_field": "x-transaction-id",
+      "required_fields": [
+        "x-cs-timestamp",
+        "x-transaction-id",
+        "x-cs-user",
+        "cs-host",
+        "cs-method",
+        "x-policy-action",
+        "marker"
+      ],
+      "timestamp_fields": [
+        "x-cs-timestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "netskope",
+    "product": "security_cloud",
+    "vendor_product": "netskope:security_cloud",
+    "netskope_event_family": "Derived fixture-backed family",
+    "_id": "Netskope event identifier where present",
+    "x-transaction-id": "Transaction log-streaming identifier",
+    "event_id": "Event or transaction ID",
+    "timestamp": "Data Export event epoch timestamp",
+    "x-cs-timestamp": "Transaction event epoch timestamp",
+    "type": "Netskope event type",
+    "user": "User email/context",
+    "src_user": "User alias",
+    "srcip": "Raw Netskope source IP",
+    "userip": "User IP where present",
+    "src_ip": "Source IP alias",
+    "dstip": "Raw destination IP",
+    "dest_ip": "Destination IP alias",
+    "dest": "Destination alias",
+    "app": "Application name",
+    "site": "Site/domain context",
+    "url": "URL/path context",
+    "action": "Policy/action token",
+    "policy": "Policy name",
+    "severity": "Alert/incident severity",
+    "alert_type": "Alert type",
+    "activity": "Application/audit activity",
+    "object": "Object/file/policy context",
+    "bytes": "Transaction bytes",
+    "numbytes": "Event bytes",
+    "marker": "Synthetic fixture marker only"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-netskope_sase.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/netskope_sase_overview.xml"
+    ],
+    "test_events": [
+      "test-events/netskope_sase_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20101.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/netskope_sase_reduction_candidates.csv",
+      "validation/preflight-2026-06-21.md",
+      "dashboards/screenshots/netskope-sase-overview-splunk-test.png"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Netskope JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20101,
+      "notes": "Dedicated TCP listener for one Netskope JSON record per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20101,
+      "notes": "Production option when SC4S provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Netskope Data-Schema JSON",
+    "min": "netskopeoss/Data-Schema main checked 2026-06-21",
+    "max": null,
+    "notes": "Schema-derived; current full production export defaults are not asserted."
+  },
+  "source_delivery": {
+    "mode": "api_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Collector/API/log-streaming tooling must relay one Netskope JSON event per line; SC4S does not manage Netskope credentials, tokens, cursors, checkpoints, Cloud Exchange, Event Streaming Client, or object-store state.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-21",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Netskope Data-Schema public schema and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent schema-derived Netskope JSON rows only. Local replay preflight is blocked by missing listener/Splunk management/HEC path; no live Netskope relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Netskope JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "netskope_sase_json"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_NETSKOPE_SASE_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20101.sh"
+    },
+    "readback": {
+      "spl": "(index=netproxy OR index=netauth) \\\"SC4S_NETSKOPE_SASE_TEST_\\\" earliest=-2h | table _time index sourcetype source vendor product netskope_event_family type action policy signature signature_id event_id user src_user src_ip dest_ip dest app site url bytes severity alert_type marker _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "family",
+        "action/policy/severity",
+        "event_id/transaction_id",
+        "timestamp",
+        "user/source/destination fields",
+        "raw JSON"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-21",
+      "summary": "Local preflight found no Netskope SC4S TEST listener on TCP 20101 and no authenticated Splunk TEST management/HEC path; replay/read-back not attempted.",
+      "evidence_path": "validation/preflight-2026-06-21.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-21.md",
+        "summary": "Command-grounded blocker note for missing listener and Splunk management/HEC; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20101,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Netskope JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netproxy",
+        "netauth"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netproxy and netauth",
+        "Search role can read netproxy and netauth"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "netskope_sase_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/netskope_sase/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/netskope_sase/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/netskope_sase/compose.yaml",
+      "compose_project": "sechub-netskope-sase-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netproxy/netauth index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/netskope_sase/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/netskope_sase/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/netskope_sase/scripts/send_tcp_20101.sh 127.0.0.1 20101",
+        "splunk_summary_readback": "(index=netproxy OR index=netauth) sechub_fixture_marker=\"SC4S_NETSKOPE_SASE_TEST_*\" earliest=-2h | stats count by index sourcetype source host | sort index sourcetype",
+        "splunk_detail_readback": "(index=netproxy OR index=netauth) sechub_fixture_marker=\"SC4S_NETSKOPE_SASE_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product netskope_event_family type action policy signature signature_id event_id user src_user src_ip dest_ip dest app site url bytes severity alert_type marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_indexes": [
+          "netproxy",
+          "netauth"
+        ],
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/netskope_sase/splunk -> /opt/splunk/etc/apps/sechub_netskope_sase:ro",
+        "required_index": "netproxy",
+        "additional_indexes": [
+          "netauth"
+        ]
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20101,
+          "host_port_env": "SC4S_NETSKOPE_SASE_PORT",
+          "source_id": "NETSKOPE_SASE"
+        },
+        "parser_mount": "packs/netskope_sase/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "netskope_sase",
+          "source_shape": "json_line_relay",
+          "event_family": "page",
+          "sourcetype": "netskope:events:page",
+          "data_structures": [
+            "Netskope page/web Data Export record"
+          ],
+          "markers": [
+            "SC4S_NETSKOPE_SASE_TEST_PAGE_001"
+          ]
+        },
+        {
+          "source": "netskope_sase",
+          "source_shape": "json_line_relay",
+          "event_family": "application",
+          "sourcetype": "netskope:events:application",
+          "data_structures": [
+            "Netskope application Data Export record"
+          ],
+          "markers": [
+            "SC4S_NETSKOPE_SASE_TEST_APPLICATION_002"
+          ]
+        },
+        {
+          "source": "netskope_sase",
+          "source_shape": "json_line_relay",
+          "event_family": "alert",
+          "sourcetype": "netskope:alerts",
+          "data_structures": [
+            "Netskope alert record"
+          ],
+          "markers": [
+            "SC4S_NETSKOPE_SASE_TEST_ALERT_003"
+          ]
+        },
+        {
+          "source": "netskope_sase",
+          "source_shape": "json_line_relay",
+          "event_family": "audit",
+          "sourcetype": "netskope:audit",
+          "data_structures": [
+            "Netskope audit record"
+          ],
+          "markers": [
+            "SC4S_NETSKOPE_SASE_TEST_AUDIT_004"
+          ]
+        },
+        {
+          "source": "netskope_sase",
+          "source_shape": "json_line_relay",
+          "event_family": "network",
+          "sourcetype": "netskope:events:network",
+          "data_structures": [
+            "Netskope network event record"
+          ],
+          "markers": [
+            "SC4S_NETSKOPE_SASE_TEST_NETWORK_005"
+          ]
+        },
+        {
+          "source": "netskope_sase",
+          "source_shape": "json_line_relay",
+          "event_family": "transaction",
+          "sourcetype": "netskope:transaction",
+          "data_structures": [
+            "Netskope transaction log-streaming record"
+          ],
+          "markers": [
+            "SC4S_NETSKOPE_SASE_TEST_TRANSACTION_006"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live Netskope tenant/API/log-streaming relay replay/read-back.",
+        "No Cloud Exchange, Event Streaming Client, API token custody, cursor/checkpoint, object-store wrapper, retry, or deduplication proof.",
+        "No CEF/ELFF, Cloud Firewall, endpoint, API Data Protection, or complete Netskope platform coverage.",
+        "No production or field validation; synthetic-equivalent schema-derived fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for the declared collector-unwrapped Netskope JSON relay shape, not live Netskope tenant/API/log-streaming/collector validation or field validation."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "netskope_sase_json",
+      "label": "Netskope Data-Schema synthetic-equivalent JSON events",
+      "path": "test-events/netskope_sase_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_NETSKOPE_SASE_TEST_PAGE_001",
+        "SC4S_NETSKOPE_SASE_TEST_APPLICATION_002",
+        "SC4S_NETSKOPE_SASE_TEST_ALERT_003",
+        "SC4S_NETSKOPE_SASE_TEST_AUDIT_004",
+        "SC4S_NETSKOPE_SASE_TEST_NETWORK_005",
+        "SC4S_NETSKOPE_SASE_TEST_TRANSACTION_006"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "timestamp or x-cs-timestamp epoch UTC",
+        "primary_timezone": "UTC",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Netskope relay timestamp policy"
+        ],
+        "notes": "Fixtures use epoch UTC timestamps from documented Netskope fields."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact JSON with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "page",
+        "application",
+        "alert",
+        "audit",
+        "network",
+        "transaction"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-netskope_sase.conf",
+      "target_path": "local/config/app_parsers/syslog/app-netskope_sase.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/netskope_sase.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/netskope_sase_overview.xml",
+      "target_path": "splunk/default/data/ui/views/netskope_sase_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/netskope_sase_test_events.txt",
+      "target_path": "test-events/netskope_sase_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20101.sh",
+      "target_path": "scripts/send_tcp_20101.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "notes": "Idempotent disposable Splunk TEST + SC4S TEST harness with plan/write-compose/up/replay/readback/run/down modes; generates ephemeral HEC token at compose-write time unless SPLUNK_HEC_TOKEN is supplied."
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/netskope_sase_reduction_candidates.csv",
+      "target_path": "docs/netskope_sase_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_21",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-21.md",
+      "target_path": "validation/preflight-2026-06-21.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "dashboard_screenshot_netskope_sase_overview_splunk_test",
+      "group": "docs",
+      "source_path": "dashboards/screenshots/netskope-sase-overview-splunk-test.png",
+      "target_path": "dashboards/screenshots/netskope-sase-overview-splunk-test.png",
+      "kind": "dashboard_screenshot",
+      "rendered": true,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Netskope-owned netskopeoss/Data-Schema BSD-3-Clause schema plus official docs and evidence scans; fixtures are synthetic-equivalent examples shaped only to public schema fields.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test users, documentation IP ranges, synthetic IDs, neutral object names, and synthetic markers; no tenant/token/customer data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-21",
+      "notes": "Initial conservative Netskope JSON relay pack built from public schema evidence without trust promotion."
+    },
+    "upstream": {
+      "repo": "https://github.com/netskopeoss/Data-Schema",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": [
+        "schema/event_schema.json",
+        "schema/event_transaction.json"
+      ]
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "src_user",
+            "x-cs-user"
+          ],
+          "status": "partial",
+          "notes": "User/email context."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "srcip",
+            "userip",
+            "x-policy-src-ip"
+          ],
+          "status": "partial",
+          "notes": "Source/user IP context."
+        },
+        "dest": {
+          "source_fields": [
+            "dest",
+            "dstip",
+            "site",
+            "cs-host"
+          ],
+          "status": "partial",
+          "notes": "Destination app/site/IP context."
+        },
+        "action": {
+          "source_fields": [
+            "action",
+            "x-policy-action",
+            "activity"
+          ],
+          "status": "partial",
+          "notes": "Policy or activity token."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "policy",
+            "alert_type",
+            "activity",
+            "cs-host"
+          ],
+          "status": "partial",
+          "notes": "Triage signature."
+        },
+        "signature_id": {
+          "source_fields": [
+            "event_id",
+            "_id",
+            "x-transaction-id"
+          ],
+          "status": "partial",
+          "notes": "Event/transaction identifier."
+        },
+        "url": {
+          "source_fields": [
+            "url",
+            "cs-uri"
+          ],
+          "status": "partial",
+          "notes": "URL/path where present."
+        }
+      },
+      "notes": "Partial Web/Network/Change/Alert guidance only; not CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.email": {
+          "source_fields": [
+            "user",
+            "src_user",
+            "x-cs-user"
+          ],
+          "status": "partial",
+          "notes": "User context."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip",
+            "srcip",
+            "x-policy-src-ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "dest_ip",
+            "dstip"
+          ],
+          "status": "partial",
+          "notes": "Destination IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action",
+            "activity",
+            "x-policy-action"
+          ],
+          "status": "partial",
+          "notes": "Action/activity token."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "event_id",
+            "_id",
+            "x-transaction-id"
+          ],
+          "status": "partial",
+          "notes": "Event identifier."
+        },
+        "policy.name": {
+          "source_fields": [
+            "policy",
+            "x-policy-name"
+          ],
+          "status": "partial",
+          "notes": "Policy name."
+        }
+      },
+      "notes": "OCSF helper mapping only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action",
+            "activity",
+            "x-policy-action"
+          ],
+          "status": "partial",
+          "notes": "Action/activity."
+        },
+        "event.id": {
+          "source_fields": [
+            "event_id",
+            "_id",
+            "x-transaction-id"
+          ],
+          "status": "partial",
+          "notes": "Event identifier."
+        },
+        "event.category": {
+          "source_fields": [
+            "netskope_event_family",
+            "type"
+          ],
+          "status": "partial",
+          "notes": "Derived family."
+        },
+        "user.email": {
+          "source_fields": [
+            "user",
+            "src_user",
+            "x-cs-user"
+          ],
+          "status": "partial",
+          "notes": "User context."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip",
+            "srcip",
+            "x-policy-src-ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "dest_ip",
+            "dstip"
+          ],
+          "status": "partial",
+          "notes": "Destination IP."
+        },
+        "url.full": {
+          "source_fields": [
+            "url",
+            "cs-uri"
+          ],
+          "status": "partial",
+          "notes": "URL/path context."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/netskope_sase/sc4s/app_parsers/syslog/app-netskope_sase.conf": "sha256:1931dc27c218f1ae845a02b7abba4056444b6a0fe63fe4621e8a6abe7caf77cc",
+      "packs/netskope_sase/sc4s/env.example": "sha256:ef373f5220a5f94f3e790b358bd6144f11805a134c4310f5178d43a0b67d7830",
+      "packs/netskope_sase/splunk/default/props.conf": "sha256:c2d36787c63cf2d5be8555bd743d6519b5cd720a856ea84dd3838541c61a39ee",
+      "packs/netskope_sase/splunk/default/transforms.conf": "sha256:85796000d1ca8062dc8dce114909b8573aea6b18b71f476a0f489caddef832f9",
+      "packs/netskope_sase/splunk/default/eventtypes.conf": "sha256:c34cfc1c0d8ed5efc150755ae36b901be4761a0485417702cf82b5d264437fbe",
+      "packs/netskope_sase/splunk/default/tags.conf": "sha256:2d1fcaefcb64a81905bde46aab2f3a930b7e0a5f9f9e57c8968afaa1efaf82f0",
+      "packs/netskope_sase/splunk/default/data/ui/views/netskope_sase_overview.xml": "sha256:9bdd8b671fb96158228fda7b0cc69a8d2f95c6fc81db600d1a59b8ee20c98c2d",
+      "packs/netskope_sase/test-events/netskope_sase_test_events.txt": "sha256:62067d344b60048888975170a31a42e1cc30e4d3199241dfe4dc3922d7b057c4",
+      "packs/netskope_sase/scripts/send_tcp_20101.sh": "sha256:1ddf4bc43e3588133f63489dd1420e9b72ed16a1d7fcbc475a3a8e6757beff13",
+      "packs/netskope_sase/README.md": "sha256:23ecc69ecdc5f75faa63888b11942b4fe26a1be98ff6768796b5204e6cfd8660",
+      "packs/netskope_sase/docs/netskope_sase_reduction_candidates.csv": "sha256:dd2f8617a0fbe91108c33c6dedaed30654859ad23e0fdeade6b39756a5999457",
+      "packs/netskope_sase/validation/preflight-2026-06-21.md": "sha256:686d7ed03ca3460f40f0d9a77653dc7adf4fa6076373ac23c11a381fd18fe824",
+      "packs/netskope_sase/scripts/e2e_docker_compose.sh": "sha256:7d38b0b45e10fb80fa5f36a9aa1a3c945ee489bb45879b9860a9482a06dafa59"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "sase",
+    "casb",
+    "secure_web_gateway",
+    "cloud_security",
+    "json"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "data_export_log_streaming_json_relay",
+      "label": "Netskope Data Export / log-streaming JSON relay",
+      "description": "One schema-derived Netskope JSON record per line after collector/API/log-streaming export.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "netskope_data_export",
+        "netskope_log_streaming",
+        "collector_relay",
+        "event_streaming_client_json",
+        "cloud_exchange_or_cribl_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "page",
+        "application",
+        "alert",
+        "audit",
+        "network",
+        "transaction"
+      ],
+      "test_event_sets": [
+        "netskope_sase_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Netskope relay replay/read-back captured.",
+        "Schema-derived fixtures only; not production default export proof.",
+        "CEF/ELFF, Cloud Firewall, endpoint, API Data Protection, and object-store native wrappers are deferred."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/netskope_sase_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "timestamp",
+        "type",
+        "alert_type",
+        "user",
+        "srcip",
+        "dstip",
+        "app",
+        "site",
+        "x-transaction-id",
+        "x-cs-timestamp",
+        "x-policy-action"
+      ],
+      "notes": "Collector should preserve one event per JSON record and avoid default field dropping."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Netskope tenant/API/log-streaming replay or Splunk indexed read-back captured.",
+    "SC4S does not collect Netskope directly or manage credentials/checkpoints.",
+    "Fixtures are schema-derived synthetic equivalents, not captured tenant exports.",
+    "Cloud Firewall, endpoint, API Data Protection, CEF/ELFF, and object-store native envelopes are deferred until separately evidenced."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Netskope JSON relay",
+      "description": "Parser and required Splunk JSON knowledge only; no drops or masking.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-netskope_sase.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Netskope analyst knowledge",
+      "description": "Adds fixture-backed eventtypes, tags, and dashboard example; no drops or masking.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced Netskope reduction review candidates",
+      "description": "Advisory privacy/noise reduction candidates only. No lossy reduction artifact is shipped or enabled by default.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/netskope_sase_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling, approval, and replay/read-back."
+    }
+  ],
+  "reduction_rules": [],
+  "dashboard_screenshots": [
+    {
+      "id": "netskope_sase_overview_splunk_test",
+      "title": "Netskope SASE / Security Cloud JSON Relay — dashboard example",
+      "source_path": "dashboards/screenshots/netskope-sase-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Netskope SASE / Security Cloud dashboard populated with synthetic-equivalent fixture records in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-22 during run SECHUB_DASH_SCREENSHOT_20260622T002607Z after loading the pack dashboard XML and indexing pack-local synthetic-equivalent fixture rows. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

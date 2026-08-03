@@ -1,0 +1,5 @@
+candidate,default_action,security_relevance,review_notes
+successful_execve_noise,retain,high,"Process execution records support incident reconstruction; do not drop by default. Consider scoped reduction only after local replay/read-back proves detection impact is understood."
+daemon_lifecycle_success,retain,medium,"audit daemon lifecycle/config events can be operationally noisy but explain audit coverage gaps; review per environment."
+path_watch_repeats,retain,medium,"Repeated file watch PATH records can be noisy; retain by default because they identify watched object context for correlated SYSCALL records."
+raw_argument_values,retain,high,"Command arguments may be sensitive but are high-value evidence; redact only with explicit privacy review and replay/read-back validation."

@@ -30,6 +30,45 @@ def fake_upstream_tree(root: Path, *, asa_contents: str = "asa-v1", include_post
     write(root / "package/lite/etc/addons/paloalto_panos/lite-panos.conf", "lite\n")
 
 
+def fake_upstream_tree_shared_layout(root: Path) -> None:
+    """SC4S 3.46.0 layout: packaged tree moved under package/shared."""
+    write(root / "package/shared/conf.d/conflib/syslog/app-syslog-cisco_asa.conf", "asa-v2\n")
+    write(root / "package/shared/conf.d/conflib/netsource/app-netsource-vmware_vsphere.conf", "netsource\n")
+    write(root / "package/shared/conf.d/conflib/post-filter/app-postfilter-cisco_asa-noise.conf", "drop debug\n")
+    write(root / "package/shared/conf.d/destinations/d_hec_fmt.conf", "destination\n")
+    write(root / "docs/sources/vendor/Cisco/asa/index.md", "# Cisco ASA\n")
+    write(root / "package/shared/addons/paloalto_panos/lite-panos.conf", "lite\n")
+
+
+def test_catalog_supports_shared_layout_from_3_46_0(tmp_path: Path) -> None:
+    upstream_root = tmp_path / "upstream"
+    fake_upstream_tree_shared_layout(upstream_root)
+
+    catalogues = build_catalogues(
+        upstream_root,
+        repo_url="https://example.invalid/sc4s.git",
+        requested_ref="v3.46.0",
+        resolved_commit="d8610827",
+        generated_at="2026-08-03T00:00:00Z",
+    )
+
+    full = catalogues["sc4s-inbuilt"]
+    assert full["upstream"]["artifact_count"] == 5
+    paths = [artifact["artifact_path"] for artifact in full["artifacts"]]
+    assert "package/shared/conf.d/conflib/syslog/app-syslog-cisco_asa.conf" in paths
+    assert "package/shared/conf.d/conflib/post-filter/app-postfilter-cisco_asa-noise.conf" in paths
+    assert "package/shared/conf.d/destinations/d_hec_fmt.conf" in paths
+    asa = next(a for a in full["artifacts"] if a["artifact_path"].endswith("app-syslog-cisco_asa.conf"))
+    assert asa["source_id"] == "cisco_asa"
+    assert asa["vendor"] == "cisco"
+    assert asa["product"] == "asa"
+
+    lite = catalogues["sc4s-inbuilt-lite"]
+    assert lite["upstream"]["artifact_count"] == 1
+    assert lite["artifacts"][0]["source_id"] == "paloalto_panos"
+    assert lite["artifacts"][0]["artifact_type"] == "lite_addon"
+
+
 def test_catalog_main_writes_deterministic_json_and_tsv(tmp_path: Path, capsys) -> None:
     upstream_root = tmp_path / "upstream"
     fake_upstream_tree(upstream_root)

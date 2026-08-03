@@ -423,85 +423,14 @@ Expected:
 - If Commvault is configured for RFC5424, keep the same parser available for `sc4s-syslog`; the payload body still needs to match the Commvault patterns.
 - If multiple CommCells should map to different indexes, use separate source/listener IDs or add a deliberate lookup/selector. Do not overload one parser silently.
 
-## 12. SecHub Resources SC4S pack/template packaging model
+## 12. Product, Library, and Manager artifact boundary
 
-Commvault should be shipped as a reusable pack, not as a one-off parser. The pack bundle should contain:
+Commvault uses three separate contracts. They are related, but not interchangeable:
 
-```text
-packs/commvault_commcell/pack.json
-packs/commvault_commcell/sc4s/app_parsers/syslog/app-commvault_commcell.conf
-packs/commvault_commcell/sc4s/env.example
-packs/commvault_commcell/splunk/default/props.conf
-packs/commvault_commcell/splunk/default/transforms.conf
-packs/commvault_commcell/splunk/default/eventtypes.conf
-packs/commvault_commcell/splunk/default/tags.conf
-packs/commvault_commcell/test-events/commvault_test_events.txt
-packs/commvault_commcell/scripts/send_tls_20029.sh
-packs/commvault_commcell/README.md
-```
+1. **Canonical product bundle**: SecHub Resources `products/commvault-commcell/` owns deployment identity, dependencies, installation guidance, and immutable Product TA releases.
+2. **Product TA release**: the Resources-built `Splunk_TA_commvault_commcell-<version>.tgz` is installed and validated through the product runbook. SC4S Manager does not package, import, install, apply, or verify it as a Library pack.
+3. **SC4S Library compatibility pack**: the Manager-pinned embedded snapshot carries the reviewed `commvault_commcell` pack's SC4S artifacts, fixtures, and evidence. Manager stages, validates, previews, and selectively applies only declared runtime-safe SC4S files; it does not download the pack at runtime.
 
-The `pack.json` manifest defines the pack. Required trust and admin-help fields are `version`, `url`, and `description`. Optional enrichment fields include `supported_transports`, `recommended_transport`, `source_log_version`, and `validation`:
+Manager template export/import is a fourth, local concern: it backs up or transfers Manager configuration. A template is not a product bundle, Product TA, or canonical Library pack.
 
-```yaml
-id: commvault_commcell
-version: 0.1.0
-url: https://documentation.commvault.com/11.40/software/configuring_syslog_server.html
-description: Commvault CommCell syslog/SIEM pack for AuditTrail, Events, and Alerts. Includes install instructions, parser config, Splunk exports, and test events.
-display_name: Commvault CommCell
-vendor: commvault
-product: commcell
-default_index: commvault
-default_source: commvault_commcell
-listener:
-  source_id: COMMVAULT_COMMCELL
-  transport: tls
-  port: 20029
-supported_transports:
-  - id: tls_rfc5425
-    label: TLS syslog RFC5425
-    transport: tls
-    format: rfc5424
-    recommended: true
-    default_port: 20029
-  - id: tcp_rfc5424
-    label: TCP syslog RFC5424
-    transport: tcp
-    format: rfc5424
-    recommended: false
-  - id: udp_bsd
-    label: UDP syslog BSD/headerless
-    transport: udp
-    format: bsd
-    recommended: false
-recommended_transport: tls_rfc5425
-source_log_version:
-  name: Commvault Platform Release
-  min: null
-  max: null
-  notes: Set min/max when the customer source version is confirmed.
-validation:
-  date_validated: 2026-05-26
-  source_log_version: Commvault documentation current as of 2026-05-26; lab samples for AuditTrail, Events, Alerts
-  sc4s_version: 3.43.0
-  splunk_version: 10.2.3
-sourcetypes:
-  audit: commvault:commcell:audittrail
-  event: commvault:commcell:events
-  alert: commvault:commcell:alerts
-event_families:
-  - id: audit
-    label: AuditTrail
-    match: '^(AuditTrail:|Opid[[:space:]]*=)'
-  - id: event
-    label: Events
-    match: '^(Events?:|Eventid[[:space:]]*=)'
-  - id: alert
-    label: Alerts
-    match: '^(Alerts?:|Alertid[[:space:]]*=)'
-exports:
-  sc4s: true
-  splunk: true
-  test_events: true
-```
-
-The UI should treat this as the template contract so admins can add many packs later: Palo Alto, Fortinet, Microsoft, Commvault, custom apps, etc.
+Do not copy a manifest example into this runbook. The current compatibility contract is `schemas/pack.schema.json` and `docs/contracts/packs-api.md`; the product boundary is `docs/adr/0002-product-ta-and-library-pack-boundary.md`. Canonical changes are submitted to Forgejo `s6-infra/sechub-resources`, with product and source-component changes reviewed separately.

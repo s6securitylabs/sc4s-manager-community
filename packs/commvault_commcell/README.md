@@ -1,4 +1,4 @@
-# Commvault CommCell SecHub Resources Pack
+# Commvault CommCell SC4S Library Pack
 
 Version: `0.1.0`
 

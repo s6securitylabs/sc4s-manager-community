@@ -1,0 +1,245 @@
+<form version="1.1" theme="dark">
+  <label>Google Cloud / Workspace Audit - Overview</label>
+  <description>Fixture-backed overview for Google Cloud AuditLog LogEntry and Google Workspace Reports Activity JSON relay events. Panels use fields proven by synthetic-equivalent fixtures plus Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Google audit events</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Admin, system, and policy-denied activity</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ google_audit_family IN ("gcp_admin_activity","gcp_system_event","gcp_policy_denied","workspace_admin","workspace_token","workspace_groups","workspace_calendar","workspace_saml") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Data access and Drive activity</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ google_audit_family IN ("gcp_data_access","workspace_drive") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Non-success / error signals</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | eval google_status=coalesce(status, severity) | where google_status!="0" OR match(upper(google_status), "ERROR|CRITICAL|ALERT|EMERGENCY") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by Google audit family</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | eval family=coalesce(google_audit_family, 'id.applicationName', "google_audit") | timechart count by family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | eval family=coalesce(google_audit_family, 'id.applicationName', "google_audit") | stats count by family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Actions / methods</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | eval google_action=coalesce(action, method, mvindex('events{}.name',0)) | stats count by google_action | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top users / principals</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | eval google_user=coalesce(user, src_user, 'protoPayload.authenticationInfo.principalEmail', 'actor.email') | stats count by google_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top caller / source IPs</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | eval caller_ip=coalesce(src_ip, src, 'protoPayload.requestMetadata.callerIp', ipAddress) | stats count by caller_ip | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Google Cloud service and project coverage</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ google_audit_family="gcp_*" | stats count by cloud_project gcp_service google_audit_family | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Workspace applications and event names</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ google_audit_family="workspace_*" | eval workspace_event=coalesce(action, mvindex('events{}.name',0)) | stats count by app workspace_event workspace_oauth_app workspace_oauth_client_type workspace_group_email workspace_member_role workspace_calendar_access_level workspace_saml_application workspace_saml_failure_type | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Cloud resources touched</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ resource_name=* | table _time host google_audit_family user src_ip gcp_service method resource_name status gcp_permission gcp_permission_granted marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>GCP authorization decisions</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ gcp_permission=* | eval grant_state=coalesce(gcp_permission_granted,"unknown") | stats count by grant_state gcp_permission gcp_service method cloud_project | sort grant_state -count | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Workspace OAuth, group, Calendar, and SAML access review</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ google_audit_family IN ("workspace_token","workspace_groups","workspace_calendar","workspace_saml") | table _time host google_audit_family user src_ip action workspace_oauth_app workspace_oauth_client_id workspace_oauth_client_type workspace_group_email workspace_member_email workspace_member_role workspace_calendar_id workspace_calendar_access_level workspace_calendar_grantee_email workspace_saml_application workspace_saml_failure_type marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host google_audit_family | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Google audit events</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="google:audit:json" host=$host_tok$ | table _time host google_audit_family cloud_project gcp_service method app user src_user src_ip action signature signature_id resource_name status gcp_permission gcp_permission_granted workspace_oauth_app workspace_oauth_client_id workspace_oauth_client_type workspace_group_email workspace_member_email workspace_member_role workspace_calendar_id workspace_calendar_access_level workspace_calendar_grantee_email workspace_saml_application workspace_saml_failure_type marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,218 @@
+<form version="1.1" theme="dark">
+  <label>SQL Database Logs - Overview</label>
+  <description>Fixture-backed onboarding and first-triage dashboard for PostgreSQL connection/error/statement-duration, MySQL and MariaDB error, MySQL slow-query, and MariaDB general-query text-log relay sourcetypes. This is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="db_user_tok" searchWhenChanged="true">
+      <label>Database user filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total database log events</title>
+      <single>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Error / warning rows</title>
+      <single>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ (severity=ERROR OR severity=FATAL OR severity=PANIC OR severity=Warning OR action=error OR action=access_denied) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Access-denied events</title>
+      <single>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ action=access_denied | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,5]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Slow-query / statement-duration rows</title>
+      <single>
+        <search>
+          <query>index=infraops (sourcetype="mysql:slowquery:log" action=slow_query OR sourcetype="postgresql:server:log" action=statement_duration) host=$host_tok$ db_user=$db_user_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events by sourcetype over time</title>
+      <chart>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Action / severity distribution</title>
+      <chart>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ | eval action_or_severity=coalesce(action,severity,db_command) | stats count by action_or_severity | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top database users and client sources</title>
+      <table>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ | stats count, values(database) as databases, values(action) as actions, values(severity) as severities by db_user, user, src_ip, src, db_host | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Database / command coverage</title>
+      <chart>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ | eval database_or_command=coalesce(database,db_command,component) | stats count by database_or_command | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>PostgreSQL authentication, errors, and statement durations</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="postgresql:server:log" host=$host_tok$ db_user=$db_user_tok$ | table _time host db_user user database process_id severity action query_duration_ms db_statement db_message marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>MySQL / MariaDB error review</title>
+      <table>
+        <search>
+          <query>index=infraops (sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log") host=$host_tok$ db_user=$db_user_tok$ | table _time host sourcetype thread_id user src_ip severity error_code component action db_message marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Slow-query metadata triage</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="mysql:slowquery:log" host=$host_tok$ db_user=$db_user_tok$ | table _time host db_user user db_host src_ip query_time lock_time rows_sent rows_examined action signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>MariaDB general-query command review</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="mariadb:general:log" host=$host_tok$ db_user=$db_user_tok$ | table _time host thread_id db_command action db_message marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage by host/source/sourcetype</title>
+      <table>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ | stats count, dc(db_user) as db_user_count, dc(src_ip) as source_ip_count, values(vendor_product) as vendor_product by host, source, sourcetype | sort -count | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Recent raw database-log context</title>
+      <table>
+        <search>
+          <query>index=infraops (sourcetype="postgresql:server:log" OR sourcetype="mysql:error:log" OR sourcetype="mariadb:error:log" OR sourcetype="mysql:slowquery:log" OR sourcetype="mariadb:general:log") host=$host_tok$ db_user=$db_user_tok$ | table _time host sourcetype vendor product db_user user database src_ip db_command severity action query_duration_ms db_statement signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

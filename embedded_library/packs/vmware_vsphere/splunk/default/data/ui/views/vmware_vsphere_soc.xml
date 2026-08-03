@@ -1,0 +1,196 @@
+<form version="1.1" theme="dark">
+  <label>VMware vSphere / ESXi / vCenter - SOC Overview</label>
+  <description>Ingestion health, authentication, vCenter tasks, vmkernel errors, and NSX DFW firewall activity for vmware:esxlog:*, vmware:vclog:*, and vmware:nsxlog:* sourcetypes. Not field-validated: panels are conservative and based on synthetic-equivalent fixture evidence only. Verify field availability before relying on panel counts.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total VMware events</title>
+      <single>
+        <search>
+          <query>(index=infraops OR index=netfw) host=$host_tok$ | extract reload=true | search vendor=vmware product=vsphere | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>NSX DFW blocked</title>
+      <single>
+        <search>
+          <query>index=netfw sourcetype="vmware:nsxlog:dfwpktlogs" host=$host_tok$ | extract reload=true | search (action=blocked OR vmware_nsx_raw_action IN (DROP, REJECT)) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,100]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>vmkernel errors/warnings</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="vmware:esxlog:vmkernel" host=$host_tok$ | extract reload=true | search (severity=warning OR severity=error) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,50]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Authentication events</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype IN (vmware:esxlog:hostd, vmware:vclog:vpxd) host=$host_tok$ | extract reload=true | search (op=Login OR action=Login) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events by sourcetype over time</title>
+      <chart>
+        <search>
+          <query>(index=infraops OR index=netfw) host=$host_tok$ | extract reload=true | search vendor=vmware product=vsphere | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Authentication - login success / failure (hostd + vpxd)</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype IN (vmware:esxlog:hostd, vmware:vclog:vpxd) host=$host_tok$ | extract reload=true | search (op=Login OR action=Login) | eval login_result=coalesce(result, "unknown") | stats count by host, src_user, dest, login_result, _time | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>vCenter task completions (op=TaskEvent)</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="vmware:vclog:vpxd" host=$host_tok$ | extract reload=true | search op=TaskEvent result=completed | stats count by host, src_user, dest, signature | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>vmkernel storage warnings (APD timeout)</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="vmware:esxlog:vmkernel" host=$host_tok$ | extract reload=true | search severity=warning | stats count by host, signature | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>NSX DFW allowed traffic (top src/dst pairs)</title>
+      <table>
+        <search>
+          <query>index=netfw sourcetype="vmware:nsxlog:dfwpktlogs" host=$host_tok$ | extract reload=true | search (action=allowed OR vmware_nsx_raw_action=PASS) | stats count by src_ip, dest_ip, dest_port, transport, rule | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>NSX DFW blocked traffic (top src/dst pairs)</title>
+      <table>
+        <search>
+          <query>index=netfw sourcetype="vmware:nsxlog:dfwpktlogs" host=$host_tok$ | extract reload=true | search (action=blocked OR vmware_nsx_raw_action IN (DROP, REJECT)) | stats count by src_ip, dest_ip, dest_port, transport, rule, vmware_nsx_raw_action | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Structured-data events (vmware:esxlog:sdata)</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="vmware:esxlog:sdata" host=$host_tok$ | extract reload=true | eval evt_severity=coalesce(severity, "unknown") | stats count by host, signature_id, evt_severity | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SPL for manual triage (copy and run)</title>
+      <html>
+        <![CDATA[
+        <div style="font-family:monospace;font-size:12px;padding:8px;">
+          <b>NSX DFW drilldown:</b><br/>
+          <code>index=netfw sourcetype="vmware:nsxlog:dfwpktlogs" | table _time host src_ip src_port dest_ip dest_port transport rule vmware_nsx_raw_action direction _raw</code><br/><br/>
+          <b>Auth events:</b><br/>
+          <code>index=infraops sourcetype IN (vmware:esxlog:hostd, vmware:vclog:vpxd) (op=Login OR action=Login) | table _time host sourcetype src_user dest op result _raw</code><br/><br/>
+          <b>All VMware events:</b><br/>
+          <code>(index=infraops OR index=netfw) vendor=vmware product=vsphere | table _time index sourcetype host action signature severity _raw</code><br/><br/>
+          <i>Note: panels use synthetic-equivalent fixture evidence; not field-validated on live VMware sources.</i>
+        </div>
+        ]]>
+      </html>
+    </panel>
+  </row>
+
+</form>

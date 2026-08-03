@@ -1,0 +1,2183 @@
+{
+  "schema_version": "0.1",
+  "id": "crowdstrike_falcon",
+  "version": "0.1.12",
+  "url": "https://github.com/CrowdStrike/FDR",
+  "description": "Curated SecHub Resources SC4S pack for the CrowdStrike Falcon Platform JSON relay family. Covers FDR/Event Streams-style endpoint rows plus separate conservative platform-module variants for Devices API, Spotlight API-resource, Intelligence indicator/feed API records, Event Streams audit/RTR session records, and selected sample-backed identity/protection/detection/policy records.",
+  "display_name": "CrowdStrike Falcon Platform JSON Relay",
+  "vendor": "crowdstrike",
+  "product": "falcon_platform_json_relay",
+  "default_index": "epintel",
+  "default_source": "crowdstrike_falcon",
+  "listener": {
+    "source_id": "CROWDSTRIKE_FALCON",
+    "transport": "tcp",
+    "port": 20076,
+    "env": {
+      "SC4S_LISTEN_CROWDSTRIKE_FALCON_TCP_PORT": "20076",
+      "SOURCE_ALL_SET_APPEND": "CROWDSTRIKE_FALCON"
+    }
+  },
+  "sourcetypes": {
+    "process": "crowdstrike:falcon:fdr:process",
+    "network": "crowdstrike:falcon:fdr:network",
+    "dns": "crowdstrike:falcon:fdr:dns",
+    "file": "crowdstrike:falcon:fdr:file",
+    "asset": "crowdstrike:falcon:fdr:asset",
+    "devices_api": "crowdstrike:falcon:api:devices",
+    "spotlight_api": "crowdstrike:falcon:api:spotlight",
+    "eventstream_audit": "crowdstrike:falcon:eventstream:audit",
+    "eventstream_rtr": "crowdstrike:falcon:eventstream:rtr",
+    "intel_api": "crowdstrike:falcon:api:intel",
+    "eventstream_identity": "crowdstrike:falcon:eventstream:identity",
+    "eventstream_detection": "crowdstrike:falcon:eventstream:detection",
+    "eventstream_policy": "crowdstrike:falcon:eventstream:policy"
+  },
+  "event_families": [
+    {
+      "id": "process",
+      "label": "Falcon FDR process rollup and end-of-process events",
+      "match_engine": "pcre",
+      "match": "\"event_simpleName\"\\s*:\\s*\"(?:ProcessRollup2|EndOfProcess)\"",
+      "expected_sourcetype": "crowdstrike:falcon:fdr:process",
+      "primary_id_field": "TargetProcessId",
+      "required_fields": [
+        "timestamp",
+        "event_simpleName",
+        "aid",
+        "cid",
+        "ImageFileName"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "network",
+      "label": "Falcon FDR IPv4 network connect/listen events",
+      "match_engine": "pcre",
+      "match": "\"event_simpleName\"\\s*:\\s*\"Network(?:Connect|Listen|ReceiveAccept)IP4\"",
+      "expected_sourcetype": "crowdstrike:falcon:fdr:network",
+      "primary_id_field": "ContextProcessId",
+      "required_fields": [
+        "timestamp",
+        "event_simpleName",
+        "aid",
+        "cid",
+        "LocalAddressIP4",
+        "RemoteAddressIP4",
+        "Protocol"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "dns",
+      "label": "Falcon FDR DNS and suspicious DNS request events",
+      "match_engine": "pcre",
+      "match": "\"event_simpleName\"\\s*:\\s*\"(?:DnsRequest|SuspiciousDnsRequest)\"",
+      "expected_sourcetype": "crowdstrike:falcon:fdr:dns",
+      "primary_id_field": "DomainName",
+      "required_fields": [
+        "timestamp",
+        "event_simpleName",
+        "aid",
+        "cid",
+        "DomainName"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "file",
+      "label": "Falcon FDR file, script, document write, and critical-file access events",
+      "match_engine": "pcre",
+      "match": "\"event_simpleName\"\\s*:\\s*\"(?:NewExecutableWritten|ExecutableDeleted|OoxmlFileWritten|PdfFileWritten|NewScriptWritten|CriticalFileAccessed)\"",
+      "expected_sourcetype": "crowdstrike:falcon:fdr:file",
+      "primary_id_field": "TargetFileName",
+      "required_fields": [
+        "timestamp",
+        "event_simpleName",
+        "aid",
+        "cid",
+        "TargetFileName"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "asset",
+      "label": "Falcon FDR sensor, config state, and user identity events",
+      "match_engine": "pcre",
+      "match": "\"event_simpleName\"\\s*:\\s*\"(?:SensorHeartbeat|UserIdentity|ConfigStateUpdate)\"",
+      "expected_sourcetype": "crowdstrike:falcon:fdr:asset",
+      "primary_id_field": "aid",
+      "required_fields": [
+        "timestamp",
+        "event_simpleName",
+        "aid",
+        "cid"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "devices_api",
+      "label": "Falcon Devices API host inventory records",
+      "match_engine": "pcre",
+      "match": "\\\"device_id\\\"\\s*:\\s*\\\"[^\\\"]+\\\".*\\\"agent_version\\\"\\s*:\\s*\\\"[^\\\"]+\\\"",
+      "expected_sourcetype": "crowdstrike:falcon:api:devices",
+      "primary_id_field": "device_id",
+      "required_fields": [
+        "device_id",
+        "agent_version",
+        "hostname",
+        "platform_name",
+        "status",
+        "last_seen"
+      ],
+      "timestamp_fields": [
+        "last_seen",
+        "first_seen"
+      ]
+    },
+    {
+      "id": "spotlight_api",
+      "label": "Falcon Spotlight vulnerability API-resource records",
+      "match_engine": "pcre",
+      "match": "\\\"vulnerability_id\\\"\\s*:\\s*\\\"[^\\\"]+\\\".*\\\"cve\\\"\\s*:",
+      "expected_sourcetype": "crowdstrike:falcon:api:spotlight",
+      "primary_id_field": "vulnerability_id",
+      "required_fields": [
+        "vulnerability_id",
+        "status",
+        "cve",
+        "host_info",
+        "updated_timestamp"
+      ],
+      "timestamp_fields": [
+        "updated_timestamp",
+        "created_timestamp"
+      ]
+    },
+    {
+      "id": "eventstream_audit",
+      "label": "Falcon Event Streams audit/auth and user activity events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"(?:AuthActivityAuditEvent|UserActivityAuditEvent)\"",
+      "expected_sourcetype": "crowdstrike:falcon:eventstream:audit",
+      "primary_id_field": "event.UserId",
+      "required_fields": [
+        "metadata.eventType",
+        "metadata.customerIDString",
+        "metadata.eventCreationTime",
+        "event.UserId",
+        "event.OperationName",
+        "event.ServiceName"
+      ],
+      "timestamp_fields": [
+        "metadata.eventCreationTime",
+        "event.UTCTimestamp"
+      ]
+    },
+    {
+      "id": "eventstream_rtr",
+      "label": "Falcon Event Streams RTR session lifecycle events",
+      "match_engine": "pcre",
+      "match": "\"eventType\"\\s*:\\s*\"(?:RemoteResponseSessionStartEvent|RemoteResponseSessionEndEvent)\"",
+      "expected_sourcetype": "crowdstrike:falcon:eventstream:rtr",
+      "primary_id_field": "event.SessionId",
+      "required_fields": [
+        "metadata.eventType",
+        "metadata.customerIDString",
+        "metadata.eventCreationTime",
+        "event.SessionId",
+        "event.HostnameField",
+        "event.UserName"
+      ],
+      "timestamp_fields": [
+        "metadata.eventCreationTime",
+        "event.StartTimestamp",
+        "event.EndTimestamp"
+      ]
+    },
+    {
+      "id": "eventstream_identity",
+      "label": "Falcon Identity Protection incident and detection summary events",
+      "match_engine": "pcre",
+      "match": "\\\"eventType\\\"\\s*:\\s*\\\"(?:IdentityProtectionEvent|IdpDetectionSummaryEvent)\\\"",
+      "expected_sourcetype": "crowdstrike:falcon:eventstream:identity",
+      "primary_id_field": "event.IdentityProtectionIncidentId",
+      "required_fields": [
+        "metadata.eventType",
+        "metadata.customerIDString",
+        "metadata.eventCreationTime",
+        "event.UserName",
+        "event.Severity"
+      ],
+      "timestamp_fields": [
+        "metadata.eventCreationTime",
+        "event.StartTime",
+        "event.EndTime"
+      ]
+    },
+    {
+      "id": "eventstream_detection",
+      "label": "Falcon detection, EPP, and data-protection summary events",
+      "match_engine": "pcre",
+      "match": "\\\"eventType\\\"\\s*:\\s*\\\"(?:DetectionSummaryEvent|EppDetectionSummaryEvent|DataProtectionDetectionSummaryEvent)\\\"",
+      "expected_sourcetype": "crowdstrike:falcon:eventstream:detection",
+      "primary_id_field": "event.DetectId",
+      "required_fields": [
+        "metadata.eventType",
+        "metadata.customerIDString",
+        "metadata.eventCreationTime",
+        "event.Severity",
+        "event.SeverityName"
+      ],
+      "timestamp_fields": [
+        "metadata.eventCreationTime",
+        "event.ProcessStartTime",
+        "event.EventTimestamp"
+      ]
+    },
+    {
+      "id": "eventstream_policy",
+      "label": "Falcon firewall/policy match events",
+      "match_engine": "pcre",
+      "match": "\\\"eventType\\\"\\s*:\\s*\\\"FirewallMatchEvent\\\"",
+      "expected_sourcetype": "crowdstrike:falcon:eventstream:policy",
+      "primary_id_field": "event.RuleId",
+      "required_fields": [
+        "metadata.eventType",
+        "metadata.customerIDString",
+        "metadata.eventCreationTime",
+        "event.PolicyName",
+        "event.RuleName",
+        "event.RuleAction"
+      ],
+      "timestamp_fields": [
+        "metadata.eventCreationTime",
+        "event.Timestamp"
+      ]
+    },
+    {
+      "id": "intel_api",
+      "label": "Falcon Intelligence indicator/feed API records",
+      "match_engine": "pcre",
+      "match": "\\\"indicator_value\\\"\\s*:\\s*\\\"[^\\\"]+\\\".*\\\"indicator_type\\\"\\s*:\\s*\\\"[^\\\"]+\\\"",
+      "expected_sourcetype": "crowdstrike:falcon:api:intel",
+      "primary_id_field": "indicator_value",
+      "required_fields": [
+        "indicator_value",
+        "indicator_type",
+        "confidence",
+        "published_date",
+        "last_updated"
+      ],
+      "timestamp_fields": [
+        "last_updated",
+        "published_date"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "CrowdStrike",
+    "product": "falcon_platform_json_relay",
+    "vendor_product": "crowdstrike:falcon_platform_json_relay",
+    "crowdstrike_event_simpleName": "Raw CrowdStrike FDR event_simpleName token",
+    "crowdstrike_aid": "Falcon agent/device identifier",
+    "crowdstrike_cid": "Falcon customer/tenant identifier; tenant-sensitive in real deployments",
+    "device_name": "ComputerName where present",
+    "os_platform": "event_platform",
+    "action": "Alias of raw event_simpleName; not a complete normalized action taxonomy",
+    "signature": "Alias of raw event_simpleName for analyst grouping",
+    "user": "UserName where present",
+    "process": "ImageFileName for process events",
+    "process_command_line": "CommandLine for process events",
+    "parent_process": "ParentBaseFileName",
+    "process_id": "TargetProcessId or ContextProcessId",
+    "parent_process_id": "ParentProcessId",
+    "file_path": "TargetFileName for file events",
+    "file_name": "TargetFileName where present",
+    "file_hash": "SHA256HashData",
+    "src_ip": "LocalAddressIP4 for network events",
+    "src_port": "LocalPort for network events",
+    "dest_ip": "RemoteAddressIP4 for network events",
+    "dest_port": "RemotePort for network events",
+    "transport": "Protocol numeric token from FDR network events",
+    "query": "DomainName for DNS request events",
+    "containment_state": "NetworkContainmentState for sensor heartbeat rows",
+    "sensor_state": "SensorStateBitMap for sensor heartbeat rows",
+    "user_id": "UID for UserIdentity rows",
+    "user_domain": "AccountDomain for UserIdentity rows",
+    "marker": "Synthetic fixture marker only",
+    "dns_request_type": "RequestType for DNS request rows where present",
+    "file_identifier": "FileIdentifier for file/script/document rows where present",
+    "file_size": "Size for NewScriptWritten rows where present",
+    "config_build": "ConfigBuild for ConfigStateUpdate rows where present",
+    "config_state_hash": "ConfigStateHash for sensor/config rows where present",
+    "config_state_data": "ConfigStateData for ConfigStateUpdate rows; may be verbose and sensitive in real feeds",
+    "file_access_type": "AccessType for CriticalFileAccessed rows where present",
+    "device_id": "Falcon Devices API device identifier for host inventory records",
+    "agent_version": "Falcon sensor/agent version from Devices API host inventory records",
+    "host_status": "Devices API status for host inventory records",
+    "platform_name": "Devices API platform name",
+    "os_version": "Devices API operating-system version",
+    "first_seen": "Devices API first-seen timestamp",
+    "last_seen": "Devices API last-seen timestamp",
+    "external_ip": "Devices API external IP where present",
+    "local_ip": "Devices API local IP where present",
+    "device_tags": "Devices API tags array where present",
+    "vulnerability_id": "Spotlight API vulnerability identifier",
+    "cve_id": "Spotlight vulnerability CVE identifier",
+    "vulnerability_status": "Spotlight vulnerability status token",
+    "severity": "Spotlight CVE severity token where present",
+    "remediation": "Spotlight remediation text/summary where present",
+    "affected_product": "Spotlight affected application/product name where present",
+    "affected_version": "Spotlight affected application version where present",
+    "operation": "Falcon Event Streams audit OperationName where present",
+    "service": "Falcon Event Streams audit ServiceName where present",
+    "result": "Falcon Event Streams audit Success/result token where present",
+    "session_id": "RTR session identifier for RemoteResponseSessionStart/End events",
+    "session_start": "RTR StartTimestamp epoch seconds where present",
+    "session_end": "RTR EndTimestamp epoch seconds where present",
+    "event_utc_timestamp": "Event Streams event.UTCTimestamp epoch seconds where present",
+    "indicator_value": "Falcon Intelligence indicator/feed value for API/collector relay records",
+    "indicator_type": "Falcon Intelligence indicator type token such as domain, ip, hash, or url",
+    "indicator_confidence": "Falcon Intelligence confidence token/score where present",
+    "indicator_tags": "Falcon Intelligence tags array where present",
+    "threat_actor": "Falcon Intelligence actor names where present",
+    "malware_family": "Falcon Intelligence malware family names where present",
+    "kill_chain_phase": "Falcon Intelligence kill-chain phase names where present",
+    "threat_type": "Falcon Intelligence threat type/category values where present",
+    "target_region": "Falcon Intelligence target regions or sectors where present",
+    "published_date": "Falcon Intelligence indicator/feed published timestamp",
+    "last_updated": "Falcon Intelligence indicator/feed last-updated timestamp",
+    "identity_incident_id": "Identity Protection incident identifier where present",
+    "detect_id": "Falcon detection or Identity Protection detection identifier where present",
+    "detect_name": "Falcon detection name where present",
+    "detect_description": "Falcon detection description where present",
+    "severity_name": "Falcon severity label where present",
+    "tactic": "MITRE ATT&CK tactic token where present",
+    "technique": "MITRE ATT&CK technique token where present",
+    "objective": "CrowdStrike detection objective where present",
+    "endpoint_ip": "Identity Protection endpoint IP where present",
+    "policy_name": "Falcon firewall/policy name where present",
+    "rule_name": "Falcon firewall/policy rule name where present",
+    "rule_action": "Falcon firewall/policy rule action token where present",
+    "response_action": "Falcon data-protection response action where present",
+    "destination": "Falcon data-protection destination or policy destination context where present",
+    "data_volume": "Falcon data-protection data volume where present",
+    "dest": "Destination/device alias derived from ComputerName, RemoteAddressIP4, hostname, HostName, or Event Streams endpoint field depending on source family",
+    "url": "DNS DomainName surfaced as url for DNS-oriented triage; not a full URL parsing statement"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-crowdstrike_falcon.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/metadata/default.meta",
+      "splunk/default/data/ui/views/crowdstrike_falcon_soc.xml"
+    ],
+    "test_events": [
+      "test-events/crowdstrike_falcon_test_events.jsonl"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20076.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/crowdstrike_falcon_reduction_candidates.csv",
+      "validation/preflight-2026-06-08.md",
+      "validation/dashboard-splunk-fixture-validation-2026-06-16.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Falcon FDR JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20076,
+      "notes": "Dedicated TCP listener for one CrowdStrike Falcon FDR JSON record per line from a collector/Cribl/syslog relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20076,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "CrowdStrike Falcon Platform JSON relay records",
+    "min": null,
+    "max": null,
+    "notes": "Umbrella Falcon Platform pack grounded in public Elastic CrowdStrike FDR/API integration samples, official CrowdStrike Developer Center/FalconPy endpoint evidence, and synthetic-equivalent fixtures. FDR/Event Streams endpoint rows, Devices API host inventory resources, and Spotlight vulnerability API resources are implemented as separate source-mode variants. Event Streams audit/auth/user activity and RTR session rows are implemented from public sample-backed structures; Identity Protection and selected detection/policy/response variants are implemented from public sample-backed structures; Intelligence indicator/feed API records are implemented as conservative API/feed relay fixtures, not native Event Streams proof. Collector wrapping must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-08",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Public Elastic CrowdStrike FDR/API sample/field evidence, official CrowdStrike API/FalconPy endpoint evidence, and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Falcon JSON records only, including FDR/Event Streams-style endpoint rows plus Devices API host inventory, Spotlight API vulnerability, Intelligence indicator/feed API, Event Streams audit, RTR session, Identity Protection, detection summary, data-protection/response, and firewall policy-match fixtures. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Falcon relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for CrowdStrike Falcon FDR JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "crowdstrike_falcon_fdr_json"
+      ],
+      "event_count": 23,
+      "marker_prefix": "SC4S_CROWDSTRIKE_FALCON_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20076.sh"
+    },
+    "readback": {
+      "spl": "index=epintel sechub_fixture_marker=\"SC4S_CROWDSTRIKE_FALCON_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product vendor_product crowdstrike_event_simpleName action signature crowdstrike_aid crowdstrike_cid device_id agent_version device_name dest host_status platform_name os_version first_seen last_seen external_ip local_ip device_tags vulnerability_id cve_id vulnerability_status severity remediation affected_product affected_version indicator_value indicator_type indicator_confidence indicator_tags threat_actor malware_family kill_chain_phase threat_type target_region published_date last_updated identity_incident_id detect_id detect_name detect_description severity_name tactic technique objective endpoint_ip policy_name rule_name rule_action response_action destination data_volume operation service result session_id session_start session_end event_utc_timestamp os_platform user user_domain process process_id process_command_line parent_process parent_process_id src_ip src_port dest_ip dest_port transport dns_request_type query url file_path file_name file_identifier file_access_type file_size file_hash containment_state sensor_state config_build config_state_hash config_state_data user_id marker _raw",
+      "expected_count": 23,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "raw event_simpleName or API source-mode fields",
+        "device and tenant identifiers",
+        "process/network/dns/file/config/asset fields",
+        "Devices API host inventory fields",
+        "Spotlight vulnerability/CVE/remediation fields",
+        "Intelligence indicator/feed fields",
+        "Event Streams audit/RTR operation/session fields",
+        "Identity Protection incident/detection fields",
+        "Detection/policy/response summary fields",
+        "runtime product/vendor_product identity",
+        "already-emitted aliases: signature, dest, url, process_id, parent_process_id, file_name, event_utc_timestamp, vendor_product",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TCP listener on 127.0.0.1:20076 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing CrowdStrike Falcon TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      },
+      {
+        "type": "dashboard_splunk_fixture_validation",
+        "path": "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+        "summary": "Splunk TEST dashboard XML + fixture-backed SPL validation for 21/21 CrowdStrike Falcon SOC dashboard panel searches; not SC4S listener/HEC/live CrowdStrike validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20076,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated CrowdStrike Falcon FDR relay listener"
+        }
+      ],
+      "required_indexes": [
+        "epintel"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to epintel",
+        "Search role can read epintel"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "crowdstrike_falcon_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/crowdstrike_falcon/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/crowdstrike_falcon/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/crowdstrike_falcon/compose.yaml",
+      "compose_project": "sechub-crowdstrike-falcon-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "epintel index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/crowdstrike_falcon/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/crowdstrike_falcon/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/crowdstrike_falcon/scripts/send_tcp_20076.sh 127.0.0.1 20076",
+        "splunk_summary_readback": "index=epintel sechub_fixture_marker=\"SC4S_CROWDSTRIKE_FALCON_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=epintel sechub_fixture_marker=\"SC4S_CROWDSTRIKE_FALCON_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product vendor_product crowdstrike_event_simpleName action signature crowdstrike_aid crowdstrike_cid device_id agent_version device_name dest host_status platform_name os_version first_seen last_seen external_ip local_ip device_tags vulnerability_id cve_id vulnerability_status severity remediation affected_product affected_version indicator_value indicator_type indicator_confidence indicator_tags threat_actor malware_family kill_chain_phase threat_type target_region published_date last_updated identity_incident_id detect_id detect_name detect_description severity_name tactic technique objective endpoint_ip policy_name rule_name rule_action response_action destination data_volume operation service result session_id session_start session_end event_utc_timestamp os_platform user user_domain process process_id process_command_line parent_process parent_process_id src_ip src_port dest_ip dest_port transport dns_request_type query url file_path file_name file_identifier file_access_type file_size file_hash containment_state sensor_state config_build config_state_hash config_state_data user_id marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "epintel",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/crowdstrike_falcon/splunk -> /opt/splunk/etc/apps/sechub_crowdstrike_falcon:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20076,
+          "host_port_env": "SC4S_CROWDSTRIKE_FALCON_PORT",
+          "source_id": "CROWDSTRIKE_FALCON"
+        },
+        "parser_mount": "packs/crowdstrike_falcon/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "process",
+          "sourcetype": "crowdstrike:falcon:fdr:process",
+          "data_structures": [
+            "process fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_PROCESS_001",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_PROCESS_END_012"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "network",
+          "sourcetype": "crowdstrike:falcon:fdr:network",
+          "data_structures": [
+            "network fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_NETWORK_002",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_NETWORK_LISTEN_007"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "dns",
+          "sourcetype": "crowdstrike:falcon:fdr:dns",
+          "data_structures": [
+            "dns fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_DNS_003",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_DNS_SUSPICIOUS_008"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "file",
+          "sourcetype": "crowdstrike:falcon:fdr:file",
+          "data_structures": [
+            "file fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_004",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_SCRIPT_009",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_PDF_010",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_OOXML_013",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_CRITICAL_014"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "asset",
+          "sourcetype": "crowdstrike:falcon:fdr:asset",
+          "data_structures": [
+            "asset fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_SENSOR_005",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_IDENTITY_006",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_CONFIG_011"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "devices_api",
+          "sourcetype": "crowdstrike:falcon:api:devices",
+          "data_structures": [
+            "devices api fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_DEVICE_API_015"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "spotlight_api",
+          "sourcetype": "crowdstrike:falcon:api:spotlight",
+          "data_structures": [
+            "spotlight api fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_SPOTLIGHT_API_016"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "eventstream_audit",
+          "sourcetype": "crowdstrike:falcon:eventstream:audit",
+          "data_structures": [
+            "eventstream audit fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_AUDIT_AUTH_017",
+            "SC4S_CROWDSTRIKE_FALCON_TEST_AUDIT_USER_018"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "eventstream_rtr",
+          "sourcetype": "crowdstrike:falcon:eventstream:rtr",
+          "data_structures": [
+            "eventstream rtr fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_RTR_SESSION_019"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "eventstream_identity",
+          "sourcetype": "crowdstrike:falcon:eventstream:identity",
+          "data_structures": [
+            "eventstream identity fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_IDENTITY_PROTECTION_021"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "eventstream_detection",
+          "sourcetype": "crowdstrike:falcon:eventstream:detection",
+          "data_structures": [
+            "eventstream detection fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_DETECTION_SUMMARY_022"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "eventstream_policy",
+          "sourcetype": "crowdstrike:falcon:eventstream:policy",
+          "data_structures": [
+            "eventstream policy fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_FIREWALL_POLICY_023"
+          ]
+        },
+        {
+          "source": "crowdstrike_falcon_platform_json_relay",
+          "source_shape": "json_line_relay",
+          "event_family": "intel_api",
+          "sourcetype": "crowdstrike:falcon:api:intel",
+          "data_structures": [
+            "intel api fixture-backed records"
+          ],
+          "markers": [
+            "SC4S_CROWDSTRIKE_FALCON_TEST_INTEL_INDICATOR_020"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live CrowdStrike tenant, FDR S3/SQS, Event Streams receiver, or API collector replay/read-back.",
+        "No API credential custody, pagination/checkpoint, native API array/envelope unwrapping, collector retry/deduplication, or SIEM connector completeness proof.",
+        "No RTR command/action rows, admin policy-change audit rows, Intelligence report events, deprecated Incidents API export, or complete Falcon platform coverage.",
+        "No production or field validation; synthetic-equivalent fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for the declared collector-unwrapped CrowdStrike Falcon JSON relay shape, not live Falcon tenant/API/FDR/Event Streams/collector validation or field validation."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "crowdstrike_falcon_fdr_json",
+      "label": "CrowdStrike Falcon FDR synthetic-equivalent JSON records",
+      "path": "test-events/crowdstrike_falcon_test_events.jsonl",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 23,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_CROWDSTRIKE_FALCON_TEST_PROCESS_001",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_NETWORK_002",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_DNS_003",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_004",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_SENSOR_005",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_IDENTITY_006",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_NETWORK_LISTEN_007",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_DNS_SUSPICIOUS_008",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_SCRIPT_009",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_PDF_010",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_CONFIG_011",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_PROCESS_END_012",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_OOXML_013",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_FILE_CRITICAL_014",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_DEVICE_API_015",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_SPOTLIGHT_API_016",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_AUDIT_AUTH_017",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_AUDIT_USER_018",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_RTR_SESSION_019",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_INTEL_INDICATOR_020",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_IDENTITY_PROTECTION_021",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_DETECTION_SUMMARY_022",
+        "SC4S_CROWDSTRIKE_FALCON_TEST_FIREWALL_POLICY_023"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "timestamp",
+        "primary_timezone": "UTC epoch milliseconds",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Falcon relay timestamp normalization policy"
+        ],
+        "notes": "Fixtures use CrowdStrike-style epoch millisecond timestamp strings. Production collectors must preserve or map this field."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping; fixtures use example domains, synthetic IDs, and RFC5737 documentation IPs",
+        "notes": "Process start/end, network/listen, DNS/suspicious DNS, file/script/PDF/OOXML/critical-access, sensor/config, identity, Devices API host inventory, Spotlight vulnerability API-resource, Intelligence indicator/feed, Event Streams audit/RTR, Identity Protection, detection/response summary, and firewall policy-match context are retained for reduction review."
+      },
+      "expected_families": [
+        "process",
+        "network",
+        "dns",
+        "file",
+        "asset",
+        "devices_api",
+        "spotlight_api",
+        "eventstream_audit",
+        "eventstream_rtr",
+        "intel_api",
+        "eventstream_identity",
+        "eventstream_detection",
+        "eventstream_policy"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-crowdstrike_falcon.conf",
+      "target_path": "local/config/app_parsers/syslog/app-crowdstrike_falcon.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/crowdstrike_falcon.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_metadata",
+      "group": "splunk",
+      "source_path": "splunk/metadata/default.meta",
+      "target_path": "splunk/metadata/default.meta",
+      "kind": "splunk_metadata",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_soc",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/crowdstrike_falcon_soc.xml",
+      "target_path": "splunk/default/data/ui/views/crowdstrike_falcon_soc.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "dashboard_screenshot_crowdstrike_falcon_soc_splunk_test",
+      "group": "docs",
+      "source_path": "dashboards/screenshots/crowdstrike-falcon-soc-splunk-test.png",
+      "target_path": "dashboards/screenshots/crowdstrike-falcon-soc-splunk-test.png",
+      "kind": "dashboard_screenshot",
+      "rendered": true,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/crowdstrike_falcon_test_events.jsonl",
+      "target_path": "test-events/crowdstrike_falcon_test_events.jsonl",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20076.sh",
+      "target_path": "scripts/send_tcp_20076.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/crowdstrike_falcon_reduction_candidates.csv",
+      "target_path": "docs/crowdstrike_falcon_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "dashboard_splunk_fixture_validation_2026_06_16",
+      "group": "docs",
+      "source_path": "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "target_path": "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "kind": "validation_splunk_fixture_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Elastic CrowdStrike integration FDR manifest/fields/test events and CrowdStrike FDR public repository; fixtures are synthetic-equivalent examples shaped to public event structures.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test identities, RFC5737 documentation IP ranges, synthetic aid/cid values, and synthetic hashes; no customer or tenant data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-08",
+      "notes": "Created from Milestone 8 CrowdStrike Falcon dedicated phase after deep evidence unblock scan."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "UserName"
+          ],
+          "status": "partial",
+          "notes": "Endpoint user where present."
+        },
+        "src": {
+          "source_fields": [
+            "LocalAddressIP4"
+          ],
+          "status": "partial",
+          "notes": "Local endpoint IP for FDR network events."
+        },
+        "dest": {
+          "source_fields": [
+            "ComputerName",
+            "RemoteAddressIP4",
+            "DomainName",
+            "dest",
+            "hostname",
+            "HostName",
+            "event.HostnameField",
+            "event.EndpointName"
+          ],
+          "status": "partial",
+          "notes": "Device, remote endpoint, or DNS query context depending on family."
+        },
+        "action": {
+          "source_fields": [
+            "event_simpleName"
+          ],
+          "status": "partial",
+          "notes": "Raw CrowdStrike event token; not normalized to a complete action taxonomy."
+        },
+        "signature": {
+          "source_fields": [
+            "event_simpleName"
+          ],
+          "status": "partial",
+          "notes": "Raw event family token used for grouping."
+        },
+        "process": {
+          "source_fields": [
+            "ImageFileName",
+            "CommandLine",
+            "ParentBaseFileName"
+          ],
+          "status": "partial",
+          "notes": "Process and parent-process context."
+        },
+        "file_hash": {
+          "source_fields": [
+            "SHA256HashData"
+          ],
+          "status": "partial",
+          "notes": "SHA256 hash where present."
+        },
+        "dns_request_type": {
+          "source_fields": [
+            "RequestType"
+          ],
+          "status": "partial",
+          "notes": "Raw DNS request-type token where present; no full DNS taxonomy stated."
+        },
+        "file_identifier": {
+          "source_fields": [
+            "FileIdentifier"
+          ],
+          "status": "partial",
+          "notes": "Raw Falcon file identifier for file/script/document rows where present."
+        },
+        "configuration": {
+          "source_fields": [
+            "ConfigBuild",
+            "ConfigStateHash",
+            "ConfigStateData"
+          ],
+          "status": "partial",
+          "notes": "Falcon configuration state context where present; preserve carefully because it may be verbose."
+        },
+        "file_access_type": {
+          "source_fields": [
+            "AccessType"
+          ],
+          "status": "partial",
+          "notes": "Raw CrowdStrike file access type where present; not a complete file activity taxonomy."
+        },
+        "device_id": {
+          "source_fields": [
+            "device_id",
+            "aid"
+          ],
+          "status": "partial",
+          "notes": "Falcon device/host identifier; API device_id for Devices records and aid for FDR rows."
+        },
+        "severity": {
+          "source_fields": [
+            "event.Severity",
+            "event.SeverityName",
+            "cve.severity"
+          ],
+          "status": "partial",
+          "notes": "Raw Falcon severity token/label where present; no full taxonomy stated."
+        },
+        "cve": {
+          "source_fields": [
+            "cve.id",
+            "cve"
+          ],
+          "status": "partial",
+          "notes": "CVE identifier from Spotlight vulnerability API-resource rows."
+        },
+        "vulnerability_id": {
+          "source_fields": [
+            "vulnerability_id"
+          ],
+          "status": "partial",
+          "notes": "CrowdStrike Spotlight vulnerability identifier."
+        },
+        "remediation": {
+          "source_fields": [
+            "remediation",
+            "remediation.entities"
+          ],
+          "status": "partial",
+          "notes": "Spotlight remediation guidance where present; preserve for triage."
+        },
+        "operation": {
+          "source_fields": [
+            "event.OperationName"
+          ],
+          "status": "partial",
+          "notes": "Falcon Event Streams audit operation token."
+        },
+        "session_id": {
+          "source_fields": [
+            "event.SessionId"
+          ],
+          "status": "partial",
+          "notes": "RTR session identifier; not a global event ID."
+        },
+        "indicator": {
+          "source_fields": [
+            "indicator_value",
+            "indicator_type"
+          ],
+          "status": "partial",
+          "notes": "Falcon Intelligence indicator/feed value and type; API/feed relay only."
+        },
+        "threat_intelligence": {
+          "source_fields": [
+            "reports",
+            "actors",
+            "malware_families",
+            "kill_chain_phases",
+            "threat_types",
+            "targets",
+            "vulnerabilities"
+          ],
+          "status": "partial",
+          "notes": "Falcon Intelligence enrichment context; preserve as triage/provenance, not a complete TI taxonomy."
+        },
+        "detect_id": {
+          "source_fields": [
+            "event.DetectId",
+            "event.IdentityProtectionIncidentId"
+          ],
+          "status": "partial",
+          "notes": "Falcon detection or identity incident identifier where present; not a globally stable event ID statement."
+        },
+        "mitre_attack": {
+          "source_fields": [
+            "event.Tactic",
+            "event.Technique",
+            "event.Objective"
+          ],
+          "status": "partial",
+          "notes": "MITRE/context tokens from sample-backed detection events where present."
+        },
+        "policy": {
+          "source_fields": [
+            "event.PolicyName",
+            "event.RuleName",
+            "event.RuleAction",
+            "event.ResponseAction"
+          ],
+          "status": "partial",
+          "notes": "Policy/rule/response context for sample-backed firewall and data-protection events."
+        },
+        "vendor_product": {
+          "source_fields": [
+            "vendor_product"
+          ],
+          "status": "partial",
+          "notes": "Pack-scoped product identity emitted by Splunk props; should match crowdstrike:falcon_platform_json_relay."
+        },
+        "url": {
+          "source_fields": [
+            "DomainName",
+            "url"
+          ],
+          "status": "partial",
+          "notes": "DNS-domain triage alias only; not a full URL extraction statement."
+        }
+      },
+      "notes": "Partial Endpoint/Network Traffic guidance only; not full CrowdStrike or Splunk TA parity."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "UserName"
+          ],
+          "status": "partial",
+          "notes": "Endpoint user."
+        },
+        "device.uid": {
+          "source_fields": [
+            "aid",
+            "device_id"
+          ],
+          "status": "partial",
+          "notes": "Falcon endpoint identifier from FDR or Devices API records."
+        },
+        "metadata.tenant_uid": {
+          "source_fields": [
+            "cid"
+          ],
+          "status": "partial",
+          "notes": "Tenant/customer identifier; handle carefully in real deployments."
+        },
+        "activity_name": {
+          "source_fields": [
+            "event_simpleName"
+          ],
+          "status": "partial",
+          "notes": "Raw event token."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "LocalAddressIP4"
+          ],
+          "status": "partial",
+          "notes": "Local endpoint IP."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "RemoteAddressIP4"
+          ],
+          "status": "partial",
+          "notes": "Remote endpoint IP."
+        },
+        "query.hostname": {
+          "source_fields": [
+            "DomainName"
+          ],
+          "status": "partial",
+          "notes": "DNS query name."
+        },
+        "dns_query.type_id": {
+          "source_fields": [
+            "RequestType"
+          ],
+          "status": "partial",
+          "notes": "Raw request type token only."
+        },
+        "file.uid": {
+          "source_fields": [
+            "FileIdentifier"
+          ],
+          "status": "partial",
+          "notes": "Falcon file identifier where present."
+        },
+        "device.config_state": {
+          "source_fields": [
+            "ConfigBuild",
+            "ConfigStateHash",
+            "ConfigStateData"
+          ],
+          "status": "partial",
+          "notes": "Pack-scoped helper mapping for Falcon config-state context."
+        },
+        "file.access_type": {
+          "source_fields": [
+            "AccessType"
+          ],
+          "status": "partial",
+          "notes": "Pack-scoped helper mapping for CriticalFileAccessed access context."
+        },
+        "device.hostname": {
+          "source_fields": [
+            "ComputerName",
+            "hostname",
+            "host_info.hostname"
+          ],
+          "status": "partial",
+          "notes": "Endpoint hostname from FDR, Devices API, or Spotlight host context."
+        },
+        "vulnerability.cve.uid": {
+          "source_fields": [
+            "cve.id"
+          ],
+          "status": "partial",
+          "notes": "Spotlight CVE identifier."
+        },
+        "vulnerability.uid": {
+          "source_fields": [
+            "vulnerability_id"
+          ],
+          "status": "partial",
+          "notes": "CrowdStrike Spotlight vulnerability identifier."
+        },
+        "vulnerability.severity": {
+          "source_fields": [
+            "cve.severity"
+          ],
+          "status": "partial",
+          "notes": "Spotlight CVE severity token."
+        },
+        "remediation.desc": {
+          "source_fields": [
+            "remediation",
+            "remediation.entities"
+          ],
+          "status": "partial",
+          "notes": "Spotlight remediation guidance where present."
+        },
+        "metadata.event_code": {
+          "source_fields": [
+            "metadata.eventType"
+          ],
+          "status": "partial",
+          "notes": "Falcon Event Streams event type token."
+        },
+        "session.uid": {
+          "source_fields": [
+            "event.SessionId"
+          ],
+          "status": "partial",
+          "notes": "RTR session identifier."
+        },
+        "observable.value": {
+          "source_fields": [
+            "indicator_value"
+          ],
+          "status": "partial",
+          "notes": "Falcon Intelligence indicator observable value."
+        },
+        "observable.type": {
+          "source_fields": [
+            "indicator_type"
+          ],
+          "status": "partial",
+          "notes": "Falcon Intelligence indicator type token."
+        },
+        "threat_intel.confidence": {
+          "source_fields": [
+            "confidence"
+          ],
+          "status": "partial",
+          "notes": "Falcon Intelligence confidence token/score where present."
+        },
+        "finding.uid": {
+          "source_fields": [
+            "event.DetectId",
+            "event.IdentityProtectionIncidentId"
+          ],
+          "status": "partial",
+          "notes": "Detection/identity incident identifier."
+        },
+        "finding.title": {
+          "source_fields": [
+            "event.DetectName",
+            "event.Name",
+            "event.IncidentType"
+          ],
+          "status": "partial",
+          "notes": "Detection or identity incident title."
+        },
+        "severity": {
+          "source_fields": [
+            "event.Severity",
+            "event.SeverityName"
+          ],
+          "status": "partial",
+          "notes": "Raw Falcon severity token/label."
+        },
+        "policy.name": {
+          "source_fields": [
+            "event.PolicyName",
+            "event.RuleName"
+          ],
+          "status": "partial",
+          "notes": "Firewall/policy-match context."
+        },
+        "url.hostname": {
+          "source_fields": [
+            "DomainName",
+            "url"
+          ],
+          "status": "partial",
+          "notes": "DNS domain alias for query triage; not full URL semantics."
+        },
+        "metadata.product.name": {
+          "source_fields": [
+            "product",
+            "vendor_product"
+          ],
+          "status": "partial",
+          "notes": "Runtime pack identity emitted by Splunk props."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "UserName"
+          ],
+          "status": "partial",
+          "notes": "Endpoint user."
+        },
+        "host.id": {
+          "source_fields": [
+            "aid",
+            "device_id"
+          ],
+          "status": "partial",
+          "notes": "Falcon endpoint identifier from FDR or Devices API records."
+        },
+        "host.name": {
+          "source_fields": [
+            "ComputerName",
+            "hostname",
+            "host_info.hostname"
+          ],
+          "status": "partial",
+          "notes": "Endpoint hostname."
+        },
+        "event.action": {
+          "source_fields": [
+            "event_simpleName"
+          ],
+          "status": "partial",
+          "notes": "Raw CrowdStrike event token."
+        },
+        "process.command_line": {
+          "source_fields": [
+            "CommandLine"
+          ],
+          "status": "partial",
+          "notes": "Process command line."
+        },
+        "source.ip": {
+          "source_fields": [
+            "LocalAddressIP4"
+          ],
+          "status": "partial",
+          "notes": "Local IP for network event."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "RemoteAddressIP4"
+          ],
+          "status": "partial",
+          "notes": "Remote IP for network event."
+        },
+        "dns.question.name": {
+          "source_fields": [
+            "DomainName"
+          ],
+          "status": "partial",
+          "notes": "DNS query."
+        },
+        "file.hash.sha256": {
+          "source_fields": [
+            "SHA256HashData"
+          ],
+          "status": "partial",
+          "notes": "SHA256 hash where present."
+        },
+        "dns.question.type": {
+          "source_fields": [
+            "RequestType"
+          ],
+          "status": "partial",
+          "notes": "Raw DNS request type token."
+        },
+        "file.inode": {
+          "source_fields": [
+            "FileIdentifier"
+          ],
+          "status": "partial",
+          "notes": "Approximate storage for Falcon file identifier; not a filesystem inode statement."
+        },
+        "crowdstrike.config_state": {
+          "source_fields": [
+            "ConfigBuild",
+            "ConfigStateHash",
+            "ConfigStateData"
+          ],
+          "status": "partial",
+          "notes": "Pack-scoped CrowdStrike config state fields."
+        },
+        "event.type": {
+          "source_fields": [
+            "AccessType"
+          ],
+          "status": "partial",
+          "notes": "Raw Falcon access type for CriticalFileAccessed rows where present; not a complete ECS event type taxonomy."
+        },
+        "host.os.platform": {
+          "source_fields": [
+            "event_platform",
+            "platform_name"
+          ],
+          "status": "partial",
+          "notes": "Endpoint platform token."
+        },
+        "host.os.version": {
+          "source_fields": [
+            "os_version"
+          ],
+          "status": "partial",
+          "notes": "Devices API OS version."
+        },
+        "vulnerability.id": {
+          "source_fields": [
+            "vulnerability_id"
+          ],
+          "status": "partial",
+          "notes": "CrowdStrike Spotlight vulnerability identifier."
+        },
+        "vulnerability.reference": {
+          "source_fields": [
+            "cve.id"
+          ],
+          "status": "partial",
+          "notes": "CVE identifier from Spotlight records."
+        },
+        "vulnerability.severity": {
+          "source_fields": [
+            "cve.severity"
+          ],
+          "status": "partial",
+          "notes": "Spotlight severity token."
+        },
+        "event.provider": {
+          "source_fields": [
+            "event.ServiceName"
+          ],
+          "status": "partial",
+          "notes": "Falcon service/module name where present."
+        },
+        "session.id": {
+          "source_fields": [
+            "event.SessionId"
+          ],
+          "status": "partial",
+          "notes": "RTR session identifier."
+        },
+        "threat.indicator.name": {
+          "source_fields": [
+            "indicator_value"
+          ],
+          "status": "partial",
+          "notes": "Falcon Intelligence indicator value."
+        },
+        "threat.indicator.type": {
+          "source_fields": [
+            "indicator_type"
+          ],
+          "status": "partial",
+          "notes": "Falcon Intelligence indicator type token."
+        },
+        "threat.indicator.confidence": {
+          "source_fields": [
+            "confidence"
+          ],
+          "status": "partial",
+          "notes": "Falcon Intelligence confidence token/score where present."
+        },
+        "event.id": {
+          "source_fields": [
+            "event.DetectId",
+            "event.IdentityProtectionIncidentId"
+          ],
+          "status": "partial",
+          "notes": "Falcon detection or identity incident identifier."
+        },
+        "event.severity": {
+          "source_fields": [
+            "event.Severity"
+          ],
+          "status": "partial",
+          "notes": "Raw numeric severity where present."
+        },
+        "event.reason": {
+          "source_fields": [
+            "event.DetectDescription",
+            "event.IncidentDescription",
+            "event.Description"
+          ],
+          "status": "partial",
+          "notes": "Detection/incident description."
+        },
+        "rule.name": {
+          "source_fields": [
+            "event.RuleName",
+            "event.PolicyName"
+          ],
+          "status": "partial",
+          "notes": "Firewall/policy-match rule context."
+        },
+        "url.domain": {
+          "source_fields": [
+            "DomainName",
+            "url"
+          ],
+          "status": "partial",
+          "notes": "DNS domain alias for query triage; not full URL semantics."
+        },
+        "observer.product": {
+          "source_fields": [
+            "product",
+            "vendor_product"
+          ],
+          "status": "partial",
+          "notes": "Runtime pack identity emitted by Splunk props."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/crowdstrike_falcon/sc4s/app_parsers/syslog/app-crowdstrike_falcon.conf": "sha256:3e5f3a7ed2851e850e44c54efe02f49a421cd69ccb6dd91541dc5cc0b537ccab",
+      "packs/crowdstrike_falcon/sc4s/env.example": "sha256:bd22df95748796d5088fd3a15d976d8fae3cb9568b4f11c385452e5489c18e37",
+      "packs/crowdstrike_falcon/splunk/default/props.conf": "sha256:0278f1f90c14d82f2f87d474530f2b9d64a0e79d3fb97efc212813464ab3c12e",
+      "packs/crowdstrike_falcon/splunk/default/transforms.conf": "sha256:fb833ca0f98f1476cf6141fd646cc1b9372d362d0e429283f0760a4025db36e9",
+      "packs/crowdstrike_falcon/splunk/default/eventtypes.conf": "sha256:31abd136ac880522a3b97c3964a6c6e3cf84320e6816da72940474084230219f",
+      "packs/crowdstrike_falcon/splunk/default/tags.conf": "sha256:ea14aadf6b9ce7084551c9d0771b8fb2fdd19dab83d3d276ba3f850b58169600",
+      "packs/crowdstrike_falcon/splunk/metadata/default.meta": "sha256:2c1ec76ee2dcf8851db582d4339de10043078dac239e1692ca476d6ddf363bb7",
+      "packs/crowdstrike_falcon/test-events/crowdstrike_falcon_test_events.jsonl": "sha256:4f9f940e2dd6b04ed4ece681fd957dd4f140b48fb6621e32a0ed34cbd28e4454",
+      "packs/crowdstrike_falcon/scripts/send_tcp_20076.sh": "sha256:6139e5bcba17c0eded441317760e1f3af4316b7548de83d13806691e111915b7",
+      "packs/crowdstrike_falcon/docs/crowdstrike_falcon_reduction_candidates.csv": "sha256:d31905144063af34f30cd03bf736670b94e05857518ecf8a37025c2bfeacac6e",
+      "packs/crowdstrike_falcon/validation/preflight-2026-06-08.md": "sha256:08e0ce02b0a9075a0316e76c79cf9c76796dc2c846a9e36de22fe417b4e69023",
+      "packs/crowdstrike_falcon/README.md": "sha256:dd55f146e6ba81b282a739b8023668520f5da6f1c6bf14891085bf020fc3cc68",
+      "packs/crowdstrike_falcon/splunk/default/data/ui/views/crowdstrike_falcon_soc.xml": "sha256:31a02a2e1a3202caba9194839996c9f9ca054b4944df4e3f924f38e40036ddbc",
+      "packs/crowdstrike_falcon/validation/dashboard-splunk-fixture-validation-2026-06-16.md": "sha256:e46bf336996c3a7efa5207030e031172304bf65c823f35f935759fa786b8ec35",
+      "packs/crowdstrike_falcon/scripts/e2e_docker_compose.sh": "sha256:49cd1edd46817b845c3645fdeb4bc3eb4ef20f94feff70de3bfc3611e8ac6181"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-16",
+    "last_tested": "2026-06-16"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "endpoint",
+    "edr",
+    "security",
+    "crowdstrike"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "fdr_json_relay",
+      "label": "Falcon FDR JSON relay",
+      "description": "Default variant for FDR/Event Streams-style relays that preserve one CrowdStrike JSON object per event and the event_simpleName token.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "fdr",
+        "event_streams",
+        "cribl_relay",
+        "hec_style_json_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "process",
+        "network",
+        "dns",
+        "file",
+        "asset"
+      ],
+      "test_event_sets": [
+        "crowdstrike_falcon_fdr_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Falcon relay replay/read-back captured.",
+        "Devices API inventory, Spotlight vulnerability API resources, Intelligence indicator/feed API records, Event Streams audit/auth/user activity/RTR session rows, Identity Protection, selected detection/response summaries, and firewall policy-match records are implemented as separate source-mode variants where public sample-backed evidence exists.",
+        "RTR command/action rows, admin policy-change audit rows, native streaming proof for API-feed modules, and Intelligence report events remain blocked without exact public samples/schemas or sanitized source evidence."
+      ]
+    },
+    {
+      "id": "devices_api_relay",
+      "label": "Falcon Devices API host inventory relay",
+      "description": "Conservative API-resource relay variant for host inventory records from CrowdStrike Devices/Hosts APIs. Treat as collector/API output, not native FDR telemetry.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "hosts_api",
+        "devices_api",
+        "collector_json_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "devices_api"
+      ],
+      "test_event_sets": [
+        "crowdstrike_falcon_fdr_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No native FDR/Event Streams proof for Devices API records; treat as API/collector relay records.",
+        "No live Falcon API relay replay/read-back captured."
+      ]
+    },
+    {
+      "id": "spotlight_api_relay",
+      "label": "Falcon Spotlight vulnerability API relay",
+      "description": "Conservative API-resource relay variant for Spotlight vulnerability records carrying vulnerability, CVE, host, application, and remediation context. Treat as collector/API output, not native FDR telemetry.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "spotlight_api",
+        "vulnerability_api",
+        "collector_json_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "spotlight_api"
+      ],
+      "test_event_sets": [
+        "crowdstrike_falcon_fdr_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No native FDR/Event Streams proof for Spotlight API records; treat as API/collector relay records.",
+        "No live Falcon Spotlight relay replay/read-back captured."
+      ]
+    },
+    {
+      "id": "eventstream_audit_rtr_relay",
+      "label": "Falcon Event Streams audit, RTR, identity, detection, and policy relay",
+      "description": "Conservative Event Streams relay variant for sample-backed AuthActivityAuditEvent, UserActivityAuditEvent, RemoteResponseSessionStart/End, Identity Protection, selected detection/response summary, and firewall policy-match records. It does not cover RTR command/action rows or admin policy-change audit rows.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "event_streams",
+        "streaming_api",
+        "collector_json_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "eventstream_audit",
+        "eventstream_rtr",
+        "eventstream_identity",
+        "eventstream_detection",
+        "eventstream_policy"
+      ],
+      "test_event_sets": [
+        "crowdstrike_falcon_fdr_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Falcon Event Streams relay replay/read-back captured.",
+        "RTR command/action rows and admin policy-change audit rows remain out of scope until exact public samples/schemas or sanitized source evidence are selected."
+      ]
+    },
+    {
+      "id": "intel_api_relay",
+      "label": "Falcon Intelligence indicator/feed API relay",
+      "description": "Conservative API/feed relay variant for Falcon Intelligence indicator records carrying observable, actor, malware, kill-chain, confidence, tag, target, and vulnerability context. Treat as API/feed output, not native FDR/Event Streams telemetry.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "intel_api",
+        "intelligence_feeds_api",
+        "collector_json_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "intel_api"
+      ],
+      "test_event_sets": [
+        "crowdstrike_falcon_fdr_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No native FDR/Event Streams proof for Intelligence API/feed records; treat as API/collector relay records.",
+        "No live Falcon Intelligence relay replay/read-back captured.",
+        "Intelligence report emitted events remain blocked unless a specific public API/feed report shape is selected."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/crowdstrike_falcon_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "event_simpleName",
+        "aid",
+        "cid",
+        "event_platform",
+        "ComputerName"
+      ],
+      "notes": "Use after sampling the local Falcon feed. Do not drop command line, file hash/path, network tuple, DNS query, sensor state, or device/tenant context by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "Pack ID remains crowdstrike_falcon for download/source compatibility, but the display/source identity is CrowdStrike Falcon Platform because the pack covers multiple Falcon platform modules rather than a single Falcon product surface.",
+    "No live Falcon relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real tenant records.",
+    "SC4S emits pack-defined family sourcetypes; exact collector wrapping/source names need local comparison.",
+    "Devices API inventory, Spotlight vulnerability API resources, and Intelligence indicator/feed API records are implemented as conservative API/collector relay variants, not native FDR/Event Streams proof; Event Streams audit/auth/user activity, RTR session, Identity Protection, selected detection/response summary, and firewall policy-match rows are implemented from public sample-backed structures.",
+    "RTR command/action rows, admin policy-change audit rows, native streaming proof for API-feed modules, and Intelligence report events remain blocked without exact public samples/schemas or sanitized source evidence.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic CrowdStrike Falcon FDR intake",
+      "description": "Dedicated listener, parser, fixtures, and JSON Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-crowdstrike_falcon.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard CrowdStrike Falcon analyst knowledge",
+      "description": "Adds eventtypes/tags for process, network, DNS, file, asset/identity, Devices, Spotlight, Intelligence indicator/feed, Event Streams audit, and RTR session families. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Falcon reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/crowdstrike_falcon_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "platform_modules": [
+    {
+      "id": "fdr",
+      "label": "Falcon Data Replicator / endpoint telemetry",
+      "variant_refs": [
+        "fdr_json_relay"
+      ],
+      "status": "fixture_backed_curated_unverified"
+    },
+    {
+      "id": "event_streams",
+      "label": "Falcon Event Streams",
+      "variant_refs": [
+        "fdr_json_relay",
+        "eventstream_audit_rtr_relay"
+      ],
+      "status": "sample_backed_curated_unverified"
+    },
+    {
+      "id": "devices",
+      "label": "Falcon Devices / Hosts API",
+      "variant_refs": [
+        "devices_api_relay"
+      ],
+      "status": "api_resource_curated_unverified"
+    },
+    {
+      "id": "spotlight",
+      "label": "Falcon Spotlight vulnerability API",
+      "variant_refs": [
+        "spotlight_api_relay"
+      ],
+      "status": "api_resource_curated_unverified"
+    },
+    {
+      "id": "intelligence",
+      "label": "Falcon Intelligence indicator/feed API",
+      "variant_refs": [
+        "intel_api_relay"
+      ],
+      "status": "api_feed_curated_unverified"
+    },
+    {
+      "id": "identity_protection",
+      "label": "Falcon Identity Protection",
+      "variant_refs": [
+        "eventstream_audit_rtr_relay"
+      ],
+      "status": "sample_backed_curated_unverified"
+    },
+    {
+      "id": "detections_policy_response",
+      "label": "Falcon detections, data-protection response, and firewall policy-match records",
+      "variant_refs": [
+        "eventstream_audit_rtr_relay"
+      ],
+      "status": "sample_backed_curated_unverified"
+    }
+  ],
+  "source_delivery": {
+    "mode": "api_fdr_eventstream_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Falcon FDR/Event Streams/API records arrive through collectors or Cribl-style relays, not native SC4S source emission.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "crowdstrike_falcon_soc_splunk_test",
+      "title": "CrowdStrike Falcon SOC — dashboard example",
+      "source_path": "dashboards/screenshots/crowdstrike-falcon-soc-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "artifact_id": "splunk_dashboard_soc",
+      "caption": "Real Splunk TEST UI screenshot of the CrowdStrike Falcon SOC dashboard populated with synthetic fixture-like endpoint, Spotlight, device, and detection events.",
+      "provenance": "Captured from the disposable Splunk TEST UI on Proxmox LXC 1027 after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true
+    }
+  ]
+}

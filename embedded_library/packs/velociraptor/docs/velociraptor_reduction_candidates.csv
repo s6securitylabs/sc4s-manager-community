@@ -1,0 +1,4 @@
+candidate_id,scope,default_enabled,risk,pre_enable_validation,rollback
+velociraptor_successful_heartbeat_noise,client monitoring heartbeat/status rows,false,May hide endpoint coverage gaps or stale-client evidence,replay marked monitoring rows and prove hunt/client identity remains searchable,disable collector-side drop/filter rule
+velociraptor_large_artifact_payload_trimming,artifact result rows,false,May remove DFIR evidence needed for incident reconstruction,validate representative artifact result read-back before and after trimming,restore raw row preservation and re-ingest sample
+velociraptor_duplicate_enrichment_fields,relay enrichment fields duplicated elsewhere,false,May break joins by client/hunt/flow/artifact identifiers,prove client_id hunt_id flow_id artifact hostname timestamp survive read-back,remove enrichment trimming rule

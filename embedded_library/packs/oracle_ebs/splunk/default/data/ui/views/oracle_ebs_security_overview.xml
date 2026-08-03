@@ -1,0 +1,103 @@
+<form version="1.1" theme="light">
+  <label>Oracle E-Business Suite Security and Audit Overview</label>
+  <description>Operator dashboard for the conservative Oracle E-Business Suite normalized JSON relay. Panels are grounded in synthetic-equivalent fixtures and public May/June 2026 Oracle advisory context; they are not proof of native EBS validation or exploit detection.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_range">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="user_filter">
+      <label>EBS user contains</label>
+      <default>*</default>
+    </input>
+    <input type="text" token="component_filter">
+      <label>Application/module contains</label>
+      <default>*</default>
+    </input>
+    <input type="text" token="idx">
+      <label>Index</label>
+      <default>main</default>
+    </input>
+  </fieldset>
+  <search id="base_oracle_ebs">
+    <query>index=$idx$ sourcetype="oracle:ebs:security:json" source_mode="ebs_security_json_relay"
+| spath
+| eval user=coalesce(user, ebs_user), component=coalesce(application, module, component), status=coalesce(status, tostring(request_status), tostring(http_status)), risk_bucket=case(severity="critical","critical", severity="high","high", status="failure" OR status="error" OR status="blocked","attention", isnotnull(cve),"advisory_focus", true(),"informational")
+| search user="$user_filter$" component="$component_filter$"</query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+  <row>
+    <panel>
+      <html><p><strong>Source-mode caveat:</strong> this view is scoped only to <code>source_mode=ebs_security_json_relay</code>. Native EBS table, AuditTrail shadow table, OHS, WebLogic, Forms/OAF, and Workflow log grammars remain blocked until source-backed samples and Splunk read-back are retained. Synthetic-equivalent fixtures are for onboarding and SPL quality only.</p></html>
+    </panel>
+  </row>
+  <row>
+    <panel><single><title>Total EBS relay events</title><search base="base_oracle_ebs"><query>| stats count</query></search></single></panel>
+    <panel><single><title>Critical/high risk events</title><search base="base_oracle_ebs"><query>| search severity IN ("critical","high") OR risk_bucket IN ("critical","high") | stats count</query></search></single></panel>
+    <panel><single><title>Authentication failures</title><search base="base_oracle_ebs"><query>| search event_family="ebs_signon_failure" OR action="authentication" status="failure" | stats count</query></search></single></panel>
+    <panel><single><title>Oracle advisory-focus events</title><search base="base_oracle_ebs"><query>| search advisory_month="May 2026" OR cve="CVE-2026-46817" OR event_family="ebs_enterprise_command_center" | stats count</query></search></single></panel>
+  </row>
+  <row>
+    <panel><chart><title>Events over time by family</title><search base="base_oracle_ebs"><query>| timechart span=1h count by event_family limit=12 useother=f</query></search><option name="charting.chart">column</option></chart></panel>
+    <panel><chart><title>Risk bucket by status</title><search base="base_oracle_ebs"><query>| stats count by risk_bucket status | sort - count</query></search><option name="charting.chart">bar</option></chart></panel>
+  </row>
+  <row>
+    <panel><table><title>Onboarding coverage by index, source, host, and family</title><search base="base_oracle_ebs"><query>| stats count dc(sechub_fixture_marker) as marker_count values(index) as indexes values(source) as sources values(host) as hosts values(event_type) as event_types by sourcetype event_family source_mode | sort event_family</query></search></table></panel>
+  </row>
+  <row>
+    <panel><table><title>Sign-on and application-tier authentication failures</title><search base="base_oracle_ebs"><query>| search event_family="ebs_signon_failure" OR action="authentication" OR status="failure"
+| table _time event_family user ebs_user responsibility application src_ip client_host action status failure_reason server_name message sechub_fixture_marker
+| sort - _time</query></search></table></panel>
+    <panel><table><title>Admin and security configuration changes</title><search base="base_oracle_ebs"><query>| search event_family="ebs_audittrail_sensitive_change" OR application="System Administration" OR responsibility="System Administrator"
+| table _time user responsibility application table_name object_name column_name old_value new_value config_scope action status severity message sechub_fixture_marker
+| sort - _time</query></search></table></panel>
+  </row>
+  <row>
+    <panel><table><title>AuditTrail object and account changes</title><search base="base_oracle_ebs"><query>| search event_family="ebs_audittrail_sensitive_change"
+| table _time user responsibility application table_name object_name column_name primary_key old_value new_value action status severity message sechub_fixture_marker
+| sort - _time</query></search></table></panel>
+  </row>
+  <row>
+    <panel><table><title>Concurrent request failures and privileged submissions</title><search base="base_oracle_ebs"><query>| search event_family="ebs_concurrent_privileged_request"
+| table _time user responsibility application request_id program phase request_status action status severity message sechub_fixture_marker
+| sort - _time</query></search></table></panel>
+    <panel><table><title>Workflow, notification mailer, and routing errors</title><search base="base_oracle_ebs"><query>| search event_family="ebs_workflow_mailer_change"
+| table _time user application notification_id workflow_item_type workflow_item_key mailer_component action status severity message sechub_fixture_marker
+| sort - _time</query></search></table></panel>
+  </row>
+  <row>
+    <panel><table><title>FND security and application errors</title><search base="base_oracle_ebs"><query>| search event_family="ebs_fnd_security_error" OR event_type="fnd_log"
+| table _time user application module component error_code request_uri action status severity message sechub_fixture_marker
+| sort - _time</query></search></table></panel>
+  </row>
+  <row>
+    <panel><table><title>OHS/WebLogic/Forms/OAF app-tier triage</title><search base="base_oracle_ebs"><query>| search event_family IN ("ebs_ohs_suspicious_http","ebs_weblogic_security","ebs_forms_oaf_error")
+| table _time event_family src_ip user server_name http_method request_uri http_status form function status severity message sechub_fixture_marker
+| sort - _time</query></search></table></panel>
+  </row>
+  <row>
+    <panel><table><title>May 2026 Oracle Payments and June 2026 ECC / module focus</title><search base="base_oracle_ebs"><query>| search isnotnull(cve) OR application IN ("Oracle Payments","Oracle Enterprise Command Center Framework","Oracle Payroll","Oracle iSupplier Portal")
+| table _time cve advisory_month application module component action status severity user src_ip request_uri message sechub_fixture_marker
+| sort - _time</query></search></table></panel>
+  </row>
+  <row>
+    <panel><table><title>Top users, responsibilities, and source IPs</title><search base="base_oracle_ebs"><query>| stats count values(responsibility) as responsibilities values(src_ip) as src_ips values(status) as statuses by user | sort - count | head 20</query></search></table></panel>
+    <panel><table><title>Applications/modules touched</title><search base="base_oracle_ebs"><query>| stats count values(event_family) as families values(cve) as cves values(severity) as severities by component | sort - count</query></search></table></panel>
+  </row>
+  <row>
+    <panel><table><title>Recent raw relay events</title><search base="base_oracle_ebs"><query>| table _time sourcetype source host event_family user application action status severity sechub_fixture_marker _raw | sort - _time | head 50</query></search></table></panel>
+  </row>
+  <row>
+    <panel>
+      <title>Manual SPL drilldown</title>
+      <html><pre>index=main sourcetype="oracle:ebs:security:json" source_mode="ebs_security_json_relay"
+| spath
+| table _time index sourcetype source host event_family user ebs_user responsibility application module action status severity cve request_uri message sechub_fixture_marker _raw
+| sort - _time</pre></html>
+    </panel>
+  </row>
+</form>

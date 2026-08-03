@@ -1,0 +1,6 @@
+candidate_id,scope,retain_by_default,security_value,reduction_risk,pre_enable_validation
+postfix_delivery_latency,Postfix delivery delay/delays fields,true,Delivery timing helps queue/backpressure and incident reconstruction,Dropping loses abuse and delivery troubleshooting context,Replay/read-back delivery fixtures and real queue samples before trimming
+postfix_message_id,Postfix cleanup/delivery message identifiers,true,Message correlation across MTA hops and mailbox events,Removing breaks traceability across queue/session records,Replay/read-back multi-hop samples before any redaction
+recipient_sender_identity,Mail user and recipient fields,true,Core abuse/phishing/investigation evidence,Sensitive but required for mail incident response,Use sanitisation/masking policy only after local approval and read-back
+mail_session_context,Dovecot session/rip/lip/mpid/user,true,Authentication and mailbox-session evidence,Removing hides source and user activity,Replay/read-back real Dovecot login/session rows before trimming
+success_delivery_noise,High-volume successful delivery rows,false,May be noisy in high-volume mail relays,Unsafe if failures/abuse require full timeline; candidate only,Enable only with retained failure/reject coverage and rollback

@@ -1,0 +1,179 @@
+<form version="1.1" theme="light">
+  <label>pfSense Filterlog Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for pfSense filterlog TCP, UDP, and ICMP CSV firewall records. Dashboard presence does not imply replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>netfw</default>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total pfSense filterlog events</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | search vendor="pfSense" product="filterlog" | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Passed traffic</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | search action="pass" | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Blocked traffic</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | search action="block" | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Tracked rules</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | stats dc(tracker) as tracked_rules</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Volume over time by sourcetype</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | timechart count by sourcetype</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Action and direction distribution</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | eval action_direction=coalesce(action,"unknown")." / ".coalesce(direction,"unknown") | top limit=12 action_direction</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Protocol / transport coverage</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | eval protocol=coalesce(protocol,transport,"unknown") | top limit=12 protocol</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Interface coverage</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | eval firewall_interface=coalesce(interface,src_interface,"unknown") | top limit=12 firewall_interface</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top source / destination pairs</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | eval src=coalesce(src,src_ip,"unknown"), dest=coalesce(dest,dest_ip,"unknown") | stats count values(action) as actions values(direction) as directions values(protocol) as protocols values(dest_port) as dest_ports values(tracker) as trackers by src dest | sort - count | head 25</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Blocked traffic review</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | search action="block" | table _time host sourcetype action direction interface src src_ip src_port dest dest_ip dest_port protocol transport rule rule_number tracker signature signature_id reason _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Rule / tracker review</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | eval src=coalesce(src,src_ip,"unknown"), dest=coalesce(dest,dest_ip,"unknown") | stats count values(action) as actions values(direction) as directions values(interface) as interfaces values(src) as sources values(dest) as destinations values(dest_port) as dest_ports values(protocol) as protocols by tracker rule rule_number reason | sort - count | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Transport-specific context</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | eval protocol=coalesce(protocol,transport,"unknown") | table _time sourcetype action direction protocol src src_ip src_port dest dest_ip dest_port tcp_flags data_length length tracker marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Onboarding coverage by source, host, and sourcetype</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | stats count dc(tracker) as distinct_trackers values(action) as actions values(direction) as directions min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Recent raw pfSense filterlog events</title>
+        <search>
+          <query>index=$index$ sourcetype="pfsense:filterlog*" host=$host_filter$ | extract reload=true | table _time host source sourcetype action direction interface src src_ip src_port dest dest_ip dest_port protocol transport tracker rule rule_number reason signature signature_id marker _raw | sort - _time | head 100</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+</form>

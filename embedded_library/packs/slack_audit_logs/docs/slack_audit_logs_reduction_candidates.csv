@@ -1,0 +1,8 @@
+field_or_event,default_posture,why_retained,reduction_candidate,pre_enable_validation,rollback
+raw_json,preserve,Original Slack audit JSON is required for reviewer challenge and evolving action-specific details,no,Replay and read back exact event count plus _raw before any masking,Disable masking/reduction pipeline template
+actor_user_email,preserve,Actor email supports identity investigation but is sensitive,yes_optional_masking_only,Prove user and actor_id remain searchable and compare incident workflow before masking,Remove masking template and replay original retained fields
+entity_user_email,preserve,Target user email supports account-change triage but is sensitive,yes_optional_masking_only,Prove target_user_id and target_user_email handling meet local privacy policy before masking,Remove masking template and replay original retained fields
+context_ip_address,preserve,Source IP is required for anomaly/session investigation,no,Replay and verify src_ip/src are retained,Disable any IP truncation template
+context_user_agent,preserve,User agent is important for anomaly and session-fingerprint review,yes_optional_trimming,Replay anomaly/session rows and verify previous/current user agent fields before trimming,Disable trimming template
+file_url_private,preserve,File URL/private path can identify sensitive file events but may be sensitive,yes_optional_masking_only,Replay file events and verify file id/hash/action survive before masking,Remove masking template and replay file fixture
+successful_session_events,preserve,Successful access context is useful baseline and incident timeline,yes_optional_sampling,Replay and compare session/anomaly counts before any sampling; keep anomalies and admin events unsampled,Disable sampling template

@@ -1,0 +1,4 @@
+candidate_id,field_or_family,default_behavior,risk_if_dropped,validation_required,notes
+mask_channel_ids_after_validation,channel_id/thread_id,preserve,Destroys channel binding and handoff investigation context,yes,Hash or mask only after dashboards and detections are adapted.
+trim_user_agent,user_agent,preserve,Weakens impossible-travel and automation review,yes,Consider retention reduction only after user-agent parsing/enrichment is preserved.
+mask_actor_user,actor_user/user,preserve,Removes accountability for admin actions and tool execution,yes,Prefer RBAC on index/dashboards over field deletion.

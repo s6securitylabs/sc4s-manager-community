@@ -1,0 +1,1023 @@
+{
+  "schema_version": "0.1",
+  "id": "truenas",
+  "version": "0.1.4",
+  "url": "https://www.truenas.com/docs/",
+  "description": "Curated SecHub Resources SC4S pack for TrueNAS storage platform telemetry telemetry with operator dashboard.",
+  "display_name": "TrueNAS storage platform telemetry",
+  "vendor": "ixsystems",
+  "product": "truenas",
+  "default_index": "infraops",
+  "default_source": "truenas",
+  "listener": {
+    "source_id": "TRUENAS",
+    "transport": "tcp",
+    "port": 20087,
+    "env": {
+      "SC4S_LISTEN_TRUENAS_TCP_PORT": "20087",
+      "SOURCE_ALL_SET_APPEND": "TRUENAS"
+    }
+  },
+  "sourcetypes": {
+    "login": "truenas:middleware:auth",
+    "storage": "truenas:storage:pool",
+    "snapshot": "truenas:storage:snapshot",
+    "disk": "truenas:hardware:disk",
+    "replication": "truenas:replication",
+    "auth": "truenas:host:auth"
+  },
+  "event_families": [
+    {
+      "id": "login",
+      "label": "TrueNAS middleware login events",
+      "match_engine": "pcre",
+      "match": "login (success|failure)|SC4S_TRUENAS_TEST_LOGIN_",
+      "expected_sourcetype": "truenas:middleware:auth",
+      "primary_id_field": "user",
+      "required_fields": [
+        "user",
+        "src",
+        "method",
+        "result"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "storage",
+      "label": "TrueNAS pool scrub/storage health events",
+      "match_engine": "pcre",
+      "match": "pool scrub|SC4S_TRUENAS_TEST_STORAGE_",
+      "expected_sourcetype": "truenas:storage:pool",
+      "primary_id_field": "pool",
+      "required_fields": [
+        "pool",
+        "result",
+        "errors"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "snapshot",
+      "label": "TrueNAS dataset snapshot events",
+      "match_engine": "pcre",
+      "match": "dataset snapshot|SC4S_TRUENAS_TEST_SNAPSHOT_",
+      "expected_sourcetype": "truenas:storage:snapshot",
+      "primary_id_field": "dataset",
+      "required_fields": [
+        "dataset",
+        "snapshot"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "disk",
+      "label": "TrueNAS disk/SMART alerts",
+      "match_engine": "pcre",
+      "match": "disk alert|SC4S_TRUENAS_TEST_DISK_",
+      "expected_sourcetype": "truenas:hardware:disk",
+      "primary_id_field": "device",
+      "required_fields": [
+        "device",
+        "serial",
+        "severity",
+        "status"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "replication",
+      "label": "TrueNAS replication/task events",
+      "match_engine": "pcre",
+      "match": "replication task|SC4S_TRUENAS_TEST_REPLICATION_",
+      "expected_sourcetype": "truenas:replication",
+      "primary_id_field": "task",
+      "required_fields": [
+        "task",
+        "result",
+        "bytes"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    },
+    {
+      "id": "auth",
+      "label": "TrueNAS host authentication events",
+      "match_engine": "pcre",
+      "match": "Failed password|Accepted password|SC4S_TRUENAS_TEST_AUTH_",
+      "expected_sourcetype": "truenas:host:auth",
+      "primary_id_field": "user",
+      "required_fields": [
+        "user",
+        "src"
+      ],
+      "timestamp_fields": [
+        "syslog timestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "ixsystems",
+    "product": "truenas",
+    "user": "admin/host auth user",
+    "src": "source IP",
+    "pool": "ZFS pool",
+    "dataset": "ZFS dataset",
+    "snapshot": "snapshot name",
+    "device": "disk/device",
+    "action": "derived action",
+    "result": "status/result",
+    "marker": "synthetic fixture marker only"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-truenas.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/truenas_overview.xml"
+    ],
+    "test_events": [
+      "test-events/truenas_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20087.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/truenas_reduction_candidates.csv",
+      "validation/preflight-2026-06-14.md",
+      "validation/replay-readback-2026-06-14.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / collector relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20087,
+      "notes": "Dedicated TCP listener for one event per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "TrueNAS storage platform telemetry operational/security logs",
+    "min": "public documentation and source-corpus curation through 2026-06-14",
+    "max": null,
+    "notes": "Synthetic-equivalent fixtures only; local product version and envelope must be validated."
+  },
+  "validation": {
+    "date_validated": "2026-06-14",
+    "validated_by": "S6 Security Labs / Hermes SC4S TEST replay-readback",
+    "source_log_version": "Synthetic-equivalent fixture set; real product source-version evidence still required for field validation",
+    "sc4s_version": "ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0 / axosyslog 4.25.0",
+    "splunk_version": "Splunk 10.2.3 build 4d61cf8a5c0c",
+    "evidence": "SC4S TEST replay to dedicated TCP 20087 listener and Splunk TEST read-back captured 6/6 TrueNAS fixture events across middleware auth, storage pool, storage snapshot, hardware disk, replication, and host auth sourcetypes in infraops. Dashboard XML read-back succeeded in Splunk TEST."
+  },
+  "validation_harness": {
+    "status": "passed",
+    "required_for_quality_promotion": false,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for TrueNAS storage platform telemetry",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "truenas_syslog"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_TRUENAS_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20087.sh"
+    },
+    "readback": {
+      "spl": "index=infraops sechub_fixture_marker=\"SC4S_TRUENAS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product host action result status marker _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "host/device",
+        "action/result/status",
+        "timestamp",
+        "eventtypes/tags",
+        "dashboard searches",
+        "raw preservation"
+      ]
+    },
+    "last_attempt": {
+      "status": "passed",
+      "date": "2026-06-14",
+      "summary": "2026-06-14 SC4S TEST -> Splunk TEST replay/read-back passed: 6/6 TrueNAS fixture events indexed in infraops with expected sourcetypes; dashboard XML read-back succeeded.",
+      "evidence_path": "validation/replay-readback-2026-06-14.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-14.md",
+        "summary": "Local preflight blocker; not replay/read-back validation."
+      },
+      {
+        "type": "sc4s_splunk_replay_readback",
+        "path": "validation/replay-readback-2026-06-14.md",
+        "summary": "2026-06-14 SC4S TEST -> Splunk TEST replay/read-back passed: 6/6 TrueNAS fixture events indexed in infraops with expected sourcetypes; dashboard XML read-back succeeded."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20087,
+          "protocol": "line_delimited_syslog_raw",
+          "purpose": "TrueNAS storage platform telemetry relay listener"
+        }
+      ],
+      "required_indexes": [
+        "infraops"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to infraops",
+        "Search role can read infraops"
+      ]
+    },
+    "testbed": {
+      "sc4s_host": "sc4s-test / 10.10.1.183",
+      "splunk_host": "splunk-test / 10.10.1.251",
+      "sc4s_version": "ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0 / axosyslog 4.25.0",
+      "splunk_version": "Splunk 10.2.3 build 4d61cf8a5c0c",
+      "validation_run": "SC4S_REAL_VALIDATE_20260614T005539Z"
+    },
+    "e2e_docker_harness": {
+      "id": "truenas_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/truenas/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/truenas/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/truenas/compose.yaml",
+      "compose_project": "sechub-truenas-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "infraops index preflight/create"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/truenas/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/truenas/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/truenas/scripts/send_tcp_20087.sh 127.0.0.1 20087",
+        "splunk_summary_readback": "index=infraops sechub_fixture_marker=\"SC4S_TRUENAS_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=infraops sechub_fixture_marker=\"SC4S_TRUENAS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product host action result status user src method pool dataset snapshot device serial severity task bytes marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "infraops",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/truenas/splunk -> /opt/splunk/etc/apps/sechub_truenas"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20087,
+          "host_port_env": "SC4S_TRUENAS_PORT",
+          "source_id": "TRUENAS"
+        },
+        "parser_mount": "packs/truenas/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "truenas",
+          "source_shape": "middleware_login_syslog",
+          "event_family": "login",
+          "sourcetype": "truenas:middleware:auth",
+          "data_structures": [
+            "middleware login success/failure"
+          ],
+          "markers": [
+            "SC4S_TRUENAS_TEST_LOGIN_001"
+          ]
+        },
+        {
+          "source": "truenas",
+          "source_shape": "storage_pool_syslog",
+          "event_family": "storage",
+          "sourcetype": "truenas:storage:pool",
+          "data_structures": [
+            "pool scrub/storage health result"
+          ],
+          "markers": [
+            "SC4S_TRUENAS_TEST_STORAGE_002"
+          ]
+        },
+        {
+          "source": "truenas",
+          "source_shape": "snapshot_syslog",
+          "event_family": "snapshot",
+          "sourcetype": "truenas:storage:snapshot",
+          "data_structures": [
+            "dataset snapshot lifecycle"
+          ],
+          "markers": [
+            "SC4S_TRUENAS_TEST_SNAPSHOT_003"
+          ]
+        },
+        {
+          "source": "truenas",
+          "source_shape": "disk_smart_syslog",
+          "event_family": "disk",
+          "sourcetype": "truenas:hardware:disk",
+          "data_structures": [
+            "disk/SMART alert"
+          ],
+          "markers": [
+            "SC4S_TRUENAS_TEST_DISK_004"
+          ]
+        },
+        {
+          "source": "truenas",
+          "source_shape": "replication_task_syslog",
+          "event_family": "replication",
+          "sourcetype": "truenas:replication",
+          "data_structures": [
+            "replication task completion"
+          ],
+          "markers": [
+            "SC4S_TRUENAS_TEST_REPLICATION_005"
+          ]
+        },
+        {
+          "source": "truenas",
+          "source_shape": "host_auth_syslog",
+          "event_family": "auth",
+          "sourcetype": "truenas:host:auth",
+          "data_structures": [
+            "host SSH authentication failure"
+          ],
+          "markers": [
+            "SC4S_TRUENAS_TEST_AUTH_006"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Real TrueNAS appliance/product-version telemetry or vendor-certified examples remain required for field validation",
+        "API/export/archive paths and collector-envelope transformations are not covered by this fixture harness",
+        "Broader middleware event catalogue, ZFS alert variants, and production source-local timezone behavior require additional source-shape evidence"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "truenas_syslog",
+      "label": "TrueNAS storage platform telemetry synthetic-equivalent events",
+      "path": "test-events/truenas_test_events.txt",
+      "format": "raw",
+      "wire_format": "syslog_or_collector_payload",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_TRUENAS_TEST_LOGIN_001",
+        "SC4S_TRUENAS_TEST_STORAGE_002",
+        "SC4S_TRUENAS_TEST_SNAPSHOT_003",
+        "SC4S_TRUENAS_TEST_DISK_004",
+        "SC4S_TRUENAS_TEST_REPLICATION_005",
+        "SC4S_TRUENAS_TEST_AUTH_006"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "leading timestamp or syslog header",
+        "primary_timezone": "UTC in fixtures",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or collector timezone policy"
+        ],
+        "notes": "Fixtures use UTC; production relays must preserve or document timezone behavior."
+      },
+      "field_delimiting": {
+        "style": "syslog_text_kv_mixed",
+        "field_separator": "spaces plus key-value/text tokens",
+        "quote_character": "double quote or product-native quoting where present",
+        "escape_policy": "Synthetic fixtures avoid unsafe embedded delimiters.",
+        "notes": "One physical line per event."
+      },
+      "expected_families": [
+        "login",
+        "storage",
+        "snapshot",
+        "disk",
+        "replication",
+        "auth"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-truenas.conf",
+      "target_path": "local/config/app_parsers/syslog/app-truenas.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/truenas.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/truenas_overview.xml",
+      "target_path": "splunk/default/data/ui/views/truenas_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/truenas_test_events.txt",
+      "target_path": "test-events/truenas_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20087.sh",
+      "target_path": "scripts/send_tcp_20087.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_compose_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_compose_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/truenas_reduction_candidates.csv",
+      "target_path": "docs/truenas_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_14",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-14.md",
+      "target_path": "validation/preflight-2026-06-14.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "replay_readback_2026_06_14",
+      "group": "docs",
+      "source_path": "validation/replay-readback-2026-06-14.md",
+      "target_path": "validation/replay-readback-2026-06-14.md",
+      "kind": "validation_replay_readback_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Public TrueNAS documentation and conservative Unix/ZFS/syslog source-shape knowledge; fixtures are synthetic-equivalent and require local TrueNAS validation.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are synthetic-equivalent with documentation-range IPs and example host/user values."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-14",
+      "notes": "Created in response to request for comprehensive dashboard and pack coverage."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "s6_verified",
+  "quality_status": "validated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Admin/SSH identity where present."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "partial",
+          "notes": "Remote client IP."
+        },
+        "dest": {
+          "source_fields": [
+            "host",
+            "device",
+            "pool"
+          ],
+          "status": "partial",
+          "notes": "NAS host, disk or storage target."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Storage/auth/replication action."
+        },
+        "signature": {
+          "source_fields": [
+            "status",
+            "task",
+            "snapshot"
+          ],
+          "status": "partial",
+          "notes": "Status/task/snapshot context."
+        }
+      }
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Admin/SSH identity where present."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "partial",
+          "notes": "Remote client IP."
+        },
+        "dest": {
+          "source_fields": [
+            "host",
+            "device",
+            "pool"
+          ],
+          "status": "partial",
+          "notes": "NAS host, disk or storage target."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Storage/auth/replication action."
+        },
+        "signature": {
+          "source_fields": [
+            "status",
+            "task",
+            "snapshot"
+          ],
+          "status": "partial",
+          "notes": "Status/task/snapshot context."
+        }
+      }
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Admin/SSH identity where present."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "partial",
+          "notes": "Remote client IP."
+        },
+        "dest": {
+          "source_fields": [
+            "host",
+            "device",
+            "pool"
+          ],
+          "status": "partial",
+          "notes": "NAS host, disk or storage target."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Storage/auth/replication action."
+        },
+        "signature": {
+          "source_fields": [
+            "status",
+            "task",
+            "snapshot"
+          ],
+          "status": "partial",
+          "notes": "Status/task/snapshot context."
+        }
+      }
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "storage",
+    "nas",
+    "infrastructure",
+    "backup",
+    "security"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "truenas_syslog",
+      "label": "TrueNAS storage platform telemetry syslog/collector relay",
+      "description": "TrueNAS middleware, storage health, snapshot, replication, disk/SMART, and host authentication syslog-style records",
+      "default": true,
+      "evidence_status": "validated",
+      "source_modes": [
+        "syslog",
+        "journald_relay",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "login",
+        "storage",
+        "snapshot",
+        "disk",
+        "replication",
+        "auth"
+      ],
+      "test_event_sets": [
+        "truenas_syslog"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "splunk_dashboard_overview"
+      ],
+      "known_limitations": [
+        "No live replay/read-back captured."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/truenas_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "host",
+        "source",
+        "sourcetype",
+        "action",
+        "result",
+        "status",
+        "marker"
+      ],
+      "notes": "No default lossy filtering; validate local sampling before reduction."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "Validation is S6 lab replay/read-back using synthetic-equivalent fixtures; field_validated/field_verified promotion still requires real product/source-version telemetry or vendor-certified equivalent with retained read-back evidence.",
+    "Synthetic-equivalent fixtures only; product version and collector wrapper coverage requires local validation.",
+    "Dashboard searches are operator starting points and need local tuning after real data observation."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic TrueNAS storage platform telemetry intake",
+      "description": "Dedicated listener, parser, fixtures, and props; preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-truenas.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops."
+    },
+    {
+      "id": "standard",
+      "label": "Standard TrueNAS storage platform telemetry analyst knowledge",
+      "description": "Adds eventtypes/tags and dashboard. No drops.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed TrueNAS storage platform telemetry reduction candidates",
+      "description": "Review-only reduction candidates; not enabled by default.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/truenas_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Requires local readback validation."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling."
+    }
+  ],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/truenas/README.md": "sha256:ed7d5f4365a41a252ab2702c92067c4c512ca553b91925485fedec5a880986f8",
+      "packs/truenas/docs/truenas_reduction_candidates.csv": "sha256:7cf3a23c14715c57955b8873762b4acce7ad74f06d1ac5fa83c3aacac09e99ff",
+      "packs/truenas/sc4s/app_parsers/syslog/app-truenas.conf": "sha256:496d96e06d64a06325e107e1928613990d01b38727ada3c2a814b7c6e92135e1",
+      "packs/truenas/sc4s/env.example": "sha256:f45bba2529cf5297dfd72f24b4b63835d1ce1cd33cb4b62eb0dcba9eb477cc49",
+      "packs/truenas/scripts/send_tcp_20087.sh": "sha256:846344f1c15215a07acab1853300d37fa99250759b344bf33b8f54c7d6eece05",
+      "packs/truenas/splunk/default/eventtypes.conf": "sha256:a0f652f6c1dc9ecb2ded0ddd2e2409971f6430a90e24c55ab3b16a7869cbfa87",
+      "packs/truenas/splunk/default/props.conf": "sha256:b240505d006d0205209ab0041d0b7dd8791c421133e0c0ee09a3057632a8180e",
+      "packs/truenas/splunk/default/tags.conf": "sha256:0c545493bb117344786c7022f7446f698e0c7a6c0e99779720b098fa9d1bbff9",
+      "packs/truenas/splunk/default/transforms.conf": "sha256:ef87e10380af6a7cc55c290c5e086f098ebe56f8445535ca1327110b347b751b",
+      "packs/truenas/splunk/default/data/ui/views/truenas_overview.xml": "sha256:1440a4f6d6ba2ddf52d89619aa90c3565af283509833c393a68523d4abd96f7a",
+      "packs/truenas/test-events/truenas_test_events.txt": "sha256:ec9c585a44fda55923df898fe1c41e145d334161ded6901fe7e9886d6098979f",
+      "packs/truenas/validation/preflight-2026-06-14.md": "sha256:1f9baac806d27f7e8ba925ff3faad69b0476d26fd0557bd0a3a5c86b66878efd",
+      "packs/truenas/validation/replay-readback-2026-06-14.md": "sha256:3d31c7d9ec6f7e49f770fb8b83122635672242c5806826e11eb3eb73016a9609",
+      "packs/truenas/scripts/e2e_docker_compose.sh": "sha256:1bbb2794d815156da15522ccf7adb9be88d9c0052db6a97dd5ca979d87356909"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-27",
+    "last_tested": "2026-06-26"
+  },
+  "source_delivery": {
+    "mode": "syslog_file_controller_relay",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "raw",
+    "supported_transport_refs": [
+      "tcp_syslog"
+    ],
+    "notes": "TrueNAS operational/security records are syslog/file/controller-relayed one-line records. The default syslog relay route has S6 lab replay/read-back for the synthetic-equivalent fixture set only; real product/source-version telemetry is still required for field validation.",
+    "validation_status": "s6_lab_replay_readback_passed; synthetic-equivalent fixtures only; field validation requires real product/source-version evidence"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "truenas_overview_splunk_test",
+      "title": "TrueNAS storage platform telemetry — dashboard example",
+      "source_path": "dashboards/screenshots/truenas-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the TrueNAS storage platform telemetry dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

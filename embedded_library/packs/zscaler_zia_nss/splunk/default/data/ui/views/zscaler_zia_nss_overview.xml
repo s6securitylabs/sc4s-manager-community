@@ -1,0 +1,215 @@
+<form version="1.1" theme="dark">
+  <label>Zscaler ZIA NSS - Overview</label>
+  <description>Fixture-backed overview for Zscaler Internet Access NSS web and firewall JSON relay events. Panels use fields proven by synthetic-equivalent fixtures plus Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total ZIA NSS events</title>
+      <single>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Blocked / dropped decisions</title>
+      <single>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | eval zia_action=lower(coalesce(action,'event.action')) | search zia_action IN ("drop","block","blocked","deny","denied") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Web threat / severity events</title>
+      <single>
+        <search>
+          <query>index=netproxy sourcetype="zscaler:zia:web" host=$host_tok$ (severity=* OR 'event.threatseverity'=*) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Firewall events</title>
+      <single>
+        <search>
+          <query>index=netfw sourcetype="zscaler:zia:firewall" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by feed</title>
+      <chart>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Feed distribution</title>
+      <chart>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | stats count by index sourcetype | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Actions / decisions</title>
+      <chart>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | eval zia_action=coalesce(action,'event.action') | stats count by zia_action | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top users</title>
+      <chart>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | eval zia_user=coalesce(user,'event.login','event.user') | stats count by zia_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top client / source IPs</title>
+      <chart>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | eval zia_src=coalesce(src_ip,src,'event.cltip','event.csip') | stats count by zia_src | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>ZIA web/proxy triage</title>
+      <table>
+        <search>
+          <query>index=netproxy sourcetype="zscaler:zia:web" host=$host_tok$ | eval zia_url_host=coalesce(url_host,'event.host'), zia_app=coalesce(app,'event.appname'), zia_severity=coalesce(severity,'event.threatseverity'), zia_record=coalesce('event.recordid',recordid), zia_reason='event.reason', zia_method='event.reqmethod', zia_response='event.respcode' | table _time host user src_ip dest_ip zia_url_host zia_method zia_response action zia_reason zia_severity zia_app zia_record 'event.sc4s_marker' | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>ZIA firewall triage</title>
+      <table>
+        <search>
+          <query>index=netfw sourcetype="zscaler:zia:firewall" host=$host_tok$ | eval zia_record=coalesce('event.recordid',recordid), zia_rule=coalesce(rule,'event.rulelabel'), zia_app=coalesce(app,'event.nwapp'), zia_dest_country='event.destcountry' | table _time host user src_ip dest_ip dest_port transport action zia_rule zia_app zia_dest_country 'event.durationms' 'event.inbytes' 'event.outbytes' zia_record 'event.sc4s_marker' | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Destination and application coverage</title>
+      <table>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | eval zia_dest=coalesce(dest,dest_ip,'event.serverip','event.cdip'), zia_app=coalesce(app,'event.appname','event.nwapp','event.nwsvc'), zia_rule=coalesce(rule,'event.rulelabel') | stats count by sourcetype zia_dest dest_port transport zia_app zia_rule action | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | stats count dc('event.sc4s_marker') as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host vendor product | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw ZIA NSS events</title>
+      <table>
+        <search>
+          <query>index IN (netproxy,netfw) sourcetype IN ("zscaler:zia:web","zscaler:zia:firewall") host=$host_tok$ | table _time index sourcetype source host vendor product user src src_ip dest dest_ip dest_port transport action severity app rule url_host 'event.recordid' 'event.sc4s_marker' _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,64 @@
+{
+  "catalogue_version": "0.1",
+  "origin": "community-extra",
+  "generated_at": "2026-05-27T18:00:00Z",
+  "entries": [
+    {
+      "id": "community_pfsense_filterlog_issue",
+      "display_name": "Community pfSense Filterlog issue candidate",
+      "vendor": "pfsense",
+      "product": "filterlog",
+      "relationship_to_upstream": "new_pack",
+      "summary": "GitHub issue snippet discussing pfSense filterlog parsing gaps.",
+      "source_kind": "issue",
+      "source_status": "candidate",
+      "provenance_url": "https://github.com/splunk/splunk-connect-for-syslog/issues/1234",
+      "artifacts": [
+        {
+          "type": "github_issue",
+          "kind": "issue_comment_snippet",
+          "path": "issues/1234#issuecomment-1",
+          "url": "https://github.com/splunk/splunk-connect-for-syslog/issues/1234#issuecomment-1"
+        }
+      ]
+    },
+    {
+      "id": "community_sonicwall_pr_candidate",
+      "display_name": "Community SonicWall PR candidate",
+      "vendor": "sonicwall",
+      "product": "firewall",
+      "relationship_to_upstream": "extends_upstream",
+      "summary": "Merged PR snippet showing parser adjustments for SonicWall events.",
+      "source_kind": "pull_request",
+      "source_status": "candidate",
+      "provenance_url": "https://github.com/splunk/splunk-connect-for-syslog/pull/5678",
+      "artifacts": [
+        {
+          "type": "github_pull_request",
+          "kind": "pull_request_file",
+          "path": "pulls/5678/files/app-sonicwall_firewall.conf",
+          "url": "https://github.com/splunk/splunk-connect-for-syslog/pull/5678/files"
+        }
+      ]
+    },
+    {
+      "id": "community_qnap_parser_snippet",
+      "display_name": "Community QNAP parser snippet",
+      "vendor": "qnap",
+      "product": "nas",
+      "relationship_to_upstream": "new_pack",
+      "summary": "Parser snippet candidate extracted from a GitHub discussion thread.",
+      "source_kind": "parser_snippet",
+      "source_status": "candidate",
+      "provenance_url": "https://github.com/splunk/splunk-connect-for-syslog/discussions/9012",
+      "artifacts": [
+        {
+          "type": "parser_snippet",
+          "kind": "syslog_ng_parser_snippet",
+          "path": "discussions/9012#snippet-qnap",
+          "url": "https://github.com/splunk/splunk-connect-for-syslog/discussions/9012"
+        }
+      ]
+    }
+  ]
+}

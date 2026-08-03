@@ -1,0 +1,1654 @@
+{
+  "schema_version": "0.1",
+  "id": "linux_auditd",
+  "version": "0.1.7",
+  "url": "https://man7.org/linux/man-pages/man8/auditd.8.html",
+  "description": "Curated SecHub Resources SC4S pack for Linux audit daemon records relayed as one audit record per line, with fixture-backed routing for SYSCALL, EXECVE, USER_LOGIN, PATH, CWD, USER_AUTH, CONFIG_CHANGE, AVC, DAEMON_START, DAEMON_END, DAEMON_CONFIG, USER_CMD, TTY, and SOFTWARE_UPDATE records.",
+  "display_name": "Linux auditd relay",
+  "vendor": "linux",
+  "product": "auditd",
+  "default_index": "osnix",
+  "default_source": "linux_auditd",
+  "listener": {
+    "source_id": "LINUX_AUDITD",
+    "transport": "tcp",
+    "port": 20064,
+    "env": {
+      "SC4S_LISTEN_LINUX_AUDITD_TCP_PORT": "20064",
+      "SOURCE_ALL_SET_APPEND": "LINUX_AUDITD"
+    }
+  },
+  "sourcetypes": {
+    "syscall": "linux:auditd:syscall",
+    "execve": "linux:auditd:execve",
+    "user_login": "linux:auditd:user_login",
+    "path": "linux:auditd:path",
+    "cwd": "linux:auditd:cwd",
+    "user_auth": "linux:auditd:user_auth",
+    "config_change": "linux:auditd:config_change",
+    "avc": "linux:auditd:avc",
+    "daemon_start": "linux:auditd:daemon_start",
+    "user_cmd": "linux:auditd:user_cmd",
+    "tty": "linux:auditd:tty",
+    "software_update": "linux:auditd:software_update",
+    "daemon_end": "linux:auditd:daemon_end",
+    "daemon_config": "linux:auditd:daemon_config"
+  },
+  "event_families": [
+    {
+      "id": "syscall",
+      "label": "Linux audit syscall records",
+      "match_engine": "pcre",
+      "match": "^type=SYSCALL\\b",
+      "expected_sourcetype": "linux:auditd:syscall",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "syscall",
+        "success",
+        "auid",
+        "uid"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "execve",
+      "label": "Linux audit execve argument records",
+      "match_engine": "pcre",
+      "match": "^type=EXECVE\\b",
+      "expected_sourcetype": "linux:auditd:execve",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "argc",
+        "a0"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "user_login",
+      "label": "Linux audit user login records",
+      "match_engine": "pcre",
+      "match": "^type=USER_LOGIN\\b",
+      "expected_sourcetype": "linux:auditd:user_login",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "op",
+        "res"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "path",
+      "label": "Linux audit path watch records",
+      "match_engine": "pcre",
+      "match": "^type=PATH\\b",
+      "expected_sourcetype": "linux:auditd:path",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "name",
+        "inode",
+        "nametype"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "cwd",
+      "label": "Linux audit current working directory records",
+      "match_engine": "pcre",
+      "match": "^type=CWD\\b",
+      "expected_sourcetype": "linux:auditd:cwd",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "cwd"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "user_auth",
+      "label": "Linux audit user authentication records",
+      "match_engine": "pcre",
+      "match": "^type=USER_AUTH\\b",
+      "expected_sourcetype": "linux:auditd:user_auth",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "operation",
+        "user",
+        "result",
+        "src_ip"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "config_change",
+      "label": "Linux audit configuration change records",
+      "match_engine": "pcre",
+      "match": "^type=CONFIG_CHANGE\\b",
+      "expected_sourcetype": "linux:auditd:config_change",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "operation",
+        "audit_key",
+        "result"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "avc",
+      "label": "SELinux AVC denial records",
+      "match_engine": "pcre",
+      "match": "^type=AVC\\b",
+      "expected_sourcetype": "linux:auditd:avc",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "result",
+        "selinux_permission",
+        "selinux_source_context",
+        "selinux_target_context",
+        "selinux_target_class"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "daemon_start",
+      "label": "Linux audit daemon start records",
+      "match_engine": "pcre",
+      "match": "^type=DAEMON_START\\b",
+      "expected_sourcetype": "linux:auditd:daemon_start",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "daemon_version",
+        "kernel_version",
+        "process_id",
+        "result"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "daemon_end",
+      "label": "Linux audit daemon shutdown records",
+      "match_engine": "pcre",
+      "match": "^type=DAEMON_END\\b",
+      "expected_sourcetype": "linux:auditd:daemon_end",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "daemon_operation",
+        "process_id",
+        "result"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "daemon_config",
+      "label": "Linux audit daemon configuration records",
+      "match_engine": "pcre",
+      "match": "^type=DAEMON_CONFIG\\b",
+      "expected_sourcetype": "linux:auditd:daemon_config",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "daemon_operation",
+        "daemon_state",
+        "process_id",
+        "result"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "user_cmd",
+      "label": "Linux audit user command records",
+      "match_engine": "pcre",
+      "match": "^type=USER_CMD\\b",
+      "expected_sourcetype": "linux:auditd:user_cmd",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "user_command_cwd",
+        "user_command_hex",
+        "terminal",
+        "result"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "tty",
+      "label": "Linux audit TTY keystroke records",
+      "match_engine": "pcre",
+      "match": "^type=TTY\\b",
+      "expected_sourcetype": "linux:auditd:tty",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "process_id",
+        "uid",
+        "tty_major",
+        "tty_minor",
+        "process",
+        "tty_data_hex"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    },
+    {
+      "id": "software_update",
+      "label": "Linux audit software update records",
+      "match_engine": "pcre",
+      "match": "^type=SOFTWARE_UPDATE\\b",
+      "expected_sourcetype": "linux:auditd:software_update",
+      "primary_id_field": "audit_serial",
+      "required_fields": [
+        "audit_type",
+        "audit_serial",
+        "software_package",
+        "software_type",
+        "process",
+        "process_path",
+        "result"
+      ],
+      "timestamp_fields": [
+        "msg=audit(epoch.serial)"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Linux",
+    "product": "auditd",
+    "vendor_product": "linux:auditd",
+    "audit_type": "Linux audit record type such as SYSCALL, EXECVE, USER_LOGIN, or PATH",
+    "audit_epoch": "Epoch seconds from msg=audit()",
+    "audit_serial": "Audit event serial used to correlate multi-record audit events",
+    "auid": "Audit user ID",
+    "uid": "Linux user ID",
+    "user": "Derived user_id where present",
+    "action": "Derived from audit record type or operation",
+    "result": "Audit success/result token when present",
+    "signature": "Audit record type, operation, or audit key",
+    "signature_id": "Audit record type",
+    "syscall": "Linux syscall number from SYSCALL records",
+    "process": "comm value where present",
+    "process_path": "exe or a0 process path where present",
+    "process_command_line": "Derived EXECVE command line from fixture arguments",
+    "process_id": "pid where present",
+    "src": "Alias for src_ip where login records include addr",
+    "src_ip": "Source IP in USER_LOGIN records",
+    "terminal": "Login terminal token",
+    "file_path": "PATH record name field",
+    "inode": "PATH record inode",
+    "file_mode": "PATH record mode",
+    "file_owner_uid": "PATH record owner UID",
+    "file_owner_gid": "PATH record owner GID",
+    "name_type": "PATH record nametype",
+    "audit_key": "Audit rule key where present",
+    "marker": "Synthetic fixture marker only",
+    "operation": "Audit operation token such as PAM:authentication or add_rule",
+    "cwd": "Current working directory from CWD records",
+    "src_host": "Source hostname token where authentication records include it",
+    "audit_rule_list": "Audit rule list such as exit from CONFIG_CHANGE records",
+    "selinux_permission": "SELinux AVC permission token such as write",
+    "selinux_source_context": "SELinux source security context from AVC records",
+    "selinux_target_context": "SELinux target security context from AVC records",
+    "selinux_target_class": "SELinux target class from AVC records",
+    "daemon_version": "auditd userspace daemon version from DAEMON_START records",
+    "kernel_version": "Kernel version token from DAEMON_START records",
+    "audit_format": "Audit output format token from DAEMON_START records",
+    "user_command_cwd": "Working directory captured in USER_CMD records",
+    "user_command_hex": "Hex-encoded command payload from USER_CMD records; retained without decoding/redaction by this pack",
+    "tty_major": "TTY major number from TTY audit records",
+    "tty_minor": "TTY minor number from TTY audit records",
+    "tty_data_hex": "Hex-encoded terminal/keystroke data from TTY records; sensitive and retained only as source evidence",
+    "software_package": "Package/software identifier from SOFTWARE_UPDATE records",
+    "software_type": "Software package type such as rpm where present",
+    "gpg_result": "GPG verification result token from SOFTWARE_UPDATE records",
+    "key_enforce": "Package key-enforcement flag from SOFTWARE_UPDATE records",
+    "root_dir": "Package manager root directory from SOFTWARE_UPDATE records",
+    "daemon_operation": "Audit daemon operation token from DAEMON_END/DAEMON_CONFIG records such as terminate or reconfigure",
+    "daemon_state": "Audit daemon configuration state token where present, such as no-change",
+    "session_id": "Linux audit session ID where daemon lifecycle rows include ses",
+    "security_subject": "SELinux/security subject token from daemon lifecycle/configuration records"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-linux_auditd.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/linux_auditd_overview.xml"
+    ],
+    "test_events": [
+      "test-events/linux_auditd_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20064.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/linux_auditd_reduction_candidates.csv",
+      "validation/preflight-2026-06-07.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / auditd relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20064,
+      "notes": "Dedicated TCP listener for one audit record per line from auditd, rsyslog, syslog-ng, or collector relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20064,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Linux audit userspace/auditd record format",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in public Linux auditd/auditctl documentation and public parser references; exact distro/kernel audit field coverage must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-07",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Linux auditd/auditctl public documentation and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent audit records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Linux audit relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Linux auditd relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "linux_auditd_records"
+      ],
+      "event_count": 14,
+      "marker_prefix": "SC4S_LINUX_AUDITD_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20064.sh"
+    },
+    "readback": {
+      "spl": "index=osnix sechub_fixture_marker=\"SC4S_LINUX_AUDITD_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product audit_type audit_serial action operation signature signature_id result auid uid user src src_ip process process_id security_subject process_path process_command_line cwd file_path audit_key audit_rule_list selinux_permission selinux_source_context selinux_target_context selinux_target_class daemon_operation daemon_state daemon_version kernel_version audit_format user_command_cwd user_command_hex tty_major tty_minor tty_data_hex software_package software_type gpg_result key_enforce root_dir marker _raw",
+      "expected_count": 14,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "audit_type",
+        "audit_serial",
+        "signature/signature_id",
+        "family-specific fields",
+        "timestamp",
+        "operation",
+        "cwd",
+        "audit_rule_list",
+        "SELinux AVC context",
+        "audit daemon lifecycle fields",
+        "audit daemon shutdown/configuration fields",
+        "user command fields",
+        "TTY data hex context",
+        "software update package fields"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-07",
+      "summary": "2026-06-07 local preflight found no TCP listener on 127.0.0.1:20064 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-07.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-07.md",
+        "summary": "Command-grounded local preflight evidence for missing Linux auditd TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20064,
+          "protocol": "line_delimited_syslog_auditd",
+          "purpose": "Dedicated Linux auditd relay listener"
+        }
+      ],
+      "required_indexes": [
+        "osnix"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to osnix",
+        "Search role can read osnix"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "linux_auditd_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/linux_auditd/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/linux_auditd/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/linux_auditd/compose.yaml",
+      "compose_project": "sechub-linux-auditd-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "osnix index preflight/create"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/linux_auditd/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/linux_auditd/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/linux_auditd/scripts/send_tcp_20064.sh 127.0.0.1 20064",
+        "splunk_summary_readback": "index=osnix sechub_fixture_marker=\"SC4S_LINUX_AUDITD_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=osnix sechub_fixture_marker=\"SC4S_LINUX_AUDITD_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product audit_type audit_serial action operation signature signature_id result auid uid user src src_ip process process_id security_subject process_path process_command_line cwd file_path audit_key audit_rule_list selinux_permission selinux_source_context selinux_target_context selinux_target_class daemon_operation daemon_state daemon_version kernel_version audit_format user_command_cwd user_command_hex tty_major tty_minor tty_data_hex software_package software_type gpg_result key_enforce root_dir marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "osnix",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/linux_auditd/splunk -> /opt/splunk/etc/apps/sechub_linux_auditd:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20064,
+          "host_port_env": "SC4S_LINUX_AUDITD_PORT",
+          "source_id": "LINUX_AUDITD"
+        },
+        "parser_mount": "packs/linux_auditd/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "syscall",
+          "sourcetype": "linux:auditd:syscall",
+          "data_structures": [
+            "Linux audit syscall records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_SYSCALL_001"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "execve",
+          "sourcetype": "linux:auditd:execve",
+          "data_structures": [
+            "Linux audit execve argument records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_EXECVE_002"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "user_login",
+          "sourcetype": "linux:auditd:user_login",
+          "data_structures": [
+            "Linux audit user login records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_USER_LOGIN_003"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "path",
+          "sourcetype": "linux:auditd:path",
+          "data_structures": [
+            "Linux audit path watch records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_PATH_004"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "cwd",
+          "sourcetype": "linux:auditd:cwd",
+          "data_structures": [
+            "Linux audit current working directory records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_CWD_005"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "user_auth",
+          "sourcetype": "linux:auditd:user_auth",
+          "data_structures": [
+            "Linux audit user authentication records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_USER_AUTH_006"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "config_change",
+          "sourcetype": "linux:auditd:config_change",
+          "data_structures": [
+            "Linux audit configuration change records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_CONFIG_CHANGE_007"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "avc",
+          "sourcetype": "linux:auditd:avc",
+          "data_structures": [
+            "SELinux AVC denial records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_AVC_008"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "daemon_start",
+          "sourcetype": "linux:auditd:daemon_start",
+          "data_structures": [
+            "Linux audit daemon start records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_DAEMON_START_009"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "daemon_end",
+          "sourcetype": "linux:auditd:daemon_end",
+          "data_structures": [
+            "Linux audit daemon shutdown records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_DAEMON_END_013"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "daemon_config",
+          "sourcetype": "linux:auditd:daemon_config",
+          "data_structures": [
+            "Linux audit daemon configuration records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_DAEMON_CONFIG_014"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "user_cmd",
+          "sourcetype": "linux:auditd:user_cmd",
+          "data_structures": [
+            "Linux audit user command records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_USER_CMD_010"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "tty",
+          "sourcetype": "linux:auditd:tty",
+          "data_structures": [
+            "Linux audit TTY keystroke records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_TTY_011"
+          ]
+        },
+        {
+          "source": "linux_auditd",
+          "source_shape": "audit_record_line_relay",
+          "event_family": "software_update",
+          "sourcetype": "linux:auditd:software_update",
+          "data_structures": [
+            "Linux audit software update records"
+          ],
+          "markers": [
+            "SC4S_LINUX_AUDITD_TEST_SOFTWARE_UPDATE_012"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "live Linux auditd source-version emission and kernel/userspace option behavior are not proven by this harness",
+        "multi-record audit-event correlation is preserved by audit_serial but not assembled into one event",
+        "AppArmor denials, audit daemon abort/rotate/resume, backlog/lost-event health records, distro wrappers, and collector envelopes remain deferred"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "linux_auditd_records",
+      "label": "Linux auditd synthetic-equivalent records",
+      "path": "test-events/linux_auditd_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "linux_audit_record_line_payload",
+      "envelope": "none",
+      "serialization": "key_value",
+      "event_count": 14,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_LINUX_AUDITD_TEST_SYSCALL_001",
+        "SC4S_LINUX_AUDITD_TEST_EXECVE_002",
+        "SC4S_LINUX_AUDITD_TEST_USER_LOGIN_003",
+        "SC4S_LINUX_AUDITD_TEST_PATH_004",
+        "SC4S_LINUX_AUDITD_TEST_CWD_005",
+        "SC4S_LINUX_AUDITD_TEST_USER_AUTH_006",
+        "SC4S_LINUX_AUDITD_TEST_CONFIG_CHANGE_007",
+        "SC4S_LINUX_AUDITD_TEST_AVC_008",
+        "SC4S_LINUX_AUDITD_TEST_DAEMON_START_009",
+        "SC4S_LINUX_AUDITD_TEST_USER_CMD_010",
+        "SC4S_LINUX_AUDITD_TEST_TTY_011",
+        "SC4S_LINUX_AUDITD_TEST_SOFTWARE_UPDATE_012",
+        "SC4S_LINUX_AUDITD_TEST_DAEMON_END_013",
+        "SC4S_LINUX_AUDITD_TEST_DAEMON_CONFIG_014"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "msg=audit(epoch.serial)",
+        "primary_timezone": "UTC epoch seconds",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or receiver time policy"
+        ],
+        "notes": "Fixtures use Linux audit epoch timestamps. Production relays should preserve msg=audit() timestamp and audit serial."
+      },
+      "field_delimiting": {
+        "style": "key_value",
+        "field_separator": "space",
+        "quote_character": "double quote for string values; USER_LOGIN msg field uses single quotes around nested content",
+        "escape_policy": "Synthetic values avoid secrets and use RFC5737 documentation addresses",
+        "notes": "Each line is one audit record. Multi-record audit events are correlated by audit_serial rather than assembled by this pack."
+      },
+      "expected_families": [
+        "syscall",
+        "execve",
+        "user_login",
+        "path",
+        "cwd",
+        "user_auth",
+        "config_change",
+        "avc",
+        "daemon_start",
+        "daemon_end",
+        "daemon_config",
+        "user_cmd",
+        "tty",
+        "software_update"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-linux_auditd.conf",
+      "target_path": "local/config/app_parsers/syslog/app-linux_auditd.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/linux_auditd.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/linux_auditd_overview.xml",
+      "target_path": "splunk/default/data/ui/views/linux_auditd_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/linux_auditd_test_events.txt",
+      "target_path": "test-events/linux_auditd_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20064.sh",
+      "target_path": "scripts/send_tcp_20064.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/linux_auditd_reduction_candidates.csv",
+      "target_path": "docs/linux_auditd_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_07",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-07.md",
+      "target_path": "validation/preflight-2026-06-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Public Linux auditd/auditctl documentation and Elastic/Filebeat auditd module documentation; synthetic-equivalent fixtures authored from documented audit record structure.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use generic usernames, generic Linux paths, and RFC5737 documentation IP addresses; no customer Linux audit records or proprietary TA content are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-18",
+      "notes": "2026-06-18 hardening added Linux audit-userspace auditd source-template grounded DAEMON_END and DAEMON_CONFIG coverage while keeping conservative trust."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "uid",
+            "auid",
+            "user_id"
+          ],
+          "status": "partial",
+          "notes": "Numeric Linux/audit user IDs are preserved; no UID-to-name lookup is performed."
+        },
+        "src": {
+          "source_fields": [
+            "addr",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Login source IP where present."
+        },
+        "action": {
+          "source_fields": [
+            "audit_type",
+            "operation"
+          ],
+          "status": "partial",
+          "notes": "Derived from audit record type or operation; not a complete normalized action taxonomy."
+        },
+        "signature_id": {
+          "source_fields": [
+            "audit_type"
+          ],
+          "status": "partial",
+          "notes": "Audit record type used as signature_id."
+        },
+        "signature": {
+          "source_fields": [
+            "audit_type",
+            "operation",
+            "audit_key"
+          ],
+          "status": "partial",
+          "notes": "Family-specific audit grouping token."
+        },
+        "process": {
+          "source_fields": [
+            "comm"
+          ],
+          "status": "partial",
+          "notes": "Process command name where present."
+        },
+        "process_path": {
+          "source_fields": [
+            "exe",
+            "a0"
+          ],
+          "status": "partial",
+          "notes": "Executable path from SYSCALL/EXECVE records."
+        },
+        "process_command_line": {
+          "source_fields": [
+            "a0",
+            "a1",
+            "a2"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed EXECVE arguments; retained by default."
+        },
+        "file_path": {
+          "source_fields": [
+            "name"
+          ],
+          "status": "partial",
+          "notes": "PATH record object path."
+        },
+        "cwd": {
+          "source_fields": [
+            "cwd"
+          ],
+          "status": "partial",
+          "notes": "Current working directory from CWD records; used for audit correlation context."
+        },
+        "audit_rule_list": {
+          "source_fields": [
+            "audit_rule_list"
+          ],
+          "status": "partial",
+          "notes": "Audit rule list/configuration context from CONFIG_CHANGE records."
+        },
+        "selinux_permission": {
+          "source_fields": [
+            "selinux_permission"
+          ],
+          "status": "partial",
+          "notes": "SELinux AVC denied/granted permission token."
+        },
+        "selinux_context": {
+          "source_fields": [
+            "selinux_source_context",
+            "selinux_target_context",
+            "selinux_target_class"
+          ],
+          "status": "partial",
+          "notes": "SELinux source/target contexts and target class for AVC denial triage."
+        },
+        "daemon_version": {
+          "source_fields": [
+            "daemon_version",
+            "kernel_version",
+            "audit_format"
+          ],
+          "status": "partial",
+          "notes": "Audit daemon lifecycle context for start records; not full auditd health monitoring."
+        },
+        "command": {
+          "source_fields": [
+            "user_command_hex",
+            "process_command_line"
+          ],
+          "status": "partial",
+          "notes": "USER_CMD command payload is retained as hex source evidence; no command decoding or normalization is published."
+        },
+        "tty_data": {
+          "source_fields": [
+            "tty_data_hex",
+            "tty_major",
+            "tty_minor"
+          ],
+          "status": "partial",
+          "notes": "TTY audit payload and terminal identifiers are sensitive source evidence, not decoded session reconstruction."
+        },
+        "software_package": {
+          "source_fields": [
+            "software_package",
+            "software_type",
+            "gpg_result",
+            "key_enforce"
+          ],
+          "status": "partial",
+          "notes": "Package update context from SOFTWARE_UPDATE records; not complete software inventory."
+        },
+        "daemon_lifecycle": {
+          "source_fields": [
+            "audit_type",
+            "daemon_operation",
+            "daemon_state",
+            "security_subject"
+          ],
+          "status": "partial",
+          "notes": "Audit daemon shutdown/reconfiguration lifecycle context; not complete auditd health monitoring."
+        }
+      },
+      "notes": "Partial Endpoint/Authentication/Change mapping only; not a complete Linux TA or auditd correlation implementation."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.uid": {
+          "source_fields": [
+            "auid",
+            "uid",
+            "user_id"
+          ],
+          "status": "partial",
+          "notes": "Numeric IDs only; no user-name enrichment."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "addr",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Login source IP where present."
+        },
+        "process.name": {
+          "source_fields": [
+            "comm"
+          ],
+          "status": "partial",
+          "notes": "Process command name."
+        },
+        "process.file.path": {
+          "source_fields": [
+            "exe",
+            "a0"
+          ],
+          "status": "partial",
+          "notes": "Executable path."
+        },
+        "file.path": {
+          "source_fields": [
+            "name"
+          ],
+          "status": "partial",
+          "notes": "PATH record object path."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "audit_serial"
+          ],
+          "status": "partial",
+          "notes": "Audit serial for record correlation, not a globally unique event ID."
+        },
+        "process.cwd": {
+          "source_fields": [
+            "cwd"
+          ],
+          "status": "partial",
+          "notes": "CWD record context only; not assembled with all related records by the pack."
+        },
+        "policy.rule.name": {
+          "source_fields": [
+            "audit_key",
+            "audit_rule_list"
+          ],
+          "status": "partial",
+          "notes": "Audit rule key/list context for configuration changes."
+        },
+        "finding.title": {
+          "source_fields": [
+            "selinux_permission",
+            "selinux_target_class"
+          ],
+          "status": "partial",
+          "notes": "SELinux AVC denial context; not complete OCSF findings classification."
+        },
+        "device.os.version": {
+          "source_fields": [
+            "kernel_version"
+          ],
+          "status": "partial",
+          "notes": "Kernel version context from DAEMON_START records only."
+        },
+        "metadata.product.version": {
+          "source_fields": [
+            "daemon_version"
+          ],
+          "status": "partial",
+          "notes": "auditd version from DAEMON_START records only."
+        },
+        "process.cmd_line": {
+          "source_fields": [
+            "user_command_hex",
+            "process_command_line"
+          ],
+          "status": "partial",
+          "notes": "USER_CMD command payload remains hex-encoded source evidence."
+        },
+        "session.terminal": {
+          "source_fields": [
+            "tty_major",
+            "tty_minor",
+            "tty_data_hex"
+          ],
+          "status": "partial",
+          "notes": "TTY audit data retained for terminal activity review; no decoded keystroke reconstruction is published."
+        },
+        "package.name": {
+          "source_fields": [
+            "software_package",
+            "software_type"
+          ],
+          "status": "partial",
+          "notes": "Software update package context where auditd emits SOFTWARE_UPDATE records."
+        },
+        "service.status": {
+          "source_fields": [
+            "daemon_operation",
+            "daemon_state",
+            "result"
+          ],
+          "status": "partial",
+          "notes": "Audit daemon lifecycle/configuration state helper mapping only."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.id": {
+          "source_fields": [
+            "auid",
+            "uid",
+            "user_id"
+          ],
+          "status": "partial",
+          "notes": "Numeric Linux/audit user IDs."
+        },
+        "source.ip": {
+          "source_fields": [
+            "addr",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Login source IP where present."
+        },
+        "event.action": {
+          "source_fields": [
+            "audit_type",
+            "operation"
+          ],
+          "status": "partial",
+          "notes": "Derived from audit record type or operation."
+        },
+        "event.code": {
+          "source_fields": [
+            "audit_type"
+          ],
+          "status": "partial",
+          "notes": "Audit record type."
+        },
+        "event.id": {
+          "source_fields": [
+            "audit_serial"
+          ],
+          "status": "partial",
+          "notes": "Audit serial, scoped to audit stream correlation."
+        },
+        "process.name": {
+          "source_fields": [
+            "comm"
+          ],
+          "status": "partial",
+          "notes": "Process command name."
+        },
+        "process.executable": {
+          "source_fields": [
+            "exe",
+            "a0"
+          ],
+          "status": "partial",
+          "notes": "Executable path."
+        },
+        "process.command_line": {
+          "source_fields": [
+            "a0",
+            "a1",
+            "a2"
+          ],
+          "status": "partial",
+          "notes": "EXECVE fixture arguments."
+        },
+        "file.path": {
+          "source_fields": [
+            "name"
+          ],
+          "status": "partial",
+          "notes": "PATH record object path."
+        },
+        "process.working_directory": {
+          "source_fields": [
+            "cwd"
+          ],
+          "status": "partial",
+          "notes": "CWD record context."
+        },
+        "rule.name": {
+          "source_fields": [
+            "audit_key"
+          ],
+          "status": "partial",
+          "notes": "Audit watch/rule key where present."
+        },
+        "event.reason": {
+          "source_fields": [
+            "selinux_permission",
+            "selinux_source_context",
+            "selinux_target_context",
+            "selinux_target_class"
+          ],
+          "status": "partial",
+          "notes": "SELinux AVC denial context."
+        },
+        "service.version": {
+          "source_fields": [
+            "daemon_version"
+          ],
+          "status": "partial",
+          "notes": "auditd daemon version from DAEMON_START records."
+        },
+        "host.os.kernel": {
+          "source_fields": [
+            "kernel_version"
+          ],
+          "status": "partial",
+          "notes": "Kernel version from DAEMON_START records."
+        },
+        "event.original": {
+          "source_fields": [
+            "tty_data_hex",
+            "user_command_hex"
+          ],
+          "status": "partial",
+          "notes": "Sensitive terminal/command payload source evidence retained in raw/hex form."
+        },
+        "package.name": {
+          "source_fields": [
+            "software_package"
+          ],
+          "status": "partial",
+          "notes": "SOFTWARE_UPDATE package identifier only; not full package inventory."
+        },
+        "package.type": {
+          "source_fields": [
+            "software_type"
+          ],
+          "status": "partial",
+          "notes": "Package type token such as rpm when present."
+        },
+        "service.state": {
+          "source_fields": [
+            "daemon_operation",
+            "daemon_state",
+            "result"
+          ],
+          "status": "partial",
+          "notes": "Audit daemon lifecycle/configuration state helper mapping only."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/linux_auditd/README.md": "sha256:5e2e5a200c28c4aa0b69356176ee251baefe40f38aeabeff9fc17be6697eabf4",
+      "packs/linux_auditd/sc4s/app_parsers/syslog/app-linux_auditd.conf": "sha256:d9dffa683875d2fd22850709e39a8d3754894851f46c298093f00e584df513df",
+      "packs/linux_auditd/sc4s/env.example": "sha256:fc295420682c39554ccae44b23d563e2e1ed3454e98353c9f6c96e7fd44f9b16",
+      "packs/linux_auditd/splunk/default/props.conf": "sha256:4d4cb914aeb797138337e691df1bc4b35c5376d8ab6bc1ffd9b1302dbc0bd017",
+      "packs/linux_auditd/splunk/default/transforms.conf": "sha256:796e3a5ef8c72abc0d25d6c3dd5d201fa4287ac832ebe1d29c13b989080b2111",
+      "packs/linux_auditd/splunk/default/eventtypes.conf": "sha256:c99fc6d59b94a0a37f0132e7e4bd4f2b5c80a2eb1cd530c9f21d76a111fd8031",
+      "packs/linux_auditd/splunk/default/tags.conf": "sha256:faf3aeaba59529bc7c0aa64c330046230c846c22a7df3005c1eb1f6d4b933002",
+      "packs/linux_auditd/splunk/default/data/ui/views/linux_auditd_overview.xml": "sha256:c8769783889a7d50819d9f1043432a51240b32d0e26e3c6b4c7d72ad570f05dd",
+      "packs/linux_auditd/test-events/linux_auditd_test_events.txt": "sha256:9d44496da1a99edfee2ea6fee38d9baf85729331d58e562c00091cc432a02a39",
+      "packs/linux_auditd/scripts/send_tcp_20064.sh": "sha256:e46061cea582bd51ccab5e541fe2e2d522666d91fe469208110c0da1589cbe35",
+      "packs/linux_auditd/docs/linux_auditd_reduction_candidates.csv": "sha256:bb7397ec3db844188a00744fbbe79abcb73be540b35c945165c280e80ff57c32",
+      "packs/linux_auditd/validation/preflight-2026-06-07.md": "sha256:587311e0117d736ad71603112b8f3498a0ff5de720228b08bb5b3b4cce98c639",
+      "packs/linux_auditd/scripts/e2e_docker_compose.sh": "sha256:ed0fcfc60012b8e54ef8f3548476b052d5181312584d045c31876482c0d7755a"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "linux",
+    "endpoint",
+    "os",
+    "authentication",
+    "audit",
+    "security"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "audit_log_line_relay",
+      "label": "audit.log one-record-per-line relay",
+      "description": "Default initial variant for one complete Linux audit record per line, optionally syslog-wrapped by a collector relay.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "audit_log_file",
+        "auditd_dispatcher",
+        "rsyslog_relay",
+        "syslog_ng_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "key_value"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "syscall",
+        "execve",
+        "user_login",
+        "path",
+        "cwd",
+        "user_auth",
+        "config_change",
+        "avc",
+        "daemon_start",
+        "daemon_end",
+        "daemon_config",
+        "user_cmd",
+        "tty",
+        "software_update"
+      ],
+      "test_event_sets": [
+        "linux_auditd_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "syslog_ng",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent fixtures only; no live Linux audit relay capture or Splunk read-back.",
+        "Multi-record audit correlation is preserved by audit_serial but not assembled in this version.",
+        "AppArmor-specific denial shapes, audit daemon abort/rotate/resume records, backlog/lost-event health, package-manager variants beyond the fixture-backed SOFTWARE_UPDATE row, and distro-specific wrapper fields remain future coverage."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/linux_auditd_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "type",
+        "audit_serial",
+        "auid",
+        "uid",
+        "comm",
+        "exe",
+        "key",
+        "sc4s_marker"
+      ],
+      "notes": "Use only after sampling the actual audit relay schema. Do not drop command arguments, PATH object context, login source, or audit serial by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Linux audit relay, SC4S runtime replay, HEC delivery, Splunk read-back, Manager apply, or production evidence captured.",
+    "Synthetic-equivalent fixtures are documentation-shaped and do not prove source validation.",
+    "Multi-record audit events are not assembled; analysts should correlate by audit_serial.",
+    "Parser routes common audit record types represented by fixtures; AppArmor-specific denials, audit daemon abort/rotate/resume records, backlog/lost-event health records, and distro-specific wrapper variants remain future work."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Linux auditd intake",
+      "description": "Dedicated listener, SC4S parser, auditd fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-linux_auditd.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Linux auditd analyst knowledge",
+      "description": "Adds eventtypes/tags for fixture-backed syscall, execve, login/auth, path/CWD, config-change, SELinux AVC, and audit daemon lifecycle/configuration discovery. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Linux auditd reduction candidates",
+      "description": "Review-only candidate list for future collector/Cribl reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/linux_auditd_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local replay/read-back validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "syslog_file_relay",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "auditd_text",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Linux auditd records are syslog/file-relayed text records, not API-native.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "linux_auditd_overview_splunk_test",
+      "title": "Linux auditd relay — dashboard example",
+      "source_path": "dashboards/screenshots/linux-auditd-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Linux auditd relay dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

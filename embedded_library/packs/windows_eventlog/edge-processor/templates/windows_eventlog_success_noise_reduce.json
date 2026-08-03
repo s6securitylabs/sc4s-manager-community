@@ -1,0 +1,67 @@
+{
+  "artifacts": {
+    "module": "edge-processor/modules/windows_eventlog_success_noise_reduce.spl2",
+    "parsed_sample": "edge-processor/samples/windows_eventlog_success_noise_reduce.parsed.jsonl",
+    "preflight": "edge-processor/validation/windows_eventlog_success_noise_reduce-preflight.md",
+    "raw_sample": "edge-processor/samples/windows_eventlog_success_noise_reduce.raw.txt"
+  },
+  "display_name": "Windows Event Log success-noise reduction candidate",
+  "lossy_behavior": {
+    "candidate_reduction_notes": [
+      "Candidate reduction should start with well-known high-volume successful logon/noise classes such as selected 4624 service-account or machine-account activity after allowlist approval.",
+      "Always retain 4625 failures, account changes, policy changes, object access under monitored paths, service installation, process creation, PowerShell script block, Defender detections, and unclassified event IDs by default."
+    ],
+    "default_lossy": false,
+    "enabled_by_default": false,
+    "must_retain_by_default": "security signals, denials/failures, privileged/admin changes, detections, unknown/unclassified event families, and raw vendor context unless local validation approves otherwise"
+  },
+  "notes": "Windows Event Logs are high volume, but lossy reduction is risky; only narrowly scoped success-noise filters should be tested first.",
+  "pack_id": "windows_eventlog",
+  "pipeline_taxonomy": {
+    "destinations": [
+      {
+        "default_index_hint": "oswinsec",
+        "placeholder": "$destination"
+      }
+    ],
+    "pipeline": "source-type definitions + transforms + destination(s)",
+    "source_type_definitions": [
+      "windows:eventlog:security",
+      "windows:eventlog:process",
+      "windows:eventlog:powershell",
+      "windows:eventlog:defender"
+    ],
+    "transforms": [
+      "annotate template id/status only by default",
+      "optional local allowlist/drop predicates require validation before enablement"
+    ]
+  },
+  "quality_posture": "curated_artifact_only_unverified",
+  "review_status": "candidate_not_edge_processor_validated",
+  "rollback": [
+    "Disable or detach the Edge Processor pipeline template",
+    "route source directly to the original Splunk destination/index",
+    "replay a held-out sample to verify full-fidelity ingestion restored",
+    "retain pre/post event counts and affected search evidence"
+  ],
+  "source": {
+    "default_index": "oswinsec",
+    "name": "Microsoft Windows Event XML relay",
+    "sample_source": "test-events/windows_eventlog_test_events.txt",
+    "sourcetypes": [
+      "windows:eventlog:security",
+      "windows:eventlog:process",
+      "windows:eventlog:powershell",
+      "windows:eventlog:defender"
+    ]
+  },
+  "template_id": "windows_eventlog_success_noise_reduce",
+  "template_type": "splunk_edge_processor_pipeline_candidate",
+  "validation_required": [
+    "Edge Processor preview parses module and sample source",
+    "non-production install/enable test",
+    "replay fixture and representative production-equivalent sample",
+    "destination read-back verifies event count, sourcetype/source/index, timestamps, required normalized fields, and retained raw context",
+    "compare detection/search results before and after reduction"
+  ]
+}

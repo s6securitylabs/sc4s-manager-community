@@ -1,0 +1,173 @@
+<form version="1.1" theme="dark">
+  <label>Veeam Backup &amp; Replication - Overview</label>
+  <description>Fixture-backed onboarding and first-triage dashboard for Veeam Backup &amp; Replication syslog job/activity records. This is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Splunk host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="user_tok" searchWhenChanged="true">
+      <label>Veeam user filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Veeam VBR syslog events</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Successful job/activity rows</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") (result=Success OR signature="*completed successfully*" OR action="*Success*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Distinct sessions</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | stats dc(session_id) as sessions</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Objects / jobs touched</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | stats dc(object) as objects</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Event volume over time</title>
+      <chart>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | timechart count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Action / result distribution</title>
+      <chart>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | eval action_result=coalesce(action,result,signature) | stats count by action_result | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Job/session activity review</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | table _time host source action result session_id signature signature_id object src_host user marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Veeam structured-data identifiers</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | table _time host values.categoryId values.instanceId values.JobSessionID values.TaskSessionID values.Status values.ActivityType values.SourceHostName values.ObjectName marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top users, source hosts, and objects</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | stats count, values(action) as actions, values(result) as results, values(signature_id) as instance_ids by user, src_host, object | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Onboarding coverage by host/source</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | stats count, dc(session_id) as session_count, dc(user) as user_count, values(vendor_product) as vendor_product by host, source, sourcetype | sort -count | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Veeam VBR context</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="veeam:vbr:syslog" host=$host_tok$ (user="$user_tok$" OR "$user_tok$"="*") | table _time host source sourcetype vendor product action result session_id signature signature_id object src_host user marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

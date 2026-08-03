@@ -1,0 +1,1615 @@
+{
+  "schema_version": "0.1",
+  "id": "cisco_duo_audit",
+  "version": "0.1.16",
+  "url": "https://duo.com/docs/adminapi",
+  "description": "Curated SecHub Resources SC4S pack for Cisco Duo Admin API authentication, activity, telephony, Trust Monitor, selected user/phone inventory, and selected integration/application inventory JSON records relayed as one JSON object per line.",
+  "display_name": "Cisco Duo Audit",
+  "vendor": "cisco",
+  "product": "duo_audit",
+  "default_index": "main",
+  "default_source": "cisco_duo_audit",
+  "listener": {
+    "source_id": "CISCO_DUO_AUDIT",
+    "transport": "tcp",
+    "port": 20088,
+    "env": {
+      "SC4S_LISTEN_CISCO_DUO_AUDIT_TCP_PORT": "20088",
+      "SOURCE_ALL_SET_APPEND": "CISCO_DUO_AUDIT"
+    }
+  },
+  "sourcetypes": {
+    "auth_success": "cisco:duo:audit:json",
+    "auth_denied": "cisco:duo:audit:json",
+    "auth_fraud": "cisco:duo:audit:json",
+    "activity_admin": "cisco:duo:audit:json",
+    "activity_policy": "cisco:duo:audit:json",
+    "activity_webauthn": "cisco:duo:audit:json",
+    "telephony": "cisco:duo:audit:json",
+    "trust_monitor_auth": "cisco:duo:audit:json",
+    "trust_monitor_bypass": "cisco:duo:audit:json",
+    "trust_monitor_device_registration": "cisco:duo:audit:json",
+    "user_phone_inventory": "cisco:duo:audit:json",
+    "integration_inventory": "cisco:duo:audit:json"
+  },
+  "event_families": [
+    {
+      "id": "auth_success",
+      "label": "Duo authentication success",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"authentication\".*\"result\"\\s*:\\s*\"success\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "txid",
+      "required_fields": [
+        "isotimestamp",
+        "event_type",
+        "result",
+        "factor",
+        "user.name"
+      ],
+      "timestamp_fields": [
+        "isotimestamp",
+        "timestamp"
+      ]
+    },
+    {
+      "id": "auth_denied",
+      "label": "Duo authentication denial or failure",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"authentication\".*\"result\"\\s*:\\s*\"failure\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "txid",
+      "required_fields": [
+        "isotimestamp",
+        "event_type",
+        "result",
+        "reason",
+        "factor"
+      ],
+      "timestamp_fields": [
+        "isotimestamp",
+        "timestamp"
+      ]
+    },
+    {
+      "id": "auth_fraud",
+      "label": "Duo authentication fraud report",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"authentication\".*\"result\"\\s*:\\s*\"fraud\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "txid",
+      "required_fields": [
+        "isotimestamp",
+        "event_type",
+        "result",
+        "reason",
+        "factor"
+      ],
+      "timestamp_fields": [
+        "isotimestamp",
+        "timestamp"
+      ]
+    },
+    {
+      "id": "activity_admin",
+      "label": "Duo administrative activity",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"activity\".*\"action\"\\s*:\\s*\"admin_create\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "activity_id",
+      "required_fields": [
+        "isotimestamp",
+        "event_type",
+        "action",
+        "username"
+      ],
+      "timestamp_fields": [
+        "isotimestamp",
+        "timestamp"
+      ]
+    },
+    {
+      "id": "activity_policy",
+      "label": "Duo policy activity",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"activity\".*\"action\"\\s*:\\s*\"policy_update\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "activity_id",
+      "required_fields": [
+        "isotimestamp",
+        "event_type",
+        "action",
+        "username",
+        "object"
+      ],
+      "timestamp_fields": [
+        "isotimestamp",
+        "timestamp"
+      ]
+    },
+    {
+      "id": "activity_webauthn",
+      "label": "Duo WebAuthn/passwordless credential activity",
+      "match_engine": "pcre",
+      "match": "\"action\"\\s*:\\s*\\{.*\"name\"\\s*:\\s*\"webauthncredential_create\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "activity_id",
+      "required_fields": [
+        "ts",
+        "action.name",
+        "actor.name",
+        "target.type",
+        "outcome.result"
+      ],
+      "timestamp_fields": [
+        "ts"
+      ]
+    },
+    {
+      "id": "telephony",
+      "label": "Duo telephony SMS/phone usage",
+      "match_engine": "pcre",
+      "match": "\\\"telephony_id\\\"\\s*:\\s*\\\"[^\\\"]+\\\".*\\\"type\\\"\\s*:\\s*\\\"(sms|phone)\\\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "telephony_id",
+      "required_fields": [
+        "ts",
+        "telephony_id",
+        "txid",
+        "context",
+        "type",
+        "credits"
+      ],
+      "timestamp_fields": [
+        "ts"
+      ]
+    },
+    {
+      "id": "trust_monitor_auth",
+      "label": "Duo Trust Monitor anomalous authentication security event",
+      "match_engine": "pcre",
+      "match": "\"type\"\\s*:\\s*\"auth\".*\"sekey\"\\s*:\\s*\"[^\"\\s]+\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "sekey",
+      "required_fields": [
+        "sekey",
+        "type",
+        "state",
+        "surfaced_timestamp",
+        "surfaced_auth",
+        "explanations"
+      ],
+      "timestamp_fields": [
+        "surfaced_timestamp",
+        "surfaced_auth.isotimestamp"
+      ]
+    },
+    {
+      "id": "trust_monitor_bypass",
+      "label": "Duo Trust Monitor bypass-status security event",
+      "match_engine": "pcre",
+      "match": "\"type\"\\s*:\\s*\"bypass_status\".*\"sekey\"\\s*:\\s*\"[^\"\\s]+\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "sekey",
+      "required_fields": [
+        "sekey",
+        "type",
+        "state",
+        "surfaced_timestamp",
+        "enabled_by",
+        "enabled_for",
+        "bypass_status_enabled"
+      ],
+      "timestamp_fields": [
+        "surfaced_timestamp",
+        "bypass_status_enabled"
+      ]
+    },
+    {
+      "id": "trust_monitor_device_registration",
+      "label": "Duo Trust Monitor device-registration security event",
+      "match_engine": "pcre",
+      "match": "\"type\"\\s*:\\s*\"device_registration\".*\"sekey\"\\s*:\\s*\"[^\"\\s]+\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "sekey",
+      "required_fields": [
+        "sekey",
+        "type",
+        "state",
+        "surfaced_timestamp",
+        "explanations"
+      ],
+      "timestamp_fields": [
+        "surfaced_timestamp"
+      ]
+    },
+    {
+      "id": "user_phone_inventory",
+      "label": "Duo user and phone inventory snapshot",
+      "match_engine": "pcre",
+      "match": "\"user_id\"\\s*:\\s*\"DU[^\"\\s]+\".*\"phones\"\\s*:\\s*\\[.*\"phone_id\"\\s*:\\s*\"DP[^\"\\s]+\"",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "user_id",
+      "required_fields": [
+        "username",
+        "user_id",
+        "status",
+        "phones[].phone_id",
+        "phones[].platform",
+        "phones[].model",
+        "phones[].type"
+      ],
+      "timestamp_fields": [
+        "phones[].last_seen",
+        "created"
+      ]
+    },
+    {
+      "id": "integration_inventory",
+      "label": "Duo integration/application inventory and Admin API permission posture",
+      "match_engine": "pcre",
+      "match": "\"integration_key\"\\s*:\\s*\"DI[^\"\\s]+\".*\"adminapi_read_log\"\\s*:",
+      "expected_sourcetype": "cisco:duo:audit:json",
+      "primary_id_field": "integration_key",
+      "required_fields": [
+        "integration_key",
+        "name",
+        "type",
+        "adminapi_read_log",
+        "adminapi_read_resource",
+        "user_access"
+      ],
+      "timestamp_fields": [
+        "receiver_time"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "cisco",
+    "product": "duo_audit",
+    "vendor_product": "cisco:duo_audit",
+    "duo_family": "Derived Duo audit family",
+    "event_type": "Duo event type such as authentication or activity",
+    "user": "Duo username/email",
+    "src_user": "User alias",
+    "src_ip": "Access-device or actor IP",
+    "src": "Source IP alias",
+    "app": "Duo application name",
+    "action": "Duo result or activity action",
+    "vendor_raw_action": "Raw Duo result/action before any analyst normalization",
+    "signature": "Duo reason/action grouping",
+    "signature_id": "Duo txid or activity_id",
+    "status": "Duo authentication result",
+    "factor": "Duo authentication factor",
+    "reason": "Duo authentication reason",
+    "object": "Duo activity object",
+    "object_type": "Duo activity object type",
+    "marker": "Synthetic fixture marker only",
+    "action_name": "Duo activity action name; preserves nested Activity Logs v2 action.name where present",
+    "outcome_result": "Duo Activity Logs v2 outcome result where present",
+    "target_type": "Duo Activity Logs v2 target object type where present",
+    "telephony_id": "Duo Telephony Logs v2 event identifier",
+    "txid": "Duo transaction identifier for auth/telephony correlation",
+    "context": "Duo telephony context such as enrollment or authentication",
+    "type": "Duo telephony delivery type such as sms or phone",
+    "credits": "Telephony credit count reported by Duo",
+    "phone": "Masked phone number from Duo Telephony Logs v2 examples",
+    "sekey": "Duo Trust Monitor security-event identifier",
+    "surfaced_timestamp": "Duo Trust Monitor surfaced time in Unix epoch milliseconds",
+    "state": "Duo Trust Monitor workflow state such as new or processed",
+    "priority_event": "Duo Trust Monitor priority-event boolean",
+    "triaged_as_interesting": "Duo Trust Monitor triage-interest boolean",
+    "trust_explanation_type": "First Trust Monitor explanation type helper derived from explanations array",
+    "trust_explanation": "First Trust Monitor explanation summary helper derived from explanations array",
+    "priority_reason_type": "First Trust Monitor priority reason type helper derived from priority_reasons array",
+    "enabled_by": "Duo Trust Monitor bypass-status enabling actor object",
+    "enabled_for": "Duo Trust Monitor bypass-status target user or group object",
+    "bypass_status_enabled": "Unix epoch millisecond timestamp when bypass status was enabled",
+    "user_id": "Duo user identifier from Admin API user/phone inventory records",
+    "user_status": "Duo user lifecycle status such as active, bypass, disabled, or locked out",
+    "phone_id": "Duo phone/device identifier from Admin API user phone inventory records",
+    "phone_platform": "Duo phone platform such as Apple iOS or Android",
+    "phone_model": "Duo phone model string from Admin API inventory",
+    "phone_type": "Duo phone type such as Mobile",
+    "phone_last_seen": "Last-seen timestamp for the Duo phone/device where present",
+    "phone_encrypted": "Duo phone encryption posture value where present",
+    "phone_screenlock": "Duo phone screen-lock posture value where present",
+    "phone_tampered": "Duo phone tamper posture value where present",
+    "phone_capabilities": "Duo phone authentication capabilities array where present",
+    "integration_key": "Duo integration/application identifier from Admin API integration inventory records",
+    "integration_name": "Duo integration/application display name from Admin API integration inventory records",
+    "integration_type": "Duo integration type such as saml, websdk, or adminapi",
+    "adminapi_read_log": "Admin API permission flag for reading log information on integration records",
+    "adminapi_read_resource": "Admin API permission flag for retrieving resource objects on integration records",
+    "adminapi_integrations": "Admin API permission flag for integration object administration",
+    "adminapi_settings": "Admin API permission flag for settings access",
+    "adminapi_write_resource": "Admin API permission flag for resource modification on integration records",
+    "user_access": "Duo integration user-access posture such as ALL_USERS, NO_USERS, or PERMITTED_GROUPS",
+    "groups_allowed": "Duo group IDs allowed to use the integration where present",
+    "policy_key": "Duo policy identifier attached to the integration where present",
+    "prompt_v4_enabled": "Duo Universal Prompt enabled flag for the integration where present",
+    "frameless_auth_prompt_enabled": "Duo frameless prompt support flag for the integration where present",
+    "networks_for_api_access": "Admin/API integration network access allowlist text where returned"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-cisco_duo_audit.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/metadata/default.meta",
+      "splunk/default/data/ui/views/cisco_duo_audit_overview.xml"
+    ],
+    "test_events": [
+      "test-events/cisco_duo_audit_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20088.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/cisco_duo_audit_reduction_candidates.csv",
+      "validation/preflight-2026-06-13.md",
+      "validation/e2e-lab-2026-06-27.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Duo JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20088,
+      "notes": "Dedicated TCP listener for one Duo Admin API JSON record per line from a collector relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog / Duo JSON relay",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20088,
+      "notes": "TLS/RFC5425 relay can be used if the collector wraps each Duo JSON record in a syslog envelope.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Cisco Duo Admin API authentication/activity/telephony/Trust Monitor/user-phone/integration JSON",
+    "min": "public Duo Admin API documentation current as of 2026-06-17",
+    "max": null,
+    "notes": "Grounded in public Duo Admin API authentication, activity, telephony, Trust Monitor, user/phone inventory, and integration inventory docs with synthetic-equivalent fixtures; API collector envelopes and optional fields must be validated locally."
+  },
+  "validation": {
+    "date_validated": null,
+    "validated_by": null,
+    "source_log_version": {
+      "name": "Cisco Duo Admin API authentication/activity/telephony/Trust Monitor/user-phone/integration JSON",
+      "min": "public Duo Admin API documentation current as of 2026-06-17",
+      "max": null,
+      "notes": "Grounded in public Duo Admin API authentication, activity, telephony, Trust Monitor, user/phone inventory, and integration inventory docs with synthetic-equivalent fixtures; API collector envelopes and optional fields must be validated locally."
+    },
+    "sc4s_version": null,
+    "splunk_version": null,
+    "evidence": "Schema/fixture/export checks only. Local replay/read-back is blocked; see validation/preflight-2026-06-13.md."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Cisco Duo audit relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "cisco_duo_audit_mixed"
+      ],
+      "event_count": 12,
+      "marker_prefix": "SC4S_CISCO_DUO_AUDIT_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20088.sh"
+    },
+    "readback": {
+      "spl": "index=main sechub_fixture_marker=\"SC4S_CISCO_DUO_AUDIT_TEST_*\" earliest=-2h | extract reload=true | table _time index sourcetype source host vendor product duo_family event_type user src_user src_ip app action vendor_raw_action signature signature_id status factor reason object object_type action_name outcome_result context type credits phone telephony_id txid sekey state surfaced_timestamp priority_event triaged_as_interesting trust_explanation_type priority_reason_type user_id user_status phone_id phone_platform phone_model phone_type phone_last_seen phone_encrypted phone_screenlock phone_tampered integration_key integration_name integration_type adminapi_read_log adminapi_read_resource adminapi_integrations adminapi_settings adminapi_write_resource user_access groups_allowed policy_key prompt_v4_enabled frameless_auth_prompt_enabled networks_for_api_access marker _raw",
+      "expected_index": "main",
+      "expected_sourcetypes": [
+        "cisco:duo:audit:json"
+      ],
+      "must_verify": [
+        "event_count",
+        "index",
+        "sourcetype",
+        "source",
+        "host",
+        "vendor",
+        "product",
+        "duo_family",
+        "event_type",
+        "user",
+        "src_ip",
+        "app",
+        "action",
+        "vendor_raw_action",
+        "signature",
+        "signature_id",
+        "action_name",
+        "outcome_result",
+        "marker",
+        "_raw",
+        "context",
+        "type",
+        "credits",
+        "phone",
+        "telephony_id",
+        "txid",
+        "sekey",
+        "state",
+        "surfaced_timestamp",
+        "priority_event",
+        "triaged_as_interesting",
+        "trust_explanation_type",
+        "user_id",
+        "user_status",
+        "phone_id",
+        "phone_platform",
+        "phone_model",
+        "phone_type",
+        "phone_last_seen",
+        "phone_encrypted",
+        "phone_screenlock",
+        "phone_tampered",
+        "priority_reason_type",
+        "integration_key",
+        "integration_name",
+        "integration_type",
+        "adminapi_read_log",
+        "adminapi_read_resource",
+        "adminapi_integrations",
+        "adminapi_settings",
+        "adminapi_write_resource",
+        "user_access",
+        "groups_allowed",
+        "policy_key",
+        "prompt_v4_enabled",
+        "frameless_auth_prompt_enabled",
+        "networks_for_api_access"
+      ],
+      "expected_count": 12
+    },
+    "last_attempt": {
+      "date": "2026-06-27",
+      "status": "blocked",
+      "blocked_layer": "indexed_readback",
+      "summary": "Dedicated SC4S/Splunk TEST lab replay sent all 12 Duo fixture rows to TCP/20088 and syslog-ng counters showed source movement, but Splunk indexed read-back returned 0 markers. Harness read-back now runs Splunk CLI as the splunk user and waits for HEC health before SC4S startup.",
+      "evidence_path": "validation/e2e-lab-2026-06-27.md"
+    },
+    "evidence": [
+      "validation/preflight-2026-06-13.md",
+      "validation/e2e-lab-2026-06-27.md"
+    ],
+    "preflight": {
+      "required_listeners": [
+        "tcp/20088"
+      ],
+      "required_indexes": [
+        "main"
+      ],
+      "required_splunk_capabilities": [
+        "search over index=main",
+        "JSON field extraction",
+        "eventtype/tag knowledge import"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "cisco_duo_audit_compose_e2e",
+      "status": "blocked_indexed_readback",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/cisco_duo_audit/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/cisco_duo_audit/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/cisco_duo_audit/compose.yaml",
+      "compose_project": "sechub-cisco-duo-audit-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/cisco_duo_audit/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/cisco_duo_audit/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/cisco_duo_audit/scripts/send_tcp_20088.sh 127.0.0.1 20088",
+        "splunk_summary_readback": "index=main sechub_fixture_marker=\"SC4S_CISCO_DUO_AUDIT_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=main sechub_fixture_marker=\"SC4S_CISCO_DUO_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product duo_family event_type user src_user src_ip app action vendor_raw_action signature signature_id status factor reason object object_type action_name outcome_result context type credits phone telephony_id txid sekey state surfaced_timestamp priority_event triaged_as_interesting trust_explanation_type priority_reason_type user_id user_status phone_id phone_platform phone_model phone_type phone_last_seen phone_encrypted phone_screenlock phone_tampered integration_key integration_name integration_type adminapi_read_log adminapi_read_resource adminapi_integrations adminapi_settings adminapi_write_resource user_access groups_allowed policy_key prompt_v4_enabled frameless_auth_prompt_enabled networks_for_api_access marker _raw"
+      },
+      "splunk_requirements": {
+        "required_index": "main",
+        "hec": "Splunk TEST HEC enabled with an ephemeral token generated at compose-write time or supplied through SPLUNK_HEC_TOKEN",
+        "readback": "Search role can read main"
+      },
+      "sc4s_requirements": {
+        "listener": {
+          "source_id": "CISCO_DUO_AUDIT",
+          "transport": "tcp",
+          "port": 20088
+        },
+        "parser_artifacts": [
+          "sc4s/app_parsers/syslog/app-cisco_duo_audit.conf"
+        ],
+        "splunk_knowledge": [
+          "props/transforms extraction for Duo JSON relay fields",
+          "eventtype/tag knowledge import"
+        ]
+      },
+      "coverage_matrix": [
+        {
+          "fixture_set": "cisco_duo_audit_mixed",
+          "source_shape": "duo_admin_api_json_relay",
+          "event_families": [
+            "auth_success",
+            "auth_denied",
+            "auth_fraud",
+            "activity_admin",
+            "activity_policy",
+            "activity_webauthn",
+            "telephony",
+            "trust_monitor_auth",
+            "trust_monitor_bypass",
+            "trust_monitor_device_registration",
+            "user_phone_inventory",
+            "integration_inventory"
+          ],
+          "expected_sourcetypes": [
+            "cisco:duo:audit:json"
+          ],
+          "event_count": 12,
+          "expected_index": "main"
+        }
+      ],
+      "explicit_gaps": [
+        "Direct Duo API polling, pagination/checkpoint ownership, and API credential custody are outside this pack.",
+        "SIEM connector envelope metadata, broader Telephony/Trust Monitor variants, broader inventory variants, and complete optional fields need exact source-shape evidence before inclusion.",
+        "Passing the disposable harness is fixture replay/read-back only; it is not field validation or a Duo export completeness statement."
+      ],
+      "last_run": {
+        "date": "2026-06-27",
+        "status": "blocked",
+        "blocked_layer": "indexed_readback",
+        "evidence_path": "validation/e2e-lab-2026-06-27.md",
+        "summary": "SC4S TEST listener processed 12 fixture events; Splunk marker read-back returned 0."
+      }
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "cisco_duo_audit_mixed",
+      "path": "test-events/cisco_duo_audit_test_events.txt",
+      "description": "Synthetic-equivalent one-line Cisco Duo Admin API authentication, activity, telephony, Trust Monitor, and selected user/phone inventory JSON records, including Activity Logs v2 nested action/target shape, Telephony Logs v2 SMS/phone usage shape, Trust Monitor auth/bypass/device-registration security-event shapes, Admin API user phone inventory shape, and Admin API integration/application permission inventory shape.",
+      "format": "custom_application",
+      "serialization": "json",
+      "wire_format": "json_lines",
+      "envelope": "none",
+      "event_count": 12,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_CISCO_DUO_AUDIT_TEST_AUTH_SUCCESS_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_AUTH_DENIED_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_AUTH_FRAUD_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_ACTIVITY_ADMIN_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_ACTIVITY_POLICY_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_ACTIVITY_WEBAUTHN_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_TELEPHONY_SMS_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_TRUST_AUTH_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_TRUST_BYPASS_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_TRUST_DEVICE_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_USER_PHONE_001",
+        "SC4S_CISCO_DUO_AUDIT_TEST_INTEGRATION_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "isotimestamp, ts, surfaced_timestamp, or surfaced_auth.isotimestamp",
+        "primary_timezone": "UTC offset in ISO-8601 timestamp",
+        "fallback_fields": [
+          "timestamp"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Duo collector timestamp normalization policy"
+        ],
+        "notes": "Fixtures use Duo isotimestamp or Activity Logs v2 / Telephony Logs v2 ts with explicit +00:00 offset; Trust Monitor fixtures preserve documented surfaced_timestamp epoch milliseconds and nested surfaced_auth.isotimestamp where present; user/phone inventory fixtures preserve documented phone last_seen without stating source-time parsing, with receiver-time fallback until collector timestamp handling is validated; integration inventory fixtures do not carry a source event time and rely on collector/receiver-time policy."
+      },
+      "field_delimiting": "json",
+      "expected_families": [
+        "auth_success",
+        "auth_denied",
+        "auth_fraud",
+        "activity_admin",
+        "activity_policy",
+        "activity_webauthn",
+        "telephony",
+        "trust_monitor_auth",
+        "trust_monitor_bypass",
+        "trust_monitor_device_registration",
+        "user_phone_inventory",
+        "integration_inventory"
+      ],
+      "label": "Cisco Duo audit mixed JSON fixtures"
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-cisco_duo_audit.conf",
+      "target_path": "local/config/app_parsers/syslog/app-cisco_duo_audit.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/cisco_duo_audit.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_metadata",
+      "group": "splunk",
+      "source_path": "splunk/metadata/default.meta",
+      "target_path": "splunk/metadata/default.meta",
+      "kind": "splunk_metadata",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/cisco_duo_audit_overview.xml",
+      "target_path": "splunk/default/data/ui/views/cisco_duo_audit_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/cisco_duo_audit_test_events.txt",
+      "target_path": "test-events/cisco_duo_audit_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20088.sh",
+      "target_path": "scripts/send_tcp_20088.sh",
+      "kind": "script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "documentation",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/cisco_duo_audit_reduction_candidates.csv",
+      "target_path": "docs/cisco_duo_audit_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "blocked_preflight",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-13.md",
+      "target_path": "validation/preflight-2026-06-13.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_lab_2026_06_27",
+      "group": "docs",
+      "source_path": "validation/e2e-lab-2026-06-27.md",
+      "target_path": "validation/e2e-lab-2026-06-27.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Official Cisco Duo Admin API docs and Duo Splunk App documentation for ecosystem context.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use documentation IP ranges, example.test users, synthetic Duo keys, synthetic Trust Monitor sekeys, synthetic user/phone IDs, masked phone values, and markers; no tenant identifiers, API secrets, phone numbers, admin-panel hostnames, or production logs."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-17",
+      "notes": "Hardened from the thin-pack backlog with public Duo integration inventory permission evidence while preserving conservative trust."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "fields": {
+        "user": {
+          "source_fields": [
+            "email",
+            "user.name",
+            "username",
+            "actor.name",
+            "user",
+            "surfaced_auth.email",
+            "surfaced_auth.user.name",
+            "enabled_for.name",
+            "enabled_by.name",
+            "user_id"
+          ],
+          "status": "partial",
+          "notes": "Duo principal/admin identity; not full Authentication CIM certification."
+        },
+        "src_user": {
+          "source_fields": [
+            "user",
+            "email",
+            "username"
+          ],
+          "status": "partial",
+          "notes": "Principal alias."
+        },
+        "src_ip": {
+          "source_fields": [
+            "access_device.ip",
+            "ip",
+            "src_ip",
+            "access_device.ip.address",
+            "surfaced_auth.access_device.ip"
+          ],
+          "status": "partial",
+          "notes": "Access device or admin actor IP where present."
+        },
+        "action": {
+          "source_fields": [
+            "result",
+            "action",
+            "vendor_raw_action",
+            "action.name",
+            "action_name",
+            "type",
+            "trust_explanation_type"
+          ],
+          "status": "partial",
+          "notes": "Authentication result or activity action."
+        },
+        "signature": {
+          "source_fields": [
+            "reason",
+            "action",
+            "signature",
+            "action.name",
+            "action_name",
+            "type",
+            "trust_explanation_type",
+            "sekey"
+          ],
+          "status": "partial",
+          "notes": "Analyst grouping value."
+        },
+        "signature_id": {
+          "source_fields": [
+            "txid",
+            "activity_id",
+            "signature_id",
+            "sekey"
+          ],
+          "status": "partial",
+          "notes": "Duo transaction/activity identifier; not a global event ID."
+        },
+        "status": {
+          "source_fields": [
+            "result",
+            "status",
+            "outcome.result",
+            "outcome_result",
+            "state"
+          ],
+          "status": "partial",
+          "notes": "Duo authentication result."
+        },
+        "telephony_id": {
+          "source_fields": [
+            "telephony_id"
+          ],
+          "status": "partial",
+          "notes": "Duo Telephony Logs v2 identifier; not a global event ID."
+        },
+        "phone": {
+          "source_fields": [
+            "phone"
+          ],
+          "status": "partial",
+          "notes": "Masked Duo telephony phone value when retained by local collector policy."
+        },
+        "trust_monitor_state": {
+          "source_fields": [
+            "state",
+            "priority_event",
+            "triaged_as_interesting"
+          ],
+          "status": "partial",
+          "notes": "Duo Trust Monitor helper field."
+        },
+        "user_status": {
+          "source_fields": [
+            "status",
+            "user_status"
+          ],
+          "status": "partial",
+          "notes": "Duo user lifecycle status from user/phone inventory; not a full identity-governance taxonomy."
+        },
+        "phone_id": {
+          "source_fields": [
+            "phones{}.phone_id",
+            "phone_id"
+          ],
+          "status": "partial",
+          "notes": "Duo enrolled phone/device identifier."
+        },
+        "phone_posture": {
+          "source_fields": [
+            "phones{}.encrypted",
+            "phones{}.screenlock",
+            "phones{}.tampered",
+            "phone_encrypted",
+            "phone_screenlock",
+            "phone_tampered"
+          ],
+          "status": "partial",
+          "notes": "Duo phone security posture helper fields."
+        },
+        "integration": {
+          "source_fields": [
+            "integration_key",
+            "integration_name",
+            "integration_type",
+            "user_access",
+            "policy_key"
+          ],
+          "status": "partial",
+          "notes": "Duo application/integration inventory context; not a full asset/application inventory taxonomy."
+        },
+        "adminapi_permissions": {
+          "source_fields": [
+            "adminapi_read_log",
+            "adminapi_read_resource",
+            "adminapi_integrations",
+            "adminapi_settings",
+            "adminapi_write_resource"
+          ],
+          "status": "partial",
+          "notes": "Duo Admin API permission posture flags for integration records."
+        }
+      },
+      "notes": "Partial identity/SaaS audit guidance only; not full CIM certification.",
+      "primary": true
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "fields": {
+        "actor.user.email_addr": {
+          "source_fields": [
+            "email",
+            "user.name",
+            "username",
+            "actor.name",
+            "surfaced_auth.email",
+            "surfaced_auth.user.name",
+            "enabled_by.name",
+            "enabled_for.name",
+            "user_id"
+          ],
+          "status": "partial",
+          "notes": "User/admin email where present."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "access_device.ip",
+            "ip",
+            "src_ip",
+            "access_device.ip.address",
+            "surfaced_auth.access_device.ip"
+          ],
+          "status": "partial",
+          "notes": "Access-device or actor IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "result",
+            "action",
+            "vendor_raw_action",
+            "action.name",
+            "action_name",
+            "type",
+            "trust_explanation_type"
+          ],
+          "status": "partial",
+          "notes": "Authentication result or admin activity."
+        },
+        "auth_factor": {
+          "source_fields": [
+            "factor"
+          ],
+          "status": "partial",
+          "notes": "Duo MFA factor."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "txid",
+            "activity_id",
+            "telephony_id",
+            "signature_id",
+            "sekey"
+          ],
+          "status": "partial",
+          "notes": "Duo event identifier."
+        },
+        "communication.direction": {
+          "source_fields": [
+            "context",
+            "type"
+          ],
+          "status": "partial",
+          "notes": "Helper mapping for telephony usage context; not full OCSF telecom classification."
+        },
+        "finding.title": {
+          "source_fields": [
+            "trust_explanation_type",
+            "trust_explanation",
+            "priority_reason_type"
+          ],
+          "status": "partial",
+          "notes": "Duo Trust Monitor helper mapping."
+        },
+        "device.uid": {
+          "source_fields": [
+            "phones{}.phone_id",
+            "phone_id"
+          ],
+          "status": "partial",
+          "notes": "Duo phone/device identifier."
+        },
+        "device.type": {
+          "source_fields": [
+            "phones{}.type",
+            "phone_type"
+          ],
+          "status": "partial",
+          "notes": "Duo phone/device type helper."
+        },
+        "device.os.name": {
+          "source_fields": [
+            "phones{}.platform",
+            "phone_platform"
+          ],
+          "status": "partial",
+          "notes": "Duo phone platform helper."
+        },
+        "device.model": {
+          "source_fields": [
+            "phones{}.model",
+            "phone_model"
+          ],
+          "status": "partial",
+          "notes": "Duo phone model helper."
+        },
+        "app.uid": {
+          "source_fields": [
+            "integration_key"
+          ],
+          "status": "partial",
+          "notes": "Duo integration/application identifier."
+        },
+        "app.name": {
+          "source_fields": [
+            "integration_name",
+            "name"
+          ],
+          "status": "partial",
+          "notes": "Duo integration/application display name."
+        },
+        "app.type": {
+          "source_fields": [
+            "integration_type",
+            "type"
+          ],
+          "status": "partial",
+          "notes": "Duo integration type helper."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only.",
+      "secondary": true
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "fields": {
+        "user.email": {
+          "source_fields": [
+            "email",
+            "user.name",
+            "username",
+            "actor.name",
+            "surfaced_auth.email",
+            "surfaced_auth.user.name",
+            "enabled_by.name",
+            "enabled_for.name",
+            "user_id"
+          ],
+          "status": "partial",
+          "notes": "User/admin identity."
+        },
+        "source.ip": {
+          "source_fields": [
+            "access_device.ip",
+            "ip",
+            "src_ip",
+            "access_device.ip.address",
+            "surfaced_auth.access_device.ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        },
+        "event.action": {
+          "source_fields": [
+            "result",
+            "action",
+            "vendor_raw_action",
+            "action.name",
+            "action_name",
+            "type",
+            "trust_explanation_type"
+          ],
+          "status": "partial",
+          "notes": "Duo auth result or activity action."
+        },
+        "event.reason": {
+          "source_fields": [
+            "reason",
+            "trust_explanation_type",
+            "trust_explanation",
+            "priority_reason_type"
+          ],
+          "status": "partial",
+          "notes": "Duo authentication reason."
+        },
+        "event.id": {
+          "source_fields": [
+            "txid",
+            "activity_id",
+            "telephony_id",
+            "signature_id",
+            "sekey"
+          ],
+          "status": "partial",
+          "notes": "Duo transaction/activity/telephony identifier."
+        },
+        "phone.number": {
+          "source_fields": [
+            "phone"
+          ],
+          "status": "partial",
+          "notes": "Masked Duo telephony phone value where present."
+        },
+        "event.kind": {
+          "source_fields": [
+            "state",
+            "priority_event"
+          ],
+          "status": "partial",
+          "notes": "Duo Trust Monitor helper mapping."
+        },
+        "device.id": {
+          "source_fields": [
+            "phones{}.phone_id",
+            "phone_id"
+          ],
+          "status": "partial",
+          "notes": "Duo phone/device identifier."
+        },
+        "device.model.name": {
+          "source_fields": [
+            "phones{}.model",
+            "phone_model"
+          ],
+          "status": "partial",
+          "notes": "Duo phone model helper."
+        },
+        "host.os.platform": {
+          "source_fields": [
+            "phones{}.platform",
+            "phone_platform"
+          ],
+          "status": "partial",
+          "notes": "Duo phone platform helper; not a host inventory assertion."
+        },
+        "service.id": {
+          "source_fields": [
+            "integration_key"
+          ],
+          "status": "partial",
+          "notes": "Duo integration/application identifier."
+        },
+        "service.name": {
+          "source_fields": [
+            "integration_name",
+            "name"
+          ],
+          "status": "partial",
+          "notes": "Duo integration/application display name."
+        },
+        "event.category": {
+          "source_fields": [
+            "integration_type",
+            "adminapi_read_log",
+            "adminapi_read_resource",
+            "user_access"
+          ],
+          "status": "partial",
+          "notes": "Helper category context for Duo integration inventory; not a complete ECS categorization."
+        }
+      },
+      "notes": "ECS mapping is partial helper guidance for search-time normalization.",
+      "optional": true
+    }
+  },
+  "ci": {
+    "pack_validation": "passed",
+    "fixture_validation": "passed",
+    "tested_artifact_hashes": {
+      "sc4s/app_parsers/syslog/app-cisco_duo_audit.conf": "sha256:2b442fa7b50dd6731b977e1d0a7a16a8f24b35d40f4622a725205a7e5349bce6",
+      "sc4s/env.example": "sha256:94743ee2b07996767840dbcdb373c0f4cc7858ca33a2ab026f2edb5aa8556515",
+      "splunk/default/props.conf": "sha256:6ac85fbdb03859746b68b0ed64fd24fa1e8561f96d0fa27842957b3573f903ff",
+      "splunk/default/transforms.conf": "sha256:62c0799fbe909b98db104a0e0925d9a6fc0ffcc120ddc37bcdd2ebf06b8ab2d0",
+      "splunk/default/eventtypes.conf": "sha256:8db4c328bb823c8dc031c673961a049906ce63478c15743a7744be04daae9bbd",
+      "splunk/default/tags.conf": "sha256:66b68484597f8b6f8fbb2af2c4d5ddea4bd972b7e515a73080653a362f97d587",
+      "splunk/metadata/default.meta": "sha256:2c1ec76ee2dcf8851db582d4339de10043078dac239e1692ca476d6ddf363bb7",
+      "test-events/cisco_duo_audit_test_events.txt": "sha256:d91d1bddacb881a18c341517579e9e54f193b317b41814f9bd1c054290f03954",
+      "scripts/send_tcp_20088.sh": "sha256:d63f7e5b028429abf27a4337ff03f6a5c28aee7d18e1ee2af7846a20828d2289",
+      "README.md": "sha256:9a1139618a567c0edbfb8ef01b9753c6e01c3a51f04c86f7e04ce4ec59134045",
+      "docs/cisco_duo_audit_reduction_candidates.csv": "sha256:00c6bb7cfc06179d9ce92bb39ca9ce723f8f93eae3293678e282359191fb5bc7",
+      "validation/preflight-2026-06-13.md": "sha256:3bc80cd63dc0eefd1b515b2f19725dd265c49340c70d034ca17931a9d685285e",
+      "splunk/default/data/ui/views/cisco_duo_audit_overview.xml": "sha256:242faf74e147be25130c259443d66f2eefb706298722e7a7a1c32eb9c650996c",
+      "scripts/e2e_docker_compose.sh": "sha256:67a5e0e5ee54390e730b6894cd755ce1aeb3644d85eb9c9db6462e84f6d1ad5a",
+      "validation/e2e-lab-2026-06-27.md": "sha256:d10d1a26577660dfcddad2d40fc55c3e043e17abfb7013fcfee0ff0398365a17"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-27",
+    "last_tested": "2026-06-27"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "identity",
+    "mfa",
+    "saas",
+    "audit",
+    "security_operations",
+    "json"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "duo_admin_api_json_relay",
+      "label": "Cisco Duo Admin API JSON relay",
+      "description": "One-line JSON records preserving Duo authentication, activity, selected telephony, selected Trust Monitor security-event, selected user/phone inventory structures, and selected integration/application permission inventory structures.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "admin_api_export",
+        "collector_relay",
+        "cribl_or_siem_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "auth_success",
+        "auth_denied",
+        "auth_fraud",
+        "activity_admin",
+        "activity_policy",
+        "activity_webauthn",
+        "telephony",
+        "trust_monitor_auth",
+        "trust_monitor_bypass",
+        "trust_monitor_device_registration",
+        "user_phone_inventory",
+        "integration_inventory"
+      ],
+      "test_event_sets": [
+        "cisco_duo_audit_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Duo relay replay/read-back captured.",
+        "Only selected authentication, v1 flat activity, one Activity Logs v2 WebAuthn credential shape, one Telephony Logs v2 SMS/phone usage shape, Trust Monitor auth/bypass/device-registration shapes, one user/phone inventory shape, and one integration inventory shape are synthetic-fixture-backed.",
+        "API pagination, collector envelope metadata, broader telephony, unsupported Trust Monitor event types, broader endpoint/integration inventory variants, and complete optional-field coverage need local capture before SecHub can state broader coverage safely."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/cisco_duo_audit_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "event_type",
+        "result",
+        "reason",
+        "factor",
+        "isotimestamp",
+        "txid",
+        "activity_id",
+        "user.name",
+        "email",
+        "username",
+        "access_device.ip",
+        "application.name",
+        "action",
+        "object",
+        "object_type",
+        "ts",
+        "action.name",
+        "outcome.result",
+        "target.type",
+        "access_device.ip.address",
+        "telephony_id",
+        "context",
+        "type",
+        "credits",
+        "phone",
+        "sekey",
+        "surfaced_timestamp",
+        "state",
+        "priority_event",
+        "triaged_as_interesting",
+        "explanations{}.type",
+        "explanations{}.summary",
+        "surfaced_auth.user.name",
+        "surfaced_auth.access_device.ip",
+        "surfaced_auth.application.name",
+        "enabled_by.name",
+        "enabled_for.name",
+        "bypass_status_enabled",
+        "user_id",
+        "status",
+        "phones{}.phone_id",
+        "phones{}.platform",
+        "phones{}.model",
+        "phones{}.type",
+        "phones{}.last_seen",
+        "phones{}.encrypted",
+        "phones{}.screenlock",
+        "phones{}.tampered",
+        "phones{}.capabilities{}",
+        "integration_key",
+        "integration_name",
+        "integration_type",
+        "adminapi_read_log",
+        "adminapi_read_resource",
+        "adminapi_integrations",
+        "adminapi_settings",
+        "adminapi_write_resource",
+        "user_access",
+        "groups_allowed",
+        "policy_key",
+        "prompt_v4_enabled",
+        "frameless_auth_prompt_enabled",
+        "networks_for_api_access"
+      ],
+      "notes": "Use only after sampling local Duo exports. Do not drop identity, application, factor/result/reason, endpoint posture, timestamps, event identifiers, activity object, or raw JSON by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Duo Admin API/collector relay replay/read-back captured.",
+    "This pack does not implement API polling, pagination, SIEM connector custody, or credential handling.",
+    "Only selected authentication, v1 flat activity, one Activity Logs v2 WebAuthn credential shape, one Telephony Logs v2 SMS/phone usage shape, Trust Monitor auth/bypass/device-registration shapes, one user/phone inventory shape, and one integration inventory shape are synthetic-fixture-backed.",
+    "Broader telephony variants, unsupported Trust Monitor event types, broader endpoint/integration inventory variants, and complete optional-field coverage remain future variants.",
+    "Endpoint posture, Trust Monitor explanation arrays, and group fields may be sensitive; no reduction is enabled by default."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Cisco Duo audit JSON intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-cisco_duo_audit.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Cisco Duo analyst knowledge",
+      "description": "Adds eventtypes/tags for Duo authentication/activity events. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Cisco Duo reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/cisco_duo_audit_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "api_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Duo Admin API JSON must be collected and relayed; SC4S does not poll Duo.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "cisco_duo_audit_overview_splunk_test",
+      "title": "Cisco Duo Audit — dashboard example",
+      "source_path": "dashboards/screenshots/cisco_duo_audit_overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Cisco Duo Audit dashboard populated with safe pack fixture events.",
+      "provenance": "Captured from a disposable Splunk TEST UI on 2026-06-27 after loading the pack dashboard XML, installing current pack Splunk knowledge, indexing safe pack-local fixture events in the same runner invocation, and passing fixture read-back plus dashboard panel export gates. No customer data or production Splunk data is present. This screenshot is a documentation example only, not source validation or replay/read-back evidence.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

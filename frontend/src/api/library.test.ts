@@ -1,25 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { productReleaseSchema } from './library';
+import { libraryCatalogueResponseSchema } from './library';
 
-const release = {
-  kind: 'splunk_ta_product_release',
-  product_id: 'pan-panos',
-  display_name: 'Palo Alto PAN-OS',
-  app_id: 'Splunk_TA_pan_panos',
-  version: '1.2.4',
-  filename: 'Splunk_TA_pan_panos-1.2.4.tgz',
-  url: 'https://sechub.s6ops.com/downloads/Splunk_TA_pan_panos-1.2.4.tgz',
-  sha256: 'a'.repeat(64),
-  source_components: ['pan_panos'],
-  install_scope: 'product_deployment',
-  manager_importable: false,
-} as const;
-
-describe('product release boundary', () => {
-  it('accepts only explicit non-importable product deployment records', () => {
-    expect(productReleaseSchema.safeParse(release).success).toBe(true);
-    expect(productReleaseSchema.safeParse({ ...release, manager_importable: true }).success).toBe(false);
-    expect(productReleaseSchema.safeParse({ ...release, install_scope: 'manager_library' }).success).toBe(false);
-    expect(productReleaseSchema.safeParse({ ...release, kind: 'sc4s_library_pack' }).success).toBe(false);
+describe('published catalogue compatibility', () => {
+  it('accepts non-downloadable upstream entries with a null version', () => {
+    const parsed = libraryCatalogueResponseSchema.safeParse({
+      source_id: 'embedded',
+      entries: [{ id: 'upstream_only', version: null, download_available: false }],
+      filters: {},
+    });
+    expect(parsed.success).toBe(true);
   });
 });

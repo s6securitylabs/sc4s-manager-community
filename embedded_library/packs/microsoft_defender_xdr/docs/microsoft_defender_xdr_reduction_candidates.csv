@@ -1,0 +1,7 @@
+candidate,default_action,risk,notes,pre_enable_validation
+redundant_device_inventory_fields,preserve,medium,"Some device enrichment can be repetitive, but device identity is needed for alert/evidence joins.","Replay marked fixtures and production-like samples; verify AlertEvidence joins still work."
+verbose_process_command_line,preserve,high,"Command lines are sensitive and noisy but are core endpoint investigation evidence.","Do not trim unless legal/privacy review and Splunk read-back prove detection workflows remain intact."
+remote_url_enrichment,preserve,medium,"RemoteUrl may be high-cardinality but explains network evidence and alert pivots.","Validate DNS/URL triage searches before any collector reduction."
+alert_evidence_objects,preserve,high,"Evidence rows explain why an alert exists and must not be dropped by default.","Replay alert info and evidence pairs and verify alert_id correlation."
+identity_query_and_directory_context,preserve,high,"Identity query and directory-change fields explain lateral movement, enumeration, and privilege changes.","Replay IdentityLogonEvents, IdentityDirectoryEvents, and IdentityQueryEvents samples; verify actor/target/query pivots before any reduction."
+cloud_app_object_context,preserve,medium,"Cloud app object/application fields are high-cardinality but needed for SaaS investigation and user-object pivots.","Replay CloudAppEvents samples; verify user, app, object, and source-IP triage searches before trimming."

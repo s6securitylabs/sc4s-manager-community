@@ -1,0 +1,173 @@
+<form version="1.1" theme="light">
+  <label>Cisco ASA/FTD Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for Cisco ASA/FTD %ASA/%FTD syslog smoke coverage. Dashboard presence does not imply replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>netfw</default>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total ASA/FTD events</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Access-group denies</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | search cisco_msg_id=106023 action="blocked" | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Connection builds</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | search cisco_msg_id IN (302013,302015) action="allowed" | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>NAT translations</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | search cisco_msg_id=305011 nat_original_ip=* nat_translated_ip=* | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Volume over time by Cisco message family</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | eval asa_family=case(cisco_msg_id="106023","access_group_deny", cisco_msg_id="305011","dynamic_translation", cisco_msg_id="302014","connection_teardown", cisco_msg_id="302013" OR cisco_msg_id="302015","connection_build", true(),"other") | timechart count by asa_family</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Action and severity distribution</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | eval action_severity=coalesce(action,"unknown") . " / " . coalesce(severity_label,cisco_severity,"unknown") | top limit=15 action_severity</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top source / destination pairs</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | stats count values(action) as actions values(transport) as transports values(src_interface) as src_interfaces values(dest_interface) as dest_interfaces values(dest_port) as dest_ports values(cisco_msg_id) as message_ids by src dest | sort - count | head 25</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Access-group deny review</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | search cisco_msg_id=106023 | table _time host cisco_facility cisco_severity severity_label action vendor_raw_action transport src_interface src_ip src_port dest_interface dest_ip dest_port icmp_type icmp_code access_group signature signature_id marker cisco_message _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Connection build / teardown context</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | search cisco_msg_id IN (302013,302014,302015) | table _time host cisco_facility cisco_msg_id severity_label connection_id action vendor_raw_action direction transport src_interface src_ip src_port dest_interface dest_ip dest_port duration bytes signature signature_id marker cisco_message _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Dynamic translation / NAT context</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | search cisco_msg_id=305011 | table _time host action vendor_raw_action transport nat_original_interface nat_original_ip nat_original_port nat_translated_interface nat_translated_ip nat_translated_port signature signature_id marker cisco_message _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Facility and message ID coverage</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | eval facility_message=coalesce(cisco_facility,"unknown") . "-" . coalesce(cisco_msg_id,"unknown") | top limit=15 facility_message</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+    <panel>
+      <table>
+        <title>Source, sourcetype, and host coverage</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | stats count min(_time) as first_seen max(_time) as last_seen dc(marker) as fixture_markers values(cisco_facility) as facilities values(cisco_msg_id) as message_ids by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Raw fixture/read-back context</title>
+        <search>
+          <query>index=$index$ sourcetype="cisco:asa" host=$host_filter$ | extract reload=true | table _time index sourcetype source host vendor product vendor_product cisco_facility cisco_severity severity_label cisco_msg_id cisco_message signature signature_id connection_id action vendor_raw_action direction transport src src_interface src_ip src_port dest dest_interface dest_ip dest_port nat_original_interface nat_original_ip nat_original_port nat_translated_interface nat_translated_ip nat_translated_port duration bytes icmp_type icmp_code access_group eventtype marker _raw | sort - _time | head 100</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <p><strong>Scope and evidence boundary:</strong> This dashboard is limited to fixture-backed Cisco ASA/FTD %ASA/%FTD smoke rows for dynamic translation, connection build/teardown, access-group deny, ICMP deny, and a narrow FTD UDP connection example. It does not prove full ASA/FTD message-catalog coverage, Firepower unified-event coverage, production source timezone validation, collector health, or SC4S/Splunk replay/read-back validation.</p>
+      </html>
+    </panel>
+  </row>
+</form>

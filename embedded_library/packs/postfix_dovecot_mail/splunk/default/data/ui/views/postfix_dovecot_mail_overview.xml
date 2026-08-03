@@ -1,0 +1,256 @@
+<form version="1.1" theme="light">
+  <label>Postfix / Dovecot Mail Syslog Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for Postfix delivery/reject/cleanup and Dovecot login/auth-failure/logout/session records. Dashboard presence is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>email</default>
+      <initialValue>email</initialValue>
+    </input>
+    <input type="multiselect" token="sourcetype" searchWhenChanged="true">
+      <label>Sourcetype</label>
+      <choice value="mail:postfix:delivery">mail:postfix:delivery</choice>
+      <choice value="mail:postfix:reject">mail:postfix:reject</choice>
+      <choice value="mail:postfix:cleanup">mail:postfix:cleanup</choice>
+      <choice value="mail:dovecot:login">mail:dovecot:login</choice>
+      <choice value="mail:dovecot:session">mail:dovecot:session</choice>
+      <choice value="mail:dovecot:auth_failure">mail:dovecot:auth_failure</choice>
+      <choice value="mail:dovecot:logout">mail:dovecot:logout</choice>
+      <default>mail:postfix:delivery,mail:postfix:reject,mail:postfix:cleanup,mail:dovecot:login,mail:dovecot:session,mail:dovecot:auth_failure,mail:dovecot:logout</default>
+      <valuePrefix>sourcetype="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="user_filter" searchWhenChanged="true">
+      <label>User / recipient filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+  <search id="base_mail_syslog">
+    <query>index=$index$ ($sourcetype$) host="$host_filter$" earliest=$time_range.earliest$ latest=$time_range.latest$
+| eval mail_actor=coalesce(user, recipient), mail_source=coalesce(src_ip, rip), mail_destination=coalesce(relay_host, relay_ip, lip, dest), mail_family=case(sourcetype="mail:postfix:delivery","Postfix delivery", sourcetype="mail:postfix:reject","Postfix reject", sourcetype="mail:postfix:cleanup","Postfix cleanup", sourcetype="mail:dovecot:login","Dovecot login", sourcetype="mail:dovecot:auth_failure","Dovecot auth failure", sourcetype="mail:dovecot:logout","Dovecot logout", sourcetype="mail:dovecot:session","Dovecot session", true(), sourcetype)
+| where "$user_filter$"="*" OR like(mail_actor, "$user_filter$")</query>
+  </search>
+  <row>
+    <panel>
+      <title>Total mail events</title>
+      <single>
+        <search base="base_mail_syslog">
+          <query>| stats count</query>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <title>Postfix rejects / blocked connects</title>
+      <single>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:postfix:reject" result=blocked
+| stats count</query>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <title>Dovecot login successes</title>
+      <single>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:dovecot:login" action=login result=success
+| stats count</query>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <title>Dovecot auth failures</title>
+      <single>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:dovecot:auth_failure" action=auth_failure result=failure
+| stats count</query>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <title>Delivered message rows</title>
+      <single>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:postfix:delivery" vendor_raw_status=sent
+| stats count</query>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Volume over time by mail family</title>
+      <chart>
+        <search base="base_mail_syslog">
+          <query>| timechart span=15m count by mail_family limit=10 useother=f</query>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Sourcetype / family distribution</title>
+      <chart>
+        <search base="base_mail_syslog">
+          <query>| stats count by sourcetype mail_family
+| sort - count</query>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Top mail actors and recipients</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| stats count values(sourcetype) as sourcetypes values(action) as actions values(result) as results by mail_actor
+| sort - count</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top source / remote IP context</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| search mail_source=*
+| stats count values(sourcetype) as sourcetypes values(user) as users values(reason) as reasons values(session) as sessions by mail_source
+| sort - count</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Postfix delivery and relay review</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:postfix:delivery"
+| table _time host queue_id recipient relay_host relay_ip dest_port dsn delay delays vendor_raw_status result marker
+| sort - _time</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Postfix rejection review</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:postfix:reject"
+| table _time host queue_id src_ip src_port vendor_raw_action result reason signature marker
+| sort - _time</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Dovecot login review</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:dovecot:login"
+| table _time host user auth_method rip lip src_ip dest_ip tls_state session action result marker
+| sort - _time</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Dovecot mailbox session actions</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:dovecot:session"
+| table _time host user vendor_raw_action action uid message_id mailbox signature marker
+| sort - _time</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Dovecot authentication failures</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:dovecot:auth_failure"
+| table _time host user auth_method rip lip src_ip dest_ip tls_state session failure_reason action result marker
+| sort - _time</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Dovecot logout / session byte counters</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| search sourcetype="mail:dovecot:logout"
+| table _time host user session logout_in_bytes logout_out_bytes deleted_count expunged_count trashed_count hdr_count hdr_bytes body_count body_bytes action result marker
+| sort - _time</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Message / queue traceability</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| search queue_id=* OR message_id=* OR session=*
+| stats count earliest(_time) as first_seen latest(_time) as last_seen values(sourcetype) as sourcetypes values(action) as actions values(result) as results values(recipient) as recipients values(user) as users values(relay_host) as relays values(mailbox) as mailboxes values(failure_reason) as failure_reasons values(logout_in_bytes) as logout_in_bytes values(logout_out_bytes) as logout_out_bytes values(marker) as markers by queue_id message_id session
+| convert ctime(first_seen) ctime(last_seen)
+| sort - count</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Onboarding coverage by source / host</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| stats count dc(sourcetype) as sourcetypes values(sourcetype) as sourcetype_values min(_time) as first_seen max(_time) as last_seen by source host
+| convert ctime(first_seen) ctime(last_seen)
+| sort - count</query>
+        </search>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Recent raw mail syslog records</title>
+      <table>
+        <search base="base_mail_syslog">
+          <query>| table _time index sourcetype source host vendor product program postfix_daemon dovecot_program action result queue_id message_id user recipient src_ip rip relay_host failure_reason logout_in_bytes logout_out_bytes expunged_count marker _raw
+| sort - _time</query>
+        </search>
+        <option name="count">10</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Coverage caveat / manual validation SPL</title>
+      <html>
+        <p>This dashboard intentionally uses only fields represented by the Postfix/Dovecot fixtures and Splunk props. It does not prove live mail-server replay/read-back validation, LMTP, policy-service logs, or broader mail-gateway coverage.</p>
+        <pre>index=email "SC4S_POSTFIX_DOVECOT_MAIL_TEST_" earliest=-2h | table _time index sourcetype source vendor product program postfix_daemon dovecot_program queue_id action result vendor_raw_status vendor_raw_action recipient relay_host relay_ip src src_ip src_port rip lip user auth_method session uid message_id mailbox failure_reason logout_in_bytes logout_out_bytes deleted_count expunged_count hdr_count body_count marker _raw</pre>
+      </html>
+    </panel>
+  </row>
+</form>

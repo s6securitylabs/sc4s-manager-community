@@ -1,0 +1,1 @@
+SC4S_ORACLE_OEM_SOURCE_SHAPE_REQUIRED_001 placeholder only: exact Oracle source shape is required before parser fixture authoring; do not route as product evidence.

@@ -4,7 +4,7 @@
 
 SC4S Manager is the private operator control plane for SC4S-compatible ingestion environments. It lets operators import reviewed packs, validate them locally, preview generated changes, apply configuration safely, observe runtime health, and roll back when needed.
 
-The Manager is not the catalogue. It consumes SC4S Library/SecHub artifact sources as untrusted input and turns them into validated local configuration only after operator-controlled checks pass.
+The Manager ships an immutable embedded SC4S Library snapshot and treats its pack content as untrusted input. It turns locally staged SC4S pack material into validated local configuration only after operator-controlled checks pass. Related Splunk knowledge remains advisory reference material; Manager does not import, validate, install, apply, or verify product TA releases as packs.
 
 ## 2. Problem statement
 
@@ -17,7 +17,7 @@ The active market-research driver is documented in `docs/roadmap/product-market-
 ## 3. Goals
 
 - Provide an operator UI/API for saving staged SC4S source onboarding changes and operating SC4S safely.
-- Import packs from the SC4S Library or local files.
+- Import packs from the embedded SC4S Library snapshot or local files.
 - Validate pack schema, test events, parser artifacts, and generated configuration locally.
 - Preview all generated changes before apply.
 - Apply changes through a constrained control daemon, not direct web access to host/Docker primitives.
@@ -46,24 +46,25 @@ The active market-research driver is documented in `docs/roadmap/product-market-
 
 ## 6. Product boundary with SC4S Library and SecHub
 
-SC4S Library is the Manager-facing pack catalogue and artifact source. SecHub is the public discovery surface. SC4S Manager is the local operating plane.
+The embedded SC4S Library snapshot is the Manager-facing pack catalogue and artifact source. SC4S Manager is the local operating plane; normal operation has no public discovery or remote source dependency.
 
 Manager responsibilities:
 
-- fetch configured Library catalogue sources
+- expose the embedded Library snapshot and provenance
 - display trust/quality labels without overstating them
-- download pack bundles
-- verify checksum/signature metadata
+- stage local pack files and verify snapshot integrity metadata
 - validate pack schema and fixtures locally
 - preview generated changes
 - apply only after operator approval
 - store local import/deployment state and evidence
 
-SC4S Library/SecHub responsibilities:
+SecHub Resources responsibilities:
 
-- maintain canonical pack metadata and evidence
+- maintain canonical product logging bundles under `products/`
+- maintain SC4S compatibility/source-component metadata and evidence under `packs/`
+- declare explicit zero/one/many product-to-source-component relationships without filename inference
 - enforce submission/manual-PR workflow
-- generate catalogue JSON and downloadable bundles
+- generate source artefacts that may be selected into a future reviewed Manager snapshot
 - define trust labels and download eligibility
 
 A SC4S Library pack can be curated or validation-backed and still fail local Manager validation if environment-specific settings, SC4S version, transports, destinations, or customer constraints do not match.
@@ -84,10 +85,10 @@ The Manager must show desired configuration separately from live runtime state:
 
 ### 7.2 Pack import
 
-Import from SC4S Library or local bundle:
+Import from embedded SC4S Library or local bundle:
 
-1. Fetch or select bundle.
-2. Verify checksum/signature metadata.
+1. Select local snapshot material or a local bundle.
+2. Verify snapshot/bundle integrity metadata.
 3. Validate `pack.json` schema.
 4. Validate fixture semantics and required evidence fields.
 5. Inspect parser/config artifacts for unsafe/default-drop behavior.
@@ -139,7 +140,7 @@ Before mutating operations, the Manager must create enough backup state to resto
 Manager-local state should distinguish:
 
 - Library catalogue entry
-- downloaded bundle metadata
+- embedded snapshot provenance
 - verified local import
 - draft source configuration
 - applied source configuration
@@ -198,7 +199,7 @@ Canonical test bootstrap:
 ./scripts/test.sh
 ```
 
-Developers should not use `10.10.1.183:/opt/sc4s-manager` as the active development workspace unless explicitly directed. It is a runtime/test host, not the canonical working tree.
+Developers should not use `<dev-host>:/opt/sc4s-manager` as the active development workspace unless explicitly directed. It is a runtime/test host, not the canonical working tree.
 
 ## 13. Open decisions
 

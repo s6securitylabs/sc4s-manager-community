@@ -1,0 +1,1261 @@
+{
+  "schema_version": "0.1",
+  "id": "nginx_apache_http",
+  "version": "0.1.4",
+  "url": "https://nginx.org/en/docs/http/ngx_http_log_module.html",
+  "description": "Curated SecHub Resources SC4S pack for common Nginx and Apache httpd HTTP access and selected error-log relay lines.",
+  "display_name": "Nginx / Apache HTTP access and error logs",
+  "vendor": "nginx_apache",
+  "product": "http_access_logs",
+  "default_index": "netops",
+  "default_source": "nginx_apache_http",
+  "listener": {
+    "source_id": "NGINX_APACHE_HTTP",
+    "transport": "tcp",
+    "port": 20075,
+    "env": {
+      "SC4S_LISTEN_NGINX_APACHE_HTTP_TCP_PORT": "20075",
+      "SOURCE_ALL_SET_APPEND": "NGINX_APACHE_HTTP"
+    }
+  },
+  "sourcetypes": {
+    "nginx_combined": "nginx:access:combined",
+    "apache_common": "apache:httpd:access:common",
+    "apache_combined": "apache:httpd:access:combined",
+    "nginx_error": "nginx:error",
+    "apache_error": "apache:httpd:error"
+  },
+  "event_families": [
+    {
+      "id": "nginx_combined",
+      "label": "Nginx combined access log",
+      "match_engine": "pcre",
+      "match": "SC4S_NGINX_APACHE_HTTP_TEST_NGINX_COMBINED_",
+      "expected_sourcetype": "nginx:access:combined",
+      "primary_id_field": "marker",
+      "required_fields": [
+        "src_ip",
+        "http_method",
+        "uri_path",
+        "status"
+      ],
+      "timestamp_fields": [
+        "bracketed access-log timestamp"
+      ]
+    },
+    {
+      "id": "apache_common",
+      "label": "Apache httpd Common Log Format",
+      "match_engine": "pcre",
+      "match": "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_COMMON_",
+      "expected_sourcetype": "apache:httpd:access:common",
+      "primary_id_field": "marker",
+      "required_fields": [
+        "src_ip",
+        "http_method",
+        "uri_path",
+        "status"
+      ],
+      "timestamp_fields": [
+        "bracketed access-log timestamp"
+      ]
+    },
+    {
+      "id": "apache_combined",
+      "label": "Apache httpd Combined Log Format",
+      "match_engine": "pcre",
+      "match": "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_COMBINED_",
+      "expected_sourcetype": "apache:httpd:access:combined",
+      "primary_id_field": "marker",
+      "required_fields": [
+        "src_ip",
+        "http_method",
+        "uri_path",
+        "status"
+      ],
+      "timestamp_fields": [
+        "bracketed access-log timestamp"
+      ]
+    },
+    {
+      "id": "nginx_error",
+      "label": "Nginx error log",
+      "match_engine": "pcre",
+      "match": "SC4S_NGINX_APACHE_HTTP_TEST_NGINX_ERROR_",
+      "expected_sourcetype": "nginx:error",
+      "primary_id_field": "marker",
+      "required_fields": [
+        "error_level",
+        "error_message",
+        "client_ip"
+      ],
+      "timestamp_fields": [
+        "leading Nginx error-log timestamp"
+      ]
+    },
+    {
+      "id": "apache_error",
+      "label": "Apache httpd error log",
+      "match_engine": "pcre",
+      "match": "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_ERROR_",
+      "expected_sourcetype": "apache:httpd:error",
+      "primary_id_field": "marker",
+      "required_fields": [
+        "module",
+        "error_level",
+        "error_message",
+        "client_ip"
+      ],
+      "timestamp_fields": [
+        "bracketed Apache error-log timestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "nginx or apache, depending on routed sourcetype",
+    "product": "http_server or httpd, depending on routed sourcetype",
+    "vendor_product": "nginx:http_server or apache:httpd",
+    "src_ip": "remote client IP/host token from CLF/combined record",
+    "src": "alias of src_ip",
+    "ident": "RFC1413 ident token where present, usually '-'",
+    "user": "authenticated user token where present, '-' means absent/unknown",
+    "http_method": "HTTP request method token",
+    "uri_path": "request target/path token from access log",
+    "url": "alias of uri_path",
+    "http_version": "HTTP protocol version token",
+    "status": "HTTP response status code",
+    "bytes": "documented response byte count token, '-' when unavailable",
+    "bytes_out": "numeric byte count when present",
+    "http_referrer": "Combined-format referrer header token",
+    "http_user_agent": "Combined-format user-agent header token",
+    "request": "quoted HTTP request line as raw context where available",
+    "action": "derived lower-case HTTP method",
+    "signature": "HTTP status code grouping",
+    "signature_id": "fixture marker for synthetic tests",
+    "marker": "synthetic fixture marker only",
+    "error_level": "Nginx/Apache error severity token where present",
+    "error_message": "Error-log message text after product prefix/module context",
+    "module": "Apache module token in error logs",
+    "error_code": "Apache AHnnnnn error code where present",
+    "client_ip": "Client IP token in Nginx/Apache error logs",
+    "client_port": "Apache client source port where present",
+    "server": "Nginx server-name context where present",
+    "host_header": "Nginx Host header context where present",
+    "connection_id": "Nginx per-connection identifier where present",
+    "pid": "Process identifier where present",
+    "tid": "Thread identifier where present"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-nginx_apache_http.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/nginx_apache_http_overview.xml"
+    ],
+    "test_events": [
+      "test-events/nginx_apache_http_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20075.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/nginx_apache_http_reduction_candidates.csv",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / access-log relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20075,
+      "notes": "Dedicated TCP listener for one Nginx/Apache access-log record per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Nginx combined and Apache CLF/combined HTTP access logs",
+    "min": "official docs scanned 2026-06-08",
+    "max": null,
+    "notes": "Grounded in Nginx ngx_http_log_module/core error_log and Apache httpd log/ErrorLogFormat documentation; exact deployment envelope must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-08",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Official Nginx/Apache documentation; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent access-log rows only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live web-server relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Nginx/Apache HTTP access-log relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "nginx_apache_http_access_logs"
+      ],
+      "event_count": 5,
+      "marker_prefix": "SC4S_NGINX_APACHE_HTTP_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20075.sh"
+    },
+    "readback": {
+      "spl": "index=netops sechub_fixture_marker=\"SC4S_NGINX_APACHE_HTTP_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product eventtype src_ip src user ident http_method uri_path url http_version status bytes bytes_out http_referrer http_user_agent action signature signature_id error_level module error_code error_message client_ip client_port server host_header request connection_id marker _raw",
+      "expected_count": 5,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "HTTP client/request/status/byte fields",
+        "eventtypes/tags",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TCP listener on 127.0.0.1:20075 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20075,
+          "protocol": "line_delimited_syslog_raw",
+          "purpose": "Dedicated Nginx/Apache HTTP access-log relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netops"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netops",
+        "Search role can read netops"
+      ]
+    },
+    "e2e_docker_harness": {
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/nginx_apache_http/scripts/e2e_docker_compose.sh run",
+      "commands": {
+        "plan": "packs/nginx_apache_http/scripts/e2e_docker_compose.sh plan",
+        "write_compose": "packs/nginx_apache_http/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/nginx_apache_http/scripts/e2e_docker_compose.sh run",
+        "down": "packs/nginx_apache_http/scripts/e2e_docker_compose.sh down"
+      },
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "splunk_requirements": {
+        "required_index": "netops",
+        "hec_enabled": true,
+        "app_mount": "packs/nginx_apache_http/splunk",
+        "readback_spl": "index=netops sechub_fixture_marker=\"SC4S_NGINX_APACHE_HTTP_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product eventtype src_ip client_ip http_method uri_path status error_level module error_code action signature signature_id marker _raw"
+      },
+      "sc4s_requirements": {
+        "image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "source_id": "NGINX_APACHE_HTTP",
+          "transport": "tcp",
+          "container_port": 20075,
+          "default_host_port": 20075,
+          "framing": "line_delimited"
+        },
+        "parser_mount": "packs/nginx_apache_http/sc4s/app_parsers/syslog"
+      },
+      "coverage_matrix": [
+        {
+          "event_family": "nginx_combined",
+          "sourcetype": "nginx:access:combined",
+          "markers": [
+            "SC4S_NGINX_APACHE_HTTP_TEST_NGINX_COMBINED_001"
+          ],
+          "required_fields": [
+            "src_ip",
+            "http_method",
+            "uri_path",
+            "status",
+            "bytes_out",
+            "http_referrer",
+            "http_user_agent"
+          ]
+        },
+        {
+          "event_family": "apache_common",
+          "sourcetype": "apache:httpd:access:common",
+          "markers": [
+            "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_COMMON_002"
+          ],
+          "required_fields": [
+            "src_ip",
+            "http_method",
+            "uri_path",
+            "status",
+            "bytes_out"
+          ]
+        },
+        {
+          "event_family": "apache_combined",
+          "sourcetype": "apache:httpd:access:combined",
+          "markers": [
+            "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_COMBINED_003"
+          ],
+          "required_fields": [
+            "src_ip",
+            "http_method",
+            "uri_path",
+            "status",
+            "bytes_out",
+            "http_referrer",
+            "http_user_agent"
+          ]
+        },
+        {
+          "event_family": "nginx_error",
+          "sourcetype": "nginx:error",
+          "markers": [
+            "SC4S_NGINX_APACHE_HTTP_TEST_NGINX_ERROR_004"
+          ],
+          "required_fields": [
+            "error_level",
+            "error_message",
+            "client_ip",
+            "server",
+            "host_header",
+            "connection_id"
+          ]
+        },
+        {
+          "event_family": "apache_error",
+          "sourcetype": "apache:httpd:error",
+          "markers": [
+            "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_ERROR_005"
+          ],
+          "required_fields": [
+            "module",
+            "error_level",
+            "error_code",
+            "error_message",
+            "client_ip",
+            "client_port"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Does not prove real Nginx or Apache httpd source-version emission, configured log_format/ErrorLogFormat variants, reverse-proxy timing fields, WAF/security modules, or collector wrapper behavior.",
+        "Does not prove headerless file-tail, BSD/RFC3164, RFC5424, or production syslog-envelope variants beyond the disposable TCP fixture replay helper.",
+        "Does not prove SC4S listener replay, HEC delivery, or Splunk indexed read-back until the harness is actually run in a permitted Docker lab.",
+        "Does not change curated/unverified trust or quality posture without retained replay/read-back evidence."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "nginx_apache_http_access_logs",
+      "label": "Nginx/Apache HTTP access-log synthetic-equivalent fixtures",
+      "path": "test-events/nginx_apache_http_test_events.txt",
+      "format": "raw",
+      "wire_format": "http_access_log_payload",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 5,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_NGINX_APACHE_HTTP_TEST_NGINX_COMBINED_001",
+        "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_COMMON_002",
+        "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_COMBINED_003",
+        "SC4S_NGINX_APACHE_HTTP_TEST_NGINX_ERROR_004",
+        "SC4S_NGINX_APACHE_HTTP_TEST_APACHE_ERROR_005"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "bracketed access-log timestamp",
+        "primary_timezone": "numeric offset in each fixture timestamp",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or receiver timezone policy"
+        ],
+        "notes": "Fixtures use explicit +0000 offsets. Production custom formats must preserve a timezone policy before promotion."
+      },
+      "field_delimiting": {
+        "style": "clf_combined_quoted_fields",
+        "field_separator": "spaces with quoted request/referrer/user-agent fields",
+        "quote_character": "double quote",
+        "escape_policy": "Synthetic fixture values avoid embedded quotes; production escaped quotes need local validation.",
+        "notes": "Access-log rows use CLF/combined quoting; error-log rows use product-specific bracket/prefix context plus comma-delimited client/request/host/referrer attributes where documented."
+      },
+      "expected_families": [
+        "nginx_combined",
+        "apache_common",
+        "apache_combined",
+        "nginx_error",
+        "apache_error"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-nginx_apache_http.conf",
+      "target_path": "local/config/app_parsers/syslog/app-nginx_apache_http.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/nginx_apache_http.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/nginx_apache_http_overview.xml",
+      "target_path": "splunk/default/data/ui/views/nginx_apache_http_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/nginx_apache_http_test_events.txt",
+      "target_path": "test-events/nginx_apache_http_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20075.sh",
+      "target_path": "scripts/send_tcp_20075.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/nginx_apache_http_reduction_candidates.csv",
+      "target_path": "docs/nginx_apache_http_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "docs/evidence/nginx-apache-http-evidence-scan-20260608.md; official Nginx ngx_http_log_module/core error_log documentation and Apache httpd log/ErrorLogFormat documentation for access and selected error-log shapes.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use documentation-shaped rows with RFC5737/example values; no customer/server logs or secrets are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-08",
+      "notes": "Created from Milestone 8 next build queue after evidence scan made conservative access-log pack actionable."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "src"
+          ],
+          "status": "partial",
+          "notes": "Remote client IP/host token from access log."
+        },
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Authenticated user token where present; '-' is unknown."
+        },
+        "http_method": {
+          "source_fields": [
+            "http_method",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "HTTP method token."
+        },
+        "url": {
+          "source_fields": [
+            "uri_path",
+            "url"
+          ],
+          "status": "partial",
+          "notes": "Request target/path token; not full URL reconstruction."
+        },
+        "status": {
+          "source_fields": [
+            "status",
+            "signature"
+          ],
+          "status": "partial",
+          "notes": "HTTP status code."
+        },
+        "bytes_out": {
+          "source_fields": [
+            "bytes",
+            "bytes_out"
+          ],
+          "status": "partial",
+          "notes": "Response byte count where present."
+        },
+        "http_user_agent": {
+          "source_fields": [
+            "http_user_agent"
+          ],
+          "status": "partial",
+          "notes": "Combined-format user-agent token."
+        },
+        "error_message": {
+          "source_fields": [
+            "error_message",
+            "error_code"
+          ],
+          "status": "partial",
+          "notes": "HTTP server error-log message/code context; not complete web/app error taxonomy."
+        },
+        "src_ip": {
+          "source_fields": [
+            "src_ip",
+            "client_ip"
+          ],
+          "status": "partial",
+          "notes": "Access-log remote host or error-log client IP."
+        }
+      },
+      "notes": "Partial Web/Network Sessions-style mapping; not complete web CIM coverage."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Remote client token when IP-shaped."
+        },
+        "http_request.http_method": {
+          "source_fields": [
+            "http_method"
+          ],
+          "status": "partial",
+          "notes": "HTTP method."
+        },
+        "http_request.url.path": {
+          "source_fields": [
+            "uri_path",
+            "url"
+          ],
+          "status": "partial",
+          "notes": "Request target/path."
+        },
+        "http_response.code": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "partial",
+          "notes": "HTTP status code."
+        },
+        "http_response.bytes": {
+          "source_fields": [
+            "bytes_out"
+          ],
+          "status": "partial",
+          "notes": "Response byte count."
+        },
+        "user.name": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Authenticated user token where present."
+        },
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "partial",
+          "notes": "Raw access-log row retained."
+        },
+        "message": {
+          "source_fields": [
+            "error_message"
+          ],
+          "status": "partial",
+          "notes": "Error-log message text for selected Nginx/Apache formats."
+        },
+        "severity": {
+          "source_fields": [
+            "error_level"
+          ],
+          "status": "partial",
+          "notes": "Product error level token; not normalized OCSF severity."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Client IP where token is IP-shaped."
+        },
+        "user.name": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Authenticated user token."
+        },
+        "http.request.method": {
+          "source_fields": [
+            "http_method"
+          ],
+          "status": "partial",
+          "notes": "HTTP method."
+        },
+        "url.path": {
+          "source_fields": [
+            "uri_path",
+            "url"
+          ],
+          "status": "partial",
+          "notes": "Request target/path."
+        },
+        "http.response.status_code": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "partial",
+          "notes": "HTTP status."
+        },
+        "http.response.body.bytes": {
+          "source_fields": [
+            "bytes_out"
+          ],
+          "status": "partial",
+          "notes": "Response bytes."
+        },
+        "user_agent.original": {
+          "source_fields": [
+            "http_user_agent"
+          ],
+          "status": "partial",
+          "notes": "Combined-format user agent."
+        },
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived lower-case method."
+        },
+        "message": {
+          "source_fields": [
+            "error_message"
+          ],
+          "status": "partial",
+          "notes": "Error-log message text."
+        },
+        "log.level": {
+          "source_fields": [
+            "error_level"
+          ],
+          "status": "partial",
+          "notes": "Nginx/Apache error level token."
+        },
+        "event.code": {
+          "source_fields": [
+            "error_code"
+          ],
+          "status": "partial",
+          "notes": "Apache AHnnnnn code where present."
+        }
+      },
+      "notes": "ECS mapping is partial field-name guidance only."
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "web",
+    "application_delivery",
+    "infrastructure",
+    "security"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "nginx_combined_access",
+      "label": "Nginx combined access log",
+      "description": "Nginx combined access-log rows using documented ngx_http_log_module variables.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "access_log",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "nginx_combined"
+      ],
+      "test_event_sets": [
+        "nginx_apache_http_access_logs"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Nginx relay replay/read-back captured.",
+        "Custom/JSON/error log formats are out of scope."
+      ]
+    },
+    {
+      "id": "apache_common_access",
+      "label": "Apache Common Log Format",
+      "description": "Apache httpd Common Log Format rows using documented LogFormat tokens.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "access_log",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "apache_common"
+      ],
+      "test_event_sets": [
+        "nginx_apache_http_access_logs"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Apache relay replay/read-back captured."
+      ]
+    },
+    {
+      "id": "apache_combined_access",
+      "label": "Apache Combined Log Format",
+      "description": "Apache httpd Combined Log Format rows with referrer and user-agent tokens.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "access_log",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "apache_combined"
+      ],
+      "test_event_sets": [
+        "nginx_apache_http_access_logs"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Apache relay replay/read-back captured."
+      ]
+    },
+    {
+      "id": "nginx_error_log",
+      "label": "Nginx error log",
+      "description": "Nginx error-log rows using documented core error_log shape with level, pid/tid, connection, client, server, request, host, and referrer context.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "error_log",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "nginx_error"
+      ],
+      "test_event_sets": [
+        "nginx_apache_http_access_logs"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Nginx error-log relay replay/read-back captured.",
+        "Nginx debug/custom error formats are not covered."
+      ]
+    },
+    {
+      "id": "apache_error_log",
+      "label": "Apache httpd error log",
+      "description": "Apache httpd error-log rows using documented module/level/pid/client/AH-code shape.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "error_log",
+        "collector_raw_relay"
+      ],
+      "payload_formats": [
+        "raw"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "apache_error"
+      ],
+      "test_event_sets": [
+        "nginx_apache_http_access_logs"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Apache error-log relay replay/read-back captured.",
+        "Module-specific custom ErrorLogFormat variants are not covered."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/nginx_apache_http_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "src_ip",
+        "user",
+        "http_method",
+        "uri_path",
+        "status",
+        "bytes",
+        "http_referrer",
+        "http_user_agent",
+        "marker"
+      ],
+      "notes": "Preserve request, client, response, referrer, user-agent, and raw event context by default. Any suppression must be validated with replay/read-back."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Nginx/Apache relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real server exports.",
+    "Only selected documentation-shaped Nginx/Apache error logs are covered; custom/JSON access formats, reverse-proxy timing extensions, module-specific WAF/security logs, and collector wrapper variants remain deferred.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Nginx/Apache HTTP access intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props for common access-log rows. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-nginx_apache_http.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard HTTP access analyst knowledge",
+      "description": "Adds eventtypes/tags for Nginx combined, Apache common/combined, HTTP error-status discovery, and Nginx/Apache error-log discovery. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed HTTP access reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/nginx_apache_http_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/nginx_apache_http/test-events/nginx_apache_http_test_events.txt": "sha256:7b0115135656c9da47ed50d02343a84663cb42d602c02f9b9b0e8156f6589b7b",
+      "packs/nginx_apache_http/sc4s/env.example": "sha256:32015ebc31de4d431023a0bf59e93a02f20f3aaf57cbec3e1b6a2bdaa02839e0",
+      "packs/nginx_apache_http/sc4s/app_parsers/syslog/app-nginx_apache_http.conf": "sha256:5b3e64c8ffaca4c94633c580c6aab7898cbb77bd7c85a2656acc29797eefbfda",
+      "packs/nginx_apache_http/splunk/default/props.conf": "sha256:beeb707f2bc98cb94fa2216ebef74261eaa0eb41747737f4b1e47a7fe0937e4c",
+      "packs/nginx_apache_http/splunk/default/transforms.conf": "sha256:903df2169dba66eaacde1a6dd0af4fdcc633e195ded3a9447c678e0b97ddc792",
+      "packs/nginx_apache_http/splunk/default/eventtypes.conf": "sha256:0a086b61eeb70309c0e07133b2ec3f653ef6faf1ed73946abf544899afeaf80f",
+      "packs/nginx_apache_http/splunk/default/tags.conf": "sha256:cfdef9748393b330c9a03396d82442ec918b6176658c62375597f9c1ab58250f",
+      "packs/nginx_apache_http/splunk/default/data/ui/views/nginx_apache_http_overview.xml": "sha256:fa6f8d2d666f5a9f8b1254ab3c19d774934e95e249be42bc36730231d34df660",
+      "packs/nginx_apache_http/docs/nginx_apache_http_reduction_candidates.csv": "sha256:9995ab2c2e1c4cd77b9f4f0d8eb6d16f52d10ad4a73827a2446692e095c81bfb",
+      "packs/nginx_apache_http/scripts/send_tcp_20075.sh": "sha256:a01ce387e6bd9ef8cab89b69436ffa51a0c5cd12c9a4c3baa6ef75c25295b678",
+      "packs/nginx_apache_http/validation/preflight-2026-06-08.md": "sha256:f3ddee872738e651ec341a3a684b7526d2886067da09339530a9ca240a6df08e",
+      "packs/nginx_apache_http/README.md": "sha256:cabef1798b21e775778ed952e649d207db628600c04b41e4bbff8789027e14d1",
+      "packs/nginx_apache_http/scripts/e2e_docker_compose.sh": "sha256:d731150825e2d69538ead1e9dbeb314f31154d3676a2fcc2f762d3af73586227"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_delivery": {
+    "mode": "file_text_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "raw_access_or_error_log",
+    "supported_transport_refs": [
+      "tcp_syslog"
+    ],
+    "notes": "Nginx/Apache access and error logs are file-backed text records requiring a file tailer or collector relay.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "nginx_apache_http_overview_splunk_test",
+      "title": "Nginx / Apache HTTP access and error logs — dashboard example",
+      "source_path": "dashboards/screenshots/nginx-apache-http-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Nginx / Apache HTTP access and error logs dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

@@ -1,89 +1,116 @@
 # SC4S Manager — Architecture
 
-## Deployment and security boundary
+## Security model
 
-- The Manager web/API process runs as non-root (UID/GID `10001` in the image).
-- The supported Docker Compose deployment has **no** `/var/run/docker.sock` mount. Docker socket access is host-root equivalent and must not be added for convenience.
-- Compose and host control are separate deployment modes. The shipped Compose stack does not include the narrow host control daemon or mount a host control socket; it does not make control daemon functionality exist inside the Docker-only deployment and must report runtime-control actions as unavailable.
-- The optional host control daemon accepts only fixed SC4S actions over `/run/sc4s-manager/control.sock`: status, bounded logs, metrics, config validation, reload, restart, listeners, and warnings. It must not accept caller-selected shells, Docker commands, compose files, paths, or container names.
-- The systemd socket unit owns `/run/sc4s-manager/control.sock` with `SocketUser=sc4s-manager`, `SocketGroup=sc4s-manager`, and `SocketMode=0660`. The root-owned service consumes exactly the single AF_UNIX stream listener systemd passes on fd 3 (`LISTEN_PID`/`LISTEN_FDS`); it neither unlinks nor rebinds that socket. Standalone development mode retains daemon-owned socket creation with the same `0660` group boundary. Do not turn either mode into a Docker-socket or world-writable-socket workaround.
-- All mutation routes require authorization. `/health` and `/api/health` are intentionally open liveness endpoints only.
-- Secrets are redacted in API responses, diffs, audit logs, exports, and error messages. Operators must still avoid putting tokens in URLs, shell history, tickets, screenshots, or browser developer tools.
-- File writes are atomic where supported; operators must retain external backups and prove post-change state.
+- The web/API process runs as a non-root user.
+- The web/API process has no access to the Docker socket.
+- SC4S restart and reload go through a narrow Unix socket to a local control service — the web process cannot issue arbitrary host commands.
+- All mutating operations require authentication. `/health` and `/live` are
+  process-liveness endpoints; `/ready` and `/api/health` report dependency readiness.
+- Secrets are redacted in API responses, diffs, audit logs, exports, and error messages.
+- File writes are atomic (write to temp, rename) to prevent corruption on failure.
 
-## Authentication and trusted proxy contract
+## Authentication modes
 
-Manager does not require a named identity provider. It can sit behind any trusted reverse proxy that authenticates the request, removes client-supplied identity headers, and injects the exact headers Manager checks.
+SC4S Manager supports two authentication modes. Only one needs to be configured.
 
-| Purpose | Header/configuration | Enforcement |
-|---|---|---|
-| Proxy trust | `X-SC4S-Manager-Proxy` equals `SC4S_MANAGER_PROXY_SECRET` | Required for proxy authorization. The proxy secret is shared infrastructure material, never a browser credential. |
-| Audit identity | `X-Forwarded-User` or `X-Authentik-Username` | Used as the actor after proxy authorization. If absent, the peer address is recorded. |
-| Admin groups (optional) | `SC4S_MANAGER_ADMIN_GROUPS` plus `X-Authentik-Groups` | Exact intersection after comma/semicolon/pipe parsing. Map another IdP's group claim to the implemented header name at the proxy. |
-| Local automation | `X-SC4S-Manager-Token` equals `SC4S_MANAGER_API_TOKEN` | Accepted only from `127.0.0.1`/`::1`; not browser authentication. |
-| Isolated temporary access | `SC4S_MANAGER_MANUAL_LOGIN_TOKEN` | Grants access for controlled temporary use. It is not a replacement for proxy auth, TLS, network restriction, or identity-aware audit. |
+### Standalone mode (direct access)
 
-A reverse proxy must overwrite/remove all of the listed incoming headers before forwarding a verified identity. Do not accept these values directly from untrusted clients. Health endpoints remaining open is not proof that the proxy correctly protects authenticated UI/API routes.
+For operators who access Manager directly from a browser without a reverse proxy, set a strong random token in `manager.env`:
 
-## Apply-state model
+```
+SC4S_MANAGER_MANUAL_LOGIN_TOKEN=$(openssl rand -hex 32)
+```
 
-Keep these states distinct:
+On first visit, Manager shows a login page. Paste the token to authenticate. A session cookie (`sc4s_manual_session`) is set for 24 hours. After that, sign out via the UI or clear the cookie to end the session.
 
-1. **Desired/staged**: Manager has saved a proposed configuration or staged a Library pack.
-2. **Validated**: syntax/config validation succeeded in the available validation environment.
-3. **Applied**: files were written and an apply transaction records its result.
-4. **Observed runtime**: SC4S process/container, listener, health, log, or counter data was actually read back.
-5. **Verified downstream**: an approved event/marker was found at the intended Splunk destination.
+### Proxy mode (Authentik / APISIX / nginx)
 
-Compose-only installations cannot honestly progress control-socket actions beyond unavailable. A Manager HTTP response or a saved file never substitutes for SC4S health or downstream readback.
+For deployments behind a trusted reverse proxy, set a shared secret that the proxy forwards on every request:
+
+```
+SC4S_MANAGER_PROXY_SECRET=<generated-secret>
+```
+
+The proxy must strip any client-supplied `X-SC4S-Manager-Proxy` header and inject
+`X-SC4S-Manager-Proxy: <secret>` only on the trusted upstream hop. The web process
+trusts the request only when this header exactly matches. If
+`SC4S_MANAGER_ADMIN_GROUPS` is configured, one exact group from the trusted
+forwarded group header must also match. Never forward an untrusted client value.
+
+### API token (local scripts / automation)
+
+For local automation (scripts running on the same host), set:
+
+```
+SC4S_MANAGER_API_TOKEN=<generated-token>
+```
+
+This token is accepted only from `127.0.0.1` / `::1`, via the `X-SC4S-Manager-Token` header.
 
 ## Apply workflow
 
-For a deployment that has a working, narrow control boundary, a configuration change follows:
+Every configuration change follows this sequence:
 
 ```
-preview → validate → backup → apply → control action → post-check → rollback-ready
+preview → validate → backup → apply → post-check → rollback-ready
 ```
 
-1. **Preview** — show files and values that would change.
-2. **Validate** — syntax/config validation against the proposed state.
-3. **Backup** — preserve current runtime files before writes.
-4. **Apply** — atomically write approved configuration.
-5. **Control/post-check** — execute only the required allowlisted reload/restart and read back health/listeners/counters.
-6. **Rollback** — on validation, control, or post-check failure, restore the backup and restore the known-good runtime where a control action has already run.
+1. **Preview** — show the operator exactly what config files will change before touching anything
+2. **Validate** — run SC4S config validation (syslog-ng `--syntax-only` equivalent) against the proposed state
+3. **Backup** — copy current runtime files to a timestamped backup before any write
+4. **Apply** — write new config through the control path
+5. **Post-check** — validate config again in the live process; check counters and listener state
+6. **Rollback-ready** — retain the backup and outcome. Automatic restoration on
+   every failed control/post-check path is not yet a universal guarantee.
 
-Stop rather than claiming success if validation, control, or post-check evidence is absent. Use Splunk readback for ingestion proof.
+Desired configuration and live runtime state are always displayed separately. Saved config is not proof that SC4S is processing events — use Splunk readback to confirm.
 
-## Library pack workflow
+## Pack import workflow
 
-Packs are fetched from a configured SC4S Library source (default: [SecHub](https://sechub.s6ops.com)) and remain untrusted until local validation and explicit operator approval:
+Packs are discovered from the committed embedded Library snapshot and treated as untrusted until locally verified:
 
-1. Fetch catalogue/entry metadata from the configured source.
-2. Download a selected bundle and verify its SHA-256 against catalogue metadata.
-3. Validate schema, parser artifacts, fixtures, path safety, and archive limits.
-4. Stage a draft import; do not apply it automatically.
-5. On explicit install/apply, write only eligible SC4S runtime files through the full apply workflow.
-6. Retain reference-only artifacts for review; do not automatically apply Splunk apps, scripts, documentation, or test events.
+1. Manager reads the pinned local snapshot index and manifest
+2. Operator selects a pack and reviews its local detail and provenance
+3. Manager stages its local files into an isolated draft import
+4. Operator clicks Check pack — Manager validates schema, parser artifacts, fixture semantics, and path safety
+5. Operator clicks Install to SC4S — Manager applies only runtime-safe SC4S config files, following the full apply workflow above
+6. Reference-only files (Splunk knowledge, test events, scripts, docs) remain available for review and are never applied automatically
 
-Remote review/trust labels are advisory. A downloaded pack is not local deployment approval and a local validation result is not downstream Splunk proof.
+### Library snapshot configuration
 
-### Library source configuration
+The Library snapshot is shipped with Manager. Its immutable source revision is exposed for provenance; normal operation has no configurable remote source, refresh, or polling path. Refreshing the snapshot is a separately reviewed maintenance/release operation.
 
-Set `SC4S_LIBRARY_SOURCE_URL` in `manager.env` to use an approved alternative source, or `none` to start with no preconfigured source. Validate the source's catalogue, manifest, representative entry, and bundle from the real Manager client before relying on it.
+### Snapshot staging safety checks
 
-### Bundle safety checks
+Before any pack content is staged, Manager verifies:
 
-Before staging pack content, Manager checks that ZIP members are relative/non-traversing, are not symlinks or duplicates, are within compressed/uncompressed and member-size limits, and match the advertised checksum.
+- Pack paths resolve beneath the committed snapshot
+- Declared runtime targets are restricted to Manager's SC4S allowlist
+- Snapshot manifest/artifact metadata is structurally valid
+- Snapshot metadata and every staged file are verified locally before staging
 
-## State layout
+### State layout
 
-Manager state is rooted at `SC4S_MANAGER_ROOT` (Compose: `/opt/sc4s/manager`), including Library cache/imports, backups, audit records, templates, and frontend assets. This is mutable operational data: back it up before upgrade, give UID/GID `10001` appropriate access, and do not expose it as a public static directory.
+Manager ships the snapshot and persists only local import state under `MANAGER_ROOT/state/library/`:
+
+```
+embedded_library/
+  SNAPSHOT.json                         pinned source revision and integrity metadata
+  packs/<pack-id>/                      SC4S, Splunk reference, fixture, docs, scripts
+state/library/
+  imports/<import_id>/
+    bundle/                            extracted bundle (never applied directly)
+    reference/                         non-runtime files for review only
+    runtime-plan.json                  which files are eligible for apply
+    record.json                        import record, provenance, apply status
+```
 
 ## What Manager does not do
 
-- It does not host the public pack catalogue.
-- It does not let Library trust labels bypass local validation.
-- It does not grant unrestricted host/Docker control to the web UI.
-- It does not make control daemon functionality exist inside the Docker-only deployment.
-- It does not silently treat saved configuration, HTTP liveness, or container health as Splunk indexing proof.
-- It does not store secrets in generated pack exports by design; operators still must protect runtime environment files and evidence.
+- Does not require or poll a public pack catalogue at runtime.
+- Does not let Library trust labels or review status bypass local validation.
+- Does not grant the web UI unrestricted host or Docker control.
+- Does not store secrets in generated pack exports.
+- Does not silently drop or reduce events.
+- Does not apply unreviewed content without explicit operator confirmation at each step.

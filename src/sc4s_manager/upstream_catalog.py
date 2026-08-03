@@ -21,10 +21,17 @@ FULL_TREE_RULES = [
     (Path("package/etc/conf.d/conflib/netsource"), "*.conf", "netsource_app_parser"),
     (Path("package/etc/conf.d/conflib/post-filter"), "*.conf", "postfilter"),
     (Path("package/etc/conf.d/destinations"), "*", "destination"),
+    # SC4S 3.46.0 moved the packaged tree under package/shared.
+    (Path("package/shared/conf.d/conflib/syslog"), "*.conf", "syslog_app_parser"),
+    (Path("package/shared/conf.d/conflib/netsource"), "*.conf", "netsource_app_parser"),
+    (Path("package/shared/conf.d/conflib/post-filter"), "*.conf", "postfilter"),
+    (Path("package/shared/conf.d/destinations"), "*", "destination"),
     (Path("docs/sources"), "*.md", "source_documentation"),
 ]
 LITE_TREE_RULES = [
     (Path("package/lite/etc/addons"), "*", "lite_addon"),
+    # SC4S 3.46.0 moved Lite addons under package/shared/addons.
+    (Path("package/shared/addons"), "*", "lite_addon"),
 ]
 CATALOGUE_OUTPUTS = (
     ("sc4s-inbuilt", FULL_TREE_RULES),
@@ -77,7 +84,7 @@ def infer_source_id_from_path(relative_path: str, artifact_type: str) -> tuple[s
             return stem or None, stem or None, None
         except ValueError:
             pass
-    if "package" in parts and "lite" in parts and "addons" in parts:
+    if "package" in parts and "addons" in parts and ("lite" in parts or "shared" in parts):
         try:
             idx = parts.index("addons")
             if len(parts) > idx + 1:

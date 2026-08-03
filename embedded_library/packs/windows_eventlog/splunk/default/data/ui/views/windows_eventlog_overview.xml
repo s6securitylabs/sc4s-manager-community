@@ -1,0 +1,263 @@
+<form version="1.1" theme="dark">
+  <label>Windows Event Log Relay - Overview</label>
+  <description>Fixture-backed Windows Event XML relay overview. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Windows Event XML records</title>
+      <single>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Process and PowerShell events</title>
+      <single>
+        <search>
+          <query>index=oswinsec sourcetype IN ("windows:eventlog:process","windows:eventlog:powershell") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Defender detections</title>
+      <single>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:defender" host=$host_tok$ event_id=1116 | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Failed logons / Kerberos pre-auth failures</title>
+      <single>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:security" host=$host_tok$ event_id IN (4625,4771) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Account and policy/service/object changes</title>
+      <single>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:security" host=$host_tok$ event_id IN (1102,4663,4697,4698,4719,4720,4726,4732,4738) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Distinct fixture markers</title>
+      <single>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ marker="SC4S_WINDOWS_EVENTLOG_TEST_*" | stats dc(marker) as markers</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by Windows family</title>
+      <chart>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ | eval windows_family=case(sourcetype="windows:eventlog:security","security",sourcetype="windows:eventlog:process","process",sourcetype="windows:eventlog:powershell","powershell",sourcetype="windows:eventlog:defender","defender",true(),sourcetype) | timechart count by windows_family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ | eval windows_family=case(sourcetype="windows:eventlog:security","security",sourcetype="windows:eventlog:process","process",sourcetype="windows:eventlog:powershell","powershell",sourcetype="windows:eventlog:defender","defender",true(),sourcetype) | stats count by windows_family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Windows Event IDs</title>
+      <chart>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ | stats count by event_id provider | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top Windows users</title>
+      <chart>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ | eval windows_user=coalesce(user, src_user) | stats count by windows_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top source IPs</title>
+      <chart>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ src_ip=* | stats count by src_ip | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Authentication and source context</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:security" host=$host_tok$ | table _time host event_id provider user user_domain src_user src_user_domain src_ip src_port logon_type workstation package_name failure_reason status sub_status object_name object_type access_mask audit_policy_changes service_name service_file_name dest signature signature_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+
+  <row>
+    <panel>
+      <title>Object, account/group, audit log, policy, service, and scheduled-task triage</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:security" host=$host_tok$ event_id IN (1102,4663,4697,4698,4719,4726,4732,4738) | table _time host event_id provider src_user src_user_domain object_name object_type access_mask access_list object_process policy_category policy_subcategory audit_policy_changes service_name service_file_name service_type service_start_type service_account target_sid member_name member_sid subject_logon_id display_name user_principal_name sam_account_name user_account_control task_name task_content dest signature signature_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Process and PowerShell triage</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype IN ("windows:eventlog:process","windows:eventlog:powershell") host=$host_tok$ | table _time host sourcetype event_id user src_user dest process process_command_line parent_process script_block_text signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Defender detection triage</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:defender" host=$host_tok$ | table _time host event_id provider severity threat_name file_path dest signature signature_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Windows Event XML records</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:eventlog:*" host=$host_tok$ | table _time host sourcetype event_id provider user user_domain src_user src_user_domain src_ip src_port logon_type workstation package_name failure_reason status sub_status object_name object_type access_mask access_list object_process audit_policy_changes policy_category policy_subcategory service_name service_file_name service_start_type service_account target_sid member_name member_sid subject_logon_id display_name user_principal_name sam_account_name user_account_control task_name task_content dest process process_command_line parent_process script_block_text threat_name file_path severity signature signature_id marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

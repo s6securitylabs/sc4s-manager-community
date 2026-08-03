@@ -1,0 +1,2 @@
+{"action": "allow", "app": "ssl", "dest_ip": "198.51.100.20", "event_family": "traffic", "marker": "SC4S-PAN-TRAFFIC-MARKER", "reduction_decision": "retain_by_default_candidate_only", "rule": "Allow-Web", "sourcetype": "pan:traffic", "src_ip": "10.0.0.10"}
+{"action": "block-url", "event_family": "threat", "marker": "SC4S-PAN-THREAT-MARKER", "reduction_decision": "always_retain_security_signal", "severity": "high", "sourcetype": "pan:threat", "url": "malware.example.test/blocked"}

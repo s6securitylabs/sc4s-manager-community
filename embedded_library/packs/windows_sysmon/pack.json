@@ -1,0 +1,2064 @@
+{
+  "schema_version": "0.1",
+  "id": "windows_sysmon",
+  "version": "0.1.9",
+  "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "description": "Curated SecHub Resources SC4S pack for Microsoft Sysmon records relayed as one-line Windows Event XML, covering Event ID 1 process creation, Event ID 2 file creation-time change, Event ID 3 network connection, Event ID 6 driver load, Event ID 7 image load, Event ID 8 CreateRemoteThread/process-create remote thread, Event ID 9 raw access read, Event ID 10 process access, Event ID 11 file creation, Event IDs 12/13/14 registry activity, Event IDs 17/18 named-pipe activity, Event IDs 19/20/21 WMI activity, Event ID 22 DNS query, Event ID 23 file deletion, Event ID 24 clipboard change, Event ID 25 process tampering, and Event ID 26 file-delete-detected records.",
+  "display_name": "Microsoft Windows Sysmon",
+  "vendor": "microsoft",
+  "product": "windows_sysmon",
+  "default_index": "oswinsec",
+  "default_source": "windows_sysmon",
+  "listener": {
+    "source_id": "WINDOWS_SYSMON",
+    "transport": "tcp",
+    "port": 20071,
+    "env": {
+      "SC4S_LISTEN_WINDOWS_SYSMON_TCP_PORT": "20071",
+      "SOURCE_ALL_SET_APPEND": "WINDOWS_SYSMON"
+    }
+  },
+  "sourcetypes": {
+    "process": "windows:sysmon:process",
+    "network": "windows:sysmon:network",
+    "file_create": "windows:sysmon:file_create",
+    "dns": "windows:sysmon:dns",
+    "image_load": "windows:sysmon:image_load",
+    "process_access": "windows:sysmon:process_access",
+    "file_delete": "windows:sysmon:file_delete",
+    "registry": "windows:sysmon:registry",
+    "pipe": "windows:sysmon:pipe",
+    "registry_create_delete": "windows:sysmon:registry",
+    "registry_value_set": "windows:sysmon:registry",
+    "registry_rename": "windows:sysmon:registry",
+    "pipe_created": "windows:sysmon:pipe",
+    "pipe_connected": "windows:sysmon:pipe",
+    "process_tampering": "windows:sysmon:tampering",
+    "driver_load": "windows:sysmon:driver_load",
+    "raw_access": "windows:sysmon:raw_access",
+    "clipboard": "windows:sysmon:clipboard",
+    "wmi": "windows:sysmon:wmi",
+    "wmi_filter": "windows:sysmon:wmi",
+    "wmi_consumer": "windows:sysmon:wmi",
+    "wmi_binding": "windows:sysmon:wmi",
+    "remote_thread": "windows:sysmon:remote_thread",
+    "file_delete_detected": "windows:sysmon:file_delete_detected",
+    "file_time": "windows:sysmon:file_time"
+  },
+  "event_families": [
+    {
+      "id": "process",
+      "label": "Sysmon process creation (Event ID 1)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>1</EventID>|<EventID>1</EventID>.*SC4S_WINDOWS_SYSMON_TEST_PROCESS_",
+      "expected_sourcetype": "windows:sysmon:process",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "UtcTime",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "CommandLine",
+        "User"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "network",
+      "label": "Sysmon network connection (Event ID 3)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>3</EventID>|<EventID>3</EventID>.*SC4S_WINDOWS_SYSMON_TEST_NETWORK_",
+      "expected_sourcetype": "windows:sysmon:network",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "Protocol",
+        "SourceIp",
+        "SourcePort",
+        "DestinationIp",
+        "DestinationPort"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "file_create",
+      "label": "Sysmon file creation (Event ID 11)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>11</EventID>|<EventID>11</EventID>.*SC4S_WINDOWS_SYSMON_TEST_FILE_",
+      "expected_sourcetype": "windows:sysmon:file_create",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "TargetFilename",
+        "CreationUtcTime"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime",
+        "CreationUtcTime"
+      ]
+    },
+    {
+      "id": "file_time",
+      "label": "Sysmon file creation time changed (Event ID 2)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>2</EventID>|<EventID>2</EventID>.*SC4S_WINDOWS_SYSMON_TEST_FILE_TIME_",
+      "expected_sourcetype": "windows:sysmon:file_time",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "UtcTime",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "TargetFilename",
+        "CreationUtcTime",
+        "PreviousCreationUtcTime",
+        "User"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime",
+        "CreationUtcTime",
+        "PreviousCreationUtcTime"
+      ]
+    },
+    {
+      "id": "dns",
+      "label": "Sysmon DNS query (Event ID 22)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>22</EventID>|<EventID>22</EventID>.*SC4S_WINDOWS_SYSMON_TEST_DNS_",
+      "expected_sourcetype": "windows:sysmon:dns",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ProcessGuid",
+        "ProcessId",
+        "QueryName",
+        "QueryStatus",
+        "Image"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "image_load",
+      "label": "Sysmon image load (Event ID 7)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>7</EventID>|<EventID>7</EventID>.*SC4S_WINDOWS_SYSMON_TEST_IMAGE_LOAD_",
+      "expected_sourcetype": "windows:sysmon:image_load",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "ImageLoaded",
+        "Hashes",
+        "Signed",
+        "SignatureStatus"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "remote_thread",
+      "label": "Sysmon CreateRemoteThread / process-create remote thread (Event ID 8)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>8</EventID>|<EventID>8</EventID>.*SC4S_WINDOWS_SYSMON_TEST_REMOTE_THREAD_",
+      "expected_sourcetype": "windows:sysmon:remote_thread",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "UtcTime",
+        "SourceProcessGuid",
+        "SourceProcessId",
+        "SourceImage",
+        "TargetProcessGuid",
+        "TargetProcessId",
+        "TargetImage",
+        "NewThreadId",
+        "StartAddress",
+        "StartModule",
+        "StartFunction"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "process_access",
+      "label": "Sysmon process access (Event ID 10)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>10</EventID>|<EventID>10</EventID>.*SC4S_WINDOWS_SYSMON_TEST_PROCESS_ACCESS_",
+      "expected_sourcetype": "windows:sysmon:process_access",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "SourceProcessGuid",
+        "SourceProcessId",
+        "SourceImage",
+        "TargetProcessGuid",
+        "TargetProcessId",
+        "TargetImage",
+        "GrantedAccess"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "file_delete",
+      "label": "Sysmon file deletion (Event ID 23)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>23</EventID>|<EventID>23</EventID>.*SC4S_WINDOWS_SYSMON_TEST_FILE_DELETE_",
+      "expected_sourcetype": "windows:sysmon:file_delete",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "TargetFilename",
+        "Hashes"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "file_delete_detected",
+      "label": "Sysmon file delete detected (Event ID 26)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>26</EventID>|<EventID>26</EventID>.*SC4S_WINDOWS_SYSMON_TEST_FILE_DELETE_DETECTED_",
+      "expected_sourcetype": "windows:sysmon:file_delete_detected",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "UtcTime",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "TargetFilename",
+        "Hashes",
+        "IsExecutable",
+        "User"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "registry_create_delete",
+      "label": "Sysmon registry object create/delete (Event ID 12)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>12</EventID>|<EventID>12</EventID>.*SC4S_WINDOWS_SYSMON_TEST_REGISTRY_CREATE_",
+      "expected_sourcetype": "windows:sysmon:registry",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "EventType",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "TargetObject"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "registry_value_set",
+      "label": "Sysmon registry value set (Event ID 13)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>13</EventID>|<EventID>13</EventID>.*SC4S_WINDOWS_SYSMON_TEST_REGISTRY_SET_",
+      "expected_sourcetype": "windows:sysmon:registry",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "EventType",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "TargetObject",
+        "Details"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "registry_rename",
+      "label": "Sysmon registry object rename (Event ID 14)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>14</EventID>|<EventID>14</EventID>.*SC4S_WINDOWS_SYSMON_TEST_REGISTRY_RENAME_",
+      "expected_sourcetype": "windows:sysmon:registry",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "EventType",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "TargetObject",
+        "NewName"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "pipe_created",
+      "label": "Sysmon named pipe created (Event ID 17)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>17</EventID>|<EventID>17</EventID>.*SC4S_WINDOWS_SYSMON_TEST_PIPE_CREATE_",
+      "expected_sourcetype": "windows:sysmon:pipe",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "PipeName"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "pipe_connected",
+      "label": "Sysmon named pipe connected (Event ID 18)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>18</EventID>|<EventID>18</EventID>.*SC4S_WINDOWS_SYSMON_TEST_PIPE_CONNECT_",
+      "expected_sourcetype": "windows:sysmon:pipe",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "PipeName"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "wmi_filter",
+      "label": "Sysmon WMI event filter activity (Event ID 19)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>19</EventID>|<EventID>19</EventID>.*SC4S_WINDOWS_SYSMON_TEST_WMI_FILTER_",
+      "expected_sourcetype": "windows:sysmon:wmi",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "EventType",
+        "Operation",
+        "User",
+        "EventNamespace",
+        "Name",
+        "Query"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "wmi_consumer",
+      "label": "Sysmon WMI event consumer activity (Event ID 20)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>20</EventID>|<EventID>20</EventID>.*SC4S_WINDOWS_SYSMON_TEST_WMI_CONSUMER_",
+      "expected_sourcetype": "windows:sysmon:wmi",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "EventType",
+        "Operation",
+        "User",
+        "Name",
+        "Type",
+        "Destination"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "wmi_binding",
+      "label": "Sysmon WMI consumer-to-filter binding activity (Event ID 21)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>21</EventID>|<EventID>21</EventID>.*SC4S_WINDOWS_SYSMON_TEST_WMI_BINDING_",
+      "expected_sourcetype": "windows:sysmon:wmi",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "EventType",
+        "Operation",
+        "User",
+        "Consumer",
+        "Filter"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "process_tampering",
+      "label": "Sysmon process tampering (Event ID 25)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>25</EventID>|<EventID>25</EventID>.*SC4S_WINDOWS_SYSMON_TEST_PROCESS_TAMPERING_",
+      "expected_sourcetype": "windows:sysmon:tampering",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "Type",
+        "User"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "driver_load",
+      "label": "Sysmon driver load (Event ID 6)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>6</EventID>|<EventID>6</EventID>.*SC4S_WINDOWS_SYSMON_TEST_DRIVER_LOAD_",
+      "expected_sourcetype": "windows:sysmon:driver_load",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "UtcTime",
+        "ImageLoaded",
+        "Hashes",
+        "Signed",
+        "Signature",
+        "SignatureStatus"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "raw_access",
+      "label": "Sysmon raw access read (Event ID 9)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>9</EventID>|<EventID>9</EventID>.*SC4S_WINDOWS_SYSMON_TEST_RAW_ACCESS_",
+      "expected_sourcetype": "windows:sysmon:raw_access",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "UtcTime",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "Device",
+        "User"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    },
+    {
+      "id": "clipboard",
+      "label": "Sysmon clipboard change (Event ID 24)",
+      "match_engine": "pcre",
+      "match": "<Provider Name=\"Microsoft-Windows-Sysmon\"[^>]*>.*<EventID>24</EventID>|<EventID>24</EventID>.*SC4S_WINDOWS_SYSMON_TEST_CLIPBOARD_",
+      "expected_sourcetype": "windows:sysmon:clipboard",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "UtcTime",
+        "ProcessGuid",
+        "ProcessId",
+        "Image",
+        "Session",
+        "ClientInfo",
+        "Hashes",
+        "Archived",
+        "User"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime",
+        "UtcTime"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "microsoft",
+    "product": "windows_sysmon",
+    "vendor_product": "microsoft:windows_sysmon",
+    "event_id": "Sysmon EventID",
+    "provider": "Microsoft-Windows-Sysmon provider",
+    "channel": "Microsoft-Windows-Sysmon/Operational channel",
+    "record_id": "Windows event record identifier",
+    "computer": "Emitting Windows host",
+    "utc_time": "Sysmon UtcTime field",
+    "process_guid": "Sysmon ProcessGuid",
+    "process_id": "Sysmon ProcessId",
+    "process_path": "Sysmon Image path",
+    "process_name": "Derived process executable name",
+    "command_line": "Sysmon CommandLine",
+    "parent_process_guid": "ParentProcessGuid",
+    "parent_process_id": "ParentProcessId",
+    "parent_process_path": "ParentImage",
+    "parent_command_line": "ParentCommandLine",
+    "user": "Sysmon User",
+    "logon_guid": "LogonGuid",
+    "logon_id": "LogonId",
+    "integrity_level": "IntegrityLevel",
+    "hashes": "Raw Sysmon hash list",
+    "sha256": "Extracted SHA256 hash when present",
+    "md5": "Extracted MD5 hash when present",
+    "src_ip": "SourceIp",
+    "src_port": "SourcePort",
+    "dest_ip": "DestinationIp",
+    "dest_port": "DestinationPort",
+    "dest_host": "DestinationHostname or QueryName",
+    "transport": "Protocol normalized to uppercase",
+    "initiated": "Sysmon Initiated field",
+    "target_filename": "TargetFilename",
+    "file_path": "File path alias",
+    "file_name": "Derived file name",
+    "creation_utc_time": "CreationUtcTime",
+    "query_name": "DNS QueryName",
+    "query_status": "DNS QueryStatus",
+    "query_results": "DNS QueryResults",
+    "action": "Derived analyst action from EventID",
+    "signature": "Derived event family signature",
+    "signature_id": "EventID as signature identifier",
+    "marker": "Synthetic fixture marker only",
+    "image_loaded": "Sysmon ImageLoaded module path",
+    "signed": "Sysmon Signed module flag",
+    "file_signature": "Sysmon Signature text",
+    "signature_status": "Sysmon SignatureStatus",
+    "source_thread_id": "Sysmon SourceThreadId for process access",
+    "target_process_guid": "Sysmon TargetProcessGuid",
+    "target_process_id": "Sysmon TargetProcessId",
+    "target_process_path": "Sysmon TargetImage",
+    "target_process_name": "Derived target process executable name",
+    "granted_access": "Sysmon GrantedAccess mask",
+    "call_trace": "Sysmon CallTrace",
+    "is_executable": "Sysmon file delete IsExecutable flag",
+    "archived": "Sysmon file delete Archived flag",
+    "registry_event_type": "Sysmon RegistryEvent EventType such as CreateKey, SetValue, or RenameKey",
+    "target_object": "Sysmon registry TargetObject path for Event IDs 12/13/14",
+    "registry_path": "Analyst alias for TargetObject registry path",
+    "registry_details": "Sysmon registry Details value for Event ID 13 where present",
+    "registry_new_name": "Sysmon NewName value for Event ID 14 where present",
+    "pipe_name": "Sysmon PipeName for Event IDs 17/18",
+    "tamper_type": "Sysmon Event ID 25 Type value describing the process tampering condition",
+    "device": "Raw device path from Event ID 9 raw access reads (for example \\.\\PHYSICALDRIVE0).",
+    "clipboard_session": "Session ID from Event ID 24 clipboard-change rows.",
+    "client_info": "Clipboard client/process context from Event ID 24 rows.",
+    "loaded_driver": "Driver image path from Event ID 6, surfaced from ImageLoaded.",
+    "wmi_event_type": "Sysmon WMI EventType value for Event IDs 19/20/21",
+    "wmi_operation": "Sysmon WMI Operation value",
+    "wmi_namespace": "WMI EventNamespace for filter rows",
+    "wmi_name": "WMI filter or consumer Name",
+    "wmi_query": "WMI filter Query text",
+    "wmi_type": "WMI consumer Type",
+    "wmi_destination": "WMI consumer Destination command/script target",
+    "wmi_consumer": "WMI binding Consumer reference",
+    "wmi_filter": "WMI binding Filter reference",
+    "source_process_guid": "Sysmon SourceProcessGuid for CreateRemoteThread Event ID 8",
+    "source_process_id": "Sysmon SourceProcessId for CreateRemoteThread Event ID 8",
+    "source_process_path": "Sysmon SourceImage for CreateRemoteThread Event ID 8",
+    "source_process_name": "Derived source process executable name for CreateRemoteThread Event ID 8",
+    "new_thread_id": "Sysmon NewThreadId for CreateRemoteThread Event ID 8",
+    "start_address": "Sysmon StartAddress for CreateRemoteThread Event ID 8",
+    "start_module": "Sysmon StartModule for CreateRemoteThread Event ID 8",
+    "start_function": "Sysmon StartFunction for CreateRemoteThread Event ID 8",
+    "delete_detected": "Derived boolean helper for Sysmon Event ID 26 file-delete-detected rows",
+    "previous_creation_utc_time": "Sysmon PreviousCreationUtcTime for Event ID 2 file creation-time change rows"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-windows_sysmon.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/windows_sysmon_overview.xml"
+    ],
+    "test_events": [
+      "test-events/windows_sysmon_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20071.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/windows_sysmon_reduction_candidates.csv",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Sysmon XML relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20071,
+      "notes": "Dedicated TCP listener for one-line Sysmon Event XML from WEF/WEC, NXLog, Fluent Bit, Cribl, or equivalent relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20071,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Microsoft Sysmon Event XML",
+    "min": "Sysmon documentation through 2026-06-15",
+    "max": null,
+    "notes": "Grounded in Microsoft Sysinternals Sysmon docs, OSSEM field dictionaries, and Microsoft SysmonCommon manifest evidence for Event IDs 1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26; exact collector envelope must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-08",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Microsoft Sysmon docs, OSSEM field dictionaries, and SysmonCommon manifest evidence through Event IDs 1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Sysmon XML payloads only, including file creation-time change, registry, named-pipe, WMI filter/consumer/binding, process-tampering, driver-load, remote-thread, raw-access, clipboard, and file-delete-detected rows. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Sysmon relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Windows Sysmon XML relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "windows_sysmon_xml"
+      ],
+      "event_count": 22,
+      "marker_prefix": "SC4S_WINDOWS_SYSMON_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20071.sh"
+    },
+    "readback": {
+      "spl": "index=oswinsec sechub_fixture_marker=\"SC4S_WINDOWS_SYSMON_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product event_id provider channel record_id computer user process_guid process_id process_path process_name command_line parent_process_guid parent_process_path parent_command_line hashes sha256 md5 src_ip src_port dest_ip dest_port dest_host transport initiated image_loaded loaded_driver signed file_signature signature_status source_process_guid source_process_id source_process_path source_process_name target_process_guid target_process_id target_process_path target_process_name new_thread_id start_address start_module start_function granted_access call_trace target_filename file_path file_name creation_utc_time previous_creation_utc_time query_name query_status query_results is_executable archived delete_detected target_object registry_event_type registry_details registry_new_name pipe_name device clipboard_session client_info wmi_event_type wmi_operation wmi_namespace wmi_name wmi_query wmi_type wmi_destination wmi_consumer wmi_filter tamper_type action signature signature_id marker _raw",
+      "expected_count": 22,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "EventID/provider/channel",
+        "process/network/image-load/process-access/file/DNS/registry/pipe/tampering fields",
+        "registry and named-pipe fields",
+        "raw and derived action/signature fields",
+        "driver-load/raw-access/clipboard fields",
+        "WMI filter/consumer/binding fields",
+        "remote-thread fields",
+        "file creation-time change fields",
+        "file-delete-detected fields",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TCP listener on 127.0.0.1:20071 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing Windows Sysmon TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20071,
+          "protocol": "line_delimited_syslog_xml",
+          "purpose": "Dedicated Windows Sysmon relay listener"
+        }
+      ],
+      "required_indexes": [
+        "oswinsec"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to oswinsec",
+        "Search role can read oswinsec"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "windows_sysmon_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/windows_sysmon/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/windows_sysmon/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/windows_sysmon/compose.yaml",
+      "compose_project": "sechub-windows-sysmon-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "oswinsec index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/windows_sysmon/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/windows_sysmon/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/windows_sysmon/scripts/send_tcp_20071.sh 127.0.0.1 20071",
+        "splunk_summary_readback": "index=oswinsec sechub_fixture_marker=\"SC4S_WINDOWS_SYSMON_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=oswinsec sechub_fixture_marker=\"SC4S_WINDOWS_SYSMON_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product event_id provider channel record_id computer user process_guid process_id process_path process_name command_line parent_process_guid parent_process_path parent_command_line hashes sha256 md5 src_ip src_port dest_ip dest_port dest_host transport initiated image_loaded loaded_driver signed file_signature signature_status source_process_guid source_process_id source_process_path source_process_name target_process_guid target_process_id target_process_path target_process_name new_thread_id start_address start_module start_function granted_access call_trace target_filename file_path file_name creation_utc_time previous_creation_utc_time query_name query_status query_results is_executable archived delete_detected target_object registry_event_type registry_details registry_new_name pipe_name device clipboard_session client_info wmi_event_type wmi_operation wmi_namespace wmi_name wmi_query wmi_type wmi_destination wmi_consumer wmi_filter tamper_type action signature signature_id marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "oswinsec",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/windows_sysmon/splunk -> /opt/splunk/etc/apps/sechub_windows_sysmon:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20071,
+          "host_port_env": "SC4S_WINDOWS_SYSMON_PORT",
+          "source_id": "WINDOWS_SYSMON"
+        },
+        "parser_mount": "packs/windows_sysmon/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "windows_sysmon",
+          "source_shape": "one_line_windows_sysmon_event_xml_relay",
+          "event_families": [
+            "process",
+            "network",
+            "file_create",
+            "file_time",
+            "dns",
+            "image_load",
+            "remote_thread",
+            "process_access",
+            "file_delete",
+            "file_delete_detected",
+            "registry_create_delete",
+            "registry_value_set",
+            "registry_rename",
+            "pipe_created",
+            "pipe_connected",
+            "process_tampering",
+            "driver_load",
+            "raw_access",
+            "clipboard",
+            "wmi_filter",
+            "wmi_consumer",
+            "wmi_binding"
+          ],
+          "expected_sourcetypes": [
+            "windows:sysmon:clipboard",
+            "windows:sysmon:dns",
+            "windows:sysmon:driver_load",
+            "windows:sysmon:file_create",
+            "windows:sysmon:file_delete",
+            "windows:sysmon:file_delete_detected",
+            "windows:sysmon:file_time",
+            "windows:sysmon:image_load",
+            "windows:sysmon:network",
+            "windows:sysmon:pipe",
+            "windows:sysmon:process",
+            "windows:sysmon:process_access",
+            "windows:sysmon:raw_access",
+            "windows:sysmon:registry",
+            "windows:sysmon:remote_thread",
+            "windows:sysmon:tampering",
+            "windows:sysmon:wmi"
+          ],
+          "data_structures": [
+            "One complete Sysmon <Event> XML record per physical line",
+            "RFC5424-style wrapper produced by the send helper for TCP relay into SC4S TEST"
+          ],
+          "markers": [
+            "SC4S_WINDOWS_SYSMON_TEST_PROCESS_001",
+            "SC4S_WINDOWS_SYSMON_TEST_NETWORK_002",
+            "SC4S_WINDOWS_SYSMON_TEST_FILE_003",
+            "SC4S_WINDOWS_SYSMON_TEST_FILE_TIME_022",
+            "SC4S_WINDOWS_SYSMON_TEST_DNS_004",
+            "SC4S_WINDOWS_SYSMON_TEST_IMAGE_LOAD_005",
+            "SC4S_WINDOWS_SYSMON_TEST_PROCESS_ACCESS_006",
+            "SC4S_WINDOWS_SYSMON_TEST_FILE_DELETE_007",
+            "SC4S_WINDOWS_SYSMON_TEST_REGISTRY_CREATE_008",
+            "SC4S_WINDOWS_SYSMON_TEST_REGISTRY_SET_009",
+            "SC4S_WINDOWS_SYSMON_TEST_REGISTRY_RENAME_010",
+            "SC4S_WINDOWS_SYSMON_TEST_PIPE_CREATE_011",
+            "SC4S_WINDOWS_SYSMON_TEST_PIPE_CONNECT_012",
+            "SC4S_WINDOWS_SYSMON_TEST_PROCESS_TAMPERING_013",
+            "SC4S_WINDOWS_SYSMON_TEST_DRIVER_LOAD_014",
+            "SC4S_WINDOWS_SYSMON_TEST_RAW_ACCESS_015",
+            "SC4S_WINDOWS_SYSMON_TEST_CLIPBOARD_016",
+            "SC4S_WINDOWS_SYSMON_TEST_WMI_FILTER_017",
+            "SC4S_WINDOWS_SYSMON_TEST_WMI_CONSUMER_018",
+            "SC4S_WINDOWS_SYSMON_TEST_WMI_BINDING_019",
+            "SC4S_WINDOWS_SYSMON_TEST_REMOTE_THREAD_020",
+            "SC4S_WINDOWS_SYSMON_TEST_FILE_DELETE_DETECTED_021"
+          ],
+          "fixture_sets": [
+            "windows_sysmon_xml"
+          ],
+          "expected_count": 22,
+          "required_indexes": [
+            "oswinsec"
+          ]
+        }
+      ],
+      "evidence_boundaries": [
+        "not live Windows endpoint validation",
+        "not Sysmon configuration policy proof",
+        "not WEF/WEC/NXLog/Fluent Bit/Cribl wrapper proof",
+        "not native EVTX or collector-normalized JSON support",
+        "not multiline XML export support",
+        "not HEC/Splunk read-back evidence until the harness is actually run",
+        "not trust/quality promotion by itself"
+      ],
+      "explicit_gaps": [
+        "Live Windows Sysmon endpoint relay emission is not proven by this harness.",
+        "Sysmon configuration policy, WEF/WEC/NXLog/Fluent Bit/Cribl wrapper behavior, and collector checkpoint/custody are not proven.",
+        "Native EVTX, collector-normalized JSON, and multiline XML export variants are not implemented by this harness.",
+        "SC4S listener replay, HEC delivery, and Splunk indexed read-back are not evidence until the harness is actually run in a permitted Docker lab.",
+        "Trust/quality labels remain curated/unverified until replay/read-back or production-equivalent evidence supports promotion."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "windows_sysmon_xml",
+      "label": "Windows Sysmon XML synthetic-equivalent fixtures for Event IDs 1/2/3/6/7/8/9/10/11/12/13/14/17/18/19/20/21/22/23/24/25/26",
+      "path": "test-events/windows_sysmon_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "windows_sysmon_event_xml_line_payload",
+      "envelope": "none",
+      "serialization": "xml",
+      "event_count": 22,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_WINDOWS_SYSMON_TEST_PROCESS_001",
+        "SC4S_WINDOWS_SYSMON_TEST_NETWORK_002",
+        "SC4S_WINDOWS_SYSMON_TEST_FILE_003",
+        "SC4S_WINDOWS_SYSMON_TEST_FILE_TIME_022",
+        "SC4S_WINDOWS_SYSMON_TEST_DNS_004",
+        "SC4S_WINDOWS_SYSMON_TEST_IMAGE_LOAD_005",
+        "SC4S_WINDOWS_SYSMON_TEST_PROCESS_ACCESS_006",
+        "SC4S_WINDOWS_SYSMON_TEST_FILE_DELETE_007",
+        "SC4S_WINDOWS_SYSMON_TEST_REGISTRY_CREATE_008",
+        "SC4S_WINDOWS_SYSMON_TEST_REGISTRY_SET_009",
+        "SC4S_WINDOWS_SYSMON_TEST_REGISTRY_RENAME_010",
+        "SC4S_WINDOWS_SYSMON_TEST_PIPE_CREATE_011",
+        "SC4S_WINDOWS_SYSMON_TEST_PIPE_CONNECT_012",
+        "SC4S_WINDOWS_SYSMON_TEST_PROCESS_TAMPERING_013",
+        "SC4S_WINDOWS_SYSMON_TEST_DRIVER_LOAD_014",
+        "SC4S_WINDOWS_SYSMON_TEST_RAW_ACCESS_015",
+        "SC4S_WINDOWS_SYSMON_TEST_CLIPBOARD_016",
+        "SC4S_WINDOWS_SYSMON_TEST_WMI_FILTER_017",
+        "SC4S_WINDOWS_SYSMON_TEST_WMI_CONSUMER_018",
+        "SC4S_WINDOWS_SYSMON_TEST_WMI_BINDING_019",
+        "SC4S_WINDOWS_SYSMON_TEST_REMOTE_THREAD_020",
+        "SC4S_WINDOWS_SYSMON_TEST_FILE_DELETE_DETECTED_021"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "TimeCreated/SystemTime",
+        "primary_timezone": "UTC when SystemTime ends in Z",
+        "fallback_fields": [
+          "UtcTime",
+          "CreationUtcTime"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "collector relay timezone or syslog envelope timezone"
+        ],
+        "notes": "Fixtures use UTC SystemTime values and Sysmon UtcTime fields. Production relays must preserve timezone-qualified TimeCreated/SystemTime or document collector timezone."
+      },
+      "field_delimiting": {
+        "style": "xml",
+        "field_separator": "XML elements/attributes",
+        "quote_character": "double quote for XML attributes",
+        "escape_policy": "XML escaping; fixtures use example domains and RFC5737 documentation IPs",
+        "notes": "Each physical line is one complete Event XML record; multiline EVTX/XML export is not represented."
+      },
+      "expected_families": [
+        "process",
+        "network",
+        "file_create",
+        "file_time",
+        "dns",
+        "image_load",
+        "remote_thread",
+        "process_access",
+        "file_delete",
+        "file_delete_detected",
+        "registry_create_delete",
+        "registry_value_set",
+        "registry_rename",
+        "pipe_created",
+        "pipe_connected",
+        "process_tampering",
+        "driver_load",
+        "raw_access",
+        "clipboard",
+        "wmi_filter",
+        "wmi_consumer",
+        "wmi_binding"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-windows_sysmon.conf",
+      "target_path": "local/config/app_parsers/syslog/app-windows_sysmon.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/windows_sysmon.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/windows_sysmon_overview.xml",
+      "target_path": "splunk/default/data/ui/views/windows_sysmon_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/windows_sysmon_test_events.txt",
+      "target_path": "test-events/windows_sysmon_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20071.sh",
+      "target_path": "scripts/send_tcp_20071.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/windows_sysmon_reduction_candidates.csv",
+      "target_path": "docs/windows_sysmon_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "validation_harness_script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "docs/evidence/windows-sysmon-evidence-scan-20260608.md; Microsoft Sysinternals Sysmon documentation, OSSEM field dictionaries, and Microsoft SysmonCommon manifest evidence for Event IDs 1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use EXAMPLE users, example.test hostnames, RFC5737 documentation IPs, and synthetic GUID/hash values; no customer Windows events, copied public sample events, or proprietary TA/config content are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-16",
+      "notes": "Expanded from Milestone 8 Windows Sysmon backlog with Microsoft Sysmon/SysmonCommon-documented Event ID 6 driver-load, Event ID 8 CreateRemoteThread, Event ID 9 raw-access, Event IDs 19/20/21 WMI activity, Event ID 24 clipboard-change, Event ID 25 process-tampering, and Event ID 26 file-delete-detected coverage; no trust promotion."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "User"
+          ],
+          "status": "partial",
+          "notes": "Sysmon user context where present."
+        },
+        "src": {
+          "source_fields": [
+            "SourceIp"
+          ],
+          "status": "partial",
+          "notes": "Network Event ID 3 source IP."
+        },
+        "dest": {
+          "source_fields": [
+            "DestinationIp",
+            "Computer",
+            "QueryName"
+          ],
+          "status": "partial",
+          "notes": "Destination varies by network, host, and DNS family."
+        },
+        "action": {
+          "source_fields": [
+            "EventID",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived from EventID; not a complete CIM taxonomy."
+        },
+        "signature_id": {
+          "source_fields": [
+            "EventID"
+          ],
+          "status": "partial",
+          "notes": "Sysmon EventID."
+        },
+        "signature": {
+          "source_fields": [
+            "action",
+            "Provider"
+          ],
+          "status": "partial",
+          "notes": "Derived event family signature."
+        },
+        "process": {
+          "source_fields": [
+            "Image",
+            "ProcessGuid",
+            "ProcessId"
+          ],
+          "status": "partial",
+          "notes": "Endpoint process context."
+        },
+        "process_command_line": {
+          "source_fields": [
+            "CommandLine"
+          ],
+          "status": "partial",
+          "notes": "Retained high-value process command line."
+        },
+        "file_path": {
+          "source_fields": [
+            "TargetFilename"
+          ],
+          "status": "partial",
+          "notes": "File create target path."
+        },
+        "file_signature": {
+          "source_fields": [
+            "Signed",
+            "Signature",
+            "SignatureStatus"
+          ],
+          "status": "partial",
+          "notes": "Image-load signature context where present."
+        },
+        "target_process": {
+          "source_fields": [
+            "TargetImage",
+            "TargetProcessGuid",
+            "TargetProcessId"
+          ],
+          "status": "partial",
+          "notes": "Process access target context; not complete process-injection classification."
+        },
+        "granted_access": {
+          "source_fields": [
+            "GrantedAccess"
+          ],
+          "status": "partial",
+          "notes": "Raw process access mask for Event ID 10."
+        },
+        "registry_path": {
+          "source_fields": [
+            "TargetObject",
+            "registry_path"
+          ],
+          "status": "partial",
+          "notes": "Registry object path for Sysmon Event IDs 12/13/14."
+        },
+        "pipe_name": {
+          "source_fields": [
+            "PipeName"
+          ],
+          "status": "partial",
+          "notes": "Named pipe path for Sysmon Event IDs 17/18."
+        },
+        "tamper_type": {
+          "source_fields": [
+            "Type"
+          ],
+          "status": "partial",
+          "notes": "Sysmon Event ID 25 Type value for process tampering triage; not a complete tamper taxonomy."
+        },
+        "device": {
+          "source_fields": [
+            "device"
+          ],
+          "notes": "Sysmon Event ID 9 raw device path for raw access read triage; not a full CIM endpoint object.",
+          "status": "partial"
+        },
+        "clipboard_session": {
+          "source_fields": [
+            "clipboard_session",
+            "client_info"
+          ],
+          "notes": "Clipboard-change context only; no clipboard contents are represented.",
+          "status": "partial"
+        },
+        "loaded_driver": {
+          "source_fields": [
+            "loaded_driver",
+            "image_loaded"
+          ],
+          "notes": "Driver-load image path from Sysmon Event ID 6.",
+          "status": "partial"
+        },
+        "wmi_name": {
+          "source_fields": [
+            "Name",
+            "Consumer",
+            "Filter"
+          ],
+          "status": "partial",
+          "notes": "Sysmon WMI filter/consumer/binding object names for triage; not a full CIM WMI object model."
+        },
+        "wmi_query": {
+          "source_fields": [
+            "Query"
+          ],
+          "status": "partial",
+          "notes": "WMI filter query text retained for Event ID 19 triage."
+        },
+        "wmi_destination": {
+          "source_fields": [
+            "Destination"
+          ],
+          "status": "partial",
+          "notes": "WMI consumer destination command/script target when present."
+        },
+        "source_process": {
+          "source_fields": [
+            "SourceImage",
+            "SourceProcessGuid",
+            "SourceProcessId"
+          ],
+          "status": "partial",
+          "notes": "Source process context for Sysmon Event ID 8 CreateRemoteThread; not complete injection classification."
+        },
+        "thread_start": {
+          "source_fields": [
+            "NewThreadId",
+            "StartAddress",
+            "StartModule",
+            "StartFunction"
+          ],
+          "status": "partial",
+          "notes": "Remote-thread start context for Event ID 8 triage."
+        },
+        "file_delete_detected": {
+          "source_fields": [
+            "TargetFilename",
+            "Hashes",
+            "IsExecutable",
+            "delete_detected"
+          ],
+          "status": "partial",
+          "notes": "Event ID 26 file-delete-detected context; complements Event ID 23 archived file delete."
+        },
+        "file_creation_time_change": {
+          "source_fields": [
+            "TargetFilename",
+            "CreationUtcTime",
+            "PreviousCreationUtcTime"
+          ],
+          "status": "partial",
+          "notes": "Sysmon Event ID 2 timestamp-change context; supports timestomp/metadata triage but is not full file integrity validation."
+        }
+      },
+      "notes": "Partial Endpoint/Processes/Network_Traffic/DNS/File mapping for twenty-two Sysmon fixture rows across process, file-time, network, driver-load, image-load, remote-thread, raw-access, process-access, file, DNS, registry, pipe, WMI, clipboard, tampering, and file-delete-detected families; not full Windows TA/Sysmon coverage."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "User"
+          ],
+          "status": "partial",
+          "notes": "Sysmon user."
+        },
+        "process.pid": {
+          "source_fields": [
+            "ProcessId"
+          ],
+          "status": "partial",
+          "notes": "Process identifier."
+        },
+        "process.file.path": {
+          "source_fields": [
+            "Image"
+          ],
+          "status": "partial",
+          "notes": "Process image path."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "SourceIp"
+          ],
+          "status": "partial",
+          "notes": "Network connection source."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "DestinationIp"
+          ],
+          "status": "partial",
+          "notes": "Network connection destination."
+        },
+        "dns_query.hostname": {
+          "source_fields": [
+            "QueryName"
+          ],
+          "status": "partial",
+          "notes": "DNS query name."
+        },
+        "file.path": {
+          "source_fields": [
+            "target_filename",
+            "image_loaded",
+            "loaded_driver"
+          ],
+          "notes": "Sysmon file, image, and driver path context.",
+          "status": "partial"
+        },
+        "activity_id": {
+          "source_fields": [
+            "EventID"
+          ],
+          "status": "partial",
+          "notes": "EventID as activity identifier only."
+        },
+        "module.file.path": {
+          "source_fields": [
+            "ImageLoaded"
+          ],
+          "status": "partial",
+          "notes": "Loaded module path for Event ID 7."
+        },
+        "target_process.pid": {
+          "source_fields": [
+            "TargetProcessId"
+          ],
+          "status": "partial",
+          "notes": "Process access target PID."
+        },
+        "target_process.file.path": {
+          "source_fields": [
+            "TargetImage"
+          ],
+          "status": "partial",
+          "notes": "Process access target image."
+        },
+        "file.is_executable": {
+          "source_fields": [
+            "IsExecutable"
+          ],
+          "status": "partial",
+          "notes": "File-delete executable flag when present."
+        },
+        "registry.key": {
+          "source_fields": [
+            "TargetObject",
+            "registry_path"
+          ],
+          "status": "partial",
+          "notes": "Registry object path helper mapping."
+        },
+        "process.file.name": {
+          "source_fields": [
+            "PipeName"
+          ],
+          "status": "partial",
+          "notes": "Named pipe name preserved as process communication context; not a file path statement."
+        },
+        "process.tamper_type": {
+          "source_fields": [
+            "Type",
+            "tamper_type"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper for Sysmon process-tampering type; not a formal OCSF process schema statement."
+        },
+        "device.file.name": {
+          "source_fields": [
+            "device"
+          ],
+          "notes": "Raw-access device path preserved for endpoint triage.",
+          "status": "partial"
+        },
+        "session.uid": {
+          "source_fields": [
+            "clipboard_session"
+          ],
+          "notes": "Clipboard session ID context from Event ID 24.",
+          "status": "partial"
+        },
+        "wmi.query": {
+          "source_fields": [
+            "Query",
+            "wmi_query"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper for WMI filter query text from Sysmon Event ID 19."
+        },
+        "wmi.consumer.name": {
+          "source_fields": [
+            "Name",
+            "Consumer",
+            "wmi_consumer"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped WMI consumer context for Sysmon Event IDs 20/21."
+        },
+        "process.thread.uid": {
+          "source_fields": [
+            "NewThreadId"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped remote-thread identifier from Sysmon Event ID 8."
+        },
+        "process.thread.start_address": {
+          "source_fields": [
+            "StartAddress",
+            "StartModule",
+            "StartFunction"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped remote-thread start context; helper guidance only."
+        },
+        "file.modified_time": {
+          "source_fields": [
+            "CreationUtcTime",
+            "PreviousCreationUtcTime"
+          ],
+          "status": "partial",
+          "notes": "Sysmon Event ID 2 creation-time change context mapped conservatively for file timestamp triage."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "User"
+          ],
+          "status": "partial",
+          "notes": "Sysmon user."
+        },
+        "process.entity_id": {
+          "source_fields": [
+            "ProcessGuid"
+          ],
+          "status": "partial",
+          "notes": "Sysmon ProcessGuid."
+        },
+        "process.pid": {
+          "source_fields": [
+            "ProcessId"
+          ],
+          "status": "partial",
+          "notes": "Sysmon ProcessId."
+        },
+        "process.executable": {
+          "source_fields": [
+            "Image"
+          ],
+          "status": "partial",
+          "notes": "Process image path."
+        },
+        "process.command_line": {
+          "source_fields": [
+            "CommandLine"
+          ],
+          "status": "partial",
+          "notes": "Command line."
+        },
+        "source.ip": {
+          "source_fields": [
+            "SourceIp"
+          ],
+          "status": "partial",
+          "notes": "Network source IP."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "DestinationIp"
+          ],
+          "status": "partial",
+          "notes": "Network destination IP."
+        },
+        "destination.port": {
+          "source_fields": [
+            "DestinationPort"
+          ],
+          "status": "partial",
+          "notes": "Network destination port."
+        },
+        "network.transport": {
+          "source_fields": [
+            "Protocol",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "Sysmon protocol token normalized to uppercase in Splunk props."
+        },
+        "dns.question.name": {
+          "source_fields": [
+            "QueryName"
+          ],
+          "status": "partial",
+          "notes": "DNS query."
+        },
+        "file.path": {
+          "source_fields": [
+            "target_filename",
+            "image_loaded",
+            "loaded_driver"
+          ],
+          "notes": "Sysmon file/image/driver paths; not complete ECS file coverage.",
+          "status": "partial"
+        },
+        "event.code": {
+          "source_fields": [
+            "EventID"
+          ],
+          "status": "partial",
+          "notes": "Sysmon EventID."
+        },
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived analyst action from EventID."
+        },
+        "dll.path": {
+          "source_fields": [
+            "ImageLoaded"
+          ],
+          "status": "partial",
+          "notes": "Loaded module path for Event ID 7."
+        },
+        "process.Ext.target.entity_id": {
+          "source_fields": [
+            "TargetProcessGuid"
+          ],
+          "status": "partial",
+          "notes": "Target process GUID for Event ID 10."
+        },
+        "process.Ext.granted_access": {
+          "source_fields": [
+            "GrantedAccess"
+          ],
+          "status": "partial",
+          "notes": "Raw access mask for process access."
+        },
+        "file.hash.sha256": {
+          "source_fields": [
+            "Hashes",
+            "sha256"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed SHA256 when present."
+        },
+        "registry.path": {
+          "source_fields": [
+            "TargetObject",
+            "registry_path"
+          ],
+          "status": "partial",
+          "notes": "Registry object path helper mapping."
+        },
+        "file.name": {
+          "source_fields": [
+            "PipeName"
+          ],
+          "status": "partial",
+          "notes": "Named pipe name preserved as endpoint IPC context; not a disk file statement."
+        },
+        "process.Ext.tamper_type": {
+          "source_fields": [
+            "Type",
+            "tamper_type"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper for Sysmon Event ID 25 tampering type."
+        },
+        "device.name": {
+          "source_fields": [
+            "device"
+          ],
+          "notes": "Raw-access device path from Sysmon Event ID 9.",
+          "status": "partial"
+        },
+        "process.session_leader.id": {
+          "source_fields": [
+            "clipboard_session"
+          ],
+          "notes": "Approximate session-context mapping for clipboard change rows only.",
+          "status": "partial"
+        },
+        "threat.technique.name": {
+          "source_fields": [
+            "RuleName"
+          ],
+          "status": "partial",
+          "notes": "RuleName may carry ATT&CK technique text in configured Sysmon deployments; fixture examples use safe technique labels."
+        },
+        "wmi.query": {
+          "source_fields": [
+            "Query",
+            "wmi_query"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper for WMI filter query text; not a formal ECS field guarantee."
+        },
+        "wmi.consumer.destination": {
+          "source_fields": [
+            "Destination",
+            "wmi_destination"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped WMI consumer destination helper."
+        },
+        "process.thread.id": {
+          "source_fields": [
+            "NewThreadId"
+          ],
+          "status": "partial",
+          "notes": "Sysmon Event ID 8 new remote thread identifier."
+        },
+        "process.Ext.start_address": {
+          "source_fields": [
+            "StartAddress",
+            "StartModule",
+            "StartFunction"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper for remote-thread start context."
+        },
+        "file.ctime": {
+          "source_fields": [
+            "CreationUtcTime",
+            "PreviousCreationUtcTime"
+          ],
+          "status": "partial",
+          "notes": "Sysmon Event ID 2 creation-time change fields; previous/current creation time retained as raw fields."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "endpoint",
+    "windows",
+    "sysmon",
+    "security",
+    "process",
+    "network",
+    "dns",
+    "file",
+    "registry",
+    "named_pipe",
+    "tampering",
+    "wmi",
+    "endpoint_management",
+    "remote_thread",
+    "file_delete_detected"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "sysmon_xml_relay",
+      "label": "Sysmon Event XML relay",
+      "description": "One-line Windows Event XML records preserving Sysmon EventID and EventData for process, network, image-load, remote-thread, process-access, file create/delete/delete-detected, DNS query, registry, named-pipe, WMI, driver-load, raw-access, clipboard, and process-tampering families.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "wef_wec_xml",
+        "nxlog_xml_relay",
+        "fluent_bit_xml_relay",
+        "cribl_xml_relay",
+        "syslog_wrapped_xml"
+      ],
+      "payload_formats": [
+        "xml"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "process",
+        "network",
+        "file_create",
+        "dns",
+        "image_load",
+        "remote_thread",
+        "process_access",
+        "file_delete",
+        "file_delete_detected",
+        "registry_create_delete",
+        "registry_value_set",
+        "registry_rename",
+        "pipe_created",
+        "pipe_connected",
+        "process_tampering",
+        "wmi_filter",
+        "wmi_consumer",
+        "wmi_binding",
+        "driver_load",
+        "raw_access",
+        "clipboard"
+      ],
+      "test_event_sets": [
+        "windows_sysmon_xml"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Sysmon relay replay/read-back captured.",
+        "Only Event IDs 1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26 are currently represented."
+      ]
+    },
+    {
+      "id": "collector_json_relay_blocked",
+      "label": "Sysmon JSON collector relay blocked",
+      "description": "JSON wrapper variants are future scope until exact collector wrapper samples are captured and field paths are proven.",
+      "default": false,
+      "evidence_status": "unknown",
+      "source_modes": [
+        "winlogbeat_json",
+        "nxlog_json",
+        "fluent_bit_json",
+        "cribl_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [],
+      "event_families": [],
+      "test_event_sets": [],
+      "supported_targets": [
+        "vector",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [],
+      "known_limitations": [
+        "Do not invent collector JSON field paths without exact source-shape evidence."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/windows_sysmon_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "EventID",
+        "Provider",
+        "Channel",
+        "Image",
+        "ProcessGuid",
+        "QueryName",
+        "TargetFilename",
+        "DestinationIp",
+        "SourceImage",
+        "TargetImage",
+        "StartAddress"
+      ],
+      "notes": "Preserve process, user, network, DNS, file, EventID/provider/channel, and raw XML/JSON envelope fields by default. Any suppression must be validated with replay/read-back."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Sysmon relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real endpoint captures.",
+    "Only Event IDs 1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, and 26 are covered in this pack.",
+    "Other newer or less common Sysmon events remain future work until exact field semantics and relay evidence are captured.",
+    "JSON collector variants are blocked until exact wrapper/schema evidence exists.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Windows Sysmon XML intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props for Event ID 1/3/6/7/8/9/10/11/12/13/14/17/18/19/20/21/22/23/24/25/26 Sysmon XML families. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-windows_sysmon.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Windows Sysmon analyst knowledge",
+      "description": "Adds eventtypes/tags for process creation, network connections, image loads, remote threads, process access, file creates/deletes/delete-detected rows, DNS queries, registry activity, named-pipe activity, WMI activity, driver/raw-access/clipboard, and process tampering. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Sysmon reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/windows_sysmon_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/windows_sysmon/sc4s/app_parsers/syslog/app-windows_sysmon.conf": "sha256:e35005c858f36d3b4c1563fc9a346e87fd50387376c1eae3721744068095d453",
+      "packs/windows_sysmon/sc4s/env.example": "sha256:816206dcc45b1f71fada59e922836cf6348f9a20b92de12a61e6aecf6b181880",
+      "packs/windows_sysmon/splunk/default/props.conf": "sha256:83de8f556237d1a1a0ca79bb82e5b68038dda52faf5a13f8283b5c6e7dea028a",
+      "packs/windows_sysmon/splunk/default/transforms.conf": "sha256:41212254cef49534c7bdaaa6c15f328ce0b46ac741c6b12639b551a3e46a226b",
+      "packs/windows_sysmon/splunk/default/eventtypes.conf": "sha256:3805b7efe90031b414e541d2d20ac333900be6f34b3c1ccf2af10a55dcd20133",
+      "packs/windows_sysmon/splunk/default/tags.conf": "sha256:f0bb9254657ac29cd89d0fc9f63580513aeefb4b900040d774dd6c677d2c1252",
+      "packs/windows_sysmon/test-events/windows_sysmon_test_events.txt": "sha256:1c934e66e4e56556433cc5b9729997500f89a3d737e0c75fd4ced20f72003069",
+      "packs/windows_sysmon/scripts/send_tcp_20071.sh": "sha256:44853e464a4c59ee3373111b8bada260037a8ba1c18f2a534cd74d6bddc1ecc2",
+      "packs/windows_sysmon/README.md": "sha256:046d7af542cb9e16a1056b7fb41dc27e4312653fb0a589f646cc7b4231dee310",
+      "packs/windows_sysmon/docs/windows_sysmon_reduction_candidates.csv": "sha256:2f4b658b9f0fc188de5cdcdcf208b555b1c955d9fe92e7423a255ecba2b2837b",
+      "packs/windows_sysmon/validation/preflight-2026-06-08.md": "sha256:a5e6216123f4b51d124b23faa54c7cbfb999284029b0a9624edfdfdceb77f485",
+      "packs/windows_sysmon/splunk/default/data/ui/views/windows_sysmon_overview.xml": "sha256:f4ab64c58f24aa1d774498f3663af9735f17d57c0bb716b84f9348c506b71b70",
+      "packs/windows_sysmon/scripts/e2e_docker_compose.sh": "sha256:7ec65275025532c608af5281cb36448223a7ac4188e9d4027b98c2032337fdec"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_delivery": {
+    "mode": "xml_event_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "windows_event_xml",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Windows Sysmon records are Windows Event XML relayed by a collector, not direct SC4S-native source delivery.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "windows_sysmon_overview_splunk_test",
+      "title": "Microsoft Windows Sysmon — dashboard example",
+      "source_path": "dashboards/screenshots/windows-sysmon-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Microsoft Windows Sysmon dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+<form version="1.1" theme="light">
+  <label>Oracle WebLogic Server and Access Overview</label>
+  <description>Operator dashboard for the conservative Oracle WebLogic server/access relay alpha slice. Panels are grounded in the synthetic-equivalent fixtures shipped with this pack (sourcetypes oracle:weblogic:server and oracle:weblogic:access); they are not proof of native WebLogic validation and no live SC4S/HEC/Splunk read-back has passed.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_range">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="server_filter">
+      <label>Managed/admin server contains</label>
+      <default>*</default>
+    </input>
+    <input type="text" token="subsystem_filter">
+      <label>Subsystem contains</label>
+      <default>*</default>
+    </input>
+    <input type="text" token="idx">
+      <label>Index</label>
+      <default>infraops</default>
+    </input>
+  </fieldset>
+  <search id="base_wls_server">
+    <query>index=$idx$ sourcetype="oracle:weblogic:server"
+| search server_name="$server_filter$" subsystem="$subsystem_filter$"</query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+  <search id="base_wls_access">
+    <query>index=$idx$ sourcetype="oracle:weblogic:access"</query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+  <row>
+    <panel>
+      <html><p><strong>Scope caveat:</strong> this view covers only the fixture-backed relay sourcetypes <code>oracle:weblogic:server</code> and <code>oracle:weblogic:access</code>. Security Audit provider, Node Manager, and Fusion Middleware (SOA/OSB/BPM) grammars remain catalogue-only and blocked until source-backed samples and Splunk read-back are retained. Synthetic-equivalent fixtures are for onboarding and SPL quality only, not exploit detection or validation evidence.</p></html>
+    </panel>
+  </row>
+  <row>
+    <panel><single><title>Server log events</title><search base="base_wls_server"><query>| stats count</query></search></single></panel>
+    <panel><single><title>Server attention events (Error/Warning/Critical+)</title><search base="base_wls_server"><query>| search status="attention" | stats count</query></search><option name="rangeColors">["0x53a051","0xdc4e41"]</option><option name="rangeValues">[0]</option><option name="colorMode">block</option></single></panel>
+    <panel><single><title>Security-subsystem server events</title><search base="base_wls_server"><query>| search subsystem="Security" OR message="*authentication*" OR message="*authoriz*" | stats count</query></search></single></panel>
+    <panel><single><title>HTTP access events</title><search base="base_wls_access"><query>| stats count</query></search></single></panel>
+    <panel><single><title>HTTP 4xx/5xx responses</title><search base="base_wls_access"><query>| where tonumber(status)>=400 | stats count</query></search><option name="rangeColors">["0x53a051","0xdc4e41"]</option><option name="rangeValues">[0]</option><option name="colorMode">block</option></single></panel>
+    <panel><single><title>Distinct managed/admin servers</title><search base="base_wls_server"><query>| stats dc(server_name)</query></search></single></panel>
+  </row>
+  <row>
+    <panel>
+      <title>Server events by severity</title>
+      <chart>
+        <search base="base_wls_server"><query>| stats count by severity | sort - count</query></search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Server events by subsystem</title>
+      <chart>
+        <search base="base_wls_server"><query>| stats count by subsystem | sort - count</query></search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Server messages by managed server, subsystem and message id</title>
+      <table>
+        <search base="base_wls_server"><query>| stats count values(severity) as severity latest(message) as latest_message by server_name machine_name subsystem message_id | sort - count</query></search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Security / authentication server events</title>
+      <table>
+        <search base="base_wls_server"><query>| search subsystem="Security" OR message="*authentication*" OR message="*authoriz*" OR severity IN ("Warning","Error","Critical","Alert","Emergency") | table _time server_name machine_name severity subsystem message_id user_id message sechub_fixture_marker | sort - _time</query></search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>HTTP status distribution</title>
+      <chart>
+        <search base="base_wls_access"><query>| stats count by status | sort - count</query></search>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top request URIs and clients</title>
+      <table>
+        <search base="base_wls_access"><query>| stats count by src_ip http_method uri_path status | sort - count</query></search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Onboarding coverage — fixture markers, sourcetype, index and source</title>
+      <table>
+        <search>
+          <query>index=$idx$ (sourcetype="oracle:weblogic:server" OR sourcetype="oracle:weblogic:access") sechub_fixture_marker="SC4S_ORACLE_WEBLOGIC_TEST_*"
+| stats count min(_time) as first_seen max(_time) as last_seen values(index) as index values(source) as source by sourcetype sechub_fixture_marker
+| eval first_seen=strftime(first_seen,"%F %T"), last_seen=strftime(last_seen,"%F %T")
+| sort sourcetype sechub_fixture_marker</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Raw event drilldown</title>
+      <table>
+        <search>
+          <query>index=$idx$ (sourcetype="oracle:weblogic:server" OR sourcetype="oracle:weblogic:access")
+| table _time sourcetype source host severity status subsystem message_id server_name machine_name src_ip http_method uri_path sechub_fixture_marker _raw
+| sort - _time</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="count">50</option>
+      </table>
+    </panel>
+  </row>
+</form>

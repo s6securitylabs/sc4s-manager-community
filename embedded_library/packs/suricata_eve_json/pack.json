@@ -1,0 +1,2541 @@
+{
+  "schema_version": "0.1",
+  "id": "suricata_eve_json",
+  "version": "0.1.14",
+  "url": "https://docs.suricata.io/en/latest/output/eve/eve-json-output.html",
+  "description": "Curated SecHub Resources SC4S pack for Suricata EVE JSON IDS/NSM records relayed as one JSON object per line, with fixture-backed alert, DNS, HTTP, TLS, flow, fileinfo, anomaly, SSH, DHCP, RDP, FTP, Kerberos/KRB5, SMB, MQTT, HTTP/2, PostgreSQL/PGSQL, Netflow, ARP, IKE, Modbus, QUIC, and POP3 families.",
+  "display_name": "Suricata EVE JSON",
+  "vendor": "suricata",
+  "product": "eve_json",
+  "default_index": "netids",
+  "default_source": "suricata_eve_json",
+  "listener": {
+    "source_id": "SURICATA_EVE_JSON",
+    "transport": "tcp",
+    "port": 20082,
+    "env": {
+      "SC4S_LISTEN_SURICATA_EVE_JSON_TCP_PORT": "20082",
+      "SOURCE_ALL_SET_APPEND": "SURICATA_EVE_JSON"
+    }
+  },
+  "sourcetypes": {
+    "alert": "suricata:eve",
+    "dns": "suricata:eve",
+    "http": "suricata:eve",
+    "tls": "suricata:eve",
+    "flow": "suricata:eve",
+    "fileinfo": "suricata:eve",
+    "anomaly": "suricata:eve",
+    "ssh": "suricata:eve",
+    "dhcp": "suricata:eve",
+    "rdp": "suricata:eve",
+    "ftp": "suricata:eve",
+    "krb5": "suricata:eve",
+    "smb": "suricata:eve",
+    "mqtt": "suricata:eve",
+    "http2": "suricata:eve",
+    "pgsql": "suricata:eve",
+    "netflow": "suricata:eve",
+    "arp": "suricata:eve",
+    "ike": "suricata:eve",
+    "modbus": "suricata:eve",
+    "quic": "suricata:eve",
+    "pop3": "suricata:eve"
+  },
+  "event_families": [
+    {
+      "id": "alert",
+      "label": "Suricata IDS alerts",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"alert\".*\"alert\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "alert.signature_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "alert.signature_id",
+        "alert.signature"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "dns",
+      "label": "Suricata DNS EVE records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"dns\".*\"dns\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "dns.rrname"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "http",
+      "label": "Suricata HTTP EVE records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"http\".*\"http\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "http.hostname",
+        "http.url"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "tls",
+      "label": "Suricata TLS EVE records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"tls\".*\"tls\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "tls.sni"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "flow",
+      "label": "Suricata flow accounting records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"flow\".*\"flow\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "flow.state"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "flow.start",
+        "flow.end"
+      ]
+    },
+    {
+      "id": "fileinfo",
+      "label": "Suricata file transaction metadata",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"fileinfo\".*\"fileinfo\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "fileinfo.tx_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "fileinfo.filename",
+        "fileinfo.state"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "anomaly",
+      "label": "Suricata anomaly records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"anomaly\".*\"anomaly\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "anomaly.event",
+      "required_fields": [
+        "timestamp",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "proto",
+        "anomaly.type",
+        "anomaly.event"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "ssh",
+      "label": "Suricata SSH metadata",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"ssh\".*\"ssh\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "ssh.client.software_version",
+        "ssh.server.software_version"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "dhcp",
+      "label": "Suricata DHCP lease/address mapping records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"dhcp\".*\"dhcp\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "dhcp.id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "dhcp.type",
+        "dhcp.id",
+        "dhcp.client_mac"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "rdp",
+      "label": "Suricata RDP negotiation records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"rdp\".*\"rdp\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "rdp.tx_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "rdp.tx_id",
+        "rdp.event_type"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "ftp",
+      "label": "Suricata FTP command/reply records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"ftp\".*\"ftp\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "ftp.command",
+        "ftp.reply",
+        "ftp.completion_code"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "krb5",
+      "label": "Suricata Kerberos/KRB5 records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"krb5\".*\"krb5\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "krb5.cname",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "krb5.msg_type",
+        "krb5.cname",
+        "krb5.realm",
+        "krb5.sname"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "smb",
+      "label": "Suricata SMB transaction records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"smb\".*\"smb\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "smb.id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "smb.command",
+        "smb.status"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "mqtt",
+      "label": "Suricata MQTT transaction records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"mqtt\".*\"mqtt\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "mqtt.publish.topic"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "http2",
+      "label": "Suricata HTTP/2 metadata records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"http2\".*\"http2\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "http2.request.headers",
+        "http2.response.headers"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "pgsql",
+      "label": "Suricata PostgreSQL/PGSQL transaction metadata",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"pgsql\".*\"pgsql\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "pgsql.tx_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "pgsql.tx_id",
+        "pgsql.request",
+        "pgsql.response"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "netflow",
+      "label": "Suricata Netflow EVE records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"netflow\".*\"netflow\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "flow_id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "netflow.pkts",
+        "netflow.bytes"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "netflow.start",
+        "netflow.end"
+      ]
+    },
+    {
+      "id": "arp",
+      "label": "Suricata ARP request/reply records",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"arp\".*\"arp\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "arp.opcode",
+      "required_fields": [
+        "timestamp",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "arp.hw_type",
+        "arp.proto_type",
+        "arp.opcode",
+        "arp.src_mac",
+        "arp.dest_mac"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "ike",
+      "label": "Suricata IKE VPN negotiation metadata",
+      "match_engine": "pcre",
+      "match": "\\\"event_type\\\"\\s*:\\s*\\\"ike\\\".*\\\"ike\\\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "ike.init_spi",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "ike.init_spi",
+        "ike.resp_spi",
+        "ike.version_major"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "modbus",
+      "label": "Suricata Modbus transaction metadata",
+      "match_engine": "pcre",
+      "match": "\"event_type\"\\s*:\\s*\"modbus\".*\"modbus\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "modbus.id",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "modbus.id",
+        "modbus.request.function_code",
+        "modbus.response.function_code"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "quic",
+      "label": "Suricata QUIC handshake/fingerprint metadata",
+      "match_engine": "pcre",
+      "match": "\\\"event_type\\\"\\s*:\\s*\\\"quic\\\".*\\\"quic\\\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "quic.ja4",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "quic.version",
+        "quic.ja4"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    },
+    {
+      "id": "pop3",
+      "label": "Suricata POP3 command/response metadata",
+      "match_engine": "pcre",
+      "match": "\\\"event_type\\\"\\s*:\\s*\\\"pop3\\\".*\\\"pop3\\\"\\s*:\\s*\\{",
+      "expected_sourcetype": "suricata:eve",
+      "primary_id_field": "pop3.request.command",
+      "required_fields": [
+        "timestamp",
+        "flow_id",
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "pop3.request.command",
+        "pop3.response.status"
+      ],
+      "timestamp_fields": [
+        "timestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "suricata",
+    "product": "eve_json",
+    "vendor_product": "suricata:eve_json",
+    "suricata_eve_family": "Native EVE event_type for supported families: alert, dns, http, tls, flow, fileinfo, anomaly, ssh, dhcp, rdp, ftp, krb5, smb, mqtt, http2, pgsql, netflow, arp, ike, modbus, quic, or pop3",
+    "event_type": "Native Suricata EVE event_type",
+    "flow_id": "Suricata flow correlation identifier",
+    "src": "Alias of src_ip",
+    "src_ip": "Suricata source IP",
+    "src_port": "Suricata source port where present",
+    "dest": "Alias of dest_ip",
+    "dest_ip": "Suricata destination IP",
+    "dest_port": "Suricata destination port where present",
+    "transport": "Uppercase proto derived from Suricata proto",
+    "app": "Suricata app_proto",
+    "action": "Suricata alert.action or flow.action when present; otherwise event_type fallback",
+    "signature": "Alert signature or family-specific triage value",
+    "signature_id": "Alert signature_id or flow_id fallback",
+    "severity": "alert.severity when present",
+    "dns_query": "dns.rrname for DNS events",
+    "dns_query_type": "dns.rrtype for DNS events",
+    "http_method": "http.http_method for HTTP events",
+    "http_status": "http.status for HTTP events",
+    "url": "http.url for HTTP events",
+    "tls_sni": "tls.sni for TLS events",
+    "tls_version": "tls.version for TLS events",
+    "bytes_in": "flow.bytes_toclient for flow records",
+    "bytes_out": "flow.bytes_toserver for flow records",
+    "marker": "Synthetic fixture marker only",
+    "file_name": "fileinfo.filename for file transaction records",
+    "file_state": "fileinfo.state for file transaction records",
+    "file_size": "fileinfo.size for file transaction records",
+    "anomaly_type": "anomaly.type for anomaly records",
+    "anomaly_event": "anomaly.event for anomaly records",
+    "ssh_client_software": "ssh.client.software_version for SSH records",
+    "ssh_server_software": "ssh.server.software_version for SSH records",
+    "ssh_client_hassh": "ssh.client.hassh.hash when Suricata HASSH logging is enabled",
+    "ssh_server_hassh": "ssh.server.hassh.hash when Suricata HASSH logging is enabled",
+    "dhcp_type": "dhcp.type / dhcp.dhcp_type DHCP message context",
+    "dhcp_client_mac": "dhcp.client_mac for DHCP address mapping",
+    "dhcp_assigned_ip": "dhcp.assigned_ip lease address when present",
+    "dhcp_requested_ip": "dhcp.requested_ip requested address when present",
+    "dhcp_hostname": "dhcp.hostname client host name when extended logging emits it",
+    "dhcp_lease_time": "dhcp.lease_time lease duration when extended logging emits it",
+    "rdp_tx_id": "rdp.tx_id per-flow RDP transaction identifier",
+    "rdp_type": "rdp.event_type RDP negotiation subtype",
+    "rdp_protocol": "rdp.protocol selected security protocol where present",
+    "rdp_cookie": "rdp.cookie client-provided routing/cookie string where present",
+    "rdp_client_name": "rdp.client.client_name where connect-request logging emits client details",
+    "ftp_command": "ftp.command for FTP command/reply records",
+    "ftp_command_data": "ftp.command_data argument/filename context for FTP records",
+    "ftp_completion_code": "ftp.completion_code response code array for FTP records",
+    "ftp_reply": "ftp.reply response text array for FTP records",
+    "krb5_msg_type": "krb5.msg_type Kerberos message type such as AS-REQ/TGS-REP",
+    "krb5_client": "krb5.cname client principal",
+    "krb5_service": "krb5.sname service principal",
+    "krb5_realm": "krb5.realm Kerberos realm",
+    "krb5_encryption": "krb5.encryption response encryption type when emitted",
+    "krb5_error_code": "krb5.error_code when a Kerberos request fails",
+    "smb_command": "smb.command command name for SMB transaction records",
+    "smb_status": "smb.status status string for SMB records",
+    "smb_status_code": "smb.status_code hex status code for SMB records",
+    "smb_filename": "smb.filename file/pipe name where Suricata emits it",
+    "smb_share": "smb.share share name where emitted",
+    "smb_share_type": "smb.share_type such as FILE, PIPE, PRINT, or unknown",
+    "mqtt_topic": "mqtt.publish.topic published topic for MQTT publish transactions",
+    "mqtt_message_id": "mqtt.publish.message_id or transaction message identifier where emitted",
+    "mqtt_qos": "mqtt.publish.qos quality-of-service level where emitted",
+    "mqtt_retain": "mqtt.publish.retain retain flag where emitted",
+    "mqtt_client_id": "mqtt.connect.client_id when CONNECT logging emits it",
+    "http2_authority": "HTTP/2 :authority pseudo-header from request headers when extracted by Splunk props",
+    "http2_method": "HTTP/2 :method pseudo-header from request headers when extracted by Splunk props",
+    "http2_path": "HTTP/2 :path pseudo-header from request headers when extracted by Splunk props",
+    "http2_status": "HTTP/2 :status pseudo-header from response headers when extracted by Splunk props",
+    "http2_user_agent": "HTTP/2 user-agent header when extracted by Splunk props",
+    "arp_hw_type": "arp.hw_type link-layer protocol type for ARP records",
+    "arp_proto_type": "arp.proto_type internetwork protocol for ARP records",
+    "arp_opcode": "arp.opcode request/reply operation for ARP records",
+    "arp_src_mac": "arp.src_mac source MAC address for ARP records",
+    "arp_dest_mac": "arp.dest_mac destination MAC address for ARP records",
+    "ike_init_spi": "IKE initiator Security Parameter Index from Suricata EVE IKE records.",
+    "ike_resp_spi": "IKE responder Security Parameter Index from Suricata EVE IKE records.",
+    "ike_version_major": "IKE/ISAKMP major version; distinguishes IKEv1 and IKEv2.",
+    "ike_version_minor": "IKE/ISAKMP minor version.",
+    "ike_exchange_type": "Numeric IKE exchange type.",
+    "ike_exchange_type_verbose": "Human-readable IKE exchange type when Suricata extended IKE output is enabled.",
+    "ike_alg_enc": "Chosen IKE encryption algorithm observed by Suricata.",
+    "ike_alg_hash": "Chosen IKE hash/integrity algorithm observed by Suricata.",
+    "ike_alg_auth": "Chosen IKE authentication algorithm observed by Suricata.",
+    "ike_alg_dh": "Chosen IKE Diffie-Hellman group observed by Suricata.",
+    "modbus_id": "modbus.id transaction number assigned by Suricata for Modbus records.",
+    "modbus_request_function": "modbus.request.function_code associated function name for the request.",
+    "modbus_response_function": "modbus.response.function_code associated function name for the response.",
+    "modbus_access_type": "modbus.request.access_type or response access type such as READ | COILS.",
+    "modbus_category": "modbus.request.category or response function category.",
+    "modbus_error_flags": "modbus.response.error_flags or request error flags from Suricata parser context.",
+    "modbus_unit_id": "modbus.request.unit_id remote server/unit identifier.",
+    "modbus_transaction_id": "modbus.request.transaction_id protocol transaction identifier.",
+    "quic_version": "QUIC protocol version observed by Suricata EVE.",
+    "quic_sni": "QUIC Server Name Indication when Suricata emits it.",
+    "quic_ja3_hash": "QUIC JA3 client fingerprint hash when emitted.",
+    "quic_ja3_string": "QUIC JA3 client fingerprint string when emitted.",
+    "quic_ja3s_hash": "QUIC JA3S server fingerprint hash when emitted.",
+    "quic_ja3s_string": "QUIC JA3S server fingerprint string when emitted.",
+    "quic_ja4": "QUIC JA4 client fingerprint string when emitted.",
+    "quic_cyu_hash": "CYU fingerprint hash for pre-standardization QUIC variants when emitted.",
+    "quic_cyu_string": "CYU fingerprint string for pre-standardization QUIC variants when emitted.",
+    "pop3_command": "pop3.request.command POP3 client command observed by Suricata.",
+    "pop3_args": "pop3.request.args POP3 command arguments when emitted; can include mailbox/account identifiers and should be reviewed before reduction.",
+    "pop3_success": "pop3.response.success boolean POP3 response success flag.",
+    "pop3_status": "pop3.response.status such as OK or ERR.",
+    "pop3_header": "pop3.response.header first-line POP3 response text where emitted."
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-suricata_eve_json.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/suricata_eve_json_overview.xml"
+    ],
+    "test_events": [
+      "test-events/suricata_eve_json_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20082.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/suricata_eve_json_reduction_candidates.csv",
+      "validation/preflight-2026-06-13.md",
+      "edge-processor/README.md",
+      "edge-processor/validation/suricata_eve_flow_reduce-preflight.md"
+    ],
+    "edge_processor": [
+      "edge-processor/README.md",
+      "edge-processor/modules/suricata_eve_flow_reduce.spl2",
+      "edge-processor/templates/suricata_eve_flow_reduce.json",
+      "edge-processor/samples/suricata_eve_flow_reduce.raw.txt",
+      "edge-processor/samples/suricata_eve_flow_reduce.parsed.jsonl",
+      "edge-processor/validation/suricata_eve_flow_reduce-preflight.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Suricata EVE JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20082,
+      "notes": "Dedicated TCP listener for one Suricata EVE JSON record per line from eve.json, syslog output, Fluent Bit, Vector, Cribl, or another relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20082,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Suricata EVE JSON",
+    "min": "public Suricata EVE JSON documentation current as of 2026-06-13",
+    "max": null,
+    "notes": "Grounded in official Suricata EVE JSON output/format documentation and synthetic-equivalent fixtures, including FTP/KRB5/SMB/MQTT/HTTP2, PGSQL/Netflow, ARP, IKE, Modbus, QUIC, and POP3 field documentation added during June 2026 hardening; local Suricata version, eve-log configuration, and collector wrapping must be validated before promotion."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-13",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Suricata EVE JSON public documentation and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Suricata EVE JSON records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Suricata relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Suricata EVE JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "suricata_eve_json_mixed"
+      ],
+      "event_count": 22,
+      "marker_prefix": "SC4S_SURICATA_EVE_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20082.sh"
+    },
+    "readback": {
+      "spl": "index=netids sechub_fixture_marker=\"SC4S_SURICATA_EVE_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product suricata_eve_family event_type src_ip src src_port dest_ip dest dest_port transport app action signature signature_id severity dns_query dns_query_type http_method http_status url tls_sni tls_version bytes_in bytes_out file_name file_state file_size anomaly_type anomaly_event ssh_client_software ssh_server_software ssh_client_hassh ssh_server_hassh dhcp_type dhcp_client_mac dhcp_assigned_ip dhcp_requested_ip dhcp_hostname dhcp_lease_time rdp_tx_id rdp_type rdp_protocol rdp_cookie rdp_client_name ftp_command ftp_command_data ftp_completion_code ftp_reply krb5_msg_type krb5_client krb5_service krb5_realm krb5_encryption krb5_error_code smb_command smb_status smb_status_code smb_filename smb_share smb_share_type mqtt_topic mqtt_message_id mqtt_qos mqtt_retain mqtt_client_id http2_authority http2_method http2_path http2_status http2_user_agent pgsql_tx_id pgsql_query pgsql_command_completed pgsql_data_rows pgsql_data_size netflow_pkts netflow_bytes netflow_age netflow_min_ttl netflow_max_ttl arp_hw_type arp_proto_type arp_opcode arp_src_mac arp_dest_mac ike_init_spi ike_resp_spi ike_version_major ike_exchange_type ike_exchange_type_verbose ike_alg_enc ike_alg_hash ike_alg_auth ike_alg_dh modbus_id modbus_request_function modbus_response_function modbus_access_type modbus_category modbus_error_flags modbus_unit_id modbus_transaction_id quic_version quic_sni quic_ja3_hash quic_ja3s_hash quic_ja4 quic_cyu_hash pop3_command pop3_args pop3_success pop3_status pop3_header marker _raw",
+      "expected_count": 22,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "Suricata EVE family",
+        "network tuple",
+        "native event_type",
+        "signature/action/severity",
+        "timestamp",
+        "family-specific DNS/HTTP/TLS/flow/fileinfo/anomaly/SSH/DHCP/RDP/FTP/KRB5/SMB/MQTT/HTTP2/PGSQL/Netflow/ARP/IKE/Modbus/QUIC/POP3 fields"
+      ],
+      "must_verify_fields": [
+        "ike_init_spi",
+        "ike_resp_spi",
+        "ike_version_major",
+        "ike_exchange_type_verbose",
+        "modbus_id",
+        "modbus_request_function",
+        "modbus_response_function",
+        "modbus_access_type",
+        "quic_version",
+        "quic_sni",
+        "quic_ja3_hash",
+        "quic_ja4",
+        "pop3_command",
+        "pop3_status",
+        "pop3_success"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-13",
+      "summary": "2026-06-13 local preflight found no TCP listener on 127.0.0.1:20082 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-13.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-13.md",
+        "summary": "Command-grounded local preflight evidence for missing Suricata EVE JSON TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20082,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Suricata EVE JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netids"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netids",
+        "Search role can read netids"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "suricata_eve_json_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/suricata_eve_json/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/suricata_eve_json/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/suricata_eve_json/compose.yaml",
+      "compose_project": "sechub-suricata-eve-json-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netids index preflight/create"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/suricata_eve_json/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/suricata_eve_json/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/suricata_eve_json/scripts/send_tcp_20082.sh 127.0.0.1 20082",
+        "splunk_summary_readback": "index=netids sechub_fixture_marker=\"SC4S_SURICATA_EVE_TEST_*\" earliest=-2h | stats count by sourcetype source host suricata_eve_family event_type",
+        "splunk_detail_readback": "index=netids sechub_fixture_marker=\"SC4S_SURICATA_EVE_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product suricata_eve_family event_type src_ip src src_port dest_ip dest dest_port transport app action signature signature_id severity dns_query dns_query_type http_method http_status url tls_sni tls_version bytes_in bytes_out file_name file_state file_size anomaly_type anomaly_event ssh_client_software ssh_server_software ssh_client_hassh ssh_server_hassh dhcp_type dhcp_client_mac dhcp_assigned_ip dhcp_requested_ip dhcp_hostname dhcp_lease_time rdp_tx_id rdp_type rdp_protocol rdp_cookie rdp_client_name ftp_command ftp_command_data ftp_completion_code ftp_reply krb5_msg_type krb5_client krb5_service krb5_realm krb5_encryption krb5_error_code smb_command smb_status smb_status_code smb_filename smb_share smb_share_type mqtt_topic mqtt_message_id mqtt_qos mqtt_retain mqtt_client_id http2_authority http2_method http2_path http2_status http2_user_agent pgsql_tx_id pgsql_query pgsql_command_completed pgsql_data_rows pgsql_data_size netflow_pkts netflow_bytes netflow_age netflow_min_ttl netflow_max_ttl arp_hw_type arp_proto_type arp_opcode arp_src_mac arp_dest_mac ike_init_spi ike_resp_spi ike_version_major ike_exchange_type ike_exchange_type_verbose ike_alg_enc ike_alg_hash ike_alg_auth ike_alg_dh modbus_id modbus_request_function modbus_response_function modbus_access_type modbus_category modbus_error_flags modbus_unit_id modbus_transaction_id quic_version quic_sni quic_ja3_hash quic_ja3s_hash quic_ja4 quic_cyu_hash pop3_command pop3_args pop3_success pop3_status pop3_header marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netids",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/suricata_eve_json/splunk -> /opt/splunk/etc/apps/sechub_suricata_eve_json:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20082,
+          "host_port_env": "SC4S_SURICATA_EVE_JSON_PORT",
+          "source_id": "SURICATA_EVE_JSON"
+        },
+        "parser_mount": "packs/suricata_eve_json/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "alert",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE alert JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_ALERT_001"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "dns",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE dns JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_DNS_002"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "http",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE http JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_HTTP_003"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "tls",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE tls JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_TLS_004"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "flow",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE flow JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_FLOW_005"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "fileinfo",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE fileinfo JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_FILEINFO_006"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "anomaly",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE anomaly JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_ANOMALY_007"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "ssh",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE ssh JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_SSH_008"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "dhcp",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE dhcp JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_DHCP_009"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "rdp",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE rdp JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_RDP_010"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "ftp",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE ftp JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_FTP_011"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "krb5",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE krb5 JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_KRB5_012"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "smb",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE smb JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_SMB_013"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "mqtt",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE mqtt JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_MQTT_014"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "http2",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE http2 JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_HTTP2_015"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "pgsql",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE pgsql JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_PGSQL_016"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "netflow",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE netflow JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_NETFLOW_017"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "arp",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE arp JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_ARP_018"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "ike",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE ike JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_IKE_019"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "modbus",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE modbus JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_MODBUS_020"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "quic",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE quic JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_QUIC_021"
+          ]
+        },
+        {
+          "source": "suricata_eve_json",
+          "source_shape": "eve_json_line_relay",
+          "event_family": "pop3",
+          "sourcetype": "suricata:eve",
+          "data_structures": [
+            "Suricata EVE pop3 JSON records"
+          ],
+          "markers": [
+            "SC4S_SURICATA_EVE_TEST_POP3_022"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Live Suricata sensor/source-version emission, ruleset behavior, and local eve-log configuration are not proven by this harness.",
+        "Collector wrappers, file-tail buffering, syslog envelope rewrites, archive decompression, and Cribl/Fluent Bit/Vector delivery semantics remain unverified.",
+        "Suricata TSV logs, non-EVE outputs, stats-volume routing, local policy extensions, and real PCAP-derived traffic/source coverage remain deferred until exact source-shape evidence is added."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "suricata_eve_json_mixed",
+      "label": "Suricata EVE JSON synthetic-equivalent events",
+      "path": "test-events/suricata_eve_json_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 22,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_SURICATA_EVE_TEST_ALERT_001",
+        "SC4S_SURICATA_EVE_TEST_DNS_002",
+        "SC4S_SURICATA_EVE_TEST_HTTP_003",
+        "SC4S_SURICATA_EVE_TEST_TLS_004",
+        "SC4S_SURICATA_EVE_TEST_FLOW_005",
+        "SC4S_SURICATA_EVE_TEST_FILEINFO_006",
+        "SC4S_SURICATA_EVE_TEST_ANOMALY_007",
+        "SC4S_SURICATA_EVE_TEST_SSH_008",
+        "SC4S_SURICATA_EVE_TEST_DHCP_009",
+        "SC4S_SURICATA_EVE_TEST_RDP_010",
+        "SC4S_SURICATA_EVE_TEST_FTP_011",
+        "SC4S_SURICATA_EVE_TEST_KRB5_012",
+        "SC4S_SURICATA_EVE_TEST_SMB_013",
+        "SC4S_SURICATA_EVE_TEST_MQTT_014",
+        "SC4S_SURICATA_EVE_TEST_HTTP2_015",
+        "SC4S_SURICATA_EVE_TEST_PGSQL_016",
+        "SC4S_SURICATA_EVE_TEST_NETFLOW_017",
+        "SC4S_SURICATA_EVE_TEST_ARP_018",
+        "SC4S_SURICATA_EVE_TEST_IKE_019",
+        "SC4S_SURICATA_EVE_TEST_MODBUS_020",
+        "SC4S_SURICATA_EVE_TEST_QUIC_021",
+        "SC4S_SURICATA_EVE_TEST_POP3_022"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "timestamp",
+        "primary_timezone": "offset in EVE timestamp field",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Suricata/collector timestamp normalization policy"
+        ],
+        "notes": "Fixtures use Suricata-style timestamp strings with an explicit +0000 offset."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact EVE JSON with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "alert",
+        "dns",
+        "http",
+        "tls",
+        "flow",
+        "fileinfo",
+        "anomaly",
+        "ssh",
+        "dhcp",
+        "rdp",
+        "ftp",
+        "krb5",
+        "smb",
+        "mqtt",
+        "http2",
+        "pgsql",
+        "netflow",
+        "arp",
+        "ike",
+        "modbus",
+        "quic",
+        "pop3"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-suricata_eve_json.conf",
+      "target_path": "local/config/app_parsers/syslog/app-suricata_eve_json.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/suricata_eve_json.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/suricata_eve_json_overview.xml",
+      "target_path": "splunk/default/data/ui/views/suricata_eve_json_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/suricata_eve_json_test_events.txt",
+      "target_path": "test-events/suricata_eve_json_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20082.sh",
+      "target_path": "scripts/send_tcp_20082.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "validation_harness_script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/suricata_eve_json_reduction_candidates.csv",
+      "target_path": "docs/suricata_eve_json_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_13",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-13.md",
+      "target_path": "validation/preflight-2026-06-13.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "edge_processor_readme",
+      "group": "docs",
+      "source_path": "edge-processor/README.md",
+      "target_path": "edge-processor/README.md",
+      "kind": "documentation",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "edge_processor_module",
+      "group": "docs",
+      "source_path": "edge-processor/modules/suricata_eve_flow_reduce.spl2",
+      "target_path": "edge-processor/modules/suricata_eve_flow_reduce.spl2",
+      "kind": "splunk_edge_processor_spl2_module",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "edge_processor_template",
+      "group": "docs",
+      "source_path": "edge-processor/templates/suricata_eve_flow_reduce.json",
+      "target_path": "edge-processor/templates/suricata_eve_flow_reduce.json",
+      "kind": "splunk_edge_processor_template_metadata",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "edge_processor_sample_raw",
+      "group": "docs",
+      "source_path": "edge-processor/samples/suricata_eve_flow_reduce.raw.txt",
+      "target_path": "edge-processor/samples/suricata_eve_flow_reduce.raw.txt",
+      "kind": "sample_raw",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "edge_processor_sample_parsed",
+      "group": "docs",
+      "source_path": "edge-processor/samples/suricata_eve_flow_reduce.parsed.jsonl",
+      "target_path": "edge-processor/samples/suricata_eve_flow_reduce.parsed.jsonl",
+      "kind": "sample_parsed_jsonl",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "edge_processor_preflight",
+      "group": "docs",
+      "source_path": "edge-processor/validation/suricata_eve_flow_reduce-preflight.md",
+      "target_path": "edge-processor/validation/suricata_eve_flow_reduce-preflight.md",
+      "kind": "validation_preflight",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "Official Suricata EVE JSON output/format documentation, Suricata public repository/configuration evidence, and parser-ecosystem corroboration from Elastic Suricata EVE integrations; fixtures are synthetic-equivalent examples shaped to public documentation, including FTP, Kerberos/KRB5, SMB, MQTT, HTTP/2, PGSQL, Netflow, ARP, IKE, Modbus, QUIC, and POP3 event fields added in 2026-06-16 hardening.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test names, RFC5737 documentation IP ranges, synthetic signatures, and synthetic flow IDs; no customer or production sensor data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-13",
+      "notes": "Selected from 2026-06-13 source-coverage canvas top new-source backlog; Suricata EVE JSON had strong public emitted-shape/schema evidence. 2026-06-16 hardening added official Suricata EVE FTP, KRB5, SMB, MQTT, HTTP/2, PGSQL, Netflow, ARP, IKE, Modbus, QUIC, and POP3 fixture-backed coverage."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Suricata source endpoint."
+        },
+        "dest": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Suricata destination endpoint."
+        },
+        "src_port": {
+          "source_fields": [
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Source port where present."
+        },
+        "dest_port": {
+          "source_fields": [
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Destination port where present."
+        },
+        "transport": {
+          "source_fields": [
+            "proto"
+          ],
+          "status": "partial",
+          "notes": "Uppercase transport from native Suricata proto."
+        },
+        "action": {
+          "source_fields": [
+            "alert.action",
+            "flow.action",
+            "event_type",
+            "smb.command",
+            "mqtt.publish.topic",
+            "http2.request.headers",
+            "pgsql.request.simple_query",
+            "pgsql.response.command_completed",
+            "netflow.pkts",
+            "arp.opcode",
+            "ike.exchange_type_verbose",
+            "ike.init_spi",
+            "modbus.request.function_code",
+            "modbus.response.function_code",
+            "quic.ja4",
+            "quic.sni",
+            "pop3.request.command",
+            "pop3.response.status"
+          ],
+          "status": "partial",
+          "notes": "Native Suricata alert/flow action when present; event_type fallback is analyst grouping only."
+        },
+        "signature": {
+          "source_fields": [
+            "alert.signature",
+            "dns.rrname",
+            "http.hostname",
+            "tls.sni",
+            "fileinfo.filename",
+            "anomaly.event",
+            "ssh.client.software_version",
+            "flow.reason",
+            "smb.command",
+            "smb.filename",
+            "mqtt.publish.topic",
+            "http2_path",
+            "http2_authority",
+            "pgsql.response.command_completed",
+            "pgsql.request.simple_query",
+            "netflow.bytes",
+            "arp.opcode",
+            "ike.exchange_type_verbose",
+            "ike.init_spi",
+            "modbus.request.function_code",
+            "modbus.response.function_code",
+            "quic.ja4",
+            "quic.sni",
+            "quic.ja3.hash",
+            "pop3.request.command",
+            "pop3.response.status",
+            "pop3.response.header"
+          ],
+          "status": "partial",
+          "notes": "Family-specific triage label."
+        },
+        "signature_id": {
+          "source_fields": [
+            "alert.signature_id",
+            "flow_id",
+            "pgsql.tx_id",
+            "modbus.id",
+            "quic.ja4",
+            "quic.ja3.hash",
+            "pop3.request.command"
+          ],
+          "status": "partial",
+          "notes": "Alert signature ID or flow correlation fallback."
+        },
+        "severity": {
+          "source_fields": [
+            "alert.severity"
+          ],
+          "status": "partial",
+          "notes": "Suricata alert severity token when present."
+        },
+        "file_name": {
+          "source_fields": [
+            "fileinfo.filename",
+            "smb.filename",
+            "smb_filename"
+          ],
+          "status": "partial",
+          "notes": "File transaction filename/path where Suricata emits fileinfo."
+        },
+        "file_size": {
+          "source_fields": [
+            "fileinfo.size"
+          ],
+          "status": "partial",
+          "notes": "File transaction size where emitted."
+        },
+        "dhcp_client_mac": {
+          "source_fields": [
+            "dhcp.client_mac"
+          ],
+          "status": "partial",
+          "notes": "DHCP client MAC address for address-mapping triage."
+        },
+        "dhcp_assigned_ip": {
+          "source_fields": [
+            "dhcp.assigned_ip"
+          ],
+          "status": "partial",
+          "notes": "DHCP assigned lease IP where present."
+        },
+        "rdp_tx_id": {
+          "source_fields": [
+            "rdp.tx_id"
+          ],
+          "status": "partial",
+          "notes": "Per-flow RDP transaction identifier."
+        },
+        "rdp_protocol": {
+          "source_fields": [
+            "rdp.protocol"
+          ],
+          "status": "partial",
+          "notes": "RDP selected security protocol where present; not full RDP session validation."
+        },
+        "user": {
+          "source_fields": [
+            "krb5.cname",
+            "krb5_client",
+            "pop3.request.args",
+            "pop3_args"
+          ],
+          "status": "partial",
+          "notes": "Kerberos client principal or POP3 command argument can support protocol triage when emitted; POP3 arguments may contain account identifiers and are not validated authentication outcomes."
+        },
+        "app": {
+          "source_fields": [
+            "app_proto",
+            "event_type"
+          ],
+          "status": "partial",
+          "notes": "Protocol/application context from Suricata EVE."
+        },
+        "command": {
+          "source_fields": [
+            "ftp.command",
+            "ftp_command"
+          ],
+          "status": "partial",
+          "notes": "FTP command context for network/file-transfer triage."
+        },
+        "status": {
+          "source_fields": [
+            "smb.status",
+            "pop3.response.status",
+            "pop3_status",
+            "pop3.response.success",
+            "pop3_success"
+          ],
+          "status": "partial",
+          "notes": "Protocol status where emitted; POP3 status is server response text, not credential validation proof."
+        },
+        "bytes": {
+          "source_fields": [
+            "netflow.bytes",
+            "pgsql.response.data_size"
+          ],
+          "status": "partial",
+          "notes": "Suricata EVE JSON helper mapping added for PGSQL/Netflow fixture-backed coverage; not complete schema validation."
+        },
+        "duration": {
+          "source_fields": [
+            "netflow.age"
+          ],
+          "status": "partial",
+          "notes": "Suricata EVE JSON helper mapping added for PGSQL/Netflow fixture-backed coverage; not complete schema validation."
+        },
+        "src_mac": {
+          "source_fields": [
+            "arp.src_mac",
+            "arp_src_mac"
+          ],
+          "status": "partial",
+          "notes": "Suricata ARP source MAC address helper mapping; not endpoint inventory validation."
+        },
+        "dest_mac": {
+          "source_fields": [
+            "arp.dest_mac",
+            "arp_dest_mac"
+          ],
+          "status": "partial",
+          "notes": "Suricata ARP destination MAC address helper mapping; not endpoint inventory validation."
+        },
+        "ike_init_spi": {
+          "source_fields": [
+            "ike.init_spi",
+            "ike_init_spi"
+          ],
+          "status": "partial",
+          "notes": "IKE initiator SPI for VPN negotiation grouping; not a complete VPN session identity."
+        },
+        "ike_resp_spi": {
+          "source_fields": [
+            "ike.resp_spi",
+            "ike_resp_spi"
+          ],
+          "status": "partial",
+          "notes": "IKE responder SPI for VPN negotiation grouping."
+        },
+        "ike_exchange_type": {
+          "source_fields": [
+            "ike.exchange_type",
+            "ike.exchange_type_verbose"
+          ],
+          "status": "partial",
+          "notes": "IKE exchange type context from Suricata EVE; not a complete VPN outcome taxonomy."
+        },
+        "modbus_function": {
+          "source_fields": [
+            "modbus.request.function_code",
+            "modbus.response.function_code",
+            "modbus_request_function",
+            "modbus_response_function"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Modbus function context for industrial protocol triage; not control-system process validation."
+        },
+        "modbus_unit_id": {
+          "source_fields": [
+            "modbus.request.unit_id",
+            "modbus_unit_id"
+          ],
+          "status": "partial",
+          "notes": "Modbus unit/server identifier where Suricata emits it."
+        },
+        "quic_fingerprint": {
+          "source_fields": [
+            "quic.ja4",
+            "quic.ja3.hash",
+            "quic.ja3s.hash",
+            "quic.cyu{}.hash"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped QUIC fingerprint helper mapping; not encrypted-traffic attribution validation."
+        }
+      },
+      "notes": "Partial Network Traffic, Intrusion Detection, DNS, Web, and TLS guidance only; not full CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip",
+            "dhcp.client_ip"
+          ],
+          "status": "partial",
+          "notes": "Source endpoint IP."
+        },
+        "src_endpoint.port": {
+          "source_fields": [
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Source endpoint port."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "dest_ip",
+            "dhcp.assigned_ip"
+          ],
+          "status": "partial",
+          "notes": "Destination endpoint IP."
+        },
+        "dst_endpoint.port": {
+          "source_fields": [
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Destination endpoint port."
+        },
+        "connection_info.protocol_name": {
+          "source_fields": [
+            "proto",
+            "app_proto",
+            "ike.version_major",
+            "quic.version"
+          ],
+          "status": "partial",
+          "notes": "Transport and application protocol context."
+        },
+        "activity_name": {
+          "source_fields": [
+            "event_type",
+            "alert.action",
+            "flow.action",
+            "smb.command",
+            "mqtt.publish.topic",
+            "http2_method",
+            "http2_path",
+            "pgsql.request.simple_query",
+            "pgsql.response.command_completed",
+            "netflow.pkts",
+            "arp.opcode",
+            "ike.exchange_type_verbose",
+            "ike.init_spi",
+            "modbus.request.function_code",
+            "modbus.response.function_code",
+            "quic.ja4",
+            "quic.sni",
+            "pop3.request.command",
+            "pop3.response.status"
+          ],
+          "status": "partial",
+          "notes": "Native EVE event/action grouping."
+        },
+        "finding.title": {
+          "source_fields": [
+            "alert.signature",
+            "anomaly.event"
+          ],
+          "status": "partial",
+          "notes": "IDS alert title or anomaly event helper mapping."
+        },
+        "severity": {
+          "source_fields": [
+            "alert.severity"
+          ],
+          "status": "partial",
+          "notes": "Native Suricata numeric alert severity."
+        },
+        "file.name": {
+          "source_fields": [
+            "fileinfo.filename",
+            "smb.filename",
+            "smb_filename"
+          ],
+          "status": "partial",
+          "notes": "File transaction filename/path helper mapping."
+        },
+        "file.size": {
+          "source_fields": [
+            "fileinfo.size"
+          ],
+          "status": "partial",
+          "notes": "File transaction size helper mapping."
+        },
+        "device.os.name": {
+          "source_fields": [
+            "ssh.client.software_version",
+            "ssh.server.software_version"
+          ],
+          "status": "partial",
+          "notes": "SSH software-version context; not endpoint OS validation."
+        },
+        "device.mac": {
+          "source_fields": [
+            "dhcp.client_mac"
+          ],
+          "status": "partial",
+          "notes": "DHCP client MAC helper mapping."
+        },
+        "network_activity.protocol_name": {
+          "source_fields": [
+            "rdp.protocol",
+            "rdp.event_type"
+          ],
+          "status": "partial",
+          "notes": "RDP negotiation protocol/subtype helper mapping."
+        },
+        "actor.user.name": {
+          "source_fields": [
+            "krb5.cname",
+            "krb5_client",
+            "pop3.request.args",
+            "pop3_args"
+          ],
+          "status": "partial",
+          "notes": "Protocol-level principal/account context only; not a validated identity assertion."
+        },
+        "service.name": {
+          "source_fields": [
+            "krb5.sname",
+            "krb5_service"
+          ],
+          "status": "partial",
+          "notes": "Kerberos service principal helper mapping."
+        },
+        "http_request.url": {
+          "source_fields": [
+            "http2_path",
+            "http2_authority"
+          ],
+          "status": "partial",
+          "notes": "HTTP/2 pseudo-header helper mapping."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "flow_id",
+            "ike.init_spi",
+            "ike.resp_spi",
+            "pgsql.tx_id",
+            "quic.ja4",
+            "quic.ja3.hash",
+            "pop3.request.command"
+          ],
+          "status": "partial",
+          "notes": "PGSQL transaction ID, flow ID, and IKE SPI values provide event grouping context, not global identity."
+        },
+        "traffic.bytes": {
+          "source_fields": [
+            "netflow.bytes"
+          ],
+          "status": "partial",
+          "notes": "Suricata EVE JSON helper mapping added for PGSQL/Netflow fixture-backed coverage; not complete schema validation."
+        },
+        "duration": {
+          "source_fields": [
+            "netflow.age"
+          ],
+          "status": "partial",
+          "notes": "Suricata EVE JSON helper mapping added for PGSQL/Netflow fixture-backed coverage; not complete schema validation."
+        },
+        "src_endpoint.mac": {
+          "source_fields": [
+            "arp.src_mac",
+            "arp_src_mac"
+          ],
+          "status": "partial",
+          "notes": "ARP source MAC helper mapping."
+        },
+        "dst_endpoint.mac": {
+          "source_fields": [
+            "arp.dest_mac",
+            "arp_dest_mac"
+          ],
+          "status": "partial",
+          "notes": "ARP destination MAC helper mapping."
+        },
+        "vpn.session.uid": {
+          "source_fields": [
+            "ike.init_spi",
+            "ike.resp_spi"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped IKE SPI grouping helper; conservative VPN negotiation metadata only."
+        },
+        "industrial.protocol.function": {
+          "source_fields": [
+            "modbus.request.function_code",
+            "modbus.response.function_code",
+            "modbus_access_type"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Modbus helper mapping; OCSF class/category selection is not asserted."
+        },
+        "fingerprint.value": {
+          "source_fields": [
+            "quic.ja4",
+            "quic.ja3.hash",
+            "quic.ja3s.hash",
+            "quic.cyu{}.hash"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped QUIC fingerprint helper mapping only."
+        },
+        "status": {
+          "source_fields": [
+            "pop3.response.status",
+            "pop3_status",
+            "pop3.response.success",
+            "pop3_success",
+            "smb.status"
+          ],
+          "status": "partial",
+          "notes": "Protocol response status context."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        },
+        "source.port": {
+          "source_fields": [
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Source port."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Destination IP."
+        },
+        "destination.port": {
+          "source_fields": [
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Destination port."
+        },
+        "network.transport": {
+          "source_fields": [
+            "proto"
+          ],
+          "status": "partial",
+          "notes": "Transport protocol."
+        },
+        "network.protocol": {
+          "source_fields": [
+            "app_proto",
+            "quic.version"
+          ],
+          "status": "partial",
+          "notes": "Application protocol."
+        },
+        "event.action": {
+          "source_fields": [
+            "event_type",
+            "alert.action",
+            "flow.action",
+            "smb.command",
+            "mqtt.publish.topic",
+            "http2_method",
+            "pgsql.request.simple_query",
+            "pgsql.response.command_completed",
+            "netflow.pkts",
+            "arp.opcode",
+            "ike.exchange_type_verbose",
+            "ike.init_spi",
+            "modbus.request.function_code",
+            "modbus.response.function_code",
+            "quic.ja4",
+            "quic.sni",
+            "pop3.request.command",
+            "pop3.response.status"
+          ],
+          "status": "partial",
+          "notes": "Native event/action grouping."
+        },
+        "rule.id": {
+          "source_fields": [
+            "alert.signature_id"
+          ],
+          "status": "partial",
+          "notes": "Suricata alert signature ID."
+        },
+        "rule.name": {
+          "source_fields": [
+            "alert.signature"
+          ],
+          "status": "partial",
+          "notes": "Suricata alert signature."
+        },
+        "dns.question.name": {
+          "source_fields": [
+            "dns.rrname"
+          ],
+          "status": "partial",
+          "notes": "DNS query name."
+        },
+        "url.path": {
+          "source_fields": [
+            "http.url",
+            "http2_path"
+          ],
+          "status": "partial",
+          "notes": "HTTP/1 URL path or HTTP/2 :path helper mapping."
+        },
+        "tls.client.server_name": {
+          "source_fields": [
+            "tls.sni"
+          ],
+          "status": "partial",
+          "notes": "TLS SNI where present."
+        },
+        "file.name": {
+          "source_fields": [
+            "fileinfo.filename",
+            "smb.filename",
+            "smb_filename"
+          ],
+          "status": "partial",
+          "notes": "File transaction filename/path."
+        },
+        "file.size": {
+          "source_fields": [
+            "fileinfo.size"
+          ],
+          "status": "partial",
+          "notes": "File transaction size."
+        },
+        "event.reason": {
+          "source_fields": [
+            "anomaly.event",
+            "flow.reason"
+          ],
+          "status": "partial",
+          "notes": "Anomaly event or flow close reason."
+        },
+        "client.software.name": {
+          "source_fields": [
+            "ssh.client.software_version"
+          ],
+          "status": "partial",
+          "notes": "SSH client software string."
+        },
+        "server.software.name": {
+          "source_fields": [
+            "ssh.server.software_version"
+          ],
+          "status": "partial",
+          "notes": "SSH server software string."
+        },
+        "client.mac": {
+          "source_fields": [
+            "dhcp.client_mac"
+          ],
+          "status": "partial",
+          "notes": "DHCP client MAC helper mapping."
+        },
+        "client.address": {
+          "source_fields": [
+            "dhcp.client_ip",
+            "dhcp.requested_ip"
+          ],
+          "status": "partial",
+          "notes": "DHCP client address/request helper mapping."
+        },
+        "server.address": {
+          "source_fields": [
+            "dhcp.assigned_ip"
+          ],
+          "status": "partial",
+          "notes": "DHCP assigned-address helper mapping."
+        },
+        "rdp.protocol": {
+          "source_fields": [
+            "rdp.protocol"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped RDP selected security protocol helper mapping."
+        },
+        "user.name": {
+          "source_fields": [
+            "krb5.cname",
+            "krb5_client",
+            "pop3.request.args",
+            "pop3_args"
+          ],
+          "status": "partial",
+          "notes": "Protocol-level account context when emitted."
+        },
+        "service.name": {
+          "source_fields": [
+            "krb5.sname",
+            "krb5_service"
+          ],
+          "status": "partial",
+          "notes": "Kerberos service principal helper mapping."
+        },
+        "http.response.status_code": {
+          "source_fields": [
+            "http.status",
+            "http2_status"
+          ],
+          "status": "partial",
+          "notes": "HTTP status helper mapping for HTTP/1 and HTTP/2 fixtures."
+        },
+        "event.id": {
+          "source_fields": [
+            "flow_id",
+            "ike.init_spi",
+            "ike.resp_spi",
+            "pgsql.tx_id",
+            "quic.ja4",
+            "quic.ja3.hash",
+            "pop3.request.command"
+          ],
+          "status": "partial",
+          "notes": "PGSQL transaction ID, flow ID, and IKE SPI values are useful grouping keys but not globally unique event IDs."
+        },
+        "network.bytes": {
+          "source_fields": [
+            "netflow.bytes"
+          ],
+          "status": "partial",
+          "notes": "Suricata EVE JSON helper mapping added for PGSQL/Netflow fixture-backed coverage; not complete schema validation."
+        },
+        "event.duration": {
+          "source_fields": [
+            "netflow.age"
+          ],
+          "status": "partial",
+          "notes": "Suricata EVE JSON helper mapping added for PGSQL/Netflow fixture-backed coverage; not complete schema validation."
+        },
+        "database.statement": {
+          "source_fields": [
+            "pgsql.request.simple_query"
+          ],
+          "status": "partial",
+          "notes": "Suricata EVE JSON helper mapping added for PGSQL/Netflow fixture-backed coverage; not complete schema validation."
+        },
+        "source.mac": {
+          "source_fields": [
+            "arp.src_mac",
+            "arp_src_mac"
+          ],
+          "status": "partial",
+          "notes": "ARP source MAC helper mapping."
+        },
+        "destination.mac": {
+          "source_fields": [
+            "arp.dest_mac",
+            "arp_dest_mac"
+          ],
+          "status": "partial",
+          "notes": "ARP destination MAC helper mapping."
+        },
+        "suricata.ike.exchange_type": {
+          "source_fields": [
+            "ike.exchange_type",
+            "ike.exchange_type_verbose"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped IKE exchange-type helper; not a complete VPN outcome taxonomy."
+        },
+        "suricata.ike.algorithms": {
+          "source_fields": [
+            "ike.alg_enc",
+            "ike.alg_hash",
+            "ike.alg_auth",
+            "ike.alg_dh"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped IKE algorithm context only; not TLS cipher semantics."
+        },
+        "suricata.modbus.function": {
+          "source_fields": [
+            "modbus.request.function_code",
+            "modbus.response.function_code",
+            "modbus_access_type"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Modbus helper mapping only."
+        },
+        "suricata.modbus.unit_id": {
+          "source_fields": [
+            "modbus.request.unit_id",
+            "modbus_unit_id"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Modbus unit identifier helper."
+        },
+        "tls.client.ja3": {
+          "source_fields": [
+            "quic.ja3.hash",
+            "quic_ja3_hash"
+          ],
+          "status": "partial",
+          "notes": "QUIC JA3-like helper mapping; not classic TLS handshake validation."
+        },
+        "tls.server.ja3s": {
+          "source_fields": [
+            "quic.ja3s.hash",
+            "quic_ja3s_hash"
+          ],
+          "status": "partial",
+          "notes": "QUIC JA3S-like helper mapping."
+        },
+        "suricata.quic.ja4": {
+          "source_fields": [
+            "quic.ja4",
+            "quic_ja4"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped QUIC JA4 fingerprint helper."
+        },
+        "event.outcome": {
+          "source_fields": [
+            "pop3.response.success",
+            "pop3_success",
+            "pop3.response.status",
+            "pop3_status"
+          ],
+          "status": "partial",
+          "notes": "POP3 response success/status helper; not end-to-end authentication validation."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/suricata_eve_json/sc4s/app_parsers/syslog/app-suricata_eve_json.conf": "sha256:5ad80893b8d221bbea2782a7b02400172cb8800fcd625d4ebe470dc571c58335",
+      "packs/suricata_eve_json/sc4s/env.example": "sha256:a5754a8058d5be38cb85ea4c91dcedd1ff9c4fa3f3e9aafca55a2bccafa89a74",
+      "packs/suricata_eve_json/splunk/default/props.conf": "sha256:28cea61e028880d1e5645aeb6ff5720f1e7e4e05002f58ad68ccdbf64b52f68f",
+      "packs/suricata_eve_json/splunk/default/transforms.conf": "sha256:922223bccec506dca85e21a283c42ce285dbd336477ffc21ae573911c3f9d021",
+      "packs/suricata_eve_json/splunk/default/eventtypes.conf": "sha256:e036fd5c69af1e91b939c7113bbf738da44f727f45ef7fad0205cbf719da0b56",
+      "packs/suricata_eve_json/splunk/default/tags.conf": "sha256:9dadf5170be68a435948e2be95c076f2fad64bff3cb2b5a23e6e419f693a8ea2",
+      "packs/suricata_eve_json/test-events/suricata_eve_json_test_events.txt": "sha256:dc126167ad02199bb734ddaac9834c85f9233f9cd5dfa6a07bc1574c250659f1",
+      "packs/suricata_eve_json/scripts/send_tcp_20082.sh": "sha256:238fd6a7a694e85ede4e8d0a16201af1f0dfc7657588da906a94114b8eef5778",
+      "packs/suricata_eve_json/docs/suricata_eve_json_reduction_candidates.csv": "sha256:d23989880e07f8fbaa73334ff155565a9ba1f7ae6479ddd35856e3f30b4aaef2",
+      "packs/suricata_eve_json/validation/preflight-2026-06-13.md": "sha256:6cc2dd472e15c66210b15fd67607840a77563e1bbd84ca43bda2be62f0c95556",
+      "packs/suricata_eve_json/README.md": "sha256:742e639484ed65582d925de35430b67c886e137bd83eea168290333b4cc53b25",
+      "packs/suricata_eve_json/splunk/default/data/ui/views/suricata_eve_json_overview.xml": "sha256:7ea15e7ccdd817590f0ae6b18b38da193dbc177ffddcb323f5e1b3c685058a16",
+      "packs/suricata_eve_json/edge-processor/README.md": "sha256:f56a4befeed3056c5866f93106c3fdd8fd2db170614b3c6fde910ff7d0729d7e",
+      "packs/suricata_eve_json/edge-processor/modules/suricata_eve_flow_reduce.spl2": "sha256:edb7e1becfa4dcb4dcd8dc6365bb281a9e6bbe2783a210535bee3d8100fb1616",
+      "packs/suricata_eve_json/edge-processor/templates/suricata_eve_flow_reduce.json": "sha256:f5e10eb173e2f3c3a291fb2774c6a6d0d53423dfac277be835f5c206c7111396",
+      "packs/suricata_eve_json/edge-processor/samples/suricata_eve_flow_reduce.raw.txt": "sha256:abf5152aa0123e64c95955483fc1f8380b642f5ebb10bbebaf1953bd99e020ea",
+      "packs/suricata_eve_json/edge-processor/samples/suricata_eve_flow_reduce.parsed.jsonl": "sha256:a773b16963f4601a7f9362490f4db3aceea0ca7bf94f1e0ff23128ef7b9e2c4d",
+      "packs/suricata_eve_json/edge-processor/validation/suricata_eve_flow_reduce-preflight.md": "sha256:7823303ac1495b1fd8e81708bcc9ade63eb58fa61def4f0b8fac8b979eea5bbb",
+      "packs/suricata_eve_json/scripts/e2e_docker_compose.sh": "sha256:058155cf328924c40624694c776f85a7235eb46230da3540a4e04c42688e80fd"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-18"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "network_security",
+    "ids",
+    "nsm",
+    "suricata",
+    "json"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "eve_json_relay",
+      "label": "Suricata EVE JSON relay",
+      "description": "Suricata EVE JSON records preserving native event_type, network tuple, and nested alert/DNS/HTTP/TLS/flow/fileinfo/anomaly/SSH/DHCP/RDP/FTP/KRB5/SMB/MQTT/HTTP2/PGSQL/Netflow/ARP/IKE/Modbus/QUIC context.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "eve_json_file",
+        "suricata_syslog_output",
+        "fluent_bit_relay",
+        "vector_relay",
+        "cribl_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "alert",
+        "dns",
+        "http",
+        "tls",
+        "flow",
+        "fileinfo",
+        "anomaly",
+        "ssh",
+        "dhcp",
+        "rdp",
+        "ftp",
+        "krb5",
+        "smb",
+        "mqtt",
+        "http2",
+        "pgsql",
+        "netflow",
+        "arp",
+        "ike",
+        "modbus",
+        "quic"
+      ],
+      "test_event_sets": [
+        "suricata_eve_json_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Suricata relay replay/read-back captured.",
+        "Suricata eve-log configuration and version can materially change optional nested fields.",
+        "Only alert, dns, http, tls, flow, fileinfo, anomaly, ssh, dhcp, rdp, ftp, krb5, smb, mqtt, http2, pgsql, netflow, arp, ike, modbus, and quic families are fixture-backed; other EVE event types remain future coverage."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/suricata_eve_json_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "event_type",
+        "src_ip",
+        "dest_ip",
+        "proto",
+        "app_proto",
+        "alert.signature_id"
+      ],
+      "notes": "Use after sampling the local Suricata EVE feed. Do not drop event_type, timestamps, flow_id, network tuple, alert signature/severity, DNS/HTTP/TLS names, or flow counters by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Suricata EVE relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real sensor records.",
+    "Only alert, DNS, HTTP, TLS, flow, fileinfo, anomaly, SSH, DHCP, RDP, FTP, KRB5, SMB, MQTT, HTTP2, PGSQL, Netflow, ARP, IKE, Modbus, and QUIC records are fixture-backed; other official EVE event types remain future coverage.",
+    "Local Suricata version, eve-log configuration, ruleset metadata, and collector wrappers affect field presence and nesting.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Suricata EVE JSON intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-suricata_eve_json.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Suricata EVE analyst knowledge",
+      "description": "Adds eventtypes/tags for Suricata alert, DNS, HTTP, TLS, flow, fileinfo, anomaly, SSH, DHCP, RDP, FTP, KRB5, SMB, MQTT, HTTP2, PGSQL, Netflow, ARP, IKE, Modbus, and QUIC records. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Suricata EVE reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/suricata_eve_json_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "pipeline_templates": [
+    {
+      "id": "suricata_eve_flow_reduce",
+      "type": "splunk_edge_processor_candidate",
+      "path": "edge-processor/templates/suricata_eve_flow_reduce.json",
+      "module": "edge-processor/modules/suricata_eve_flow_reduce.spl2",
+      "enabled_by_default": false,
+      "lossy_by_default": false,
+      "review_status": "candidate_not_edge_processor_validated"
+    }
+  ],
+  "source_delivery": {
+    "mode": "json_native_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Suricata EVE is JSON-native IDS output; not API-native, but external relay may be required.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "suricata_eve_json_overview_splunk_test",
+      "title": "Suricata EVE JSON — dashboard example",
+      "source_path": "dashboards/screenshots/suricata-eve-json-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Suricata EVE JSON dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

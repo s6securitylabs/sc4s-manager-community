@@ -1,0 +1,13 @@
+<form version="1.1" theme="light">
+  <label>Hermes Agent Audit Overview</label>
+  <description>Analyst overview for Hermes Agent gateway/runtime and OpenClaw audit events. Operator example only; not validation evidence.</description>
+  <fieldset submitButton="true">
+    <input type="time" token="time_range"><label>Time range</label><default><earliest>-24h@h</earliest><latest>now</latest></default></input>
+  </fieldset>
+  <row>
+    <panel><title>Events by family and action</title><table><search><query>index=netauth sourcetype="hermes:agent:audit" | stats count by hermes_openclaw_family action component platform | sort - count</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+  <row>
+    <panel><title>Recent audit trail</title><table><search><query>index=netauth sourcetype="hermes:agent:audit" | table _time hermes_openclaw_family action actor_user src_ip user_agent platform channel_id thread_id component object object_type tool_name provider model policy_decision risk_reason marker</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search></table></panel>
+  </row>
+</form>

@@ -1,0 +1,136 @@
+# Oracle E-Business Suite application-family Splunk input examples
+#
+# This file is intentionally an example, not deployable default inputs.conf. All
+# stanzas are disabled and contain placeholder paths/hosts. Copy only the stanzas
+# that match source-backed local evidence into a deployment app on the collecting
+# Universal Forwarder / heavy forwarder / search-head-side modular input owner.
+#
+# Evidence boundary:
+# - The deployable pack parser/dashboard currently targets the site-owned
+#   normalized JSON relay: sourcetype=oracle:ebs:security:json.
+# - Native EBS/OLM/ECC/APEX table or file monitors below need local source-shape
+#   proof, approved queries/paths, checkpointing, and read-back before enabling.
+# - Do not enable lossy filtering, masking, null queues, or sourcetype rewriting
+#   unless replay/read-back proves the change is safe.
+
+###############################################################################
+# Conservative supported relay: one JSON object per line from a site-owned EBS
+# collector that has already queried approved EBS/OLM/ECC/APEX sources and added
+# event_family/source_mode metadata documented in docs/collection/.
+###############################################################################
+
+# Raw TCP has no TLS or authentication by itself; bind/ACL this listener or prefer an
+# SC4S/syslog/HEC relay with transport security where available.
+[tcp://20104]
+disabled = 1
+index = oracle
+sourcetype = oracle:ebs:security:json
+connection_host = dns
+
+###############################################################################
+# EBS application-tier log files: examples only. Use existing oracle_weblogic,
+# OHS/Fusion Middleware, and Oracle Database packs for native source-specific
+# parsing where those formats are proven. If forwarding into this pack, convert
+# to the normalized JSON relay first rather than assigning raw app-tier logs to
+# oracle:ebs:security:json.
+###############################################################################
+
+[monitor:///<EBS_APP_TIER_LOG_ROOT>/<context>/logs/appl/conc/log/*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:ebs:concurrent:raw
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+[monitor:///<EBS_APP_TIER_LOG_ROOT>/<context>/logs/ora/*/oacore*/oacore*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:weblogic:server
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+[monitor:///<EBS_APP_TIER_LOG_ROOT>/<context>/logs/ora/*/forms*/forms*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:forms:diagnostic:raw
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+###############################################################################
+# Oracle Enterprise Command Center (ECC) Server / Framework examples. Oracle docs
+# name import.log, setup log, domain log, Oracle Enterprise Command Center
+# Framework log, data-load tracking logs, concurrent program logs, and debug log
+# level. Exact paths vary by installation and must be proven locally.
+###############################################################################
+
+[monitor:///<ECC_INSTALL_OR_DOMAIN_LOG_ROOT>/.../import.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:ecc:import:raw
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = true
+
+[monitor:///<ECC_INSTALL_OR_DOMAIN_LOG_ROOT>/.../*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:ecc:framework:raw
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = true
+
+[monitor:///<EBS_CONCURRENT_LOG_ROOT>/*ECC*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:ecc:data_load:raw
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+###############################################################################
+# Oracle APEX collection is database/view based, not a universal file monitor.
+# Use Splunk DB Connect or a site-owned scheduled export/relay for
+# APEX_ACTIVITY_LOG and debug-message views. This placeholder documents the file
+# handoff pattern if a DB export process writes JSONL/CSV locally.
+###############################################################################
+
+[monitor:///<APEX_EXPORT_STAGING_ROOT>/apex_activity_log*.jsonl]
+disabled = 1
+index = oracle
+sourcetype = oracle:apex:activity:json
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+[monitor:///<APEX_EXPORT_STAGING_ROOT>/apex_debug_messages*.jsonl]
+disabled = 1
+index = oracle
+sourcetype = oracle:apex:debug:json
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+###############################################################################
+# Oracle Learning Management (OLM) collection is normally EBS table/AuditTrail /
+# concurrent-request / workflow export based. Use DB Connect or a site-owned
+# relay; only monitor staged exports that preserve source table/query metadata.
+###############################################################################
+
+[monitor:///<OLM_EXPORT_STAGING_ROOT>/olm_audittrail*.jsonl]
+disabled = 1
+index = oracle
+sourcetype = oracle:olm:audit:json
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+[monitor:///<OLM_EXPORT_STAGING_ROOT>/olm_learning_activity*.jsonl]
+disabled = 1
+index = oracle
+sourcetype = oracle:olm:activity:json
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false

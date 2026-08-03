@@ -1,0 +1,5 @@
+candidate,default_enabled,risk,review_requirement
+access_device.browser_version,false,low,Retain until local read-back confirms not needed for investigations.
+access_device.security_agents,false,medium,Do not trim endpoint posture details before incident-response review.
+user.groups,false,medium,Group context can explain policy decisions; trim only with approval.
+raw_json,false,high,Never remove raw event context without replay/read-back and rollback approval.

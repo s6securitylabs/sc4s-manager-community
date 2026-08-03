@@ -1,4 +1,4 @@
-# Palo Alto Networks PAN-OS SecHub Resources Pack
+# Palo Alto Networks PAN-OS SC4S Library Pack
 
 Version: `0.1.0`
 
@@ -9,7 +9,7 @@ Primary references:
 - Splunk Add-on for Palo Alto Networks: https://docs.splunk.com/Documentation/AddOns/latest/PaloAltoNetworks/About
 - Splunk TA source types: https://docs.splunk.com/Documentation/AddOns/latest/PaloAltoNetworks/SourceTypes
 
-This pack upgrades the upstream `pan_panos` SC4S parser into a first-class SecHub Resources bundle for PAN-OS, Panorama, and compatible PAN-OS syslog emitters.
+This pack upgrades the upstream `pan_panos` SC4S parser into a first-class SC4S Library bundle for PAN-OS, Panorama, and compatible PAN-OS syslog emitters. Its canonical provenance is SecHub Resources.
 
 ## Best-practice position
 

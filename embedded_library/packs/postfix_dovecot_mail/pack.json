@@ -1,0 +1,1193 @@
+{
+  "schema_version": "0.1",
+  "id": "postfix_dovecot_mail",
+  "version": "0.1.4",
+  "url": "https://github.com/vdukhovni/postfix",
+  "description": "Curated SecHub Resources SC4S pack for common Postfix MTA and Dovecot IMAP mail syslog relay records with fixture-backed delivery, rejection, cleanup, login, auth-failure, logout, and mail-log-plugin session families.",
+  "display_name": "Postfix and Dovecot mail syslog relay",
+  "vendor": "postfix_dovecot",
+  "product": "mail_syslog",
+  "default_index": "email",
+  "default_source": "postfix_dovecot_mail",
+  "listener": {
+    "source_id": "POSTFIX_DOVECOT_MAIL",
+    "transport": "tcp",
+    "port": 20077,
+    "env": {
+      "SC4S_LISTEN_POSTFIX_DOVECOT_MAIL_TCP_PORT": "20077",
+      "SOURCE_ALL_SET_APPEND": "POSTFIX_DOVECOT_MAIL"
+    }
+  },
+  "sourcetypes": {
+    "postfix_delivery": "mail:postfix:delivery",
+    "postfix_reject": "mail:postfix:reject",
+    "postfix_cleanup": "mail:postfix:cleanup",
+    "dovecot_login": "mail:dovecot:login",
+    "dovecot_session": "mail:dovecot:session",
+    "dovecot_auth_failure": "mail:dovecot:auth_failure",
+    "dovecot_logout": "mail:dovecot:logout"
+  },
+  "event_families": [
+    {
+      "id": "postfix_delivery",
+      "label": "Postfix delivery result",
+      "match_engine": "pcre",
+      "match": "postfix/smtp\\[\\d+\\]: [A-F0-9]+: .*\\bstatus=sent\\b",
+      "expected_sourcetype": "mail:postfix:delivery",
+      "primary_id_field": "queue_id",
+      "required_fields": [
+        "queue_id",
+        "recipient",
+        "relay_host",
+        "dsn",
+        "vendor_raw_status"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "postfix_reject",
+      "label": "Postfix postscreen/pre-queue rejection",
+      "match_engine": "pcre",
+      "match": "postfix/postscreen\\[\\d+\\]: NOQUEUE: reject: CONNECT from",
+      "expected_sourcetype": "mail:postfix:reject",
+      "primary_id_field": "queue_id",
+      "required_fields": [
+        "queue_id",
+        "vendor_raw_action",
+        "src_ip",
+        "src_port",
+        "reason"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "postfix_cleanup",
+      "label": "Postfix cleanup message-id",
+      "match_engine": "pcre",
+      "match": "postfix/cleanup\\[\\d+\\]: [A-F0-9]+: message-id=<",
+      "expected_sourcetype": "mail:postfix:cleanup",
+      "primary_id_field": "queue_id",
+      "required_fields": [
+        "queue_id",
+        "message_id"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "dovecot_login",
+      "label": "Dovecot IMAP login",
+      "match_engine": "pcre",
+      "match": "dovecot: imap-login: Login: user=<.*>.*\\brip=",
+      "expected_sourcetype": "mail:dovecot:login",
+      "primary_id_field": "session",
+      "required_fields": [
+        "user",
+        "auth_method",
+        "rip",
+        "lip",
+        "session"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "dovecot_session",
+      "label": "Dovecot mail-log-plugin session action",
+      "match_engine": "pcre",
+      "match": "dovecot: imap\\([^)]*\\): (copy|delete|expunged|save): .*\\buid=",
+      "expected_sourcetype": "mail:dovecot:session",
+      "primary_id_field": "message_id",
+      "required_fields": [
+        "user",
+        "vendor_raw_action",
+        "uid",
+        "message_id",
+        "mailbox"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "dovecot_auth_failure",
+      "label": "Dovecot IMAP authentication failure",
+      "match_engine": "pcre",
+      "match": "dovecot: imap-login: Disconnected: auth failed.*SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_AUTH_FAILURE_",
+      "expected_sourcetype": "mail:dovecot:auth_failure",
+      "primary_id_field": "session",
+      "required_fields": [
+        "user",
+        "auth_method",
+        "rip",
+        "lip",
+        "failure_reason",
+        "session"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "dovecot_logout",
+      "label": "Dovecot IMAP logout counters",
+      "match_engine": "pcre",
+      "match": "dovecot: imap\\([^)]*\\): Logged out .*\\bin=.*\\bout=.*SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_LOGOUT_",
+      "expected_sourcetype": "mail:dovecot:logout",
+      "primary_id_field": "session",
+      "required_fields": [
+        "user",
+        "session",
+        "logout_in_bytes",
+        "logout_out_bytes"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Postfix/Dovecot",
+    "product": "mail_syslog",
+    "vendor_product": "postfix_dovecot:mail_syslog",
+    "syslog_timestamp": "RFC3164-style payload timestamp",
+    "host": "Mail host token",
+    "program": "Postfix or Dovecot program",
+    "postfix_daemon": "Postfix daemon/component such as smtp, postscreen, or cleanup",
+    "dovecot_program": "Dovecot component such as imap-login or imap",
+    "process_id": "Program PID where present",
+    "queue_id": "Postfix queue ID or NOQUEUE",
+    "message_id": "Mail message identifier where present",
+    "recipient": "Postfix recipient",
+    "relay_host": "Postfix relay host",
+    "relay_ip": "Postfix relay IP",
+    "dsn": "Postfix delivery status notification token",
+    "delay": "Postfix total delivery delay",
+    "delays": "Postfix component delivery delays",
+    "vendor_raw_status": "Raw Postfix status token such as sent",
+    "vendor_raw_action": "Raw vendor action token such as reject or copy",
+    "result": "Analyst result derived from raw token",
+    "action": "Fixture-backed analyst action",
+    "signature": "Family grouping label",
+    "signature_id": "Component or daemon identifier",
+    "reason": "Postfix reject reason",
+    "src": "Alias for source IP",
+    "src_ip": "Source IP from Postfix reject or Dovecot rip",
+    "src_port": "Source port from Postfix reject",
+    "dest": "Alias for destination IP/relay",
+    "dest_ip": "Destination IP from Dovecot lip",
+    "dest_port": "Relay destination port",
+    "user": "Dovecot/login user",
+    "auth_method": "Dovecot login auth method",
+    "rip": "Raw Dovecot remote IP token",
+    "lip": "Raw Dovecot local IP token",
+    "mail_pid": "Dovecot mail process ID",
+    "tls_state": "TLS marker when logged",
+    "session": "Dovecot session ID",
+    "uid": "Dovecot mail-log-plugin UID",
+    "mailbox": "Mailbox name",
+    "marker": "Synthetic fixture marker only",
+    "failure_reason": "Dovecot authentication failure reason token such as auth failed",
+    "logout_in_bytes": "Dovecot IMAP logout input byte counter from default imap_logout_format",
+    "logout_out_bytes": "Dovecot IMAP logout output byte counter from default imap_logout_format",
+    "deleted_count": "Dovecot IMAP logout deleted message counter",
+    "expunged_count": "Dovecot IMAP logout expunged message counter",
+    "trashed_count": "Dovecot IMAP logout trashed message counter",
+    "hdr_count": "Dovecot IMAP logout fetched header count",
+    "hdr_bytes": "Dovecot IMAP logout fetched header byte count",
+    "body_count": "Dovecot IMAP logout fetched body count",
+    "body_bytes": "Dovecot IMAP logout fetched body byte count"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-postfix_dovecot_mail.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/postfix_dovecot_mail_overview.xml"
+    ],
+    "test_events": [
+      "test-events/postfix_dovecot_mail_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20077.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/postfix_dovecot_mail_reduction_candidates.csv",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Postfix Dovecot relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20077,
+      "notes": "Dedicated TCP listener for one mail syslog record per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20077,
+      "notes": "Preferred for production if TLS is provisioned for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Postfix and Dovecot syslog/file-relayed one-line records",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in pinned Postfix source docs and Dovecot documentation structures; exact deployment variants require local validation."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-08",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Pinned public docs/source structure and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent mail syslog records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live mail relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Postfix/Dovecot mail syslog relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "postfix_dovecot_mail_records"
+      ],
+      "event_count": 7,
+      "marker_prefix": "SC4S_POSTFIX_DOVECOT_MAIL_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20077.sh"
+    },
+    "readback": {
+      "spl": "index=email sechub_fixture_marker=\"SC4S_POSTFIX_DOVECOT_MAIL_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product program postfix_daemon dovecot_program queue_id action result vendor_raw_status vendor_raw_action recipient relay_host relay_ip src src_ip src_port rip lip user auth_method session uid message_id mailbox failure_reason logout_in_bytes logout_out_bytes deleted_count expunged_count hdr_count body_count marker _raw",
+      "expected_count": 7,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "program/component",
+        "queue/session/message identifiers",
+        "raw vendor status/action tokens",
+        "family-specific fields",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TCP listener on 127.0.0.1:20077 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing Postfix/Dovecot mail TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20077,
+          "protocol": "line_delimited_syslog",
+          "purpose": "Dedicated Postfix/Dovecot mail syslog relay listener"
+        }
+      ],
+      "required_indexes": [
+        "email"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to email",
+        "Search role can read email"
+      ]
+    },
+    "e2e_docker_harness": {
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/postfix_dovecot_mail/scripts/e2e_docker_compose.sh run",
+      "commands": {
+        "plan": "packs/postfix_dovecot_mail/scripts/e2e_docker_compose.sh plan",
+        "write_compose": "packs/postfix_dovecot_mail/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/postfix_dovecot_mail/scripts/e2e_docker_compose.sh run",
+        "down": "packs/postfix_dovecot_mail/scripts/e2e_docker_compose.sh down"
+      },
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "splunk_requirements": {
+        "required_index": "email",
+        "hec_enabled": true,
+        "app_mount": "packs/postfix_dovecot_mail/splunk",
+        "readback_spl": "index=email sechub_fixture_marker=\"SC4S_POSTFIX_DOVECOT_MAIL_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product program postfix_daemon dovecot_program queue_id action result vendor_raw_status vendor_raw_action recipient relay_host relay_ip src src_ip src_port rip lip user auth_method session uid message_id mailbox failure_reason logout_in_bytes logout_out_bytes deleted_count expunged_count hdr_count body_count marker _raw"
+      },
+      "sc4s_requirements": {
+        "image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "source_id": "POSTFIX_DOVECOT_MAIL",
+          "transport": "tcp",
+          "container_port": 20077,
+          "default_host_port": 20077,
+          "framing": "line_delimited"
+        },
+        "parser_mount": "packs/postfix_dovecot_mail/sc4s/app_parsers/syslog"
+      },
+      "coverage_matrix": [
+        {
+          "event_family": "postfix_delivery",
+          "sourcetype": "mail:postfix:delivery",
+          "markers": [
+            "SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_DELIVERY_001"
+          ],
+          "required_fields": [
+            "queue_id",
+            "recipient",
+            "relay_host",
+            "relay_ip",
+            "dsn",
+            "vendor_raw_status",
+            "action",
+            "result",
+            "marker"
+          ]
+        },
+        {
+          "event_family": "postfix_reject",
+          "sourcetype": "mail:postfix:reject",
+          "markers": [
+            "SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_REJECT_002"
+          ],
+          "required_fields": [
+            "queue_id",
+            "vendor_raw_action",
+            "src",
+            "src_ip",
+            "src_port",
+            "reason",
+            "action",
+            "marker"
+          ]
+        },
+        {
+          "event_family": "postfix_cleanup",
+          "sourcetype": "mail:postfix:cleanup",
+          "markers": [
+            "SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_CLEANUP_003"
+          ],
+          "required_fields": [
+            "queue_id",
+            "message_id",
+            "signature",
+            "signature_id",
+            "marker"
+          ]
+        },
+        {
+          "event_family": "dovecot_login",
+          "sourcetype": "mail:dovecot:login",
+          "markers": [
+            "SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_LOGIN_004"
+          ],
+          "required_fields": [
+            "user",
+            "auth_method",
+            "rip",
+            "lip",
+            "src_ip",
+            "dest_ip",
+            "session",
+            "tls_state",
+            "marker"
+          ]
+        },
+        {
+          "event_family": "dovecot_session",
+          "sourcetype": "mail:dovecot:session",
+          "markers": [
+            "SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_MAILLOG_005"
+          ],
+          "required_fields": [
+            "user",
+            "vendor_raw_action",
+            "uid",
+            "message_id",
+            "mailbox",
+            "action",
+            "marker"
+          ]
+        },
+        {
+          "event_family": "dovecot_auth_failure",
+          "sourcetype": "mail:dovecot:auth_failure",
+          "markers": [
+            "SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_AUTH_FAILURE_006"
+          ],
+          "required_fields": [
+            "user",
+            "auth_method",
+            "rip",
+            "lip",
+            "failure_reason",
+            "session",
+            "action",
+            "marker"
+          ]
+        },
+        {
+          "event_family": "dovecot_logout",
+          "sourcetype": "mail:dovecot:logout",
+          "markers": [
+            "SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_LOGOUT_007"
+          ],
+          "required_fields": [
+            "user",
+            "session",
+            "logout_in_bytes",
+            "logout_out_bytes",
+            "deleted_count",
+            "expunged_count",
+            "hdr_count",
+            "body_count",
+            "marker"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Does not prove live Postfix/Dovecot source-version emission, queue/lifecycle completeness, Dovecot LMTP/POP3/proxy variants, local mail-log-plugin configuration, or commercial mail-gateway products.",
+        "Does not prove collector-specific wrappers, multiline records, archive/file-tail behavior, TLS production certificates, or source-local timezone handling beyond the disposable TCP syslog fixture replay helper.",
+        "Does not prove SC4S listener replay, HEC delivery, or Splunk indexed read-back until the harness is actually run in a permitted Docker lab.",
+        "Does not change curated/unverified trust or quality posture without retained replay/read-back evidence."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "postfix_dovecot_mail_records",
+      "label": "Postfix/Dovecot mail syslog synthetic-equivalent records",
+      "path": "test-events/postfix_dovecot_mail_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "rfc3164_style_mail_program_message_payload",
+      "envelope": "none",
+      "serialization": "plain_text",
+      "event_count": 7,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_DELIVERY_001",
+        "SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_REJECT_002",
+        "SC4S_POSTFIX_DOVECOT_MAIL_TEST_POSTFIX_CLEANUP_003",
+        "SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_LOGIN_004",
+        "SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_MAILLOG_005",
+        "SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_AUTH_FAILURE_006",
+        "SC4S_POSTFIX_DOVECOT_MAIL_TEST_DOVECOT_LOGOUT_007"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "receiver_time",
+        "primary_field": "syslog payload timestamp",
+        "primary_timezone": "not present in RFC3164-style fixture payload",
+        "fallback_fields": [
+          "RFC5424 relay envelope timestamp when using send helper"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or receiver time policy"
+        ],
+        "notes": "Fixtures use RFC3164-style month/day/time payload timestamps with no timezone/year. The send helper wraps fixtures with timezone-qualified RFC5424 timestamps for replay."
+      },
+      "field_delimiting": {
+        "style": "plain_text_with_program_specific_tokens",
+        "field_separator": "space, comma, and key/value punctuation",
+        "quote_character": "angle brackets for mail identifiers and quoted synthetic marker",
+        "escape_policy": "Synthetic values avoid secrets and use RFC5737 documentation addresses/example.test identities",
+        "notes": "Each line is one mail syslog message. Multiline service logs and broader gateway products are outside this initial pack."
+      },
+      "expected_families": [
+        "postfix_delivery",
+        "postfix_reject",
+        "postfix_cleanup",
+        "dovecot_login",
+        "dovecot_session",
+        "dovecot_auth_failure",
+        "dovecot_logout"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-postfix_dovecot_mail.conf",
+      "target_path": "local/config/app_parsers/syslog/app-postfix_dovecot_mail.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/postfix_dovecot_mail.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/postfix_dovecot_mail_overview.xml",
+      "target_path": "splunk/default/data/ui/views/postfix_dovecot_mail_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/postfix_dovecot_mail_test_events.txt",
+      "target_path": "test-events/postfix_dovecot_mail_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20077.sh",
+      "target_path": "scripts/send_tcp_20077.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/postfix_dovecot_mail_reduction_candidates.csv",
+      "target_path": "docs/postfix_dovecot_mail_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "docs/evidence/postfix-dovecot-mail-syslog-evidence-scan-20260608.md; Postfix mirror commit b355ca0c47799c0564357d2b9f7b97f1f5a939a0; Dovecot documentation commit 1f87c243da22c6e1dc50472f6c2b937cdb6f91c7",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use generic users, hosts, queue IDs, message IDs, session IDs, example.test domains, and RFC5737 documentation IPs; no customer mail logs or proprietary TA content are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-08",
+      "notes": "Selected from Milestone 8 P2 next-build queue after evidence scan confirmed conservative Postfix/Dovecot mail syslog scope was actionable."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "recipient"
+          ],
+          "status": "partial",
+          "notes": "Mail account/recipient context where extracted."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "rip"
+          ],
+          "status": "partial",
+          "notes": "Postfix reject source or Dovecot remote IP."
+        },
+        "dest": {
+          "source_fields": [
+            "relay_host",
+            "relay_ip",
+            "lip"
+          ],
+          "status": "partial",
+          "notes": "Mail relay or local endpoint context where present."
+        },
+        "action": {
+          "source_fields": [
+            "vendor_raw_action",
+            "vendor_raw_status",
+            "action",
+            "failure_reason",
+            "vendor_raw_action"
+          ],
+          "status": "partial",
+          "notes": "Preserves raw vendor action/status next to derived analyst action/result."
+        },
+        "signature_id": {
+          "source_fields": [
+            "postfix_daemon",
+            "dovecot_program"
+          ],
+          "status": "partial",
+          "notes": "Mail component identifier."
+        },
+        "signature": {
+          "source_fields": [
+            "reason",
+            "signature",
+            "failure_reason"
+          ],
+          "status": "partial",
+          "notes": "Family grouping or rejection reason."
+        },
+        "message_id": {
+          "source_fields": [
+            "message_id",
+            "queue_id",
+            "session",
+            "failure_reason"
+          ],
+          "status": "partial",
+          "notes": "Mail trace/session identifiers; not globally unique event IDs."
+        }
+      },
+      "notes": "Partial mail/authentication/network mapping only; not complete CIM compliance."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Dovecot user/mail account."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip",
+            "rip"
+          ],
+          "status": "partial",
+          "notes": "Client/remote IP."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "relay_ip",
+            "lip"
+          ],
+          "status": "partial",
+          "notes": "Relay/local IP."
+        },
+        "email.uid": {
+          "source_fields": [
+            "message_id",
+            "queue_id"
+          ],
+          "status": "partial",
+          "notes": "Mail identifiers where present."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action",
+            "vendor_raw_action",
+            "vendor_raw_status",
+            "failure_reason"
+          ],
+          "status": "partial",
+          "notes": "Derived family action plus raw tokens."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "session",
+            "message_id",
+            "queue_id"
+          ],
+          "status": "partial",
+          "notes": "Session/mail identifiers; not globally unique event IDs."
+        },
+        "traffic.bytes": {
+          "source_fields": [
+            "logout_in_bytes",
+            "logout_out_bytes"
+          ],
+          "status": "partial",
+          "notes": "Dovecot logout byte counters; direction-specific interpretation is local to Dovecot IMAP stats."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Dovecot/mail user."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip",
+            "rip"
+          ],
+          "status": "partial",
+          "notes": "Remote/source IP."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "relay_ip",
+            "lip"
+          ],
+          "status": "partial",
+          "notes": "Relay/local destination IP."
+        },
+        "destination.port": {
+          "source_fields": [
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Postfix relay port."
+        },
+        "event.action": {
+          "source_fields": [
+            "action",
+            "vendor_raw_action",
+            "vendor_raw_status",
+            "failure_reason"
+          ],
+          "status": "partial",
+          "notes": "Derived and raw action/status tokens."
+        },
+        "email.message_id": {
+          "source_fields": [
+            "message_id"
+          ],
+          "status": "partial",
+          "notes": "Message-ID where present."
+        },
+        "event.outcome": {
+          "source_fields": [
+            "result",
+            "failure_reason"
+          ],
+          "status": "partial",
+          "notes": "Derived success/failure result for represented Dovecot auth/logout rows."
+        },
+        "network.bytes": {
+          "source_fields": [
+            "logout_in_bytes",
+            "logout_out_bytes"
+          ],
+          "status": "partial",
+          "notes": "Dovecot logout byte counters; not complete network telemetry."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/postfix_dovecot_mail/README.md": "sha256:2b87a4ec63ad61f9e06ff2eaccc6a260320295e2c79e6dde8f84f542f92a5aec",
+      "packs/postfix_dovecot_mail/sc4s/app_parsers/syslog/app-postfix_dovecot_mail.conf": "sha256:74fa79b5b13471c2e17a9f5d457041e8123f2e0d37a5432ba245672b16c4a643",
+      "packs/postfix_dovecot_mail/sc4s/env.example": "sha256:acf35d83ebf63c472593b12ff332d363fc1ca7657858d62fbdd7f5964c5b4451",
+      "packs/postfix_dovecot_mail/splunk/default/props.conf": "sha256:92361b6311bde5dc5db3a04bc41971d405d096bed6037651261a423ae10ed804",
+      "packs/postfix_dovecot_mail/splunk/default/transforms.conf": "sha256:60ac3f271e89a275c437970e0a96108826a948cf0773fe55b38096ff5d460f44",
+      "packs/postfix_dovecot_mail/splunk/default/eventtypes.conf": "sha256:d86334866870e6c4d011a0c95a1daf5e2f0f83ba86a4d9605e63ad9b783ca619",
+      "packs/postfix_dovecot_mail/splunk/default/tags.conf": "sha256:b5375f5e649d472082b19fbc03b0600d76340ef046d9893a2d53d5d87de0c868",
+      "packs/postfix_dovecot_mail/test-events/postfix_dovecot_mail_test_events.txt": "sha256:af1c6cd41a90295cda1ad44ac33394da42d4046212bd67461d068ffa6f0e2d99",
+      "packs/postfix_dovecot_mail/scripts/send_tcp_20077.sh": "sha256:6b123a5eb26f67de12ea4bf6516c3fd03908a0e65262b3d9f83b804fdc227ab0",
+      "packs/postfix_dovecot_mail/docs/postfix_dovecot_mail_reduction_candidates.csv": "sha256:de42ecd13403029972e9523d7c23445decf4dbd20a30d62633226e4963b2d2da",
+      "packs/postfix_dovecot_mail/validation/preflight-2026-06-08.md": "sha256:9f8deffef344d4eacf9ce48e2d15d9c45b4c3dd357f52aa8714d89764f15f283",
+      "packs/postfix_dovecot_mail/splunk/default/data/ui/views/postfix_dovecot_mail_overview.xml": "sha256:d3d007988104729f3cf41bcb4f5b15afc553471150726ef8de2579a71063f2eb",
+      "packs/postfix_dovecot_mail/scripts/e2e_docker_compose.sh": "sha256:44b31ab76d5062cbd3553de5b15b97917cd9e97be19de0a200c9feb0f5f9d7ad"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-26",
+    "last_tested": "2026-06-26"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "email",
+    "mail",
+    "mta",
+    "authentication",
+    "syslog"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "rfc3164_mail_syslog_relay",
+      "label": "RFC3164-style Postfix/Dovecot mail syslog relay",
+      "description": "Default initial variant for one Postfix or Dovecot mail syslog message per line, optionally syslog-wrapped by a collector relay.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "syslog_relay",
+        "file_agent_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "plain_text",
+        "rfc3164_style"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "postfix_delivery",
+        "postfix_reject",
+        "postfix_cleanup",
+        "dovecot_login",
+        "dovecot_session",
+        "dovecot_auth_failure",
+        "dovecot_logout"
+      ],
+      "test_event_sets": [
+        "postfix_dovecot_mail_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "syslog_ng",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent fixtures only; no live mail-server relay capture or Splunk read-back.",
+        "Dovecot LMTP, additional disconnect/proxy/POP3 variants, policy-service logs, and commercial mail gateways are not covered."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/postfix_dovecot_mail_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "program",
+        "postfix_daemon",
+        "dovecot_program",
+        "queue_id",
+        "message_id",
+        "session",
+        "user",
+        "recipient",
+        "src_ip",
+        "rip",
+        "sc4s_marker"
+      ],
+      "notes": "Use only after sampling the actual mail relay schema. Do not drop identifiers, users, recipients, source/session, status, or marker context by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Postfix/Dovecot relay, SC4S runtime replay, HEC delivery, Splunk read-back, Manager apply, or production evidence captured.",
+    "Synthetic-equivalent fixtures are documentation-shaped and do not prove source validation.",
+    "Dovecot LMTP, Dovecot disconnect/proxy/POP3 variants beyond the represented auth-failure/logout shapes, Postfix policy-service request logs, and broader mail-gateway products remain future work.",
+    "RFC3164-style payload timestamps lack timezone/year unless wrapped by a timezone-qualified relay envelope."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Postfix/Dovecot mail syslog intake",
+      "description": "Dedicated listener, SC4S parser, fixture-backed mail families, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-postfix_dovecot_mail.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard mail analyst knowledge",
+      "description": "Adds eventtypes/tags for fixture-backed delivery, rejection, cleanup, login, and mail-log actions. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed mail reduction candidates",
+      "description": "Review-only candidate list for future collector/Cribl reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/postfix_dovecot_mail_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local replay/read-back validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "custom_application_syslog",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Postfix/Dovecot daemon records are native syslog-style records; relay may be local syslog.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "postfix_dovecot_mail_overview_splunk_test",
+      "title": "Postfix and Dovecot mail syslog relay — dashboard example",
+      "source_path": "dashboards/screenshots/postfix-dovecot-mail-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Postfix and Dovecot mail syslog relay dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

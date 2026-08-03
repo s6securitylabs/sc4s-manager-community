@@ -1,0 +1,807 @@
+{
+  "schema_version": "0.1",
+  "id": "oracle_goldengate",
+  "version": "0.1.2",
+  "url": "https://docs.oracle.com/en/middleware/goldengate/core/",
+  "description": "Oracle GoldenGate replication and integration telemetry covering classic ggserr.log error logs, Extract reports, Replicat reports, discard files, Manager logs, and Microservices REST/admin audit. Typical forwarding: file-beat relay from the GoldenGate home and trail directories; Microservices variant may also use REST export. Source-shape acquisition is blocked; no relay envelope selected and no validated parser exists yet. Operator action required: provide fixture events before this source can be promoted.",
+  "display_name": "Oracle GoldenGate logs",
+  "vendor": "oracle",
+  "product": "goldengate",
+  "default_index": "infraops",
+  "default_source": "oracle_goldengate",
+  "listener": {
+    "source_id": "ORACLE_GOLDENGATE",
+    "transport": "tcp",
+    "port": 20108,
+    "env": {
+      "SC4S_LISTEN_ORACLE_GOLDENGATE_TCP_PORT": "20108",
+      "SOURCE_ALL_SET_APPEND": "ORACLE_GOLDENGATE"
+    }
+  },
+  "sourcetypes": {
+    "oracle_goldengate_error_log": "oracle:goldengate:error",
+    "oracle_goldengate_extract_report": "oracle:goldengate:extract:report",
+    "oracle_goldengate_replicat_report": "oracle:goldengate:replicat:report",
+    "oracle_goldengate_discard_file": "oracle:goldengate:discard",
+    "oracle_goldengate_manager_log": "oracle:goldengate:manager",
+    "oracle_goldengate_microservices_admin": "oracle:goldengate:microservices:admin"
+  },
+  "event_families": [
+    {
+      "id": "oracle_goldengate_error_log",
+      "label": "GoldenGate ggserr.log",
+      "match_engine": "pcre",
+      "match": "SC4S_ORACLE_GOLDENGATE_SOURCE_SHAPE_REQUIRED_001",
+      "expected_sourcetype": "oracle:goldengate:error",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_goldengate_extract_report",
+      "label": "Extract report files",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_GOLDENGATE_ORACLE_GOLDENGATE_EXTRACT_REPORT_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:goldengate:extract:report",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_goldengate_replicat_report",
+      "label": "Replicat report files",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_GOLDENGATE_ORACLE_GOLDENGATE_REPLICAT_REPORT_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:goldengate:replicat:report",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_goldengate_discard_file",
+      "label": "Discard files",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_GOLDENGATE_ORACLE_GOLDENGATE_DISCARD_FILE_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:goldengate:discard",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_goldengate_manager_log",
+      "label": "Manager process logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_GOLDENGATE_ORACLE_GOLDENGATE_MANAGER_LOG_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:goldengate:manager",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_goldengate_microservices_admin",
+      "label": "Microservices admin/service logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_GOLDENGATE_ORACLE_GOLDENGATE_MICROSERVICES_ADMIN_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:goldengate:microservices:admin",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "event_time": "Preserve event_time when present in the exact source shape; do not invent or derive without evidence.",
+    "goldengate_deployment": "Preserve goldengate_deployment when present in the exact source shape; do not invent or derive without evidence.",
+    "process_type": "Preserve process_type when present in the exact source shape; do not invent or derive without evidence.",
+    "process_name": "Preserve process_name when present in the exact source shape; do not invent or derive without evidence.",
+    "group_name": "Preserve group_name when present in the exact source shape; do not invent or derive without evidence.",
+    "database": "Preserve database when present in the exact source shape; do not invent or derive without evidence.",
+    "checkpoint": "Preserve checkpoint when present in the exact source shape; do not invent or derive without evidence.",
+    "lag": "Preserve lag when present in the exact source shape; do not invent or derive without evidence.",
+    "severity": "Preserve severity when present in the exact source shape; do not invent or derive without evidence.",
+    "error_code": "Preserve error_code when present in the exact source shape; do not invent or derive without evidence.",
+    "action": "Preserve action when present in the exact source shape; do not invent or derive without evidence.",
+    "result": "Preserve result when present in the exact source shape; do not invent or derive without evidence.",
+    "message": "Preserve message when present in the exact source shape; do not invent or derive without evidence."
+  },
+  "artifacts": {
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md",
+      "validation/source-shape-acquisition-plan-2026-06-20.md"
+    ],
+    "test_events": [
+      "test-events/source_shape_required.txt"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "collector_definition_only",
+      "label": "Collector/source definition only — routing disabled",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20108,
+      "notes": "Placeholder listener metadata required by current schema. No SC4S parser/listener is shipped; Manager/SecHub should keep routing disabled until a concrete relay envelope is selected.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "collector_definition_only",
+  "source_log_version": {
+    "name": "Oracle GoldenGate logs",
+    "min": "public Oracle evidence scan 2026-06-08",
+    "max": null,
+    "notes": "Exact product version/source mode required before parser fixtures or deployment routing."
+  },
+  "validation": {
+    "date_validated": "not validated; catalogued 2026-06-08",
+    "validated_by": "Hermes source-definition curation only; no validated/verified status stated",
+    "source_log_version": "Public Oracle evidence scan only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Pack definition only. No parser artifacts, fixtures, SC4S replay, HEC delivery, Splunk read-back, Manager collector read-back, or production-equivalent validation captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "Source-shape then replay/readback gate for Oracle GoldenGate logs",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "source_shape_required"
+      ],
+      "event_count": 1,
+      "marker_prefix": "SC4S_ORACLE_GOLDENGATE_TEST_",
+      "transport": "source_shape_required",
+      "framing": "source_shape_required"
+    },
+    "readback": {
+      "spl": "index=infraops sechub_fixture_marker=\"SC4S_ORACLE_GOLDENGATE_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product action user src severity status message _raw",
+      "expected_count": 1,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "timestamp",
+        "required fields for selected variant",
+        "no sensitive values exposed"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "source_mapping",
+      "date": "2026-06-08",
+      "summary": "No exact emitted source shape or relay envelope has been selected for this Oracle source-family definition; parser fixtures and replay/read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Documents source-shape/replay blocker; not validation evidence."
+      },
+      {
+        "type": "source_shape_acquisition_plan",
+        "path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+        "summary": "Variant-specific evidence acquisition checklist; not validation evidence."
+      }
+    ]
+  },
+  "test_event_sets": [
+    {
+      "id": "source_shape_required",
+      "label": "Source-shape evidence placeholder marker",
+      "path": "test-events/source_shape_required.txt",
+      "format": "raw",
+      "wire_format": "placeholder_not_product_log",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 1,
+      "events_per_file": "single",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ORACLE_GOLDENGATE_SOURCE_SHAPE_REQUIRED_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "unknown_requires_validation",
+        "primary_field": "not_applicable_source_shape_required",
+        "primary_timezone": "unknown_requires_validation",
+        "fallback_fields": [],
+        "fallback_time_mode": "unknown_requires_validation",
+        "fallback_timezone": "unknown_requires_validation",
+        "requires_source_timezone_when_fields_missing": [
+          "selected Oracle source variant timezone policy"
+        ],
+        "notes": "Placeholder only; no source timestamp exists until an emitted source shape is selected."
+      },
+      "field_delimiting": {
+        "style": "placeholder_not_product_log",
+        "field_separator": "none",
+        "quote_character": "none",
+        "escape_policy": "not applicable",
+        "notes": "This is not an Oracle event fixture; it prevents empty fixture requirementss while keeping routing disabled."
+      },
+      "expected_families": []
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "preflight",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "source_shape_required",
+      "group": "test_events",
+      "source_path": "test-events/source_shape_required.txt",
+      "target_path": "test-events/source_shape_required.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "source_shape_acquisition_plan",
+      "group": "docs",
+      "source_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "target_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "kind": "evidence_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "docs/evidence/oracle-platform-evidence-scan-20260608.md plus Oracle public product documentation listed there.",
+      "redistribution": "unknown",
+      "sanitisation_status": "unknown",
+      "notes": "No source samples are redistributed; pack definitions record source-shape requirements only."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent with subagent planning",
+      "reviewed_at": "2026-06-08",
+      "notes": "Created from Oracle platform backlog/subagent plan as catalogue-first definitions for Manager/SecHub; routing disabled until source evidence exists."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "catalogued",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "signature": {
+          "source_fields": [
+            "signature"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "status": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        }
+      },
+      "notes": "Planning note only; no parser/read-back evidence."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "unknown",
+          "notes": "Raw event retention required once source exists."
+        }
+      },
+      "notes": "Source-family planning only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires evidence."
+        }
+      },
+      "notes": "Optional helper mapping only."
+    }
+  },
+  "source_pack_kind": "generic_log_source_definition",
+  "source_categories": [
+    "database",
+    "replication",
+    "infrastructure",
+    "administration"
+  ],
+  "supported_targets": [
+    "splunk",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "oracle_goldengate_error_log",
+      "label": "GoldenGate ggserr.log",
+      "description": "GoldenGate ggserr.log: classic ggserr.log.",
+      "default": true,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "classic ggserr.log"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_goldengate_error_log"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until exact classic/microservices log examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_goldengate_extract_report",
+      "label": "Extract report files",
+      "description": "Extract report files: Extract reports.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Extract reports"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_goldengate_extract_report"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked; reports may be multiline and not continuous syslog.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_goldengate_replicat_report",
+      "label": "Replicat report files",
+      "description": "Replicat report files: Replicat reports.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Replicat reports"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_goldengate_replicat_report"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until report schema/boundary exists.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_goldengate_discard_file",
+      "label": "Discard files",
+      "description": "Discard files: discard files.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "discard files"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_goldengate_discard_file"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked and sensitive; do not fixture row values without sanitisation.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_goldengate_manager_log",
+      "label": "Manager process logs",
+      "description": "Manager process logs: Manager logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Manager logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_goldengate_manager_log"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until exact process/admin examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_goldengate_microservices_admin",
+      "label": "Microservices admin/service logs",
+      "description": "Microservices admin/service logs: REST/admin/service logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "REST/admin/service logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_goldengate_microservices_admin"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until JSON/text/API shape exists.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    }
+  ],
+  "adapters": {
+    "generic": {
+      "manager_visibility": "catalog_only",
+      "routing_enabled": false,
+      "sechub_detection_claims": "none",
+      "notes": "Manager/SecHub should surface this as a source-shape checklist, not a deployable parser."
+    },
+    "cribl": {
+      "default_behavior": "preserve_all_fields",
+      "notes": "Collector serialization and redaction policy required before route design."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "implementation_status": "catalogued_source_definition_source_shape_required",
+  "manager_visibility": "catalog_only",
+  "sechub_detection_claims": "none",
+  "routing_enabled": false,
+  "fixture_policy": "no fixtures until exact source-shape evidence exists",
+  "sc4s_adapter_enabled": false,
+  "known_limitations": [
+    "This is a catalogue/source definition, not a deployable SC4S parser pack.",
+    "No fixtures are shipped because exact emitted source shapes are not yet selected for the variants.",
+    "Trust remains unverified and quality remains catalogued; do not promote from CI or pack presence.",
+    "Oracle logs/exports may contain sensitive users, SQL text/binds, business data, OCIDs, hostnames, request parameters, or tenant identifiers; sample capture requires sanitisation."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "not applicable; no fixtures until source shape exists",
+    "tested_artifact_hashes": {
+      "packs/oracle_goldengate/README.md": "sha256:4c270b67da9454765764adc06ee42b8c7772cd85d6c71b8b5fedd22e4300288b",
+      "packs/oracle_goldengate/test-events/source_shape_required.txt": "sha256:2f1be7c5fa2d187ef516774e8c87f87235a2fd649a558c8f8393ebc9dcc94251",
+      "packs/oracle_goldengate/validation/preflight-2026-06-08.md": "sha256:89afa9a7e5303ea2bc349680342d018650848e52a88f94c3641f69caf3fc61cd",
+      "packs/oracle_goldengate/validation/source-shape-acquisition-plan-2026-06-20.md": "sha256:83d5f083f4c8a21f53b1f5a098db80640bd27979fbe222a13fa225fa66d9c143"
+    },
+    "tested_commit": "not_committed_yet",
+    "last_updated": "2026-07-08",
+    "last_tested": "2026-07-08 local CI pending final commit"
+  },
+  "source_delivery": {
+    "mode": "catalogue_definition_only",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "unknown_placeholder_raw",
+    "supported_transport_refs": [
+      "collector_definition_only"
+    ],
+    "notes": "Catalogue/source-definition only; no deployable SC4S parser/listener is shipped.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  }
+}

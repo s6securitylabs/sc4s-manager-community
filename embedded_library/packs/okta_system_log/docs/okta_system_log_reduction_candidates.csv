@@ -1,0 +1,6 @@
+field_or_event,risk_tier,default_action,reason,pre_enable_validation
+client.userAgent.rawUserAgent,review_required,preserve,Useful for phishing/session investigation but high-cardinality; trim only after confirming alternate user-agent context remains,replay/read-back auth and MFA fixtures plus production-like samples
+client.geographicalContext,review_required,preserve,Geo context helps impossible-travel and suspicious-auth triage; may be redundant if enrichment occurs downstream,compare detection searches before trimming
+debugContext.debugData,high_risk,preserve,Contains request IDs URI context policy/factor clues and other incident-reconstruction evidence,do not drop without SOC approval and read-back of representative auth/admin events
+target arrays,high_risk,preserve,Target app/user/policy/token context explains what changed or was accessed,do not drop without proof all target identity fields are preserved
+successful low-risk sign-on noise,review_required,preserve,Potential volume candidate but needed for baseline/session timeline and incident reconstruction,only optional enhanced filtering with allowlisted apps/users and rollback

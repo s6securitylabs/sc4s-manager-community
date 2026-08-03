@@ -63,31 +63,16 @@ export const librarySourceHealthResponseSchema = z.object({
   }).passthrough(),
 }).passthrough();
 
-export const productReleaseSchema = z.object({
-  kind: z.literal('splunk_ta_product_release'),
-  product_id: z.string(),
-  display_name: z.string(),
-  app_id: z.string(),
-  version: z.string(),
-  filename: z.string(),
-  url: z.string().url(),
-  sha256: z.string(),
-  source_components: z.array(z.string()),
-  install_scope: z.literal('product_deployment'),
-  manager_importable: z.literal(false),
-}).passthrough();
-
 const libraryCatalogueEntrySchema = z.object({
   id: z.string(),
   display_name: z.string().optional(),
   vendor: z.string().optional(),
   product: z.string().optional(),
-  version: z.string().optional(),
+  version: z.string().nullish(),
   download_available: z.boolean().optional(),
   source_id: z.string().optional(),
   source_type: z.string().optional(),
   is_remote: z.boolean().optional(),
-  product_releases: z.array(productReleaseSchema).optional(),
 }).passthrough();
 
 const libraryEligibilitySchema = z.object({
@@ -129,8 +114,8 @@ const libraryImportRecordSchema = z.object({
   runtime_files: z.array(libraryArtifactSchema).optional(),
   reference_files: z.array(libraryArtifactSchema).optional(),
   download: libraryDownloadSchema.optional(),
-  detail: z.record(z.string(), z.unknown()).optional(),
-  last_apply: z.record(z.string(), z.unknown()).optional(),
+  detail: z.record(z.unknown()).optional(),
+  last_apply: z.record(z.unknown()).optional(),
 }).passthrough();
 
 export const librarySourcesResponseSchema = z.object({
@@ -139,14 +124,14 @@ export const librarySourcesResponseSchema = z.object({
 
 export const libraryCatalogueResponseSchema = z.object({
   source_id: z.string(),
-  source: z.record(z.string(), z.unknown()).optional(),
+  source: z.record(z.unknown()).optional(),
   entries: z.array(libraryCatalogueEntrySchema),
-  filters: z.record(z.string(), z.string()),
+  filters: z.record(z.string()),
 });
 
 export const libraryEntryResponseSchema = z.object({
   source_id: z.string(),
-  entry: z.record(z.string(), z.unknown()),
+  entry: z.record(z.unknown()),
   refresh: z.boolean(),
   eligibility: libraryEligibilitySchema,
 });
@@ -155,7 +140,7 @@ export const libraryDownloadResponseSchema = z.object({
   ok: z.boolean(),
   source_id: z.string(),
   entry_id: z.string(),
-  detail: z.record(z.string(), z.unknown()),
+  detail: z.record(z.unknown()),
   download: libraryDownloadSchema,
   verification: libraryVerificationSchema,
 });
@@ -182,20 +167,13 @@ export const libraryApplyResponseSchema = z.object({
   apply: z.boolean(),
   apply_allowed: z.boolean(),
   changed_targets: z.array(z.string()),
-  validation: z.record(z.string(), z.unknown()),
-  control: z.record(z.string(), z.unknown()),
-  post_check: z.record(z.string(), z.unknown()),
+  validation: z.record(z.unknown()),
+  control: z.record(z.unknown()),
+  post_check: z.record(z.unknown()),
   rolled_back: z.boolean(),
   reference_only: z.boolean().optional(),
 }).passthrough();
 
-export const librarySyncResponseSchema = z.object({
-  ok: z.boolean().optional(),
-  source_id: z.string(),
-  entry_count: z.number().int().optional(),
-  manifest_download_count: z.number().int().optional(),
-  last_sync: z.string().optional(),
-}).passthrough();
 
 export type LibrarySourcesResponse = z.infer<typeof librarySourcesResponseSchema>;
 export type LibraryCatalogueResponse = z.infer<typeof libraryCatalogueResponseSchema>;
@@ -204,7 +182,6 @@ export type LibraryDownloadResponse = z.infer<typeof libraryDownloadResponseSche
 export type LibraryValidateResponse = z.infer<typeof libraryValidateResponseSchema>;
 export type LibraryImportsResponse = z.infer<typeof libraryImportsResponseSchema>;
 export type LibraryApplyResponse = z.infer<typeof libraryApplyResponseSchema>;
-export type LibrarySyncResponse = z.infer<typeof librarySyncResponseSchema>;
 export type LibrarySourceHealthResponse = z.infer<typeof librarySourceHealthResponseSchema>;
 export type LibraryCatalogueEntry = z.infer<typeof libraryCatalogueEntrySchema>;
 export type LibraryImportRecord = z.infer<typeof libraryImportRecordSchema>;
@@ -249,7 +226,7 @@ export async function listLibrarySources(signal?: AbortSignal): Promise<LibraryS
 }
 
 export async function getLibrarySourceHealth(sourceId: string, signal?: AbortSignal): Promise<LibrarySourceHealthResponse> {
-  const query = new URLSearchParams({ source_id: sourceId || 'official' });
+  const query = new URLSearchParams({ source_id: sourceId || 'embedded' });
   const response = await apiFetch(`${API_BASE}/library/source-health?${query.toString()}`, { signal });
   return parseResponse(response, librarySourceHealthResponseSchema);
 }
@@ -261,9 +238,8 @@ export async function listLibraryCatalogue(params?: Record<string, string>, sign
   return parseResponse(response, libraryCatalogueResponseSchema);
 }
 
-export async function getLibraryEntry(sourceId: string, entryId: string, refresh = false, signal?: AbortSignal): Promise<LibraryEntryResponse> {
+export async function getLibraryEntry(sourceId: string, entryId: string, signal?: AbortSignal): Promise<LibraryEntryResponse> {
   const query = new URLSearchParams({ source_id: sourceId, entry_id: entryId });
-  if (refresh) query.set('refresh', 'yes');
   const response = await apiFetch(`${API_BASE}/library/entry?${query.toString()}`, { signal });
   return parseResponse(response, libraryEntryResponseSchema);
 }
@@ -271,14 +247,6 @@ export async function getLibraryEntry(sourceId: string, entryId: string, refresh
 export async function listLibraryImports(signal?: AbortSignal): Promise<LibraryImportsResponse> {
   const response = await apiFetch(`${API_BASE}/library/imports`, { signal });
   return parseResponse(response, libraryImportsResponseSchema);
-}
-
-export async function syncLibrarySource(sourceId: string): Promise<LibrarySyncResponse> {
-  return postJson('/library/sync', { source_id: sourceId }, librarySyncResponseSchema);
-}
-
-export async function downloadLibraryBundle(sourceId: string, entryId: string): Promise<LibraryDownloadResponse> {
-  return postJson('/library/download', { source_id: sourceId, entry_id: entryId }, libraryDownloadResponseSchema);
 }
 
 export async function validateLibraryImport(sourceId: string, entryId: string): Promise<LibraryValidateResponse> {

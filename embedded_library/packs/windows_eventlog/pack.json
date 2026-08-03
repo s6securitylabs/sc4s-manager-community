@@ -1,0 +1,1598 @@
+{
+  "schema_version": "0.1",
+  "id": "windows_eventlog",
+  "version": "0.1.9",
+  "url": "https://learn.microsoft.com/en-us/windows/win32/wes/eventschema-schema",
+  "description": "Curated SecHub Resources SC4S pack for Microsoft Windows Event Log records relayed as one-line Windows Event XML, with fixture-backed routing for Security logon success/failure, Kerberos TGT/TGS/pre-auth failures, NTLM credential validation failure, account creation/deletion/change, group membership, audit log clearing, scheduled-task creation, process creation, PowerShell script block, Defender detection, object access, audit-policy change, and service-installation events.",
+  "display_name": "Microsoft Windows Event Log relay",
+  "vendor": "microsoft",
+  "product": "windows_eventlog",
+  "default_index": "oswinsec",
+  "default_source": "windows_eventlog",
+  "listener": {
+    "source_id": "WINDOWS_EVENTLOG",
+    "transport": "tcp",
+    "port": 20063,
+    "env": {
+      "SC4S_LISTEN_WINDOWS_EVENTLOG_TCP_PORT": "20063",
+      "SOURCE_ALL_SET_APPEND": "WINDOWS_EVENTLOG"
+    }
+  },
+  "sourcetypes": {
+    "security": "windows:eventlog:security",
+    "process": "windows:eventlog:process",
+    "powershell": "windows:eventlog:powershell",
+    "defender": "windows:eventlog:defender"
+  },
+  "event_families": [
+    {
+      "id": "security",
+      "label": "Windows Security logon/Kerberos/NTLM/account/group/object/policy/service/log/task audit events",
+      "match_engine": "pcre",
+      "match": "<EventID>(?:1102|4624|4625|4663|4697|4698|4719|4720|4726|4732|4738|4768|4769|4771|4776)</EventID>",
+      "expected_sourcetype": "windows:eventlog:security",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "provider",
+        "TimeCreated",
+        "Computer"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime"
+      ]
+    },
+    {
+      "id": "process",
+      "label": "Windows process creation events",
+      "match_engine": "pcre",
+      "match": "<EventID>4688</EventID>",
+      "expected_sourcetype": "windows:eventlog:process",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "NewProcessName",
+        "CommandLine"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime"
+      ]
+    },
+    {
+      "id": "powershell",
+      "label": "Windows PowerShell script block events",
+      "match_engine": "pcre",
+      "match": "<EventID>4104</EventID>|Microsoft-Windows-PowerShell",
+      "expected_sourcetype": "windows:eventlog:powershell",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "ScriptBlockText"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime"
+      ]
+    },
+    {
+      "id": "defender",
+      "label": "Microsoft Defender detection events",
+      "match_engine": "pcre",
+      "match": "<EventID>1116</EventID>|Microsoft-Windows-Windows Defender",
+      "expected_sourcetype": "windows:eventlog:defender",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "event_id",
+        "Threat Name"
+      ],
+      "timestamp_fields": [
+        "TimeCreated/SystemTime"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Microsoft",
+    "product": "windows_eventlog",
+    "vendor_product": "microsoft:windows_eventlog",
+    "event_id": "Windows EventID",
+    "provider": "Windows event provider",
+    "signature_id": "event_id",
+    "signature": "provider",
+    "user": "TargetUserName/User",
+    "src_user": "SubjectUserName",
+    "src_ip": "IpAddress",
+    "dest": "Computer",
+    "process": "NewProcessName",
+    "process_command_line": "CommandLine",
+    "parent_process": "ParentProcessName",
+    "script_block_text": "ScriptBlockText",
+    "threat_name": "Threat Name",
+    "file_path": "Path",
+    "severity": "Severity Name",
+    "marker": "Synthetic fixture marker only",
+    "user_domain": "TargetDomainName",
+    "src_user_domain": "SubjectDomainName",
+    "src_port": "IpPort",
+    "logon_type": "Windows logon type token",
+    "workstation": "WorkstationName",
+    "failure_reason": "FailureReason for failed logon events",
+    "status": "Windows status code",
+    "sub_status": "Windows substatus code",
+    "object_name": "ObjectName for object-access events",
+    "object_type": "ObjectType for object-access events",
+    "object_process": "ProcessName for object-access events",
+    "access_mask": "AccessMask for object-access events",
+    "access_list": "AccessList for object-access events",
+    "policy_category": "Category for audit-policy change events",
+    "policy_subcategory": "Subcategory for audit-policy change events",
+    "policy_subcategory_guid": "SubcategoryGuid for audit-policy change events",
+    "audit_policy_changes": "AuditPolicyChanges raw change text/token",
+    "service_name": "ServiceName for service-installation events",
+    "service_file_name": "ServiceFileName for service-installation events",
+    "service_type": "ServiceType for service-installation events",
+    "service_start_type": "ServiceStartType for service-installation events",
+    "service_account": "ServiceAccount for service-installation events",
+    "target_sid": "TargetSid for account/group management events",
+    "member_name": "MemberName for group membership events",
+    "member_sid": "MemberSid for group membership events",
+    "subject_logon_id": "SubjectLogonId for Security audit events where present",
+    "task_name": "TaskName for scheduled-task creation events",
+    "task_content": "TaskContent XML payload for scheduled-task creation events",
+    "display_name": "DisplayName for account-change/account-management events",
+    "user_principal_name": "UserPrincipalName for account-change events",
+    "sam_account_name": "SamAccountName for account-change events",
+    "user_account_control": "UserAccountControl raw token for account-change events",
+    "package_name": "PackageName authentication package for credential-validation events",
+    "service_sid": "ServiceSid for Kerberos ticket service context",
+    "ticket_options": "TicketOptions for Kerberos TGT/TGS/pre-authentication events",
+    "ticket_encryption_type": "TicketEncryptionType for Kerberos ticket events",
+    "pre_auth_type": "PreAuthType for Kerberos pre-authentication events",
+    "failure_code": "FailureCode for Kerberos pre-authentication failures",
+    "logon_guid": "LogonGuid for Kerberos service-ticket events",
+    "transmitted_services": "TransmittedServices for Kerberos constrained delegation context",
+    "cert_issuer_name": "CertIssuerName for certificate-backed Kerberos authentication where emitted",
+    "cert_serial_number": "CertSerialNumber for certificate-backed Kerberos authentication where emitted",
+    "cert_thumbprint": "CertThumbprint for certificate-backed Kerberos authentication where emitted"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-windows_eventlog.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/windows_eventlog_overview.xml"
+    ],
+    "test_events": [
+      "test-events/windows_eventlog_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20063.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/windows_eventlog_reduction_candidates.csv",
+      "validation/preflight-2026-06-07.md",
+      "edge-processor/README.md",
+      "edge-processor/validation/windows_eventlog_success_noise_reduce-preflight.md"
+    ],
+    "edge_processor": [
+      "edge-processor/README.md",
+      "edge-processor/modules/windows_eventlog_success_noise_reduce.spl2",
+      "edge-processor/templates/windows_eventlog_success_noise_reduce.json",
+      "edge-processor/samples/windows_eventlog_success_noise_reduce.raw.txt",
+      "edge-processor/samples/windows_eventlog_success_noise_reduce.parsed.jsonl",
+      "edge-processor/validation/windows_eventlog_success_noise_reduce-preflight.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Windows Event XML relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20063,
+      "notes": "Dedicated TCP listener for one-line Windows Event XML from WEF/WEC, NXLog, Fluent Bit, Cribl, or equivalent relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20063,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Windows Event XML schema and selected Microsoft event IDs",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in Microsoft Windows Event XML schema documentation and public Microsoft security-auditing/PowerShell/Defender event references; exact collector relay shape must be validated locally. 2026-06-14 hardening added public Security Event 4663/4697/4719 fixture coverage. 2026-06-15 hardening added Security Event 4726/4732/1102/4698 fixture coverage. 2026-06-17 hardening added Microsoft Learn-grounded Security Event 4738 account-change fixture coverage. 2026-06-18 hardening added Microsoft Learn-grounded Security Event 4776 NTLM credential-validation failure fixture coverage. 2026-06-22 hardening added Microsoft Learn-grounded Kerberos Event 4768/4769/4771 fixture coverage for TGT, TGS, and pre-authentication failure context."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-07",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Microsoft Learn Windows Event XML schema plus selected public event ID references; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent XML payloads only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Windows relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Windows Event XML relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "windows_eventlog_xml"
+      ],
+      "event_count": 18,
+      "marker_prefix": "SC4S_WINDOWS_EVENTLOG_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20063.sh"
+    },
+    "readback": {
+      "spl": "index=oswinsec sechub_fixture_marker=\"SC4S_WINDOWS_EVENTLOG_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product event_id signature signature_id provider user user_domain src_user src_user_domain src_ip src_port logon_type workstation package_name service_sid ticket_options ticket_encryption_type pre_auth_type failure_code logon_guid transmitted_services failure_reason status sub_status object_name object_type access_mask access_list object_process audit_policy_changes policy_category policy_subcategory service_name service_file_name service_type service_start_type service_account target_sid member_name member_sid subject_logon_id task_name task_content display_name user_principal_name sam_account_name user_account_control dest process process_command_line parent_process script_block_text threat_name file_path severity marker _raw",
+      "expected_count": 18,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "event_id",
+        "signature/signature_id",
+        "provider",
+        "user/process/threat fields by family",
+        "timestamp",
+        "failed logon/status fields",
+        "account creation subject/target fields",
+        "source IP/port/logon type/workstation fields",
+        "object access fields",
+        "audit-policy change fields",
+        "service-installation fields",
+        "account deletion fields",
+        "group membership fields",
+        "audit-log clearing subject fields",
+        "scheduled-task fields",
+        "account change fields",
+        "Kerberos ticket/pre-authentication fields",
+        "NTLM credential-validation package/status fields"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-07",
+      "summary": "2026-06-07 local preflight found no TCP listener on 127.0.0.1:20063 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-07.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-07.md",
+        "summary": "Command-grounded local preflight evidence for missing Windows Event Log TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20063,
+          "protocol": "line_delimited_syslog_xml",
+          "purpose": "Dedicated Windows Event Log relay listener"
+        }
+      ],
+      "required_indexes": [
+        "oswinsec"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to oswinsec",
+        "Search role can read oswinsec"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "windows_eventlog_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/windows_eventlog/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/windows_eventlog/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/windows_eventlog/compose.yaml",
+      "compose_project": "sechub-windows-eventlog-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "oswinsec index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/windows_eventlog/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/windows_eventlog/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/windows_eventlog/scripts/send_tcp_20063.sh 127.0.0.1 20063",
+        "splunk_summary_readback": "index=oswinsec sechub_fixture_marker=\"SC4S_WINDOWS_EVENTLOG_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=oswinsec sechub_fixture_marker=\"SC4S_WINDOWS_EVENTLOG_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product event_id signature signature_id provider user user_domain src_user src_user_domain src_ip src_port logon_type workstation package_name service_sid ticket_options ticket_encryption_type pre_auth_type failure_code logon_guid transmitted_services failure_reason status sub_status object_name object_type access_mask access_list object_process audit_policy_changes policy_category policy_subcategory service_name service_file_name service_type service_start_type service_account target_sid member_name member_sid subject_logon_id task_name task_content display_name user_principal_name sam_account_name user_account_control dest process process_command_line parent_process script_block_text threat_name file_path severity marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "oswinsec",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/windows_eventlog/splunk -> /opt/splunk/etc/apps/sechub_windows_eventlog:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20063,
+          "host_port_env": "SC4S_WINDOWS_EVENTLOG_PORT",
+          "source_id": "WINDOWS_EVENTLOG"
+        },
+        "parser_mount": "packs/windows_eventlog/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "windows_eventlog",
+          "source_shape": "one_line_windows_event_xml_relay",
+          "event_families": [
+            "security",
+            "process",
+            "powershell",
+            "defender"
+          ],
+          "expected_sourcetypes": [
+            "windows:eventlog:security",
+            "windows:eventlog:process",
+            "windows:eventlog:powershell",
+            "windows:eventlog:defender"
+          ],
+          "data_structures": [
+            "One complete Windows <Event> XML record per physical line",
+            "RFC5424-style wrapper produced by the send helper for TCP relay into SC4S TEST"
+          ],
+          "markers": [
+            "SC4S_WINDOWS_EVENTLOG_TEST_LOGON_001",
+            "SC4S_WINDOWS_EVENTLOG_TEST_PROCESS_002",
+            "SC4S_WINDOWS_EVENTLOG_TEST_POWERSHELL_003",
+            "SC4S_WINDOWS_EVENTLOG_TEST_DEFENDER_004",
+            "SC4S_WINDOWS_EVENTLOG_TEST_LOGON_FAIL_005",
+            "SC4S_WINDOWS_EVENTLOG_TEST_ACCOUNT_CREATE_006",
+            "SC4S_WINDOWS_EVENTLOG_TEST_OBJECT_ACCESS_007",
+            "SC4S_WINDOWS_EVENTLOG_TEST_AUDIT_POLICY_008",
+            "SC4S_WINDOWS_EVENTLOG_TEST_SERVICE_INSTALL_009",
+            "SC4S_WINDOWS_EVENTLOG_TEST_ACCOUNT_DELETE_010",
+            "SC4S_WINDOWS_EVENTLOG_TEST_GROUP_MEMBER_ADD_011",
+            "SC4S_WINDOWS_EVENTLOG_TEST_LOG_CLEARED_012",
+            "SC4S_WINDOWS_EVENTLOG_TEST_SCHEDULED_TASK_013",
+            "SC4S_WINDOWS_EVENTLOG_TEST_ACCOUNT_CHANGE_014",
+            "SC4S_WINDOWS_EVENTLOG_TEST_NTLM_CREDENTIAL_015",
+            "SC4S_WINDOWS_EVENTLOG_TEST_KERBEROS_TGT_016",
+            "SC4S_WINDOWS_EVENTLOG_TEST_KERBEROS_TGS_017",
+            "SC4S_WINDOWS_EVENTLOG_TEST_KERBEROS_PREAUTH_FAIL_018"
+          ],
+          "fixture_sets": [
+            "windows_eventlog_xml"
+          ],
+          "expected_count": 18,
+          "required_indexes": [
+            "oswinsec"
+          ]
+        }
+      ],
+      "evidence_boundaries": [
+        "not live Windows host/domain-controller validation",
+        "not WEF/WEC/NXLog/Fluent Bit/Cribl wrapper proof",
+        "not native EVTX or collector-normalized JSON support",
+        "not multiline XML export support",
+        "not HEC/Splunk read-back evidence until the harness is actually run",
+        "not trust/quality promotion by itself"
+      ],
+      "explicit_gaps": [
+        "Live Windows host/domain-controller relay emission is not proven by this harness.",
+        "WEF/WEC/NXLog/Fluent Bit/Cribl wrapper behavior and checkpoint/custody are not proven.",
+        "Native EVTX, collector-normalized JSON, and multiline XML export variants are not implemented by this harness.",
+        "SC4S listener replay, HEC delivery, and Splunk indexed read-back are not evidence until the harness is actually run in a permitted Docker lab.",
+        "Trust/quality labels remain curated/unverified until replay/read-back or production-equivalent evidence supports promotion."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "windows_eventlog_xml",
+      "label": "Windows Event XML synthetic-equivalent fixtures",
+      "path": "test-events/windows_eventlog_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "windows_event_xml_line_payload",
+      "envelope": "none",
+      "serialization": "xml",
+      "event_count": 18,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_WINDOWS_EVENTLOG_TEST_LOGON_001",
+        "SC4S_WINDOWS_EVENTLOG_TEST_PROCESS_002",
+        "SC4S_WINDOWS_EVENTLOG_TEST_POWERSHELL_003",
+        "SC4S_WINDOWS_EVENTLOG_TEST_DEFENDER_004",
+        "SC4S_WINDOWS_EVENTLOG_TEST_LOGON_FAIL_005",
+        "SC4S_WINDOWS_EVENTLOG_TEST_ACCOUNT_CREATE_006",
+        "SC4S_WINDOWS_EVENTLOG_TEST_OBJECT_ACCESS_007",
+        "SC4S_WINDOWS_EVENTLOG_TEST_AUDIT_POLICY_008",
+        "SC4S_WINDOWS_EVENTLOG_TEST_SERVICE_INSTALL_009",
+        "SC4S_WINDOWS_EVENTLOG_TEST_ACCOUNT_DELETE_010",
+        "SC4S_WINDOWS_EVENTLOG_TEST_GROUP_MEMBER_ADD_011",
+        "SC4S_WINDOWS_EVENTLOG_TEST_LOG_CLEARED_012",
+        "SC4S_WINDOWS_EVENTLOG_TEST_SCHEDULED_TASK_013",
+        "SC4S_WINDOWS_EVENTLOG_TEST_ACCOUNT_CHANGE_014",
+        "SC4S_WINDOWS_EVENTLOG_TEST_NTLM_CREDENTIAL_015",
+        "SC4S_WINDOWS_EVENTLOG_TEST_KERBEROS_TGT_016",
+        "SC4S_WINDOWS_EVENTLOG_TEST_KERBEROS_TGS_017",
+        "SC4S_WINDOWS_EVENTLOG_TEST_KERBEROS_PREAUTH_FAIL_018"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "TimeCreated/SystemTime",
+        "primary_timezone": "UTC when SystemTime ends in Z",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "collector relay timezone or syslog envelope timezone"
+        ],
+        "notes": "Fixtures use UTC SystemTime values. Production relays must preserve timezone-qualified TimeCreated/SystemTime or document collector timezone."
+      },
+      "field_delimiting": {
+        "style": "xml",
+        "field_separator": "XML elements/attributes",
+        "quote_character": "double quote for XML attributes",
+        "escape_policy": "XML escaping; fixtures use example domains and RFC5737 documentation IPs",
+        "notes": "Each physical line is one complete Event XML record; multiline EVTX/XML export is not represented."
+      },
+      "expected_families": [
+        "security",
+        "process",
+        "powershell",
+        "defender"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-windows_eventlog.conf",
+      "target_path": "local/config/app_parsers/syslog/app-windows_eventlog.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/windows_eventlog.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/windows_eventlog_overview.xml",
+      "target_path": "splunk/default/data/ui/views/windows_eventlog_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/windows_eventlog_test_events.txt",
+      "target_path": "test-events/windows_eventlog_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20063.sh",
+      "target_path": "scripts/send_tcp_20063.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/windows_eventlog_reduction_candidates.csv",
+      "target_path": "docs/windows_eventlog_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_07",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-07.md",
+      "target_path": "validation/preflight-2026-06-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "edge_processor_readme",
+      "group": "docs",
+      "source_path": "edge-processor/README.md",
+      "target_path": "edge-processor/README.md",
+      "kind": "edge_processor_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "edge_processor_module",
+      "group": "docs",
+      "source_path": "edge-processor/modules/windows_eventlog_success_noise_reduce.spl2",
+      "target_path": "edge-processor/modules/windows_eventlog_success_noise_reduce.spl2",
+      "kind": "splunk_edge_processor_spl2_module",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "edge_processor_template",
+      "group": "docs",
+      "source_path": "edge-processor/templates/windows_eventlog_success_noise_reduce.json",
+      "target_path": "edge-processor/templates/windows_eventlog_success_noise_reduce.json",
+      "kind": "splunk_edge_processor_template_metadata",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "edge_processor_sample_raw",
+      "group": "docs",
+      "source_path": "edge-processor/samples/windows_eventlog_success_noise_reduce.raw.txt",
+      "target_path": "edge-processor/samples/windows_eventlog_success_noise_reduce.raw.txt",
+      "kind": "sample_raw",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "edge_processor_sample_parsed",
+      "group": "docs",
+      "source_path": "edge-processor/samples/windows_eventlog_success_noise_reduce.parsed.jsonl",
+      "target_path": "edge-processor/samples/windows_eventlog_success_noise_reduce.parsed.jsonl",
+      "kind": "sample_parsed_jsonl",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "edge_processor_preflight",
+      "group": "docs",
+      "source_path": "edge-processor/validation/windows_eventlog_success_noise_reduce-preflight.md",
+      "target_path": "edge-processor/validation/windows_eventlog_success_noise_reduce-preflight.md",
+      "kind": "validation_preflight",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Microsoft Learn Windows Event XML schema and public Windows security auditing, PowerShell, and Defender event references; synthetic-equivalent fixtures authored from documented XML structure.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example host/domain names and RFC5737 documentation IP addresses; no customer Windows events or proprietary TA content are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-07",
+      "notes": "Selected from Milestone 8 P0 operating-system telemetry backlog as the highest-value missing pack foundation. Initial scope is conservative XML relay coverage, not full Windows TA parity or field validation. 2026-06-14 hardening added Microsoft Learn-grounded failed-logon and account-creation XML fixtures plus Splunk read-back fields without trust promotion. 2026-06-14 follow-up added Microsoft Learn-grounded object-access/audit-policy/service-installation fixtures and read-back fields without trust promotion. 2026-06-15 follow-up added Microsoft Learn-grounded account-deletion, group-membership, audit-log-cleared, and scheduled-task creation fixtures/read-back fields without trust promotion. 2026-06-18 hardening added Microsoft Learn-grounded Event 4776 NTLM credential-validation fixture/read-back fields without trust promotion. 2026-06-22 hardening added Microsoft Learn-grounded Kerberos Event 4768/4769/4771 fixture/read-back fields without trust promotion."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "TargetUserName",
+            "User",
+            "UserPrincipalName",
+            "SamAccountName"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed actor/target user for logon and PowerShell examples."
+        },
+        "src_user": {
+          "source_fields": [
+            "SubjectUserName"
+          ],
+          "status": "partial",
+          "notes": "Subject user where present in Security events."
+        },
+        "src": {
+          "source_fields": [
+            "IpAddress"
+          ],
+          "status": "partial",
+          "notes": "Remote source IP for logon-style events when present."
+        },
+        "dest": {
+          "source_fields": [
+            "Computer"
+          ],
+          "status": "partial",
+          "notes": "Windows host that emitted the event."
+        },
+        "action": {
+          "source_fields": [
+            "EventID"
+          ],
+          "status": "partial",
+          "notes": "EventID-specific action semantics are not normalized to a complete taxonomy."
+        },
+        "signature_id": {
+          "source_fields": [
+            "EventID"
+          ],
+          "status": "partial",
+          "notes": "Windows EventID used as signature_id."
+        },
+        "signature": {
+          "source_fields": [
+            "Provider"
+          ],
+          "status": "partial",
+          "notes": "Provider used as a lightweight signature until family-specific mappings are expanded."
+        },
+        "process": {
+          "source_fields": [
+            "NewProcessName"
+          ],
+          "status": "partial",
+          "notes": "Process creation fixture only."
+        },
+        "process_command_line": {
+          "source_fields": [
+            "CommandLine"
+          ],
+          "status": "partial",
+          "notes": "High-value endpoint investigation field; retained by default."
+        },
+        "user_domain": {
+          "source_fields": [
+            "TargetDomainName"
+          ],
+          "status": "partial",
+          "notes": "Target account domain for Security logon/account-management fixtures."
+        },
+        "src_user_domain": {
+          "source_fields": [
+            "SubjectDomainName"
+          ],
+          "status": "partial",
+          "notes": "Subject account domain for Security audit fixtures."
+        },
+        "src_port": {
+          "source_fields": [
+            "IpPort"
+          ],
+          "status": "partial",
+          "notes": "Source network port for failed-logon fixture when Windows reports it."
+        },
+        "logon_type": {
+          "source_fields": [
+            "LogonType"
+          ],
+          "status": "partial",
+          "notes": "Raw Windows logon type token retained for reviewer interpretation; no complete taxonomy stated."
+        },
+        "failure_reason": {
+          "source_fields": [
+            "FailureReason"
+          ],
+          "status": "partial",
+          "notes": "Raw failed-logon reason token/text as emitted in Event 4625 XML."
+        },
+        "status": {
+          "source_fields": [
+            "Status",
+            "SubStatus"
+          ],
+          "status": "partial",
+          "notes": "Windows status/substatus codes for failed-logon triage."
+        },
+        "workstation": {
+          "source_fields": [
+            "WorkstationName"
+          ],
+          "status": "partial",
+          "notes": "Workstation context for failed-logon fixture when present."
+        },
+        "object_name": {
+          "source_fields": [
+            "ObjectName"
+          ],
+          "status": "partial",
+          "notes": "Object-access object path/name from Event 4663 fixture."
+        },
+        "object_type": {
+          "source_fields": [
+            "ObjectType"
+          ],
+          "status": "partial",
+          "notes": "Object-access object type from Event 4663 fixture."
+        },
+        "access_mask": {
+          "source_fields": [
+            "AccessMask",
+            "AccessList"
+          ],
+          "status": "partial",
+          "notes": "Raw access mask/list context from Event 4663; no complete rights taxonomy stated."
+        },
+        "policy_change": {
+          "source_fields": [
+            "Category",
+            "Subcategory",
+            "AuditPolicyChanges"
+          ],
+          "status": "partial",
+          "notes": "Audit policy category/subcategory/change context from Event 4719."
+        },
+        "service": {
+          "source_fields": [
+            "ServiceName",
+            "ServiceFileName",
+            "ServiceType",
+            "ServiceStartType",
+            "ServiceAccount"
+          ],
+          "status": "partial",
+          "notes": "Service-installation context from Event 4697."
+        },
+        "target_sid": {
+          "source_fields": [
+            "TargetSid"
+          ],
+          "status": "partial",
+          "notes": "Target account/group SID for fixture-backed account/group management events."
+        },
+        "member_name": {
+          "source_fields": [
+            "MemberName",
+            "MemberSid"
+          ],
+          "status": "partial",
+          "notes": "Group membership member context for Event 4732."
+        },
+        "subject_logon_id": {
+          "source_fields": [
+            "SubjectLogonId"
+          ],
+          "status": "partial",
+          "notes": "Subject logon ID where Windows emits it in Security audit events."
+        },
+        "scheduled_task": {
+          "source_fields": [
+            "TaskName",
+            "TaskContent"
+          ],
+          "status": "partial",
+          "notes": "Scheduled-task creation context from Event 4698; task content is retained as raw XML text."
+        },
+        "account_change": {
+          "source_fields": [
+            "DisplayName",
+            "UserPrincipalName",
+            "SamAccountName",
+            "UserAccountControl"
+          ],
+          "status": "partial",
+          "notes": "Account-change context from Event 4738; preserves raw Windows tokens without deriving a complete IAM taxonomy."
+        },
+        "package_name": {
+          "source_fields": [
+            "PackageName"
+          ],
+          "status": "partial",
+          "notes": "Authentication package context from Event 4776; used for NTLM credential-validation triage."
+        },
+        "kerberos_ticket": {
+          "source_fields": [
+            "ServiceName",
+            "ServiceSid",
+            "TicketOptions",
+            "TicketEncryptionType",
+            "PreAuthType",
+            "FailureCode",
+            "LogonGuid",
+            "TransmittedServices"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed Kerberos TGT/TGS/pre-authentication context from Events 4768, 4769, and 4771; preserves raw Windows tokens without stating complete Kerberos workflow validation."
+        }
+      },
+      "notes": "Partial Authentication/Endpoint/Malware mapping only; not a complete Windows TA or CIM implementation."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "TargetUserName",
+            "User",
+            "SubjectUserName"
+          ],
+          "status": "partial",
+          "notes": "User context varies by event family."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "IpAddress"
+          ],
+          "status": "partial",
+          "notes": "Source IP when present."
+        },
+        "device.hostname": {
+          "source_fields": [
+            "Computer"
+          ],
+          "status": "partial",
+          "notes": "Emitting Windows host."
+        },
+        "process.name": {
+          "source_fields": [
+            "NewProcessName"
+          ],
+          "status": "partial",
+          "notes": "Process creation fixture."
+        },
+        "activity_id": {
+          "source_fields": [
+            "EventID"
+          ],
+          "status": "partial",
+          "notes": "EventID as activity identifier; not full OCSF class mapping."
+        },
+        "src_endpoint.port": {
+          "source_fields": [
+            "IpPort",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Failed-logon source port when emitted by Windows."
+        },
+        "logon_type": {
+          "source_fields": [
+            "LogonType"
+          ],
+          "status": "partial",
+          "notes": "Raw Windows logon type retained as profile-scoped helper context."
+        },
+        "status_code": {
+          "source_fields": [
+            "Status",
+            "SubStatus"
+          ],
+          "status": "partial",
+          "notes": "Windows status/substatus codes; not full OCSF status taxonomy."
+        },
+        "file.name": {
+          "source_fields": [
+            "ObjectName",
+            "object_name"
+          ],
+          "status": "partial",
+          "notes": "Object-access path/name helper mapping; not complete file activity classification."
+        },
+        "policy.name": {
+          "source_fields": [
+            "Category",
+            "Subcategory",
+            "policy_category",
+            "policy_subcategory"
+          ],
+          "status": "partial",
+          "notes": "Audit-policy change helper context."
+        },
+        "service.name": {
+          "source_fields": [
+            "ServiceName",
+            "service_name"
+          ],
+          "status": "partial",
+          "notes": "Service-installation helper context."
+        },
+        "group.name": {
+          "source_fields": [
+            "TargetUserName",
+            "member_name"
+          ],
+          "status": "partial",
+          "notes": "Local-group membership helper context from Event 4732; not full OCSF IAM classification."
+        },
+        "scheduled_task.name": {
+          "source_fields": [
+            "TaskName",
+            "task_name"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped helper mapping for scheduled-task creation context."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "SubjectLogonId",
+            "TargetSid",
+            "MemberSid"
+          ],
+          "status": "partial",
+          "notes": "Windows logon/SID identifiers retained as audit context; not globally unique event IDs."
+        },
+        "user.uid": {
+          "source_fields": [
+            "TargetSid",
+            "UserPrincipalName",
+            "SamAccountName"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped account identifier context for account-management events; not a global OCSF identity model."
+        },
+        "account_change.flags": {
+          "source_fields": [
+            "UserAccountControl",
+            "user_account_control"
+          ],
+          "status": "partial",
+          "notes": "Raw Windows account-control token from Event 4738 retained for audit triage."
+        },
+        "auth_protocol": {
+          "source_fields": [
+            "PackageName",
+            "package_name",
+            "TicketEncryptionType",
+            "PreAuthType",
+            "FailureCode"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped credential-validation package context; not a complete OCSF authentication protocol mapping."
+        },
+        "service.uid": {
+          "source_fields": [
+            "ServiceSid",
+            "service_sid"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Kerberos service SID context for ticket events."
+        },
+        "ticket.options": {
+          "source_fields": [
+            "TicketOptions",
+            "ticket_options"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Kerberos ticket option token retained for triage."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "TargetUserName",
+            "User",
+            "SubjectUserName",
+            "UserPrincipalName",
+            "SamAccountName"
+          ],
+          "status": "partial",
+          "notes": "User context varies by family."
+        },
+        "source.ip": {
+          "source_fields": [
+            "IpAddress"
+          ],
+          "status": "partial",
+          "notes": "Source IP when present."
+        },
+        "host.name": {
+          "source_fields": [
+            "Computer"
+          ],
+          "status": "partial",
+          "notes": "Emitting Windows host."
+        },
+        "event.code": {
+          "source_fields": [
+            "EventID"
+          ],
+          "status": "partial",
+          "notes": "Windows EventID."
+        },
+        "process.executable": {
+          "source_fields": [
+            "NewProcessName"
+          ],
+          "status": "partial",
+          "notes": "Process path from 4688 fixture."
+        },
+        "process.command_line": {
+          "source_fields": [
+            "CommandLine"
+          ],
+          "status": "partial",
+          "notes": "Command line from 4688 fixture."
+        },
+        "threat.indicator.name": {
+          "source_fields": [
+            "Threat Name"
+          ],
+          "status": "partial",
+          "notes": "Defender fixture threat name; no full malware taxonomy stated."
+        },
+        "source.port": {
+          "source_fields": [
+            "IpPort",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Failed-logon source port when present."
+        },
+        "event.outcome": {
+          "source_fields": [
+            "EventID",
+            "Status",
+            "SubStatus"
+          ],
+          "status": "partial",
+          "notes": "Failed-logon outcome can be inferred for EventID 4625 but the pack preserves raw codes rather than deriving a complete outcome taxonomy."
+        },
+        "user.domain": {
+          "source_fields": [
+            "TargetDomainName",
+            "SubjectDomainName"
+          ],
+          "status": "partial",
+          "notes": "Windows account-domain context varies by family."
+        },
+        "file.path": {
+          "source_fields": [
+            "ObjectName",
+            "object_name"
+          ],
+          "status": "partial",
+          "notes": "Object-access path/name helper mapping."
+        },
+        "event.action": {
+          "source_fields": [
+            "EventID",
+            "AuditPolicyChanges",
+            "ServiceName",
+            "ObjectName"
+          ],
+          "status": "partial",
+          "notes": "EventID and fixture-backed change/access/service context; no full action taxonomy stated."
+        },
+        "service.name": {
+          "source_fields": [
+            "ServiceName",
+            "service_name"
+          ],
+          "status": "partial",
+          "notes": "Service-installation helper context."
+        },
+        "group.name": {
+          "source_fields": [
+            "TargetUserName",
+            "member_name"
+          ],
+          "status": "partial",
+          "notes": "Group membership helper context from Event 4732."
+        },
+        "scheduled_task.name": {
+          "source_fields": [
+            "TaskName",
+            "task_name"
+          ],
+          "status": "partial",
+          "notes": "Scheduled-task creation helper context."
+        },
+        "user.id": {
+          "source_fields": [
+            "TargetSid",
+            "MemberSid",
+            "UserPrincipalName",
+            "SamAccountName"
+          ],
+          "status": "partial",
+          "notes": "Windows SID context where emitted by account/group events."
+        },
+        "user.changes": {
+          "source_fields": [
+            "DisplayName",
+            "UserPrincipalName",
+            "SamAccountName",
+            "UserAccountControl"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped account-change helper mapping for Event 4738; not a complete ECS user-change schema."
+        },
+        "winlog.event_data.PackageName": {
+          "source_fields": [
+            "PackageName",
+            "package_name"
+          ],
+          "status": "partial",
+          "notes": "Preserves Windows Event 4776 authentication package context for ECS-style winlog field mapping."
+        },
+        "winlog.event_data.TicketEncryptionType": {
+          "source_fields": [
+            "TicketEncryptionType",
+            "ticket_encryption_type"
+          ],
+          "status": "partial",
+          "notes": "Preserves Kerberos ticket encryption type from Events 4768/4769 where emitted."
+        },
+        "winlog.event_data.PreAuthType": {
+          "source_fields": [
+            "PreAuthType",
+            "pre_auth_type"
+          ],
+          "status": "partial",
+          "notes": "Preserves Kerberos pre-authentication type from Events 4768/4771 where emitted."
+        },
+        "winlog.event_data.FailureCode": {
+          "source_fields": [
+            "FailureCode",
+            "failure_code"
+          ],
+          "status": "partial",
+          "notes": "Preserves Kerberos pre-authentication failure code from Event 4771."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/windows_eventlog/README.md": "sha256:154795ef812bbb620d858e52227ad360ea1c8208b7dee2aeb410f26380278cc5",
+      "packs/windows_eventlog/sc4s/app_parsers/syslog/app-windows_eventlog.conf": "sha256:096504ca5b60e99611042cbcb4a4eeed7ff8b3cad816cb601c0fab52768f4cab",
+      "packs/windows_eventlog/sc4s/env.example": "sha256:58dfe89b2c9bcdb1bf74b7f23e08d22f102d37f034129f82f04f28c9ff65f5fb",
+      "packs/windows_eventlog/splunk/default/props.conf": "sha256:26a6374abeee693c5d0ff17b5a371afaeadb513c5091a9d5cca7d349a8466dfd",
+      "packs/windows_eventlog/splunk/default/transforms.conf": "sha256:9b96fb9e9ce3bcf675fe9653a08b499e14133df7da390e48c3801bb102fc843b",
+      "packs/windows_eventlog/splunk/default/eventtypes.conf": "sha256:a551744a9711a5a032bbcc499e3bf990a8707687ff665c0baddd0150766f2443",
+      "packs/windows_eventlog/splunk/default/tags.conf": "sha256:381a54f5fdf106462ab1c7a41b63d37af7d28a44770bea28cc7ead6bcb60ef35",
+      "packs/windows_eventlog/test-events/windows_eventlog_test_events.txt": "sha256:708242609e7f0d8f11f890d49c608d045e67ec2612af0c077f0608e6d3358046",
+      "packs/windows_eventlog/scripts/send_tcp_20063.sh": "sha256:b5277444a461258dd23ab8ab56edd6569e6ce2a8dacfecee4db12208ab9c03cc",
+      "packs/windows_eventlog/docs/windows_eventlog_reduction_candidates.csv": "sha256:24249f37a766be478a2b694020e53b072380a08cb1aee288b09facc50c63205b",
+      "packs/windows_eventlog/validation/preflight-2026-06-07.md": "sha256:2937a87d3d2245bcfebc8e091702d1ae4f5460103f052506de09df3c6e2ca150",
+      "packs/windows_eventlog/splunk/default/data/ui/views/windows_eventlog_overview.xml": "sha256:3d359b2ee4e40a7b33820470d0e3c2aa18e1b33ebb717bc2370d1244d7fd9360",
+      "packs/windows_eventlog/edge-processor/README.md": "sha256:9884092148b10bc77ecc15d9742b69b178b94101b90ad5f54f011f896ea9df4a",
+      "packs/windows_eventlog/edge-processor/modules/windows_eventlog_success_noise_reduce.spl2": "sha256:f2d5b582b6b1aecbc8529834c28528766b33799b8c3999765466e9183edd7833",
+      "packs/windows_eventlog/edge-processor/templates/windows_eventlog_success_noise_reduce.json": "sha256:b6ad591d65008235b81d4423833b60f1e197f0a9a92d57e3183faae6f5b011a2",
+      "packs/windows_eventlog/edge-processor/samples/windows_eventlog_success_noise_reduce.raw.txt": "sha256:ee04b72f61b8f3c55af522644582799733dfb691068468d9404f27eb841395cd",
+      "packs/windows_eventlog/edge-processor/samples/windows_eventlog_success_noise_reduce.parsed.jsonl": "sha256:c2b49842a9f57269a21807ceacf6e8a5a23b8dd1e8501cd2d2d235d8d50ae6a3",
+      "packs/windows_eventlog/edge-processor/validation/windows_eventlog_success_noise_reduce-preflight.md": "sha256:d4f65f70935d0fd0adb2c697c53e0e6f09e52746debf85ede1171367424bc409",
+      "packs/windows_eventlog/scripts/e2e_docker_compose.sh": "sha256:0211489ce26b4feb594789b52d8cb1da9b9ddf182b8f0cc97c4f4076bbc53de1"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "windows",
+    "endpoint",
+    "os",
+    "authentication",
+    "audit",
+    "security"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "wef_xml_relay",
+      "label": "WEF/WEC or collector-relayed Windows Event XML",
+      "description": "Default initial variant for one complete Windows Event XML record per line, optionally syslog-wrapped by a collector relay.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "wef",
+        "wec",
+        "nxlog_xml",
+        "fluent_bit_xml",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "xml"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "security",
+        "process",
+        "powershell",
+        "defender"
+      ],
+      "test_event_sets": [
+        "windows_eventlog_xml"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "syslog_ng",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent fixtures only; no live Windows relay capture or Splunk read-back.",
+        "One-line XML relay shape only; native EVTX, multiline XML exports, and JSON collector variants require separate fixtures and validation.",
+        "Security Event 4625 failed-logon and 4720 account-creation fixtures are synthetic-equivalent and documentation-grounded; no live Windows relay capture or read-back.",
+        "Security Event 4663 object-access, 4719 audit-policy-change, and 4697 service-installation fixtures are synthetic-equivalent and Microsoft Learn-grounded; no live Windows relay capture or read-back.",
+        "Security Event 4726 account-deletion, 4732 local-group membership, 1102 audit-log-cleared, and 4698 scheduled-task fixtures are synthetic-equivalent and Microsoft Learn-grounded; no live Windows relay capture or read-back.",
+        "Security Event 4776 NTLM credential-validation fixture is synthetic-equivalent and Microsoft Learn-grounded; no live domain-controller relay capture or read-back.",
+        "Security Events 4768/4769/4771 Kerberos fixtures are synthetic-equivalent and Microsoft Learn-grounded; no live domain-controller relay capture or read-back."
+      ]
+    },
+    {
+      "id": "collector_json_future",
+      "label": "Collector-normalized Windows Event JSON",
+      "description": "Future variant placeholder for Winlogbeat/NXLog/Cribl JSON where the underlying Windows event is preserved but field names differ.",
+      "default": false,
+      "evidence_status": "unknown",
+      "source_modes": [
+        "winlogbeat_json",
+        "nxlog_json",
+        "cribl_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [],
+      "test_event_sets": [],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [],
+      "known_limitations": [
+        "No JSON fixtures or parser route are shipped in this pack version."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/windows_eventlog_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "EventID",
+        "Provider",
+        "Channel",
+        "Computer",
+        "SC4SMarker"
+      ],
+      "notes": "Use only after sampling the actual Windows relay schema. Do not drop command line, script block, security principal, or Defender detail fields by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Windows relay, SC4S runtime replay, HEC delivery, Splunk read-back, Manager apply, or production evidence captured.",
+    "Synthetic-equivalent XML fixtures are documentation-shaped and do not prove source validation.",
+    "Initial parser routes selected EventID families only; Windows provider coverage is intentionally incomplete.",
+    "Collector JSON and native EVTX/multiline export modes are future variants, not implemented routes in this version."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Windows Event XML intake",
+      "description": "Dedicated listener, SC4S parser, XML fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-windows_eventlog.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Windows Event analyst knowledge",
+      "description": "Adds eventtypes/tags for fixture-backed authentication/Kerberos/NTLM credential-validation, account/group, object-access, audit-log-clear, audit-policy, service-installation, scheduled-task, process, PowerShell, and Defender discovery. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Windows reduction candidates",
+      "description": "Review-only candidate list for future collector/Cribl reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/windows_eventlog_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local replay/read-back validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "pipeline_templates": [
+    {
+      "id": "windows_eventlog_success_noise_reduce",
+      "type": "splunk_edge_processor_candidate",
+      "path": "edge-processor/templates/windows_eventlog_success_noise_reduce.json",
+      "module": "edge-processor/modules/windows_eventlog_success_noise_reduce.spl2",
+      "enabled_by_default": false,
+      "lossy_by_default": false,
+      "review_status": "candidate_not_edge_processor_validated"
+    }
+  ],
+  "source_delivery": {
+    "mode": "xml_event_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "windows_event_xml",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Windows Event Log is collected by WEF/WEC/NXLog/Fluent Bit/Cribl or similar and relayed; it is not direct SC4S-native source emission.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "windows_eventlog_overview_splunk_test",
+      "title": "Microsoft Windows Event Log relay — dashboard example",
+      "source_path": "dashboards/screenshots/windows_eventlog_overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Microsoft Windows Event Log relay dashboard populated with safe pack fixture events.",
+      "provenance": "Captured from a disposable Splunk TEST UI on 2026-06-27 after loading the pack dashboard XML, installing current pack Splunk knowledge, indexing safe pack-local fixture events in the same runner invocation, and passing fixture read-back plus dashboard panel export gates. No customer data or production Splunk data is present. This screenshot is a documentation example only, not source validation or replay/read-back evidence.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

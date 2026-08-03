@@ -1,0 +1,219 @@
+<form version="1.1" theme="dark">
+  <label>Nginx / Apache HTTP Access/Error - Overview</label>
+  <description>Fixture-backed onboarding and first-triage dashboard for Nginx/Apache access-log and selected error-log sourcetypes. This is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="src_tok" searchWhenChanged="true">
+      <label>Client/source filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total HTTP access events</title>
+      <single>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>4xx client errors</title>
+      <single>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ status=4* | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,50]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>5xx server errors</title>
+      <single>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ status=5* | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>POST requests</title>
+      <single>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ http_method=POST | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events by sourcetype over time</title>
+      <chart>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Status-code distribution</title>
+      <chart>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ status=* | stats count by status | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top clients and requested paths</title>
+      <table>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ | stats count, values(status) as statuses, values(http_method) as methods by src_ip, uri_path | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Methods by status</title>
+      <chart>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ http_method=* status=* | chart count over http_method by status</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>HTTP error triage</title>
+      <table>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ (status=4* OR status=5*) | table _time host sourcetype src_ip user http_method uri_path status bytes_out http_referrer http_user_agent signature_id | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Referrer and user-agent context</title>
+      <table>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ | stats count by http_referrer, http_user_agent | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage by host/source/sourcetype</title>
+      <table>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ | stats count, dc(src_ip) as client_count, values(vendor_product) as vendor_product by host, source, sourcetype | sort -count | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Recent raw access-log context</title>
+      <table>
+        <search>
+          <query>index=netops (sourcetype="nginx:access:combined" OR sourcetype="apache:httpd:access:common" OR sourcetype="apache:httpd:access:combined") host=$host_tok$ src_ip=$src_tok$ | table _time host sourcetype src_ip user http_method uri_path status bytes bytes_out marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent Nginx/Apache error-log context</title>
+      <table>
+        <search>
+          <query>index=netops (sourcetype="nginx:error" OR sourcetype="apache:httpd:error") host=$host_tok$ src_ip=$src_tok$ | table _time host sourcetype vendor product error_level module error_code process_id tid connection_id src_ip client_port server host_header request error_message http_referrer marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Error levels and modules</title>
+      <chart>
+        <search>
+          <query>index=netops (sourcetype="nginx:error" OR sourcetype="apache:httpd:error") host=$host_tok$ src_ip=$src_tok$ | stats count by sourcetype, error_level, module | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+</form>

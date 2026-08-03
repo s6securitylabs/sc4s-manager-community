@@ -327,8 +327,8 @@
     }
   ],
   "provenance": {
-    "origin": "sechub-resource",
-    "pack_class": "sechub-resource",
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
     "source": {
       "type": "mixed",
       "reference": "Commvault public documentation and S6 Security Labs lab validation fixtures",
@@ -531,5 +531,19 @@
     "last_tested": "2026-05-27T20:15:00Z",
     "tested_commit": "088e8d0",
     "tested_artifact_hashes": {}
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "custom_application_syslog",
+    "supported_transport_refs": [
+      "tls_rfc5425",
+      "tcp_rfc5424",
+      "udp_bsd",
+      "tcp_bsd"
+    ],
+    "notes": "CommCell SIEM/syslog events are native syslog-style delivery.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
   }
 }

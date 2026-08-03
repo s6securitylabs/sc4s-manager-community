@@ -1,0 +1,255 @@
+<form version="1.1" theme="light">
+  <label>Microsoft Defender XDR Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for Microsoft Defender XDR, Defender for Endpoint, Defender for Identity, Defender for Office 365, and Defender for Cloud Apps JSON relay sourcetypes. Synthetic-equivalent fixtures are not replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+
+  <search id="base_defender_xdr">
+    <query>index=epintel (sourcetype="microsoft:defender:xdr:device_process" OR sourcetype="microsoft:defender:xdr:device_network" OR sourcetype="microsoft:defender:xdr:file_event" OR sourcetype="microsoft:defender:xdr:alert_info" OR sourcetype="microsoft:defender:xdr:alert_evidence" OR sourcetype="microsoft:defender:xdr:identity_logon" OR sourcetype="microsoft:defender:xdr:identity_directory" OR sourcetype="microsoft:defender:xdr:identity_query" OR sourcetype="microsoft:defender:xdr:cloud_app" OR sourcetype="microsoft:defender:xdr:email_event" OR sourcetype="microsoft:defender:xdr:email_url" OR sourcetype="microsoft:defender:xdr:device_registry" OR sourcetype="microsoft:defender:xdr:email_attachment" OR sourcetype="microsoft:defender:xdr:vulnerability")
+| eval family=coalesce(defender_table, Table, case(sourcetype="microsoft:defender:xdr:device_process","DeviceProcessEvents", sourcetype="microsoft:defender:xdr:device_network","DeviceNetworkEvents", sourcetype="microsoft:defender:xdr:file_event","DeviceFileEvents", sourcetype="microsoft:defender:xdr:alert_info","AlertInfo", sourcetype="microsoft:defender:xdr:alert_evidence","AlertEvidence", sourcetype="microsoft:defender:xdr:identity_logon","IdentityLogonEvents", sourcetype="microsoft:defender:xdr:identity_directory","IdentityDirectoryEvents", sourcetype="microsoft:defender:xdr:identity_query","IdentityQueryEvents", sourcetype="microsoft:defender:xdr:cloud_app","CloudAppEvents", sourcetype="microsoft:defender:xdr:email_event","EmailEvents", sourcetype="microsoft:defender:xdr:email_url","EmailUrlInfo", sourcetype="microsoft:defender:xdr:device_registry","DeviceRegistryEvents", sourcetype="microsoft:defender:xdr:email_attachment","EmailAttachmentInfo", sourcetype="microsoft:defender:xdr:vulnerability","DeviceTvmSoftwareVulnerabilities"))
+| eval device=coalesce(device_name, DeviceName, dest, DestinationDeviceName), actor=coalesce(user, AccountUpn, InitiatingProcessAccountUpn, process_user), target=coalesce(target_user, TargetAccountUpn), alert=coalesce(alert_id, AlertId), risk_severity=coalesce(severity, Severity), action_name=coalesce(action, ActionType, ActivityType), remote=coalesce(dest_ip, RemoteIP, url, RemoteUrl, IPAddress), proc=coalesce(process, FileName, parent_process, InitiatingProcessFileName), proc_cmd=coalesce(process_command_line, ProcessCommandLine, parent_process_command_line, InitiatingProcessCommandLine), file=coalesce(file_name, FileName, ObjectName), folder=coalesce(file_path, FolderPath), app=coalesce(application, Application), query_text=coalesce(query, Query), email_sender=coalesce(sender, SenderFromAddress, SenderMailFromAddress), email_recipient=coalesce(recipient, RecipientEmailAddress), email_subject=coalesce(subject, Subject), email_threat=coalesce(threat_types, ThreatTypes), message_id=coalesce(network_message_id, NetworkMessageId), registry_object=coalesce(registry_key, RegistryKey), registry_value=coalesce(registry_value_name, RegistryValueName), attachment_name=coalesce(file_name, FileName), attachment_type=coalesce(file_type, FileType), cve_id=coalesce(cve, CveId), software=coalesce(software_name, SoftwareName), software_version=coalesce(software_version, SoftwareVersion), recommended_update=coalesce(recommended_security_update, RecommendedSecurityUpdate), marker_value=coalesce(marker, mvindex(spath(_raw,"marker"),0))</query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+
+  <row>
+    <panel>
+      <title>Total Defender XDR events</title>
+      <single>
+        <search base="base_defender_xdr">
+          <query>| stats count</query>
+        </search>
+        <option name="underLabel">All fixture-backed Defender sourcetypes</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Alert records</title>
+      <single>
+        <search base="base_defender_xdr">
+          <query>| search family IN ("AlertInfo","AlertEvidence") | stats count</query>
+        </search>
+        <option name="underLabel">AlertInfo + AlertEvidence rows</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Endpoint activity records</title>
+      <single>
+        <search base="base_defender_xdr">
+          <query>| search family IN ("DeviceProcessEvents","DeviceNetworkEvents","DeviceFileEvents","DeviceRegistryEvents") | stats count</query>
+        </search>
+        <option name="underLabel">Process, network, file, and registry rows</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Identity and cloud records</title>
+      <single>
+        <search base="base_defender_xdr">
+          <query>| search family IN ("IdentityLogonEvents","IdentityDirectoryEvents","IdentityQueryEvents","CloudAppEvents","EmailEvents","EmailUrlInfo","EmailAttachmentInfo") | stats count</query>
+        </search>
+        <option name="underLabel">Identity, Cloud Apps, and email rows</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Medium/high alerts</title>
+      <single>
+        <search base="base_defender_xdr">
+          <query>| search family="AlertInfo" risk_severity IN ("Medium","High") | stats count</query>
+        </search>
+        <option name="underLabel">Fixture-backed Severity values only</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Event volume over time by Defender table</title>
+      <chart>
+        <search base="base_defender_xdr">
+          <query>| timechart span=15m count by family limit=10</query>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.stackMode">stacked</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search base="base_defender_xdr">
+          <query>| stats count by family | sort - count</query>
+        </search>
+        <option name="charting.chart">pie</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top devices and actors</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| stats count dc(family) as families values(family) as defender_tables values(action_name) as actions values(risk_severity) as severities by device actor | sort - count | head 20</query>
+        </search>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Actions and severities</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| stats count values(risk_severity) as severities values(family) as defender_tables by action_name | sort - count | head 20</query>
+        </search>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Process execution triage</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="DeviceProcessEvents" | table _time device actor action_name proc process_command_line parent_process parent_process_command_line file_hash marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Network connection triage</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="DeviceNetworkEvents" | table _time device actor action_name proc proc_cmd src_ip src_port dest_ip dest_port transport url marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>File activity triage</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="DeviceFileEvents" | table _time device actor action_name file file_path file_hash marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Alert metadata</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="AlertInfo" | table _time alert risk_severity category signature service_source detection_source AttackTechniques marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Identity logon and directory activity</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family IN ("IdentityLogonEvents","IdentityDirectoryEvents","IdentityQueryEvents") | table _time family device actor target action_name app LogonType QueryType query_text src_ip dest_port transport AdditionalFields marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Cloud Apps activity</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="CloudAppEvents" | table _time actor action_name app ActivityType ObjectType ObjectName src_ip device marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+  </row>
+
+
+  <row>
+    <panel>
+      <title>Email security triage</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family IN ("EmailEvents","EmailUrlInfo","EmailAttachmentInfo") | table _time family message_id email_sender email_recipient email_subject action_name delivery_location email_threat detection_methods confidence_level url url_domain url_location attachment_name attachment_type file_hash marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Registry activity triage</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="DeviceRegistryEvents" | table _time device actor action_name registry_object registry_value RegistryValueData parent_process parent_process_command_line marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>TVM vulnerability triage</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="DeviceTvmSoftwareVulnerabilities" | table _time device cve_id risk_severity software software_version recommended_update marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Email attachment review</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="EmailAttachmentInfo" | table _time message_id attachment_name attachment_type file_hash email_threat detection_methods marker_value | sort - _time | head 25</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Alert evidence correlation</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| search family="AlertEvidence" | stats count values(entity_type) as entity_types values(evidence_role) as evidence_roles values(device) as devices values(actor) as users values(proc) as processes values(folder) as file_paths values(remote) as remote_context values(marker_value) as markers by alert | sort - count | head 25</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Onboarding coverage by source, host, and sourcetype</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| stats count dc(marker_value) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index source host sourcetype | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+        </search>
+        <option name="count">25</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Defender XDR context</title>
+      <table>
+        <search base="base_defender_xdr">
+          <query>| table _time index sourcetype source host family device actor action_name alert risk_severity marker_value _raw | sort - _time | head 50</query>
+        </search>
+        <option name="count">20</option>
+        <option name="wrap">true</option>
+      </table>
+    </panel>
+  </row>
+</form>

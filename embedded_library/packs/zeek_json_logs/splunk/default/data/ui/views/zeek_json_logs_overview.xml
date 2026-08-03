@@ -1,0 +1,302 @@
+<form version="1.1" theme="dark">
+  <label>Zeek JSON Logs - Overview</label>
+  <description>Fixture-backed Zeek JSON relay overview for conn, DNS, HTTP, SSL/TLS, notice, files, x509, SSH, DHCP, RDP, weird, software, known-hosts, Intel framework, and SMTP records. Panels use fields proven by synthetic-equivalent fixtures and Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Zeek events</title>
+      <single>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Zeek notices</title>
+      <single>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="notice" note=* | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>HTTP error/status rows</title>
+      <single>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="http" status_code&gt;=400 | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,20]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>DNS non-NOERROR rows</title>
+      <single>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="dns" rcode_name!="NOERROR" | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by Zeek log family</title>
+      <chart>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ | eval family=coalesce(zeek_log_type, log_type, "unknown") | timechart count by family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family and action distribution</title>
+      <chart>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ | eval family=coalesce(zeek_log_type, log_type, "unknown"), action_or_state=coalesce(action, conn_state, method, note, family) | stats count by family action_or_state | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top source and destination pairs</title>
+      <chart>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ | eval pair=coalesce(src_ip, src, "unknown") . " -> " . coalesce(dest_ip, dest, "unknown") | stats count by pair transport dest_port | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Connection summaries</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="conn" | table _time host uid src_ip src_port dest_ip dest_port transport service conn_state duration orig_bytes resp_bytes bytes_out bytes_in marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>DNS query and response context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="dns" | table _time host uid src_ip dest_ip transport dns_query dns_query_type rcode_name answers marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>HTTP request/response context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="http" | table _time host uid src_ip dest_ip http_method host url http_status status_msg user_agent signature marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>TLS/SSL handshake context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="ssl" | table _time host uid src_ip dest_ip tls_sni tls_version cipher established validation_status subject issuer marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Notice framework events</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="notice" | table _time host uid note msg src_ip src_port dest_ip dest_port action signature actions suppress_for marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>File analysis records</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="files" | table _time host file_id file_name file_mime_type file_seen_bytes file_total_bytes file_md5 src_ip dest_ip signature marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>X.509 and SSH context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ (zeek_log_type="x509" OR zeek_log_type="ssh") | table _time host zeek_log_type uid x509_id x509_subject x509_issuer x509_serial ssh_auth_success ssh_client ssh_server ssh_cipher_alg ssh_host_key_alg src_ip dest_ip marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>DHCP lease/conversation context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="dhcp" | table _time host dhcp_client_addr dhcp_server_addr dhcp_mac dhcp_host_name dhcp_assigned_addr dhcp_msg_types src_ip dest_ip action signature marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>RDP negotiation/client context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="rdp" | table _time host uid src_ip src_port dest_ip dest_port rdp_cookie rdp_result rdp_security_protocol rdp_client_name action signature marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Weird activity, software, host inventory, and Intel matches</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ (zeek_log_type="weird" OR zeek_log_type="software" OR zeek_log_type="known_hosts" OR zeek_log_type="intel") | table _time host zeek_log_type uid src_ip src_port dest_ip dest_port weird_name weird_addl weird_notice weird_source software_host software_port software_type software_name software_version known_host intel_indicator intel_indicator_type intel_seen_where intel_matched_types intel_sources action signature marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+
+  <row>
+    <panel>
+      <title>SMTP mail transaction context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ zeek_log_type="smtp" | table _time host uid src_ip src_port dest_ip dest_port smtp_helo smtp_mailfrom smtp_rcptto smtp_subject smtp_last_reply user_agent path action signature marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ | eval family=coalesce(zeek_log_type, log_type, "unknown") | stats count dc(marker) as fixture_markers values(family) as families values(transport) as transports min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Zeek JSON events</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="zeek:json" host=$host_tok$ | table _time host sourcetype source vendor product zeek_log_type uid src_ip src_port dest_ip dest_port transport action signature signature_id dns_query http_method http_status tls_sni tls_version file_id file_name file_mime_type x509_subject x509_issuer ssh_auth_success ssh_client ssh_server dhcp_client_addr dhcp_assigned_addr rdp_result rdp_security_protocol weird_name weird_addl software_name software_version known_host intel_indicator intel_indicator_type intel_seen_where smtp_helo smtp_mailfrom smtp_rcptto smtp_subject smtp_last_reply marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

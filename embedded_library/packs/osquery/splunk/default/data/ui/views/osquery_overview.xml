@@ -1,0 +1,265 @@
+<form version="1.1" theme="dark">
+  <label>osquery Result and Status - Overview</label>
+  <description>Fixture-backed osquery result/status JSON relay overview. Panels use fields proven by synthetic-equivalent fixtures and Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total osquery events</title>
+      <single>
+        <search>
+          <query>index=osnix (sourcetype="osquery:results" OR sourcetype="osquery:status") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Differential changes</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ action IN (added,removed) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Inventory rows</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ query_name IN (processes,process_snapshot,listening_ports,process_events,file_events,socket_events,users,logged_in_users,crontab,authorized_keys,suid_bin,startup_items) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Status/error rows</title>
+      <single>
+        <search>
+          <query>index=osnix sourcetype="osquery:status" host=$host_tok$ (osquery_log_type="status" OR severity=*) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by osquery log type</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="osquery:results" OR sourcetype="osquery:status") host=$host_tok$ | eval log_type=coalesce(osquery_log_type, if(sourcetype="osquery:status", "status", action), "osquery") | timechart count by log_type</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Actions and status severities</title>
+      <chart>
+        <search>
+          <query>index=osnix (sourcetype="osquery:results" OR sourcetype="osquery:status") host=$host_tok$ | eval action_or_severity=coalesce(action, severity, status, "unknown") | stats count by sourcetype action_or_severity | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top query names</title>
+      <chart>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ | eval query=coalesce(query_name, name) | stats count by query | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Endpoint coverage</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="osquery:results" OR sourcetype="osquery:status") host=$host_tok$ | eval endpoint=coalesce(hostIdentifier, host) | stats count dc(query_name) as query_count values(sourcetype) as sourcetypes values(action) as actions values(severity) as severities min(_time) as first_seen max(_time) as last_seen by endpoint | convert ctime(first_seen) ctime(last_seen) | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">15</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Process inventory and process changes</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ (query_name IN (processes,process_snapshot,process_events) OR process_name=* OR pid=*) | table _time host hostIdentifier action query_name process_name pid file_path cmdline uid signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Listening port inventory</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ (query_name="listening_ports" OR port=* OR protocol=*) | table _time host hostIdentifier action query_name pid port protocol signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+
+  <row>
+    <panel>
+      <title>Evented process, file, and socket activity</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ query_name IN (process_events,file_events,socket_events) | table _time host hostIdentifier action query_name process_name pid file_path cmdline uid local_address remote_address local_port remote_port port protocol signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Hardware device changes</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ query_name="hardware_events" | table _time host hostIdentifier action query_name hardware_action hardware_type hardware_driver hardware_vendor hardware_vendor_id hardware_model hardware_model_id hardware_serial hardware_path signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>User accounts, sessions, and scheduled tasks</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ query_name IN (users,logged_in_users,crontab) | table _time host hostIdentifier action query_name user_name uid user_home user_shell session_tty session_host session_time cron_schedule cron_command cron_path signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SSH authorized keys, SUID binaries, and startup items</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="osquery:results" host=$host_tok$ query_name IN (authorized_keys,suid_bin,startup_items) | table _time host hostIdentifier action query_name uid ssh_key_algorithm ssh_key_comment ssh_key_file ssh_key_options suid_path suid_owner suid_group suid_permissions startup_name startup_path startup_args startup_type startup_source startup_status startup_user signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Status messages and errors</title>
+      <table>
+        <search>
+          <query>index=osnix sourcetype="osquery:status" host=$host_tok$ | table _time host hostIdentifier severity status result signature signature_id filename line marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="osquery:results" OR sourcetype="osquery:status") host=$host_tok$ | eval endpoint=coalesce(hostIdentifier, host), log_type=coalesce(osquery_log_type, action, "status") | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host endpoint log_type | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw osquery events</title>
+      <table>
+        <search>
+          <query>index=osnix (sourcetype="osquery:results" OR sourcetype="osquery:status") host=$host_tok$ | table _time host sourcetype source vendor product osquery_log_type query_name hostIdentifier action severity status result process_name pid file_path cmdline uid local_address remote_address local_port remote_port port protocol hardware_action hardware_path hardware_type hardware_driver hardware_vendor hardware_vendor_id hardware_model hardware_model_id hardware_serial user_name user_home user_shell session_tty session_host session_time cron_schedule cron_command cron_path ssh_key_algorithm ssh_key_comment ssh_key_file ssh_key_options suid_path suid_owner suid_group suid_permissions startup_name startup_path startup_args startup_type startup_source startup_status startup_user marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

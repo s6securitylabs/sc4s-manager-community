@@ -1,0 +1,137 @@
+# Oracle Fusion Middleware / WebLogic conservative Splunk input examples
+#
+# Status: example-only, disabled by default. These stanzas are placeholders for a
+# site-owned Splunk deployment app. Enable only after confirming the exact domain
+# layout, log format, timezone policy, multiline behavior, rotation pattern, and
+# Splunk read-back.
+#
+# The current SecHub oracle_weblogic pack supports an alpha server/access slice;
+# SOA/FMW diagnostic/audit, Node Manager, Forms/Reports, OHS, and Discoverer
+# remain source-shape gated.
+#
+# Replace placeholders such as <DOMAIN_HOME>, <MW_HOME>, <ORACLE_HOME>, and
+# <ORACLE_COLLECTOR_STAGING>. Avoid overlapping monitors that ingest the same
+# file under multiple sourcetypes.
+
+# --- WebLogic server/domain logs --------------------------------------------
+# Oracle WebLogic server logs use a documented ####<...> first-line shape, but
+# stack traces/multiline records and version/configuration details still require
+# local proof before parser promotion.
+[monitor:///<DOMAIN_HOME>/servers/<SERVER_NAME>/logs/<SERVER_NAME>.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:weblogic:server
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+# --- WebLogic HTTP access logs ----------------------------------------------
+# Confirm each server/virtual-host access log location and access log format
+# before enabling. Field order is administrator-configurable.
+[monitor:///<DOMAIN_HOME>/servers/<SERVER_NAME>/logs/<ACCESS_LOG_FILE>.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:weblogic:access
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+# --- WebLogic security audit provider output --------------------------------
+# Enable only after the audit provider is configured and a safe sample proves the
+# principal/action/result format, timestamp behavior, and sensitive-data posture.
+[monitor:///<DOMAIN_HOME>/servers/<SERVER_NAME>/logs/<AUDIT_LOG_FILE>.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:weblogic:audit
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+# --- Node Manager logs -------------------------------------------------------
+# Oracle documents NM_HOME/nodemanager.log, with NM_HOME defaulting to
+# DOMAIN_HOME/nodemanager. Some estates place Node Manager under WL_HOME or a
+# host-level service path; keep paths explicit and non-overlapping.
+[monitor:///<DOMAIN_HOME>/nodemanager/nodemanager.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:weblogic:nodemanager
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+[monitor:///<MW_HOME>/wlserver/common/nodemanager/nodemanager.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:weblogic:nodemanager
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+# --- Fusion Middleware ODL / diagnostic logs --------------------------------
+# FMW Java components commonly write diagnostic logs under
+# DOMAIN_HOME/servers/<server_name>/logs with default name
+# <server_name>-diagnostic.log. ODL text/XML and multiline behavior are
+# component/config dependent; prove boundaries before parser work.
+[monitor:///<DOMAIN_HOME>/servers/<SERVER_NAME>/logs/<SERVER_NAME>-diagnostic.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:fusion_middleware:diagnostic
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+# System-component diagnostics, including OHS/Forms system components in some
+# deployments. Prefer a more specific pack/sourcetype where available.
+[monitor:///<DOMAIN_HOME>/servers/<COMPONENT_NAME>/logs/<COMPONENT_LOG_FILE>.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:fusion_middleware:diagnostic
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+# --- Oracle Forms diagnostics / traces --------------------------------------
+# Forms servlet diagnostics are ODL-like and Forms trace files have a separate
+# trace grammar. Enable only after selecting the desired Forms source mode.
+[monitor:///<DOMAIN_HOME>/servers/WLS_FORMS/logs/<FORMS_APPLICATION_NAME>-diagnostic.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:fusion_middleware:diagnostic
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+[monitor:///<DOMAIN_HOME>/system_components/<FORMS_COMPONENT_NAME>/trace/forms_*.trc]
+disabled = 1
+index = oracle
+sourcetype = oracle:fusion_middleware:forms_trace
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = true
+
+# --- SOA Suite / OSB / BPM audit/export handoff -----------------------------
+# inputs.conf cannot define Enterprise Manager/API/DB exports; this stanza is for
+# a site-owned collector that has already emitted one sanitized JSON object per
+# invocation, audit, flow, or fault event.
+[monitor:///<ORACLE_COLLECTOR_STAGING>/soa/*.jsonl]
+disabled = 1
+index = oracle
+sourcetype = oracle:soa:audit
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = false
+
+# --- Oracle Discoverer legacy logs ------------------------------------------
+# Discoverer deployments are installation-specific. Replace the path only after
+# locating real logs and proving event boundaries.
+[monitor:///<ORACLE_HOME>/discoverer/.../logs/*.log]
+disabled = 1
+index = oracle
+sourcetype = oracle:discoverer:server
+crcSalt = <SOURCE>
+ignoreOlderThan = 30d
+recursive = true
+
+# Validation SPL template after enabling any stanza:
+# index=oracle (sourcetype="oracle:weblogic:*" OR sourcetype="oracle:fusion_middleware:*" OR sourcetype="oracle:soa:*" OR sourcetype="oracle:discoverer:*") earliest=-15m
+# | stats count min(_time) as first max(_time) as last values(host) as host by sourcetype source

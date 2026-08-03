@@ -9,8 +9,8 @@ const validationSchema = z.object({
   ok: z.boolean().optional(),
   revision: z.number().int().nonnegative().optional(),
   validation_token: z.string().min(1).optional(),
-  syntax: z.record(z.string(), z.unknown()).optional(),
-  tls: z.record(z.string(), z.unknown()).optional(),
+  syntax: z.record(z.unknown()).optional(),
+  tls: z.record(z.unknown()).optional(),
   checked_at: z.string().optional(),
 }).passthrough();
 
@@ -20,9 +20,9 @@ const controlSchema = z.object({
 }).passthrough();
 
 const postCheckSchema = z.object({
-  docker: z.record(z.string(), z.unknown()).optional(),
-  health: z.record(z.string(), z.unknown()).optional(),
-  ports: z.record(z.string(), z.unknown()).optional(),
+  docker: z.record(z.unknown()).optional(),
+  health: z.record(z.unknown()).optional(),
+  ports: z.record(z.unknown()).optional(),
 }).passthrough();
 
 export const sourceEntrySchema = z.object({
@@ -54,11 +54,11 @@ export const sourceCatalogResponseSchema = z.object({
 export const onboardSourceResponseSchema = z.object({
   ok: z.boolean(),
   apply_mode: z.string(),
-  service: z.record(z.string(), z.unknown()),
+  service: z.record(z.unknown()),
   validation: validationSchema,
   control: controlSchema,
   post_check: postCheckSchema.optional(),
-  test_instructions: z.record(z.string(), z.string()).optional(),
+  test_instructions: z.record(z.string()).optional(),
 }).passthrough();
 
 export const deleteSourceResponseSchema = z.object({
@@ -107,7 +107,7 @@ export const configureDestinationResponseSchema = z.object({
   kind: z.string(),
   id: z.string(),
   apply_mode: z.string(),
-  updates: z.record(z.string(), z.string()),
+  updates: z.record(z.string()),
   selector: z.string().nullable().optional(),
   backup: z.string().nullable().optional(),
   validation: validationSchema,

@@ -1,0 +1,426 @@
+<form version="1.1" theme="dark">
+  <label>Suricata EVE JSON - Overview</label>
+  <description>Fixture-backed Suricata EVE JSON relay overview for alert, DNS, HTTP, TLS, flow, fileinfo, anomaly, SSH, DHCP, RDP, FTP, Kerberos/KRB5, SMB, MQTT, HTTP/2, PGSQL, Netflow, ARP, IKE, Modbus, QUIC, and POP3 records. Panels use fields proven by synthetic-equivalent fixtures and Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Suricata EVE events</title>
+      <single>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>IDS alert events</title>
+      <single>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="alert" alert.signature_id=* | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>HTTP status &gt;= 400 rows</title>
+      <single>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="http" http.status&gt;=400 | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,20]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Alert severity 1-2 rows</title>
+      <single>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="alert" severity&lt;=2 | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by EVE family</title>
+      <chart>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ | eval family=coalesce(suricata_eve_family, event_type, "unknown") | timechart count by family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family, action, and protocol distribution</title>
+      <chart>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ | eval family=coalesce(suricata_eve_family, event_type, "unknown"), action_or_state=coalesce(action, flow.state, alert.action, family) | stats count by family action_or_state transport app | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top source and destination pairs</title>
+      <chart>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ | eval pair=coalesce(src_ip, src, "unknown") . " -> " . coalesce(dest_ip, dest, "unknown") | stats count by pair transport dest_port app | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>IDS alert triage</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="alert" | table _time host flow_id src_ip src_port dest_ip dest_port transport app action signature signature_id alert.category severity marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>DNS query context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="dns" | table _time host flow_id src_ip src_port dest_ip dest_port transport app dns_query dns_query_type dns.type dns.id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>HTTP request/response context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="http" | table _time host flow_id src_ip src_port dest_ip dest_port transport app http_method http.hostname url http_status http.http_user_agent marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>TLS metadata context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="tls" | table _time host flow_id src_ip src_port dest_ip dest_port transport app tls_sni tls_version tls.subject tls.issuer tls.fingerprint marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Flow accounting context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="flow" | table _time host flow_id src_ip src_port dest_ip dest_port transport app flow.state flow.reason action flow.alerted flow.age bytes_in bytes_out marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>File transaction context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="fileinfo" | table _time host flow_id src_ip src_port dest_ip dest_port transport app http.hostname http.url file_name file_state file_size fileinfo.gaps fileinfo.stored marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Anomaly and SSH context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ (event_type="anomaly" OR event_type="ssh") | table _time host event_type flow_id src_ip src_port dest_ip dest_port transport app anomaly_type anomaly_event ssh_client_software ssh_server_software ssh_client_hassh ssh_server_hassh marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>DHCP lease/address mapping context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="dhcp" | table _time host flow_id src_ip src_port dest_ip dest_port transport app dhcp_type dhcp_client_mac dhcp_assigned_ip dhcp_requested_ip dhcp_hostname dhcp_lease_time dhcp.dns_servers marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>RDP negotiation context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="rdp" | table _time host flow_id src_ip src_port dest_ip dest_port transport app rdp_tx_id rdp_type rdp_protocol rdp_cookie rdp_client_name rdp.flags marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>FTP command/reply context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="ftp" | table _time host flow_id src_ip src_port dest_ip dest_port transport app ftp_command ftp_command_data ftp_completion_code ftp_reply ftp.mode ftp.reply_received marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Kerberos/KRB5 protocol context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="krb5" | table _time host flow_id src_ip src_port dest_ip dest_port transport app krb5_msg_type krb5_client krb5_service krb5_realm krb5_encryption krb5_error_code krb5.weak_encryption krb5.ticket_weak_encryption marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SMB file/share transaction context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="smb" | table _time host flow_id src_ip src_port dest_ip dest_port transport app smb_command smb_status smb_status_code smb_filename smb_share smb_share_type smb.session_id smb.tree_id smb.disposition smb.access marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>MQTT and HTTP/2 protocol context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ (event_type="mqtt" OR event_type="http2") | table _time host event_type flow_id src_ip src_port dest_ip dest_port transport app mqtt_topic mqtt_message_id mqtt_qos mqtt_retain mqtt_client_id http2_authority http2_method http2_path http2_status http2_user_agent marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ | eval family=coalesce(suricata_eve_family, event_type, "unknown") | stats count dc(marker) as fixture_markers values(family) as families values(transport) as transports values(app) as apps min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Suricata EVE JSON events</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ | table _time host sourcetype source vendor product suricata_eve_family event_type flow_id src_ip src_port dest_ip dest_port transport app action signature signature_id severity dns_query http_method http_status tls_sni tls_version bytes_in bytes_out file_name file_state file_size anomaly_type anomaly_event ssh_client_software ssh_server_software dhcp_type dhcp_client_mac dhcp_assigned_ip dhcp_requested_ip rdp_tx_id rdp_type rdp_protocol rdp_client_name ftp_command ftp_command_data ftp_completion_code ftp_reply krb5_msg_type krb5_client krb5_service krb5_realm krb5_encryption krb5_error_code smb_command smb_status smb_filename smb_share mqtt_topic mqtt_qos http2_authority http2_method http2_path http2_status pgsql_tx_id pgsql_query pgsql_command_completed pgsql_data_rows pgsql_data_size netflow_pkts netflow_bytes netflow_age netflow_min_ttl netflow_max_ttl arp_hw_type arp_proto_type arp_opcode arp_src_mac arp_dest_mac ike_init_spi ike_resp_spi ike_version_major ike_exchange_type ike_exchange_type_verbose ike_alg_enc ike_alg_hash ike_alg_auth ike_alg_dh modbus_id modbus_request_function modbus_response_function modbus_access_type modbus_error_flags quic_version quic_sni quic_ja3_hash quic_ja3s_hash quic_ja4 pop3_command pop3_status pop3_success marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>PostgreSQL/PGSQL transaction context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="pgsql" | table _time host flow_id src_ip src_port dest_ip dest_port transport app pgsql_tx_id pgsql_query pgsql_command_completed pgsql_data_rows pgsql_data_size marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Netflow accounting context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="netflow" | table _time host flow_id src_ip src_port dest_ip dest_port transport app netflow_pkts netflow_bytes netflow_age netflow_min_ttl netflow_max_ttl netflow.tx_cnt marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+
+    <panel>
+      <title>IKE VPN negotiation context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="ike" | table _time host flow_id src_ip src_port dest_ip dest_port transport app ike_init_spi ike_resp_spi ike_version_major ike_version_minor ike_exchange_type ike_exchange_type_verbose ike_alg_enc ike_alg_hash ike_alg_auth ike_alg_dh modbus_id modbus_request_function modbus_response_function modbus_access_type modbus_error_flags quic_version quic_sni quic_ja3_hash quic_ja3s_hash quic_ja4 pop3_command pop3_status pop3_success marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>ARP request/reply context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="arp" | table _time host src_ip dest_ip arp_hw_type arp_proto_type arp_opcode arp_src_mac arp_dest_mac marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Modbus industrial protocol context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="modbus" | table _time host flow_id src_ip src_port dest_ip dest_port transport app modbus_id modbus_transaction_id modbus_unit_id modbus_request_function modbus_response_function modbus_access_type modbus_category modbus_error_flags marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>QUIC handshake/fingerprint context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="quic" | table _time host flow_id src_ip src_port dest_ip dest_port transport app quic_version quic_sni quic_ja3_hash quic_ja3s_hash quic_ja4 quic_cyu_hash marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>POP3 command/response context</title>
+      <table>
+        <search>
+          <query>index=netids sourcetype="suricata:eve" host=$host_tok$ event_type="pop3" | table _time host flow_id src_ip src_port dest_ip dest_port transport app pop3_command pop3_args pop3_success pop3_status pop3_header marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+</form>

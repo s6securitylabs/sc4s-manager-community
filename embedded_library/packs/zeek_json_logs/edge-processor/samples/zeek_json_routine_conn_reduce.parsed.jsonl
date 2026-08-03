@@ -1,0 +1,2 @@
+{"conn_state": "SF", "dest_ip": "198.51.100.20", "log_type": "conn", "marker": "SC4S_ZEEK_JSON_TEST_CONN_001", "reduction_decision": "retain_by_default_candidate_only", "service": "ssl", "sourcetype": "zeek:json", "src_ip": "192.0.2.10", "uid": "CZeekConn001"}
+{"dns_query": "www.example.test", "log_type": "dns", "marker": "SC4S_ZEEK_JSON_TEST_DNS_002", "rcode_name": "NOERROR", "reduction_decision": "retain_by_default_candidate_only", "sourcetype": "zeek:json", "uid": "CZeekDns002"}

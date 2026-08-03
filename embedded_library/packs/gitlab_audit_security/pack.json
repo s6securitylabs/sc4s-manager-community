@@ -1,0 +1,1030 @@
+{
+  "schema_version": "0.1",
+  "id": "gitlab_audit_security",
+  "version": "0.1.1",
+  "url": "https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/api/audit_events.md",
+  "description": "Curated SecHub Resources SC4S pack for GitLab Audit Events API and audit-event-streaming JSON records relayed as one JSON object per line, with fixture-backed project, group, user/account, and audit-streaming configuration change families.",
+  "display_name": "GitLab Audit and Security Events",
+  "vendor": "gitlab",
+  "product": "audit_events",
+  "default_index": "gitops",
+  "default_source": "gitlab_audit_security",
+  "listener": {
+    "source_id": "GITLAB_AUDIT_SECURITY",
+    "transport": "tcp",
+    "port": 20099,
+    "env": {
+      "SC4S_LISTEN_GITLAB_AUDIT_SECURITY_TCP_PORT": "20099",
+      "SOURCE_ALL_SET_APPEND": "GITLAB_AUDIT_SECURITY"
+    }
+  },
+  "sourcetypes": {
+    "project_admin_change": "gitlab:audit:json",
+    "group_admin_change": "gitlab:audit:json",
+    "user_account_change": "gitlab:audit:json",
+    "audit_streaming_config_change": "gitlab:audit:json"
+  },
+  "event_families": [
+    {
+      "id": "project_admin_change",
+      "label": "GitLab project administrative changes",
+      "match_engine": "pcre",
+      "match": "\\\"entity_type\\\"\\s*:\\s*\\\"Project\\\"",
+      "expected_sourcetype": "gitlab:audit:json",
+      "primary_id_field": "id",
+      "required_fields": [
+        "id",
+        "created_at",
+        "entity_type",
+        "details"
+      ],
+      "timestamp_fields": [
+        "created_at"
+      ]
+    },
+    {
+      "id": "group_admin_change",
+      "label": "GitLab group administrative changes",
+      "match_engine": "pcre",
+      "match": "\\\"entity_type\\\"\\s*:\\s*\\\"Group\\\"",
+      "expected_sourcetype": "gitlab:audit:json",
+      "primary_id_field": "id",
+      "required_fields": [
+        "id",
+        "created_at",
+        "entity_type",
+        "details"
+      ],
+      "timestamp_fields": [
+        "created_at"
+      ]
+    },
+    {
+      "id": "user_account_change",
+      "label": "GitLab user/account changes",
+      "match_engine": "pcre",
+      "match": "\\\"entity_type\\\"\\s*:\\s*\\\"User\\\"",
+      "expected_sourcetype": "gitlab:audit:json",
+      "primary_id_field": "id",
+      "required_fields": [
+        "id",
+        "created_at",
+        "entity_type",
+        "details"
+      ],
+      "timestamp_fields": [
+        "created_at"
+      ]
+    },
+    {
+      "id": "audit_streaming_config_change",
+      "label": "GitLab audit streaming configuration changes",
+      "match_engine": "pcre",
+      "match": "\\\"event_type\\\"\\s*:\\s*\\\"audit_events_streaming_instance_headers_create\\\"",
+      "expected_sourcetype": "gitlab:audit:json",
+      "primary_id_field": "id",
+      "required_fields": [
+        "id",
+        "created_at",
+        "entity_type",
+        "details"
+      ],
+      "timestamp_fields": [
+        "created_at"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "gitlab",
+    "product": "audit_events",
+    "vendor_product": "gitlab:audit_events",
+    "gitlab_audit_family": "Derived family for project/group/user/streaming changes",
+    "id": "GitLab audit event id",
+    "event_id": "String alias of id for read-back/dedupe",
+    "event_type": "GitLab audit event type where present",
+    "created_at": "GitLab audit timestamp",
+    "author_id": "Actor id",
+    "author_name": "Actor display/name",
+    "author_email": "Actor email where nested details expose it; sensitive",
+    "user": "Actor alias",
+    "src_user": "Actor alias",
+    "entity_id": "Entity id",
+    "entity_type": "Entity type",
+    "entity_path": "Entity path",
+    "target_id": "Target id",
+    "target_type": "Target type",
+    "target_details": "Target details/path/email",
+    "object": "Affected target/entity fallback",
+    "ip_address": "Source IP where present",
+    "src_ip": "Source IP alias",
+    "src": "Source IP alias",
+    "action": "Derived action/signature token",
+    "change": "Details change token",
+    "from": "Previous value for change rows",
+    "to": "New value for change rows",
+    "custom_message": "GitLab details custom message",
+    "signature": "Event type/custom message/change triage signature",
+    "signature_id": "Event id/type triage id",
+    "marker": "Synthetic fixture marker only"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-gitlab_audit_security.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/gitlab_audit_security_overview.xml"
+    ],
+    "test_events": [
+      "test-events/gitlab_audit_security_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20099.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/gitlab_audit_security_reduction_candidates.csv",
+      "validation/preflight-2026-06-20.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / GitLab audit JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20099,
+      "notes": "Dedicated TCP listener for one collector-unwrapped GitLab audit JSON record per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20099,
+      "notes": "Preferred for production if SC4S provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "GitLab Audit Events API / audit event streaming JSON",
+    "min": "GitLab public docs current as of 2026-06-20",
+    "max": null,
+    "notes": "Grounded in official GitLab audit_events.md, audit_event_streaming.md, and audit_event_types.md; collector/webhook receiver must relay one JSON object per line."
+  },
+  "source_delivery": {
+    "mode": "api_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Collector/webhook receiver owns GitLab tokens, HTTP streaming receipt, pagination, retry/dedup/checkpoint state, and relays one JSON object per line; SC4S does not poll GitLab or serve as the native HTTP endpoint.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-20",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "GitLab public docs and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent GitLab audit JSON records only. Local replay preflight is blocked by missing listener/Splunk search path; no live GitLab API/stream relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for GitLab audit JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "gitlab_audit_security_json"
+      ],
+      "event_count": 4,
+      "marker_prefix": "SC4S_GITLAB_AUDIT_SECURITY_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20099.sh"
+    },
+    "readback": {
+      "spl": "index=gitops \\\"SC4S_GITLAB_AUDIT_SECURITY_TEST_\\\" earliest=-2h | table _time index sourcetype source vendor product gitlab_audit_family id event_id event_type created_at author_id author_name author_email src_user entity_id entity_type entity_path target_id target_type target_details object ip_address src_ip action change from to custom_message signature signature_id marker _raw",
+      "expected_count": 4,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "family",
+        "event_id/id",
+        "event_type/signature",
+        "timestamp",
+        "actor/source IP fields",
+        "target/object fields",
+        "raw JSON"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-20",
+      "summary": "Local preflight found no GitLab SC4S TEST listener or authenticated Splunk TEST search path in this repository run; replay/read-back not attempted.",
+      "evidence_path": "validation/preflight-2026-06-20.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-20.md",
+        "summary": "Command-grounded blocker note for missing listener/testbed; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20099,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated GitLab audit JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "gitops"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to gitops",
+        "Search role can read gitops"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "gitlab_audit_security_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/gitlab_audit_security/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/gitlab_audit_security/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/gitlab_audit_security/compose.yaml",
+      "compose_project": "sechub-gitlab-audit-security-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "gitops index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/gitlab_audit_security/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/gitlab_audit_security/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/gitlab_audit_security/scripts/send_tcp_20099.sh 127.0.0.1 20099",
+        "splunk_summary_readback": "index=gitops sechub_fixture_marker=\"SC4S_GITLAB_AUDIT_SECURITY_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=gitops sechub_fixture_marker=\"SC4S_GITLAB_AUDIT_SECURITY_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product gitlab_audit_family id event_id event_type created_at author_id author_name author_email src_user entity_id entity_type entity_path target_id target_type target_details object ip_address src_ip action change from to custom_message signature signature_id marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "gitops",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/gitlab_audit_security/splunk -> /opt/splunk/etc/apps/sechub_gitlab_audit_security:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20099,
+          "host_port_env": "SC4S_GITLAB_AUDIT_SECURITY_PORT",
+          "source_id": "GITLAB_AUDIT_SECURITY"
+        },
+        "parser_mount": "packs/gitlab_audit_security/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "gitlab_audit_events",
+          "source_shape": "json_relay",
+          "event_family": "project_admin_change",
+          "sourcetype": "gitlab:audit:json",
+          "data_structures": [
+            "GitLab Audit Events API project audit event"
+          ],
+          "markers": [
+            "SC4S_GITLAB_AUDIT_SECURITY_TEST_PROJECT_001"
+          ]
+        },
+        {
+          "source": "gitlab_audit_events",
+          "source_shape": "json_relay",
+          "event_family": "group_admin_change",
+          "sourcetype": "gitlab:audit:json",
+          "data_structures": [
+            "GitLab group audit event"
+          ],
+          "markers": [
+            "SC4S_GITLAB_AUDIT_SECURITY_TEST_GROUP_002"
+          ]
+        },
+        {
+          "source": "gitlab_audit_events",
+          "source_shape": "json_relay",
+          "event_family": "user_account_change",
+          "sourcetype": "gitlab:audit:json",
+          "data_structures": [
+            "GitLab user/account audit event"
+          ],
+          "markers": [
+            "SC4S_GITLAB_AUDIT_SECURITY_TEST_USER_003"
+          ]
+        },
+        {
+          "source": "gitlab_audit_event_streaming",
+          "source_shape": "json_relay",
+          "event_family": "audit_streaming_config_change",
+          "sourcetype": "gitlab:audit:json",
+          "data_structures": [
+            "GitLab audit-event-streaming configuration event"
+          ],
+          "markers": [
+            "SC4S_GITLAB_AUDIT_SECURITY_TEST_STREAM_004"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live GitLab tenant/API or collector replay/read-back.",
+        "No token custody, API pagination/checkpoint, webhook receiver, audit-event-streaming retry, or deduplication proof.",
+        "No native API array or HTTP envelope unwrapping proof inside the disposable harness; fixtures are already one event per line.",
+        "No Git events, runner logs, registry logs, application logs, or complete audit event type coverage.",
+        "No production or field validation; synthetic-equivalent fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for the declared collector-unwrapped GitLab audit JSON relay shape, not live GitLab tenant/API/collector validation or field validation."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "gitlab_audit_security_json",
+      "label": "GitLab audit synthetic-equivalent JSON events",
+      "path": "test-events/gitlab_audit_security_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 4,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_GITLAB_AUDIT_SECURITY_TEST_PROJECT_001",
+        "SC4S_GITLAB_AUDIT_SECURITY_TEST_GROUP_002",
+        "SC4S_GITLAB_AUDIT_SECURITY_TEST_USER_003",
+        "SC4S_GITLAB_AUDIT_SECURITY_TEST_STREAM_004"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "created_at",
+        "primary_timezone": "UTC",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "GitLab created_at timestamp policy"
+        ],
+        "notes": "Fixtures use ISO-8601 UTC timestamps with milliseconds."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact JSON with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "project_admin_change",
+        "group_admin_change",
+        "user_account_change",
+        "audit_streaming_config_change"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-gitlab_audit_security.conf",
+      "target_path": "local/config/app_parsers/syslog/app-gitlab_audit_security.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/gitlab_audit_security.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/gitlab_audit_security_overview.xml",
+      "target_path": "splunk/default/data/ui/views/gitlab_audit_security_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/gitlab_audit_security_test_events.txt",
+      "target_path": "test-events/gitlab_audit_security_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20099.sh",
+      "target_path": "scripts/send_tcp_20099.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/gitlab_audit_security_reduction_candidates.csv",
+      "target_path": "docs/gitlab_audit_security_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_20",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-20.md",
+      "target_path": "validation/preflight-2026-06-20.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Official GitLab Audit Events API, audit event streaming, audit event type docs, and local evidence scan; fixtures are synthetic-equivalent examples shaped to public documentation.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test users, documentation IP ranges, synthetic IDs, and synthetic markers; no tenant, token, or production account data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-20",
+      "notes": "Initial conservative GitLab audit JSON relay pack built from public evidence without trust promotion."
+    },
+    "upstream": {
+      "repo": null,
+      "ref": null,
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "src_user",
+            "author_name",
+            "author_email"
+          ],
+          "status": "partial",
+          "notes": "Actor/user context."
+        },
+        "src_user": {
+          "source_fields": [
+            "src_user",
+            "author_name",
+            "details.author_name",
+            "author_email"
+          ],
+          "status": "partial",
+          "notes": "Actor context."
+        },
+        "action": {
+          "source_fields": [
+            "event_type",
+            "custom_message",
+            "change",
+            "signature"
+          ],
+          "status": "partial",
+          "notes": "Audit action/change token."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "event_type",
+            "custom_message",
+            "change"
+          ],
+          "status": "partial",
+          "notes": "Triage signature only."
+        },
+        "signature_id": {
+          "source_fields": [
+            "id",
+            "event_id",
+            "signature_id"
+          ],
+          "status": "partial",
+          "notes": "GitLab audit id/event id."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "ip_address",
+            "details.ip_address"
+          ],
+          "status": "partial",
+          "notes": "Source IP where present."
+        },
+        "object": {
+          "source_fields": [
+            "object",
+            "target_details",
+            "entity_path",
+            "entity_type"
+          ],
+          "status": "partial",
+          "notes": "Affected entity/target context."
+        }
+      },
+      "notes": "Partial audit/change guidance only; not CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "src_user",
+            "author_name",
+            "author_email"
+          ],
+          "status": "partial",
+          "notes": "Actor context."
+        },
+        "activity_name": {
+          "source_fields": [
+            "event_type",
+            "custom_message",
+            "change",
+            "signature"
+          ],
+          "status": "partial",
+          "notes": "Audit activity token."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "id",
+            "event_id"
+          ],
+          "status": "partial",
+          "notes": "GitLab audit event id."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip",
+            "ip_address"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        },
+        "resource.name": {
+          "source_fields": [
+            "target_details",
+            "entity_path",
+            "object"
+          ],
+          "status": "partial",
+          "notes": "Target/entity context."
+        }
+      },
+      "notes": "OCSF helper mapping only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "event_type",
+            "custom_message",
+            "change",
+            "signature"
+          ],
+          "status": "partial",
+          "notes": "Audit action token."
+        },
+        "event.id": {
+          "source_fields": [
+            "id",
+            "event_id"
+          ],
+          "status": "partial",
+          "notes": "GitLab audit event id."
+        },
+        "event.category": {
+          "source_fields": [
+            "gitlab_audit_family"
+          ],
+          "status": "partial",
+          "notes": "Derived family."
+        },
+        "user.email": {
+          "source_fields": [
+            "author_email",
+            "details.author_email",
+            "target_details"
+          ],
+          "status": "partial",
+          "notes": "Synthetic fixture emails only."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip",
+            "ip_address"
+          ],
+          "status": "partial",
+          "notes": "Source IP."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/gitlab_audit_security/sc4s/app_parsers/syslog/app-gitlab_audit_security.conf": "sha256:55b441fcfdf5dddd3bdb413a5fc5ba6bd491fd515a7f9d72167af39bccfff48d",
+      "packs/gitlab_audit_security/sc4s/env.example": "sha256:732935262663f561374739296f05f219d4b46dd51fbe7828a2a24da4de214c41",
+      "packs/gitlab_audit_security/splunk/default/props.conf": "sha256:0ce49ec34b3c1c0ae24d02ba53155aa46ba0da930ce02bc6b2566f276fdf1d5e",
+      "packs/gitlab_audit_security/splunk/default/transforms.conf": "sha256:fd57bb024627519581bb1ce13d15bfae9c84f23af30571e131e8072a6981e3ab",
+      "packs/gitlab_audit_security/splunk/default/eventtypes.conf": "sha256:8d25bcc919393e93653da000f178e11f8c96208387d36400590746cef85b8bc7",
+      "packs/gitlab_audit_security/splunk/default/tags.conf": "sha256:42595fedefab7d83e33f1ad8b8ce462c29b53d50c7e6ad3e5168da4bdda6cee0",
+      "packs/gitlab_audit_security/splunk/default/data/ui/views/gitlab_audit_security_overview.xml": "sha256:0f75434595f44aa1fde1827948f329d6033a5355434304dd1dafe4867b27e8ee",
+      "packs/gitlab_audit_security/test-events/gitlab_audit_security_test_events.txt": "sha256:f6808b31d192aa688a1148fe51f9b23c7d8e06bcba4a05d2059dece3ec049df5",
+      "packs/gitlab_audit_security/scripts/send_tcp_20099.sh": "sha256:6c5ba40f7ac0a5f7c0f58b46f248d45d015585f2e7dfe6c27d8ae833586c51a8",
+      "packs/gitlab_audit_security/README.md": "sha256:3350a2d70ea6da6823801bd6db582176a60cf95089f3f9892b8639741eab8a96",
+      "packs/gitlab_audit_security/docs/gitlab_audit_security_reduction_candidates.csv": "sha256:850bded1e704ee5f2d3c11f041357808255cde1bf757caa15d76f37dae33a7af",
+      "packs/gitlab_audit_security/validation/preflight-2026-06-20.md": "sha256:f36da24aea1f6ffd87e40353c8d737ad00fc62cd57d7bec2541c4fbb72011d68",
+      "packs/gitlab_audit_security/scripts/e2e_docker_compose.sh": "sha256:07b93923aef022de4aa74cfba0166a3093d06b67b00d5c42091071a1b8542aa1"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "saas",
+    "audit",
+    "source_control",
+    "security_operations",
+    "json"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "audit_events_json_relay",
+      "label": "GitLab Audit Events JSON relay",
+      "description": "One GitLab audit-event JSON object per record after a collector/webhook receiver unwraps or receives the API/stream payload.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "gitlab_audit_events_api",
+        "gitlab_audit_event_streaming",
+        "collector_relay",
+        "cribl_or_siem_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "project_admin_change",
+        "group_admin_change",
+        "user_account_change",
+        "audit_streaming_config_change"
+      ],
+      "test_event_sets": [
+        "gitlab_audit_security_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live GitLab API/stream relay replay/read-back captured.",
+        "Only collector-relayed one-line JSON records are fixture-backed; native API arrays and HTTP POST envelopes need collector splitting/receipt.",
+        "Audit event type coverage is narrow and does not prove complete GitLab platform coverage."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/gitlab_audit_security_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "created_at",
+        "id",
+        "event_type",
+        "entity_type",
+        "entity_path",
+        "target_details",
+        "details.author_email",
+        "ip_address"
+      ],
+      "notes": "Cribl/collector should relay one GitLab audit event per record and preserve nested details by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live GitLab tenant/API/stream replay or Splunk indexed read-back captured.",
+    "SC4S does not poll GitLab, manage credentials/checkpoints, or serve as a native GitLab HTTP endpoint.",
+    "Native API arrays and audit-event-streaming HTTP envelopes are not the default SC4S event boundary.",
+    "Fixture-backed action coverage is narrow and does not prove complete GitLab audit-event-type coverage."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic GitLab audit JSON relay",
+      "description": "Parser and required Splunk JSON knowledge only; no drops or masking.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-gitlab_audit_security.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard GitLab analyst knowledge",
+      "description": "Adds fixture-backed eventtypes, tags, and dashboard example; no drops or masking.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced GitLab reduction review candidates",
+      "description": "Advisory privacy/noise reduction candidates only. No lossy reduction artifact is shipped or enabled by default.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/gitlab_audit_security_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling, approval, and replay/read-back."
+    }
+  ],
+  "reduction_rules": [],
+  "dashboard_screenshots": [
+    {
+      "id": "gitlab_audit_security_overview_splunk_test",
+      "title": "GitLab Audit and Security Events — dashboard example",
+      "source_path": "dashboards/screenshots/gitlab-audit-security-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the GitLab Audit and Security Events dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

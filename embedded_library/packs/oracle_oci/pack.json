@@ -1,0 +1,932 @@
+{
+  "schema_version": "0.1",
+  "id": "oracle_oci",
+  "version": "0.1.2",
+  "url": "https://docs.oracle.com/en-us/iaas/Content/Audit/Concepts/auditoverview.htm",
+  "description": "Oracle Cloud Infrastructure audit and observability telemetry covering OCI Audit (CloudEvents JSON), OCI Logging records, VCN Flow Logs, WAF events, Cloud Guard findings, Bastion session audit, Object Storage activity logs, and Load Balancer access logs. Typical forwarding: OCI Logging REST pull via Service Connector Hub, Streaming/Kafka pipeline, or Object Storage export to collector. OCI Audit variant is actionable (source definition complete, fixture capture deferred); remaining variants blocked on source-shape evidence. Operator action required: provide fixture events before any variant can be promoted.",
+  "display_name": "Oracle Cloud Infrastructure audit and logging",
+  "vendor": "oracle",
+  "product": "oci",
+  "default_index": "main",
+  "default_source": "oracle_oci",
+  "listener": {
+    "source_id": "ORACLE_OCI",
+    "transport": "tcp",
+    "port": 20101,
+    "env": {
+      "SC4S_LISTEN_ORACLE_OCI_TCP_PORT": "20101",
+      "SOURCE_ALL_SET_APPEND": "ORACLE_OCI"
+    }
+  },
+  "sourcetypes": {
+    "oracle_oci_audit": "oracle:oci:audit",
+    "oracle_oci_logging": "oracle:oci:logging",
+    "oracle_oci_vcn_flow": "oracle:oci:vcn:flow",
+    "oracle_oci_waf": "oracle:oci:waf",
+    "oracle_oci_cloud_guard": "oracle:oci:cloudguard",
+    "oracle_oci_bastion": "oracle:oci:bastion",
+    "oracle_oci_object_storage": "oracle:oci:objectstorage",
+    "oracle_oci_load_balancer": "oracle:oci:loadbalancer"
+  },
+  "event_families": [
+    {
+      "id": "oracle_oci_audit",
+      "label": "OCI Audit control-plane events",
+      "match_engine": "pcre",
+      "match": "SC4S_ORACLE_OCI_SOURCE_SHAPE_REQUIRED_001",
+      "expected_sourcetype": "oracle:oci:audit",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_oci_logging",
+      "label": "OCI Logging generic envelope",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_OCI_ORACLE_OCI_LOGGING_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:oci:logging",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_oci_vcn_flow",
+      "label": "VCN Flow Logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_OCI_ORACLE_OCI_VCN_FLOW_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:oci:vcn:flow",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_oci_waf",
+      "label": "OCI WAF logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_OCI_ORACLE_OCI_WAF_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:oci:waf",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_oci_cloud_guard",
+      "label": "Cloud Guard detector/problem events",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_OCI_ORACLE_OCI_CLOUD_GUARD_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:oci:cloudguard",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_oci_bastion",
+      "label": "OCI Bastion session/control events",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_OCI_ORACLE_OCI_BASTION_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:oci:bastion",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_oci_object_storage",
+      "label": "Object Storage activity",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_OCI_ORACLE_OCI_OBJECT_STORAGE_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:oci:objectstorage",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_oci_load_balancer",
+      "label": "Load Balancer logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_OCI_ORACLE_OCI_LOAD_BALANCER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:oci:loadbalancer",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "eventTime": "Preserve eventTime when present in the exact source shape; do not invent or derive without evidence.",
+    "eventType": "Preserve eventType when present in the exact source shape; do not invent or derive without evidence.",
+    "eventID": "Preserve eventID when present in the exact source shape; do not invent or derive without evidence.",
+    "source": "Preserve source when present in the exact source shape; do not invent or derive without evidence.",
+    "principal_id": "Preserve principal_id when present in the exact source shape; do not invent or derive without evidence.",
+    "principal_name": "Preserve principal_name when present in the exact source shape; do not invent or derive without evidence.",
+    "src_ip": "Preserve src_ip when present in the exact source shape; do not invent or derive without evidence.",
+    "request_id": "Preserve request_id when present in the exact source shape; do not invent or derive without evidence.",
+    "request_action": "Preserve request_action when present in the exact source shape; do not invent or derive without evidence.",
+    "response_status": "Preserve response_status when present in the exact source shape; do not invent or derive without evidence.",
+    "resource_id": "Preserve resource_id when present in the exact source shape; do not invent or derive without evidence.",
+    "resource_name": "Preserve resource_name when present in the exact source shape; do not invent or derive without evidence.",
+    "compartment_id": "Preserve compartment_id when present in the exact source shape; do not invent or derive without evidence.",
+    "region": "Preserve region when present in the exact source shape; do not invent or derive without evidence.",
+    "service_name": "Preserve service_name when present in the exact source shape; do not invent or derive without evidence.",
+    "oci_data": "Preserve oci_data when present in the exact source shape; do not invent or derive without evidence."
+  },
+  "artifacts": {
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md",
+      "validation/source-shape-acquisition-plan-2026-06-20.md"
+    ],
+    "test_events": [
+      "test-events/source_shape_required.txt"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "collector_definition_only",
+      "label": "Collector/source definition only — routing disabled",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20101,
+      "notes": "Placeholder listener metadata required by current schema. No SC4S parser/listener is shipped; Manager/SecHub should keep routing disabled until a concrete relay envelope is selected.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "collector_definition_only",
+  "source_log_version": {
+    "name": "Oracle Cloud Infrastructure audit and logging",
+    "min": "public Oracle evidence scan 2026-06-08",
+    "max": null,
+    "notes": "Exact product version/source mode required before parser fixtures or deployment routing."
+  },
+  "validation": {
+    "date_validated": "not validated; catalogued 2026-06-08",
+    "validated_by": "Hermes source-definition curation only; no validated/verified status stated",
+    "source_log_version": "Public Oracle evidence scan only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Pack definition only. No parser artifacts, fixtures, SC4S replay, HEC delivery, Splunk read-back, Manager collector read-back, or production-equivalent validation captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "Source-shape then replay/readback gate for Oracle Cloud Infrastructure audit and logging",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "source_shape_required"
+      ],
+      "event_count": 1,
+      "marker_prefix": "SC4S_ORACLE_OCI_TEST_",
+      "transport": "source_shape_required",
+      "framing": "source_shape_required"
+    },
+    "readback": {
+      "spl": "index=main sechub_fixture_marker=\"SC4S_ORACLE_OCI_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product action user src severity status message _raw",
+      "expected_count": 1,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "timestamp",
+        "required fields for selected variant",
+        "no sensitive values exposed"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "source_mapping",
+      "date": "2026-06-08",
+      "summary": "No exact emitted source shape or relay envelope has been selected for this Oracle source-family definition; parser fixtures and replay/read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Documents source-shape/replay blocker; not validation evidence."
+      },
+      {
+        "type": "blocked_preflight",
+        "path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+        "summary": "OCI source-shape acquisition checklist; not validation evidence."
+      }
+    ]
+  },
+  "test_event_sets": [
+    {
+      "id": "source_shape_required",
+      "label": "Source-shape evidence placeholder marker",
+      "path": "test-events/source_shape_required.txt",
+      "format": "raw",
+      "wire_format": "placeholder_not_product_log",
+      "envelope": "none",
+      "serialization": "raw_text",
+      "event_count": 1,
+      "events_per_file": "single",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ORACLE_OCI_SOURCE_SHAPE_REQUIRED_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "unknown_requires_validation",
+        "primary_field": "not_applicable_source_shape_required",
+        "primary_timezone": "unknown_requires_validation",
+        "fallback_fields": [],
+        "fallback_time_mode": "unknown_requires_validation",
+        "fallback_timezone": "unknown_requires_validation",
+        "requires_source_timezone_when_fields_missing": [
+          "selected Oracle source variant timezone policy"
+        ],
+        "notes": "Placeholder only; no source timestamp exists until an emitted source shape is selected."
+      },
+      "field_delimiting": {
+        "style": "placeholder_not_product_log",
+        "field_separator": "none",
+        "quote_character": "none",
+        "escape_policy": "not applicable",
+        "notes": "This is not an Oracle event fixture; it prevents empty fixture requirementss while keeping routing disabled."
+      },
+      "expected_families": []
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "preflight",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "source_shape_acquisition_plan_20260620",
+      "group": "docs",
+      "source_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "target_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "source_shape_required",
+      "group": "test_events",
+      "source_path": "test-events/source_shape_required.txt",
+      "target_path": "test-events/source_shape_required.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "docs/evidence/oracle-platform-evidence-scan-20260608.md plus Oracle public product documentation listed there.",
+      "redistribution": "unknown",
+      "sanitisation_status": "unknown",
+      "notes": "No source samples are redistributed; pack definitions record source-shape requirements only."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent with subagent planning",
+      "reviewed_at": "2026-06-08",
+      "notes": "Created from Oracle platform backlog/subagent plan as catalogue-first definitions for Manager/SecHub; routing disabled until source evidence exists."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "catalogued",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "signature": {
+          "source_fields": [
+            "signature"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "status": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        }
+      },
+      "notes": "Planning note only; no parser/read-back evidence."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "unknown",
+          "notes": "Raw event retention required once source exists."
+        }
+      },
+      "notes": "Source-family planning only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires evidence."
+        }
+      },
+      "notes": "Optional helper mapping only."
+    }
+  },
+  "source_pack_kind": "generic_log_source_definition",
+  "source_categories": [
+    "cloud",
+    "security",
+    "identity"
+  ],
+  "supported_targets": [
+    "splunk",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "oracle_oci_audit",
+      "label": "OCI Audit control-plane events",
+      "description": "OCI Audit control-plane events: OCI Audit API, Service Connector Hub, Object Storage/Streaming/collector JSON relay.",
+      "default": true,
+      "evidence_status": "catalogued",
+      "implementation_status": "source_definition_actionable_fixture_deferred",
+      "source_modes": [
+        "OCI Audit API",
+        "Service Connector Hub",
+        "Object Storage/Streaming/collector JSON relay"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_oci_audit"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Public OCI Audit schema supports source definition; service-specific data payload parsing remains blocked until examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_oci_logging",
+      "label": "OCI Logging generic envelope",
+      "description": "OCI Logging generic envelope: OCI Logging record envelope or collector JSON relay.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "OCI Logging record envelope or collector JSON relay"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_oci_logging"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Generic envelope only; source-specific logs blocked until exact payload examples.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_oci_vcn_flow",
+      "label": "VCN Flow Logs",
+      "description": "VCN Flow Logs: OCI VCN flow log records.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "OCI VCN flow log records"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_oci_vcn_flow"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until exact VCN flow record shape/version selected.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_oci_waf",
+      "label": "OCI WAF logs",
+      "description": "OCI WAF logs: WAF log/event payloads.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "WAF log/event payloads"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_oci_waf"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until exact WAF payload examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_oci_cloud_guard",
+      "label": "Cloud Guard detector/problem events",
+      "description": "Cloud Guard detector/problem events: Cloud Guard findings/problems.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Cloud Guard findings/problems"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_oci_cloud_guard"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until detector/problem schema examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_oci_bastion",
+      "label": "OCI Bastion session/control events",
+      "description": "OCI Bastion session/control events: Bastion session/control audit.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Bastion session/control audit"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_oci_bastion"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until exact session/control event examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_oci_object_storage",
+      "label": "Object Storage activity",
+      "description": "Object Storage activity: Object/bucket activity logs/audit.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "Object/bucket activity logs/audit"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_oci_object_storage"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until source shape confirmed.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_oci_load_balancer",
+      "label": "Load Balancer logs",
+      "description": "Load Balancer logs: load balancer access/security records.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "load balancer access/security records"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_oci_load_balancer"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme",
+        "preflight"
+      ],
+      "known_limitations": [
+        "Blocked until access/security format examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    }
+  ],
+  "adapters": {
+    "generic": {
+      "manager_visibility": "catalog_only",
+      "routing_enabled": false,
+      "sechub_detection_claims": "none",
+      "notes": "Manager/SecHub should surface this as a source-shape checklist, not a deployable parser."
+    },
+    "cribl": {
+      "default_behavior": "preserve_all_fields",
+      "notes": "Collector serialization and redaction policy required before route design."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "implementation_status": "catalogued_source_definition_source_shape_required",
+  "manager_visibility": "catalog_only",
+  "sechub_detection_claims": "none",
+  "routing_enabled": false,
+  "fixture_policy": "no fixtures until exact source-shape evidence exists",
+  "sc4s_adapter_enabled": false,
+  "known_limitations": [
+    "This is a catalogue/source definition, not a deployable SC4S parser pack.",
+    "No fixtures are shipped because exact emitted source shapes are not yet selected for the variants.",
+    "Trust remains unverified and quality remains catalogued; do not promote from CI or pack presence.",
+    "Oracle logs/exports may contain sensitive users, SQL text/binds, business data, OCIDs, hostnames, request parameters, or tenant identifiers; sample capture requires sanitisation.",
+    "OCI source-shape acquisition plan exists, but no exact OCI emitted records or relay envelopes have been captured."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "not applicable; no fixtures until source shape exists",
+    "tested_artifact_hashes": {
+      "packs/oracle_oci/README.md": "sha256:bf39d78dd2139a774a06f2ad5b56b3fddd4a02011486afd01a468ee578d00c71",
+      "packs/oracle_oci/test-events/source_shape_required.txt": "sha256:a52b025f2c31b000bb1aea09a70295c80ef02e4a5b696c4c65378333f9b5d145",
+      "packs/oracle_oci/validation/preflight-2026-06-08.md": "sha256:de37d27e07180d4f6122b4558d3ff6521cc88d606d9c19d07c44284a95b84a22",
+      "packs/oracle_oci/validation/source-shape-acquisition-plan-2026-06-20.md": "sha256:bae54dd04602365df7fb0722b88111ee1e9c82ea2b75adb1d6d9257423d14724"
+    },
+    "tested_commit": "not_committed_yet",
+    "last_updated": "2026-07-08",
+    "last_tested": "2026-07-08 local CI pending final commit"
+  },
+  "source_delivery": {
+    "mode": "catalogue_definition_only",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "unknown_placeholder_raw",
+    "supported_transport_refs": [
+      "collector_definition_only"
+    ],
+    "notes": "OCI audit/logging is cloud/API/export oriented, but this pack is currently catalogue-only with routing disabled.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  }
+}

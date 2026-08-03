@@ -1,0 +1,10 @@
+{
+  "schema_version": "1.0",
+  "source_repository": "s6securitylabs/sechub-resources",
+  "source_ref": "origin/main",
+  "source_revision": "839c21b2e8d2739b84eaf2075cad8a7d9ee0710f",
+  "source_tree": "6f31875d242565934c0a4dca9baa8b3126c19427",
+  "pack_count": 67,
+  "content_sha256": "0475e920a2abd57bb8997e451e01a3eb35c645e13706597448c1dbeb573e901c",
+  "snapshot_kind": "immutable_embedded_library"
+}

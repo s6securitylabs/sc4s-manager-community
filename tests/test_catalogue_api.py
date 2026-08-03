@@ -186,7 +186,7 @@ def test_catalogue_api_detail_contract_contains_provenance_comparison_and_feedba
     monkeypatch.setattr('sc4s_manager.app.PACK_DIR', packs_root)
 
     detail = catalogue_detail('commvault_commcell')
-    assert detail['effective_origin'] == 'sechub-resource'
+    assert detail['effective_origin'] == 'sechub-resources-pack'
     assert detail['comparison_to_upstream']['relationship'] == 'new_pack'
     assert detail['feedback'] == {'likes': 0, 'rating_average': None, 'comments_url': None}
     assert detail['artifacts']

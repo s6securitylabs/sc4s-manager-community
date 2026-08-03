@@ -1,33 +1,17 @@
 # SC4S Manager Docker-first release compose template.
-#
-# This is intentionally aligned to the upstream SC4S Docker Compose process:
-#   - place this file in /opt/sc4s/compose.yaml or docker-compose.yml
-#   - keep SC4S configuration in /opt/sc4s/env_file
-#   - keep local parser/config material under /opt/sc4s/local
-#   - keep archive and TLS material under /opt/sc4s/archive and /opt/sc4s/tls
-#   - keep syslog-ng disk-buffer state in the splunk-sc4s-var Docker volume
-#
-# Quick start:
-#   sudo mkdir -p /opt/sc4s/{env,local,archive,tls,manager}
-#   sudo cp deploy/compose/compose.yaml /opt/sc4s/compose.yaml
-#   sudo cp deploy/compose/env_file.example /opt/sc4s/env/env_file
-#   sudo ln -s env/env_file /opt/sc4s/env_file
-#   sudo cp deploy/compose/manager.env.example /opt/sc4s/manager.env
-#   sudo cp deploy/compose/.env.example /opt/sc4s/.env
-#   sudo chown -R 10001:10001 /opt/sc4s/{env,local,tls,manager}
-#   sudo editor /opt/sc4s/env/env_file /opt/sc4s/manager.env /opt/sc4s/.env
-#   cd /opt/sc4s && sudo docker compose -f compose.yaml up -d
-#
-# This template deliberately does NOT mount /var/run/docker.sock. Without a
-# narrow host-provided control socket, runtime restart/reload/control actions are
-# unavailable and the UI reports runtime control as unknown/unavailable. That is
-# safer than giving a web-adjacent container host-root Docker control.
+# Install as /opt/sc4s/compose.yaml. Immutable frontend assets and built-in packs
+# stay in the Manager image; only mutable state paths are bind-mounted.
+# This deployment never mounts /var/run/docker.sock. A separately installed,
+# narrow host control socket may be mounted explicitly when available.
 services:
   sc4s:
-    image: ${SC4S_IMAGE:-ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0}
+    image: ${SC4S_IMAGE:-ghcr.io/splunk/splunk-connect-for-syslog/container3:3.46.0}
     container_name: SC4S
     restart: unless-stopped
     env_file:
+      # Keep the conventional SC4S host path. Install staging makes this a
+      # symlink to env/env_file so Manager can safely use atomic replacement on
+      # the mounted containing directory without receiving broader /opt/sc4s access.
       - /opt/sc4s/env_file
     ports:
       - target: 514
@@ -52,7 +36,7 @@ services:
       - /opt/sc4s/tls:/etc/syslog-ng/tls:ro,z
 
   manager:
-    image: ${SC4S_MANAGER_IMAGE:-ghcr.io/s6securitylabs/sc4s-manager-community:1.0.3}
+    image: ghcr.io/s6securitylabs/sc4s-manager:${SC4S_MANAGER_VERSION:-3.46.0-beta}
     container_name: sc4s-manager
     restart: unless-stopped
     depends_on:
@@ -61,18 +45,25 @@ services:
       - /opt/sc4s/manager.env
     environment:
       SC4S_ROOT: /opt/sc4s
-      SC4S_ENV_FILE: /opt/sc4s/env/env_file
+      SC4S_ENV_FILE: /opt/sc4s-manager-env/env_file
       SC4S_MANAGER_ROOT: /opt/sc4s-manager
+      SC4S_CONTROL_SOCKET: /run/sc4s-manager/control.sock
+      SC4S_HEALTH_URL: http://sc4s:8080/health
     ports:
       - target: 8090
         published: ${SC4S_MANAGER_PORT:-8090}
+        host_ip: ${SC4S_MANAGER_BIND_ADDRESS:-127.0.0.1}
         protocol: tcp
     volumes:
-      - /opt/sc4s/env:/opt/sc4s/env:z
       - /opt/sc4s/local:/opt/sc4s/local:z
       - /opt/sc4s/tls:/opt/sc4s/tls:z
-      - /opt/sc4s/manager:/opt/sc4s-manager:z
-
+      # Mount the containing directory so Manager's atomic temp+rename update is
+      # safe; a single-file bind mount cannot be atomically replaced.
+      - /opt/sc4s/env:/opt/sc4s-manager-env:z
+      - /opt/sc4s/manager/state:/opt/sc4s-manager/state:z
+      - /opt/sc4s/manager/backups:/opt/sc4s-manager/backups:z
+      - /opt/sc4s/manager/templates:/opt/sc4s-manager/templates:z
+      - sc4s-manager-run:/run/sc4s-manager
     read_only: true
     tmpfs:
       - /tmp
@@ -81,10 +72,11 @@ services:
     cap_drop:
       - ALL
     healthcheck:
-      test: ["CMD", "python", "-c", "import json, urllib.request; data=json.loads(urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=3).read().decode()); raise SystemExit(0 if data.get('status') == 'ok' else 1)"]
+      test: ["CMD", "python", "-c", "import json, urllib.request; data=json.loads(urllib.request.urlopen('http://127.0.0.1:8090/ready', timeout=3).read().decode()); raise SystemExit(0 if data.get('status') == 'ready' else 1)"]
       interval: 30s
       timeout: 5s
       retries: 3
 
 volumes:
   splunk-sc4s-var:
+  sc4s-manager-run:

@@ -1,0 +1,1425 @@
+{
+  "schema_version": "0.1",
+  "id": "cloudflare_security_access",
+  "version": "0.1.8",
+  "url": "https://developers.cloudflare.com/logs/reference/log-fields/",
+  "description": "Curated SecHub Resources SC4S pack for Cloudflare Logpush and Zero Trust security/access records relayed as one JSON record per line, covering HTTP request, WAF/firewall, Access, Gateway DNS/HTTP/Network, and audit-log families.",
+  "display_name": "Cloudflare Security and Access",
+  "vendor": "cloudflare",
+  "product": "security_access",
+  "default_index": "netwaf",
+  "default_source": "cloudflare_security_access",
+  "listener": {
+    "source_id": "CLOUDFLARE_SECURITY_ACCESS",
+    "transport": "tcp",
+    "port": 20081,
+    "env": {
+      "SC4S_LISTEN_CLOUDFLARE_SECURITY_ACCESS_TCP_PORT": "20081",
+      "SOURCE_ALL_SET_APPEND": "CLOUDFLARE_SECURITY_ACCESS"
+    }
+  },
+  "sourcetypes": {
+    "http_request": "cloudflare:http:request",
+    "waf_event": "cloudflare:waf:event",
+    "access_request": "cloudflare:access:request",
+    "gateway_dns": "cloudflare:gateway:dns",
+    "gateway_http": "cloudflare:gateway:http",
+    "audit_log": "cloudflare:audit",
+    "gateway_network": "cloudflare:gateway:network"
+  },
+  "event_families": [
+    {
+      "id": "http_request",
+      "label": "Cloudflare HTTP request logs",
+      "match_engine": "pcre",
+      "match": "\"Dataset\"\\s*:\\s*\"http_requests\".*\"RayID\"",
+      "expected_sourcetype": "cloudflare:http:request",
+      "primary_id_field": "RayID",
+      "required_fields": [
+        "Dataset",
+        "RayID",
+        "ClientIP",
+        "ClientRequestHost",
+        "ClientRequestURI",
+        "EdgeResponseStatus"
+      ],
+      "timestamp_fields": [
+        "EdgeStartTimestamp"
+      ]
+    },
+    {
+      "id": "waf_event",
+      "label": "Cloudflare WAF/firewall events",
+      "match_engine": "pcre",
+      "match": "\"Dataset\"\\s*:\\s*\"firewall_events\".*\"(Action|RuleID)\"",
+      "expected_sourcetype": "cloudflare:waf:event",
+      "primary_id_field": "RuleID",
+      "required_fields": [
+        "Dataset",
+        "Action",
+        "RuleID",
+        "ClientRequestHost",
+        "ClientRequestURI"
+      ],
+      "timestamp_fields": [
+        "Datetime"
+      ]
+    },
+    {
+      "id": "access_request",
+      "label": "Cloudflare Access request logs",
+      "match_engine": "pcre",
+      "match": "\"Dataset\"\\s*:\\s*\"access_requests\".*\"UserEmail\"",
+      "expected_sourcetype": "cloudflare:access:request",
+      "primary_id_field": "RayID",
+      "required_fields": [
+        "Dataset",
+        "ApplicationName",
+        "UserEmail",
+        "IPAddress",
+        "Action"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "gateway_dns",
+      "label": "Cloudflare Gateway DNS logs",
+      "match_engine": "pcre",
+      "match": "\"Dataset\"\\s*:\\s*\"gateway_dns\".*\"QueryName\"",
+      "expected_sourcetype": "cloudflare:gateway:dns",
+      "primary_id_field": "QueryName",
+      "required_fields": [
+        "Dataset",
+        "QueryName",
+        "QueryType",
+        "SourceIP",
+        "Action"
+      ],
+      "timestamp_fields": [
+        "Datetime"
+      ]
+    },
+    {
+      "id": "gateway_http",
+      "label": "Cloudflare Gateway HTTP logs",
+      "match_engine": "pcre",
+      "match": "\"Dataset\"\\s*:\\s*\"gateway_http\".*\"URL\"",
+      "expected_sourcetype": "cloudflare:gateway:http",
+      "primary_id_field": "URL",
+      "required_fields": [
+        "Dataset",
+        "URL",
+        "Method",
+        "SourceIP",
+        "Action"
+      ],
+      "timestamp_fields": [
+        "Datetime"
+      ]
+    },
+    {
+      "id": "gateway_network",
+      "label": "Cloudflare Gateway Network session logs",
+      "match_engine": "pcre",
+      "match": "\\\"Dataset\\\"\\s*:\\s*\\\"gateway_network\\\".*\\\"SessionID\\\"",
+      "expected_sourcetype": "cloudflare:gateway:network",
+      "primary_id_field": "SessionID",
+      "required_fields": [
+        "Dataset",
+        "SessionID",
+        "SourceIP",
+        "DestinationIP",
+        "DestinationPort",
+        "TransportProtocol",
+        "Action"
+      ],
+      "timestamp_fields": [
+        "Datetime"
+      ]
+    },
+    {
+      "id": "audit_log",
+      "label": "Cloudflare account audit logs",
+      "match_engine": "pcre",
+      "match": "\"Dataset\"\\s*:\\s*\"audit_logs\".*\"Action\"",
+      "expected_sourcetype": "cloudflare:audit",
+      "primary_id_field": "ID",
+      "required_fields": [
+        "Dataset",
+        "ID",
+        "Action",
+        "ActorEmail",
+        "ResourceID"
+      ],
+      "timestamp_fields": [
+        "When"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Cloudflare",
+    "product": "security_access",
+    "vendor_product": "cloudflare:security_access",
+    "cloudflare_family": "Derived family from Dataset/sourcetype",
+    "ray_id": "Cloudflare Ray/request identifier where present",
+    "src_ip": "Client/source/actor IP from documented Cloudflare fields",
+    "user": "Access/Gateway/audit user or actor identity where present",
+    "dest": "Request host or URL host context",
+    "uri": "HTTP request URI or path",
+    "url": "Gateway HTTP URL",
+    "http_method": "HTTP method where present",
+    "action": "Native Cloudflare action/decision token; not normalized away from vendor semantics",
+    "signature": "Rule/policy/audit/request grouping field",
+    "signature_id": "Ray/rule/policy/audit identifier",
+    "rule_id": "WAF/firewall rule identifier",
+    "rule_message": "WAF/firewall rule message",
+    "policy_id": "Gateway or Access policy identifier",
+    "policy_name": "Gateway or Access policy name",
+    "resource_id": "Audit resource identifier",
+    "resource_type": "Audit resource type",
+    "http_user_agent": "HTTP user-agent from Cloudflare HTTP/Gateway HTTP records",
+    "status": "HTTP response/status code from Cloudflare HTTP/Gateway HTTP records",
+    "cache_status": "Cloudflare cache status from HTTP request records",
+    "ruleset_id": "Cloudflare WAF/firewall ruleset identifier",
+    "query": "Gateway DNS query name",
+    "query_type": "Gateway DNS query type token",
+    "resolver_decision": "Gateway DNS resolver decision token",
+    "resource_name": "Cloudflare audit resource name",
+    "interface": "Cloudflare audit interface/channel token",
+    "event_id": "Cloudflare audit event identifier",
+    "service_token_id": "Cloudflare Access service-token identifier when present",
+    "app": "Cloudflare Access application name or Gateway detected protocol context",
+    "src_internal_ip": "Gateway Network internal source IP context",
+    "virtual_network_id": "Gateway Network virtual-network identifier",
+    "virtual_network_name": "Gateway Network virtual-network display name",
+    "marker": "Synthetic fixture marker only",
+    "dest_ip": "Gateway Network destination IP context",
+    "dest_port": "Gateway Network destination port context",
+    "src_port": "Gateway Network source port context",
+    "transport": "Gateway Network transport protocol token",
+    "session_id": "Gateway Network session identifier",
+    "device_id": "Zero Trust device identifier",
+    "device_name": "Zero Trust device name",
+    "sni": "Gateway Network TLS SNI where present"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-cloudflare_security_access.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/cloudflare_security_access_overview.xml"
+    ],
+    "test_events": [
+      "test-events/cloudflare_security_access_test_events.jsonl"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20081.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/cloudflare_security_access_reduction_candidates.csv",
+      "docs/splunk_cloudflare_app_bridge.md",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Cloudflare JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20081,
+      "notes": "Dedicated TCP listener for one Cloudflare JSON record per line from Logpush/Zero Trust collector relays.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20081,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Cloudflare Logpush field references for HTTP requests, firewall events, Access requests, Gateway DNS/HTTP/Network, and audit logs",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in official Cloudflare documentation and synthetic-equivalent fixtures; Elastic/Splunk ecosystem evidence supports conservative compatibility notes for HTTP/logpull, audit, and published Splunk sourcetype expectations, but collector wrappers and selected-field configurations still require local comparison."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-08",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Cloudflare public field-reference documentation and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Cloudflare records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Cloudflare relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Cloudflare security/access relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "cloudflare_security_access_mixed_json"
+      ],
+      "event_count": 7,
+      "marker_prefix": "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20081.sh"
+    },
+    "readback": {
+      "spl": "index=netwaf sechub_fixture_marker=\"SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product cloudflare_family ray_id user src_ip src_internal_ip dest uri url http_method http_user_agent status cache_status action signature signature_id rule_id ruleset_id rule_message policy_id policy_name service_token_id session_id dest_ip dest_port src_port transport app sni query query_type resolver_decision resource_id resource_type resource_name interface event_id virtual_network_id virtual_network_name marker _raw",
+      "expected_count": 7,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "family routing",
+        "Ray/request identifiers",
+        "source/user/device context",
+        "WAF action/rule fields",
+        "Gateway policy decisions",
+        "audit actor/resource fields",
+        "Gateway Network session fields",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TCP listener on 127.0.0.1:20081 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing Cloudflare TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20081,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Cloudflare security/access relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netwaf"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netwaf",
+        "Search role can read netwaf"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "cloudflare_security_access_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/cloudflare_security_access/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/cloudflare_security_access/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/cloudflare_security_access/compose.yaml",
+      "compose_project": "sechub-cloudflare-security-access-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netwaf index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/cloudflare_security_access/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/cloudflare_security_access/scripts/e2e_docker_compose.sh run",
+        "replay_only": "SC4S_TEST_HOST=127.0.0.1 SC4S_TEST_PORT=20081 packs/cloudflare_security_access/scripts/send_tcp_20081.sh",
+        "splunk_summary_readback": "index=netwaf sechub_fixture_marker=\"SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netwaf sechub_fixture_marker=\"SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product cloudflare_family ray_id user src_ip src_internal_ip dest uri url http_method http_user_agent status cache_status action signature signature_id rule_id ruleset_id rule_message policy_id policy_name service_token_id session_id dest_ip dest_port src_port transport app sni query query_type resolver_decision resource_id resource_type resource_name interface event_id virtual_network_id virtual_network_name marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netwaf",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/cloudflare_security_access/splunk -> /opt/splunk/etc/apps/sechub_cloudflare_security_access:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20081,
+          "host_port_env": "SC4S_CLOUDFLARE_SECURITY_ACCESS_PORT",
+          "source_id": "CLOUDFLARE_SECURITY_ACCESS"
+        },
+        "parser_mount": "packs/cloudflare_security_access/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "cloudflare_logpush",
+          "source_shape": "json_relay",
+          "event_families": [
+            "http_request",
+            "waf_event"
+          ],
+          "expected_sourcetypes": [
+            "cloudflare:http:request",
+            "cloudflare:waf:event"
+          ],
+          "data_structures": [
+            "HTTP request record",
+            "firewall/WAF event record"
+          ],
+          "markers": [
+            "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_HTTP_REQUEST_001",
+            "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_WAF_EVENT_002"
+          ]
+        },
+        {
+          "source": "cloudflare_zero_trust",
+          "source_shape": "json_relay",
+          "event_families": [
+            "access_request",
+            "gateway_dns",
+            "gateway_http",
+            "gateway_network"
+          ],
+          "expected_sourcetypes": [
+            "cloudflare:access:request",
+            "cloudflare:gateway:dns",
+            "cloudflare:gateway:http",
+            "cloudflare:gateway:network"
+          ],
+          "data_structures": [
+            "Access request record",
+            "Gateway DNS decision",
+            "Gateway HTTP decision",
+            "Gateway Network session"
+          ],
+          "markers": [
+            "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_ACCESS_REQUEST_003",
+            "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_GATEWAY_DNS_004",
+            "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_GATEWAY_HTTP_005",
+            "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_GATEWAY_NETWORK_007"
+          ]
+        },
+        {
+          "source": "cloudflare_audit_logs",
+          "source_shape": "json_relay",
+          "event_families": [
+            "audit_log"
+          ],
+          "expected_sourcetypes": [
+            "cloudflare:audit"
+          ],
+          "data_structures": [
+            "account audit log record"
+          ],
+          "markers": [
+            "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_AUDIT_LOG_006"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live Cloudflare Logpush or Zero Trust relay was exercised by adding this harness.",
+        "The harness uses synthetic-equivalent fixture JSON and does not prove selected-field Logpush jobs, object-store/API collectors, webhook receivers, tenant export completeness, or action-specific audit Metadata schemas.",
+        "Passing the harness would be lab replay/read-back evidence for this fixture route only, not field validation for a real Cloudflare tenant."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "cloudflare_security_access_mixed_json",
+      "label": "Cloudflare synthetic-equivalent Logpush/Zero Trust JSON records",
+      "path": "test-events/cloudflare_security_access_test_events.jsonl",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 7,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_HTTP_REQUEST_001",
+        "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_WAF_EVENT_002",
+        "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_ACCESS_REQUEST_003",
+        "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_GATEWAY_DNS_004",
+        "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_GATEWAY_HTTP_005",
+        "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_AUDIT_LOG_006",
+        "SC4S_CLOUDFLARE_SECURITY_ACCESS_TEST_GATEWAY_NETWORK_007"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "EdgeStartTimestamp, Datetime, Timestamp, or When depending on dataset",
+        "primary_timezone": "UTC for ISO-8601 Z timestamps",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Cloudflare collector timestamp normalization policy"
+        ],
+        "notes": "Fixtures use UTC ISO-8601 timestamps from documented Cloudflare timestamp-style fields."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each fixture record includes a synthetic Marker value for validation only."
+      },
+      "expected_families": [
+        "http_request",
+        "waf_event",
+        "access_request",
+        "gateway_dns",
+        "gateway_http",
+        "gateway_network",
+        "audit_log"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-cloudflare_security_access.conf",
+      "target_path": "local/config/app_parsers/syslog/app-cloudflare_security_access.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/cloudflare_security_access.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/cloudflare_security_access_overview.xml",
+      "target_path": "splunk/default/data/ui/views/cloudflare_security_access_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/cloudflare_security_access_test_events.jsonl",
+      "target_path": "test-events/cloudflare_security_access_test_events.jsonl",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20081.sh",
+      "target_path": "scripts/send_tcp_20081.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness_script",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/cloudflare_security_access_reduction_candidates.csv",
+      "target_path": "docs/cloudflare_security_access_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_cloudflare_app_bridge",
+      "group": "docs",
+      "source_path": "docs/splunk_cloudflare_app_bridge.md",
+      "target_path": "docs/splunk_cloudflare_app_bridge.md",
+      "kind": "pack_documentation",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "dashboard_screenshot_cloudflare_security_access_overview_splunk_test",
+      "group": "docs",
+      "source_path": "dashboards/screenshots/cloudflare-security-access-overview-splunk-test.png",
+      "target_path": "dashboards/screenshots/cloudflare-security-access-overview-splunk-test.png",
+      "kind": "dashboard_screenshot",
+      "rendered": true,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "Official Cloudflare Logpush and field-reference documentation for HTTP requests, firewall events, Access requests, Gateway DNS, Gateway HTTP, Gateway Network, and account audit logs; fixtures are synthetic-equivalent examples shaped to public documentation. Elastic Cloudflare integration evidence is used only for conservative HTTP/logpull and audit field-family comparison. The Splunkbase Cloudflare App public listing is used only for sourcetype compatibility notes; no third-party parser logic or fixtures are copied.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test identities and RFC5737 documentation IP ranges; no Cloudflare customer or tenant data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-08",
+      "notes": "Created from the Milestone 8 Cloudflare backlog after public evidence scan."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "ClientIP",
+            "SourceIP",
+            "IPAddress",
+            "ActorIP"
+          ],
+          "status": "partial",
+          "notes": "Client, Gateway, Access, or audit actor IP context."
+        },
+        "user": {
+          "source_fields": [
+            "UserEmail",
+            "ActorEmail",
+            "Email"
+          ],
+          "status": "partial",
+          "notes": "Access/Gateway/audit identity where present."
+        },
+        "dest": {
+          "source_fields": [
+            "ClientRequestHost",
+            "Host",
+            "URL",
+            "ResourceName",
+            "DestinationIP",
+            "DestinationPort",
+            "SNI"
+          ],
+          "status": "partial",
+          "notes": "Requested host/URL or audit resource context."
+        },
+        "action": {
+          "source_fields": [
+            "Action",
+            "SecurityAction",
+            "ResolverDecision"
+          ],
+          "status": "partial",
+          "notes": "Native Cloudflare action/decision token; not a complete CIM normalized action taxonomy."
+        },
+        "signature": {
+          "source_fields": [
+            "RuleID",
+            "PolicyID",
+            "Action",
+            "RayID",
+            "QueryName",
+            "TransportProtocol",
+            "DetectedProtocol",
+            "SessionID"
+          ],
+          "status": "partial",
+          "notes": "Rule, policy, audit action, request ID, or DNS query grouping."
+        },
+        "http_user_agent": {
+          "source_fields": [
+            "ClientRequestUserAgent",
+            "UserAgent"
+          ],
+          "status": "partial",
+          "notes": "HTTP/Gateway HTTP user-agent context where present."
+        },
+        "status": {
+          "source_fields": [
+            "EdgeResponseStatus",
+            "HTTPStatusCode"
+          ],
+          "status": "partial",
+          "notes": "HTTP response/status code context; not a complete result taxonomy."
+        },
+        "rule_id": {
+          "source_fields": [
+            "RuleID",
+            "RulesetID",
+            "PolicyID"
+          ],
+          "status": "partial",
+          "notes": "WAF rule/ruleset or Gateway policy identifier context."
+        },
+        "query": {
+          "source_fields": [
+            "QueryName",
+            "QueryType",
+            "ResolverDecision"
+          ],
+          "status": "partial",
+          "notes": "Gateway DNS query and decision context."
+        },
+        "resource_name": {
+          "source_fields": [
+            "ResourceName",
+            "ResourceID",
+            "ResourceType",
+            "Interface",
+            "ID"
+          ],
+          "status": "partial",
+          "notes": "Cloudflare audit resource and event identity context."
+        }
+      },
+      "notes": "Partial Web, Network Traffic, Authentication, Change, and Intrusion Detection guidance only; not complete CIM compliance."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "ClientIP",
+            "SourceIP",
+            "IPAddress",
+            "ActorIP"
+          ],
+          "status": "partial",
+          "notes": "Source/actor IP context."
+        },
+        "actor.user.email_addr": {
+          "source_fields": [
+            "UserEmail",
+            "ActorEmail",
+            "Email"
+          ],
+          "status": "partial",
+          "notes": "Cloudflare user/actor email context."
+        },
+        "activity_name": {
+          "source_fields": [
+            "Action",
+            "SecurityAction",
+            "ResolverDecision",
+            "SessionID",
+            "DestinationIP",
+            "SNI",
+            "DetectedProtocol",
+            "TransportProtocol"
+          ],
+          "status": "partial",
+          "notes": "Native action/decision."
+        },
+        "http_request.url.url_string": {
+          "source_fields": [
+            "URL",
+            "ClientRequestURI"
+          ],
+          "status": "partial",
+          "notes": "HTTP URL/URI context."
+        },
+        "policy.uid": {
+          "source_fields": [
+            "PolicyID",
+            "RuleID"
+          ],
+          "status": "partial",
+          "notes": "Gateway policy or WAF rule identifier."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "DestinationIP"
+          ],
+          "status": "partial",
+          "notes": "Gateway Network destination IP context."
+        },
+        "connection_info.protocol_name": {
+          "source_fields": [
+            "TransportProtocol",
+            "DetectedProtocol"
+          ],
+          "status": "partial",
+          "notes": "Gateway Network transport/detected protocol context."
+        },
+        "http_request.user_agent": {
+          "source_fields": [
+            "ClientRequestUserAgent",
+            "UserAgent"
+          ],
+          "status": "partial",
+          "notes": "HTTP user-agent context."
+        },
+        "status_code": {
+          "source_fields": [
+            "EdgeResponseStatus",
+            "HTTPStatusCode"
+          ],
+          "status": "partial",
+          "notes": "HTTP status-code context; not complete OCSF status normalization."
+        },
+        "dns_query.hostname": {
+          "source_fields": [
+            "QueryName",
+            "QueryType",
+            "ResolverDecision"
+          ],
+          "status": "partial",
+          "notes": "Gateway DNS query and resolver-decision context."
+        },
+        "resources.name": {
+          "source_fields": [
+            "ResourceName",
+            "ResourceID",
+            "ResourceType",
+            "Interface",
+            "ID"
+          ],
+          "status": "partial",
+          "notes": "Cloudflare audit resource identity context."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "ClientIP",
+            "SourceIP",
+            "IPAddress",
+            "ActorIP"
+          ],
+          "status": "partial",
+          "notes": "Source/actor IP."
+        },
+        "user.email": {
+          "source_fields": [
+            "UserEmail",
+            "ActorEmail",
+            "Email"
+          ],
+          "status": "partial",
+          "notes": "Cloudflare identity field where present."
+        },
+        "url.full": {
+          "source_fields": [
+            "URL"
+          ],
+          "status": "partial",
+          "notes": "Gateway HTTP URL."
+        },
+        "http.request.method": {
+          "source_fields": [
+            "ClientRequestMethod",
+            "Method"
+          ],
+          "status": "partial",
+          "notes": "HTTP method."
+        },
+        "event.action": {
+          "source_fields": [
+            "Action",
+            "SecurityAction",
+            "ResolverDecision",
+            "SessionID",
+            "TransportProtocol",
+            "DetectedProtocol"
+          ],
+          "status": "partial",
+          "notes": "Native action."
+        },
+        "rule.id": {
+          "source_fields": [
+            "RuleID",
+            "PolicyID"
+          ],
+          "status": "partial",
+          "notes": "WAF rule or Gateway policy identifier."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "DestinationIP"
+          ],
+          "status": "partial",
+          "notes": "Gateway Network destination IP."
+        },
+        "destination.port": {
+          "source_fields": [
+            "DestinationPort"
+          ],
+          "status": "partial",
+          "notes": "Gateway Network destination port."
+        },
+        "network.transport": {
+          "source_fields": [
+            "TransportProtocol"
+          ],
+          "status": "partial",
+          "notes": "Gateway Network transport protocol."
+        },
+        "user_agent.original": {
+          "source_fields": [
+            "ClientRequestUserAgent",
+            "UserAgent"
+          ],
+          "status": "partial",
+          "notes": "HTTP/Gateway HTTP user-agent context."
+        },
+        "http.response.status_code": {
+          "source_fields": [
+            "EdgeResponseStatus",
+            "HTTPStatusCode"
+          ],
+          "status": "partial",
+          "notes": "HTTP response/status code."
+        },
+        "dns.question.name": {
+          "source_fields": [
+            "QueryName"
+          ],
+          "status": "partial",
+          "notes": "Gateway DNS query name."
+        },
+        "dns.question.type": {
+          "source_fields": [
+            "QueryType"
+          ],
+          "status": "partial",
+          "notes": "Gateway DNS query type."
+        },
+        "cloudflare.audit.resource.name": {
+          "source_fields": [
+            "ResourceName",
+            "ResourceID",
+            "ResourceType",
+            "Interface",
+            "ID"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped Cloudflare audit resource identity helper mapping."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/cloudflare_security_access/sc4s/app_parsers/syslog/app-cloudflare_security_access.conf": "sha256:e0d23a15103c1022b663599a7b8360db6b99324af0b3f5203370f6803ec9fd2d",
+      "packs/cloudflare_security_access/sc4s/env.example": "sha256:df7a8ec19160f62be202d19a5f33a0a305a951fae86c348a1353047d9f2044e2",
+      "packs/cloudflare_security_access/splunk/default/props.conf": "sha256:da2333c0c859be36040376961a679c8c5cd97c5d50fbfcafb91db2b25452b981",
+      "packs/cloudflare_security_access/splunk/default/transforms.conf": "sha256:b844bb05b6fa575db406711fa84fae7dbeefdc977ec1d01b9f63d619cc775ed6",
+      "packs/cloudflare_security_access/splunk/default/eventtypes.conf": "sha256:5679c2e718633a5bd1442bf8e720d8aa635234604078a04b5f4755f7246573ec",
+      "packs/cloudflare_security_access/splunk/default/tags.conf": "sha256:01781658d0d9e208ff8314a2ae3c7a990918c4613a371420d50e4a9d4c3c3fcd",
+      "packs/cloudflare_security_access/test-events/cloudflare_security_access_test_events.jsonl": "sha256:d4dd8db3b3947b9596879ea9013e2e210725373a0aa62f63574f68d709adafba",
+      "packs/cloudflare_security_access/scripts/send_tcp_20081.sh": "sha256:e3783ee97d73fc68bdfaf43edd926c33b88c91ed7643b23cb9843104d1c8aaad",
+      "packs/cloudflare_security_access/scripts/e2e_docker_compose.sh": "sha256:83b560e613f790b5ce4ef0e79555c31fd825e739cd011bf3171637d531a6241c",
+      "packs/cloudflare_security_access/docs/cloudflare_security_access_reduction_candidates.csv": "sha256:a6cb8993ac6097df5db26a0916b4dcc14ba557b3bc5f3a3f6475b78bbe430157",
+      "packs/cloudflare_security_access/validation/preflight-2026-06-08.md": "sha256:12ff7fea1a74ae15d342847fb2bc41c59f0c1c8e65d3ad57abe989e5325ec893",
+      "packs/cloudflare_security_access/README.md": "sha256:425f37a056c5902400147ff267b7072935be701606582b12d5622b8abf413480",
+      "packs/cloudflare_security_access/docs/splunk_cloudflare_app_bridge.md": "sha256:a44afae70473f768fbc259924f6c26a746bc76fbe89e3bc4a36bbf0ba45738a0",
+      "packs/cloudflare_security_access/splunk/default/data/ui/views/cloudflare_security_access_overview.xml": "sha256:20ab3a9cd410029fc2e55e04cec4f3287196af8691e85ed1d5a7bcc98b1fbf7b"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-24",
+    "last_tested": "2026-06-24"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "cloud",
+    "cloudflare",
+    "waf",
+    "zero_trust",
+    "audit",
+    "security",
+    "dns",
+    "web"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "logpush_json_relay",
+      "label": "Cloudflare Logpush JSON relay",
+      "description": "Cloudflare HTTP request and firewall/WAF Logpush records split into one JSON object per line.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "logpush_http_destination",
+        "object_store_collector",
+        "cribl_relay",
+        "vector_or_fluentbit_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "http_request",
+        "waf_event"
+      ],
+      "test_event_sets": [
+        "cloudflare_security_access_mixed_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Cloudflare Logpush relay replay/read-back captured.",
+        "Selected-field Logpush jobs and collector wrappers require local comparison."
+      ],
+      "event_boundary": "one Cloudflare Logpush JSON object per physical line after HTTP destination, object-store, API, or collector envelope unwrapping; no Logpush file/archive wrapper or array batching is fixture-backed",
+      "events_per_file_or_message": "one source record per relayed syslog/message line; source files, object-store batches, and compressed archives may contain many records but must be decompressed and split before SC4S relay",
+      "uniqueness_or_multiline": "fixture-backed records are unique single-line JSON events; multiline JSON, nested collector wrappers, selected-field schema drift, and batched source files require local normalization before relay",
+      "field_delimiting_or_escaping": "JSON object syntax with standard quoting/escaping; preserve nested Cloudflare request, rule, action, metadata, Ray ID, host, URI, status, and source IP fields without lossy flattening",
+      "timestamp_timezone": "HTTP request fixtures use EdgeStartTimestamp and WAF/firewall fixtures use Datetime as UTC ISO-8601 source timestamps; syslog wrapper time is relay metadata only until local read-back verifies precedence"
+    },
+    {
+      "id": "zero_trust_json_relay",
+      "label": "Cloudflare Zero Trust Access/Gateway JSON relay",
+      "description": "Cloudflare Access, Gateway DNS, Gateway HTTP, and Gateway Network records preserving user/device, policy, decision, query, and URL context.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "cloudflare_one_logpush",
+        "zero_trust_logpush",
+        "collector_json_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "access_request",
+        "gateway_dns",
+        "gateway_http",
+        "gateway_network"
+      ],
+      "test_event_sets": [
+        "cloudflare_security_access_mixed_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No real Zero Trust relay replay/read-back captured.",
+        "Plan/product-enabled fields may vary by deployment."
+      ],
+      "event_boundary": "one Zero Trust Access or Gateway JSON object per physical line after Logpush/API/collector envelope unwrapping; no API page, archive, or array wrapper is fixture-backed",
+      "events_per_file_or_message": "one source record per relayed syslog/message line; Access, Gateway DNS, Gateway HTTP, and Gateway Network batches must be split before SC4S relay",
+      "uniqueness_or_multiline": "fixture-backed records are unique single-line JSON events; multiline records, nested collector envelopes, and tenant-specific selected-field layouts require local normalization before relay",
+      "field_delimiting_or_escaping": "JSON object syntax with standard quoting/escaping; preserve user, device, source IP, query, URL, policy, action/decision, session, destination, and SNI fields without lossy flattening",
+      "timestamp_timezone": "Zero Trust fixtures use Timestamp or Datetime as UTC ISO-8601 source timestamps depending on dataset; syslog wrapper time is relay metadata only until local read-back verifies precedence"
+    },
+    {
+      "id": "audit_log_json_relay",
+      "label": "Cloudflare account audit JSON relay",
+      "description": "Conservative account audit log records preserving actor, action, resource, interface, and raw metadata context.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "audit_logpush",
+        "api_or_collector_relay"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "audit_log"
+      ],
+      "test_event_sets": [
+        "cloudflare_security_access_mixed_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Action-specific Metadata schemas are not normalized by the initial pack."
+      ],
+      "event_boundary": "one Cloudflare account audit JSON object per physical line after audit Logpush/API/collector envelope unwrapping; no API page, archive, or array wrapper is fixture-backed",
+      "events_per_file_or_message": "one audit source record per relayed syslog/message line; source exports may contain many records but collector must split before relay",
+      "uniqueness_or_multiline": "fixture-backed audit record is a unique single-line JSON event; action-specific Metadata shapes remain raw and require local sample comparison before normalization",
+      "field_delimiting_or_escaping": "JSON object syntax with standard quoting/escaping; preserve actor, action, resource, interface, ID, and raw Metadata fields without lossy flattening",
+      "timestamp_timezone": "Audit fixture uses When as a UTC ISO-8601 source timestamp; syslog wrapper time is relay metadata only until local read-back verifies precedence"
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/cloudflare_security_access_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "Dataset",
+        "RayID",
+        "Action",
+        "SecurityAction",
+        "ResolverDecision",
+        "RuleID",
+        "PolicyID",
+        "QueryName",
+        "URL",
+        "ID",
+        "SessionID",
+        "DestinationIP",
+        "TransportProtocol",
+        "SNI"
+      ],
+      "notes": "Use after sampling the local Cloudflare feed. Do not drop Ray/request ID, identity, source IP, host/URL/query, action/decision, policy/rule, or audit metadata by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Cloudflare relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real tenant records.",
+    "Elastic integration evidence supports conservative HTTP/logpull and audit field-family comparison only; it does not prove every Access/Gateway/DLP/CASB family or justify copied fixtures.",
+    "Splunkbase Cloudflare App evidence supports JSON and Zero Trust sourcetype compatibility notes, but local deployments may require non-lossy search-time bridging because this pack uses more explicit family sourcetypes; docs/splunk_cloudflare_app_bridge.md records a conservative design and is not validation evidence.",
+    "GitHub/community parser search did not find high-confidence reusable Logstash/Vector/Fluent Bit/Cribl parser evidence; collector-wrapper compatibility remains unproven.",
+    "Account audit Metadata remains raw/conservative because action-specific schemas vary.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Cloudflare security/access intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-cloudflare_security_access.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Cloudflare analyst knowledge",
+      "description": "Adds eventtypes/tags for HTTP, WAF, Access, Gateway DNS/HTTP/Network, and audit-log families. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Cloudflare reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/cloudflare_security_access_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "cloud_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Cloudflare Logpush/API/Zero Trust JSON must be exported/collected and relayed to SC4S.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "cloudflare_security_access_overview_splunk_test",
+      "title": "Cloudflare Security and Access — dashboard example",
+      "source_path": "dashboards/screenshots/cloudflare-security-access-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Cloudflare Security and Access dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

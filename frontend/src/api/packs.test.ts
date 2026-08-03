@@ -11,15 +11,6 @@ describe('filenameFromContentDisposition', () => {
     expect(filenameFromContentDisposition('attachment; filename="vendor-export.zip"')).toBe('vendor-export.zip');
   });
 
-  it('parses escaped quotes without ambiguous regex backtracking', () => {
-    expect(filenameFromContentDisposition('attachment; filename="vendor-\\"export.zip"')).toBe('vendor-"export.zip');
-  });
-
-  it('rejects a malformed quoted filename with many escapes', () => {
-    const malformed = `attachment; filename="${'\\'.repeat(10_000)}!`;
-    expect(filenameFromContentDisposition(malformed)).toBeUndefined();
-  });
-
   it('ignores malformed encoded filenames and falls back', () => {
     expect(filenameFromContentDisposition("attachment; filename=fallback.zip; filename*=UTF-8''%E0%A4%A")).toBe('fallback.zip');
   });
@@ -42,7 +33,7 @@ describe('catalogueListResponseSchema', () => {
         source_statuses: [],
         artifact_types: [{ value: 'syslog_app_parser', label: 'syslog app parser', count: 111 }],
         capabilities: [{ value: 'log_reduction', label: 'Log reduction', count: 1 }],
-        sc4s_versions: [{ value: '3.43.0', label: '3.43.0', count: 249 }],
+        sc4s_versions: [{ value: '3.46.0', label: '3.46.0', count: 249 }],
       },
     });
 

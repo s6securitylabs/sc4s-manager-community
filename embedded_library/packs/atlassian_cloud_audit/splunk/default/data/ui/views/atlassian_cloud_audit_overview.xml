@@ -1,0 +1,32 @@
+<form version="1.1" theme="light">
+  <label>Atlassian Cloud Audit Overview</label>
+  <description>Operator overview for fixture-backed Atlassian Cloud audit JSON relay examples. Example dashboard only; not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_range">
+      <label>Time range</label>
+      <default><earliest>-24h</earliest><latest>now</latest></default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Audit events by source product</title>
+      <chart>
+        <search><query>index=gitops sourcetype=atlassian:cloud:audit:json earliest=$time_range.earliest$ latest=$time_range.latest$ | stats count by source_product atlassian_audit_family</query></search>
+      </chart>
+    </panel>
+    <panel>
+      <title>Recent actions</title>
+      <table>
+        <search><query>index=gitops sourcetype=atlassian:cloud:audit:json earliest=$time_range.earliest$ latest=$time_range.latest$ | table _time source_product action user src_ip object object_type signature marker | sort - _time</query></search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Security-relevant fixture-backed rows</title>
+      <table>
+        <search><query>eventtype=atlassian_cloud_audit_security_relevant earliest=$time_range.earliest$ latest=$time_range.latest$ | table _time source_product category action user src_ip object change from to marker</query></search>
+      </table>
+    </panel>
+  </row>
+</form>

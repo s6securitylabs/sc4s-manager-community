@@ -1,0 +1,157 @@
+<form version="1.1" theme="dark">
+  <label>Dell PowerStore remote logging - Overview</label>
+  <description>Fixture-backed onboarding and first-triage dashboard for Dell PowerStore remote logging structured-data smoke events. This is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Splunk host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="severity_tok" searchWhenChanged="true">
+      <label>PowerStore severity filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total PowerStore events</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Major / critical severity rows</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") severity IN (MAJOR,CRITICAL,Critical,Major) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Alert-raised rows</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") alert_raised=true | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Remote syslog connection events</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") event_code=0x0240010* | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Event volume over time</title>
+      <chart>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | timechart count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Severity distribution</title>
+      <chart>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats count by severity | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Event type and code coverage</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats count, values(severity) as severities, values(alert_raised) as alert_raised, values(call_home) as call_home, values(kb_article) as kb_articles by event_type, event_code | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Alert and call-home review</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | table _time host source event_code severity event_type alert_raised call_home kb_article message marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage by host/source</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats count, dc(event_code) as event_codes, values(severity) as severities, values(vendor_product) as vendor_product by host, source, sourcetype | sort -count | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Recent raw PowerStore context</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="dell:emc:powerstore" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | table _time host source sourcetype vendor product event_code severity event_type alert_raised call_home kb_article action signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

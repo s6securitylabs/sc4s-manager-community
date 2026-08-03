@@ -1,0 +1,150 @@
+<form version="1.1" theme="light">
+  <label>QNAP NAS Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for QNAP NAS QuLog event and connection syslog records. Dashboard presence does not imply replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>infraops</default>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total QNAP events</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:* host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Connection/access rows</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:conn host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Failed login rows</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:conn host=$host_filter$ action="login_fail" | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Event-log rows</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:event host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Volume over time by sourcetype</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:* host=$host_filter$ | timechart count by sourcetype</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Action and category distribution</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:* host=$host_filter$ | eval qnap_signal=coalesce(action,qnap_category,signature) | top limit=12 qnap_signal</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top users and source IPs</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:* host=$host_filter$ | stats count values(action) as actions values(qnap_connection_type) as connection_types values(qnap_application) as applications by user src | sort - count | head 20</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Connection/resource access review</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:conn host=$host_filter$ | table _time host user src qnap_computer_name qnap_connection_type qnap_resource action signature _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>QNAP event log review</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:event host=$host_filter$ | table _time host user src qnap_computer_name qnap_application qnap_category action signature message _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Source, sourcetype, and host coverage</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:* host=$host_filter$ | stats count min(_time) as first_seen max(_time) as last_seen dc(marker) as fixture_markers by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Recent raw QNAP context</title>
+        <search>
+          <query>index=$index$ sourcetype=qnap:nas:* host=$host_filter$ | table _time index sourcetype source host vendor product user src action signature qnap_application qnap_category qnap_connection_type qnap_resource marker _raw | sort - _time | head 100</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <p><strong>Scope and evidence boundary:</strong> This dashboard is limited to fixture-backed QNAP <code>qulogd</code> <code>event log</code> and <code>conn log</code> syslog rows. It does not prove full QuLog catalogue coverage, official QNAP source-version validation, collector health, or SC4S/Splunk replay/read-back validation.</p>
+      </html>
+    </panel>
+  </row>
+</form>

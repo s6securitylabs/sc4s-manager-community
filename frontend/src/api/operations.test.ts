@@ -64,7 +64,7 @@ describe('deleteSourceResponseSchema', () => {
 describe('destinationsResponseSchema', () => {
   it('accepts redacted tokens without re-expanding them', () => {
     const parsed = destinationsResponseSchema.parse({
-      supported_sc4s_version: '3.43.0',
+      supported_sc4s_version: '3.46.0',
       destinations: [
         { kind: 'hec', id: 'DEFAULT', url: 'https://splunk:8088', token: '[REDACTED]', tls_verify: 'yes' },
         { kind: 'syslog', id: 'SIEM', host: '10.0.0.5', port: '601', transport: 'tcp', mode: 'SELECT' },

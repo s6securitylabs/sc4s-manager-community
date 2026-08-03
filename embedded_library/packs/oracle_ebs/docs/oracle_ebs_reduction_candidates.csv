@@ -1,0 +1,3 @@
+id,description,default_enabled,pre_enable_validation
+no_default_drops,No default event drops or lossy masking. EBS business values and request parameters can be incident-critical.,false,Replay/read-back must prove retained raw context and approved masking before any local reduction.
+sensitive_values_review,Review old_value new_value SQL text binds request parameters email recipients and hostnames before sharing samples.,false,Sanitize only copies used as fixtures or public examples; do not enable lossy production transforms by default.

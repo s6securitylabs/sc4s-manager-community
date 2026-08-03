@@ -1,0 +1,695 @@
+{
+  "schema_version": "0.1",
+  "id": "netapp_ontap",
+  "version": "0.1.6",
+  "url": "https://raw.githubusercontent.com/splunk/splunk-connect-for-syslog/main/docs/sources/vendor/NetApp/ontap.md",
+  "description": "Curated SecHub Resources SC4S pack for NetApp ONTAP EMS syslog. Extends upstream SC4S ONTAP inventory with dedicated-listener guidance, fixtures, Splunk knowledge, and explicit validation gaps.",
+  "display_name": "NetApp ONTAP",
+  "vendor": "netapp",
+  "product": "ontap",
+  "default_index": "infraops",
+  "default_source": "netapp_ontap",
+  "listener": {
+    "source_id": "NETAPP_ONTAP",
+    "transport": "tls",
+    "port": 20093,
+    "env": {
+      "SC4S_LISTEN_NETAPP_ONTAP_TLS_PORT": "20093",
+      "SOURCE_ALL_SET_APPEND": "NETAPP_ONTAP"
+    }
+  },
+  "sourcetypes": {
+    "ems_legacy": "ontap:ems"
+  },
+  "event_families": [
+    {
+      "id": "ems_legacy",
+      "label": "NetApp ONTAP EMS legacy syslog events",
+      "match_engine": "pcre",
+      "match": "[A-Za-z0-9_.-]+: [0-9a-f]+\\.[0-9a-f]+ [0-9a-f]+ [A-Z][A-Za-z]+ ",
+      "expected_sourcetype": "ontap:ems",
+      "primary_id_field": "ontap_event_id",
+      "required_fields": [
+        "ontap_node",
+        "ontap_event_id",
+        "severity"
+      ],
+      "timestamp_fields": [
+        "embedded_ontap_timestamp",
+        "syslog_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "NetApp",
+    "product": "ONTAP",
+    "vendor_product": "netapp:ontap",
+    "signature_id": "ontap_event_id",
+    "signature": "event or message",
+    "severity": "severity",
+    "host": "ontap_node"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-netapp_ontap.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/netapp_ontap_overview.xml"
+    ],
+    "test_events": [
+      "test-events/netapp_ontap_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tls_20093.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-07.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425 dedicated listener",
+      "transport": "tls",
+      "recommended": true,
+      "default_port": 20093,
+      "notes": "Recommended SecHub Resources pattern because ONTAP messages are not distinctive; use a dedicated listener or host/source mapping.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog dedicated listener",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 5005,
+      "notes": "Upstream docs show unique-port identification as an option.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "udp_syslog",
+      "label": "UDP syslog dedicated listener",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 5005,
+      "notes": "Legacy/lab only due to loss risk.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tls_rfc5425",
+  "source_log_version": {
+    "name": "NetApp ONTAP EMS syslog",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in upstream SC4S ONTAP parser/docs; new-format audit/EMS requires real sample evidence."
+  },
+  "validation": {
+    "date_validated": "not lab validated; curated 2026-06-05",
+    "validated_by": "Hermes autonomous curation (upstream-grounded only)",
+    "source_log_version": "Upstream SC4S ONTAP parser/docs plus synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Live ONTAP replay and Splunk read-back evidence is not yet captured; keep quality_status=curated and trust_level=unverified."
+  },
+  "test_event_sets": [
+    {
+      "id": "netapp_ontap_ems_legacy_bsd",
+      "label": "NetApp ONTAP EMS legacy BSD-style fixtures",
+      "path": "test-events/netapp_ontap_test_events.txt",
+      "format": "bsd",
+      "wire_format": "bsd_syslog_with_ontap_payload",
+      "envelope": "bsd_rfc3164",
+      "serialization": "custom_application",
+      "event_count": 2,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_NETAPP_ONTAP_TEST_EMS_NOTICE_001",
+        "SC4S_NETAPP_ONTAP_TEST_EMS_ERROR_002"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "embedded_ontap_timestamp",
+        "primary_timezone": "offset included in fixture payload timestamps",
+        "fallback_fields": [
+          "syslog_header"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "embedded_ontap_timestamp"
+        ],
+        "notes": "Upstream parser extracts an embedded ONTAP timestamp where present."
+      },
+      "field_delimiting": {
+        "style": "custom_text_prefix_then_message",
+        "field_separator": "spaces in fixed prefix; message text after timestamp",
+        "quote_character": "none in fixtures",
+        "escape_policy": "Real ONTAP EMS messages may include additional punctuation; fixtures are smoke tests only.",
+        "notes": "Treat each physical line as one event."
+      },
+      "expected_families": [
+        "ems_legacy"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-netapp_ontap.conf",
+      "target_path": "local/config/app_parsers/syslog/app-netapp_ontap.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/netapp_ontap.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/netapp_ontap_test_events.txt",
+      "target_path": "test-events/netapp_ontap_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tls_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tls_20093.sh",
+      "target_path": "scripts/send_tls_20093.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "validation_preflight",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-07.md",
+      "target_path": "validation/preflight-2026-06-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/netapp_ontap_overview.xml",
+      "target_path": "splunk/default/data/ui/views/netapp_ontap_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Upstream SC4S generated entries netapp_ontap and docs/sources/vendor/NetApp/ontap.md.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test hostnames and synthetic ONTAP-like EMS messages only."
+    },
+    "curation": {
+      "reviewed_by": "Hermes autonomous curation",
+      "reviewed_at": "2026-06-05",
+      "notes": "Selected as high-value storage/infrastructure source with upstream parser evidence and explicit overmatch warning."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": [
+        "docs/sources/vendor/NetApp/ontap.md",
+        "package/etc/conf.d/conflib/syslog/app-syslog-netapp_ontap.conf",
+        "package/etc/conf.d/conflib/netsource/app-netsource-netapp_ontap.conf"
+      ]
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "signature_id": {
+          "source_fields": [
+            "ontap_event_id"
+          ],
+          "status": "partial",
+          "notes": "Extracted event identifier."
+        },
+        "signature": {
+          "source_fields": [
+            "event",
+            "message",
+            "ontap_event_id"
+          ],
+          "status": "partial",
+          "notes": "Best-effort EMS message/signature."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Observed severity token in legacy EMS shape."
+        }
+      },
+      "notes": "CIM mapping is limited to operational event identification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "message": {
+          "source_fields": [
+            "message"
+          ],
+          "status": "partial",
+          "notes": "Raw EMS message text."
+        }
+      },
+      "notes": "Optional OCSF mapping is incomplete."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.code": {
+          "source_fields": [
+            "ontap_event_id"
+          ],
+          "status": "partial",
+          "notes": "ONTAP event identifier."
+        },
+        "event.severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Severity token."
+        }
+      },
+      "notes": "Optional ECS mapping is incomplete."
+    }
+  },
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic NetApp ONTAP EMS ingestion",
+      "description": "Parser, listener env example, fixtures, and minimal Splunk props. No drops or reductions.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-netapp_ontap.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; preserves events."
+    },
+    {
+      "id": "standard",
+      "label": "Standard NetApp ONTAP knowledge",
+      "description": "Adds eventtype/tags for operational event searches. No drops or reductions.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Still non-lossy."
+    }
+  ],
+  "known_limitations": [
+    "Not validated until real ONTAP records are replayed through SC4S and read back from Splunk.",
+    "Requires dedicated listener or host/source mapping because ONTAP messages are not distinctive.",
+    "No default reduction/drop rules are included."
+  ],
+  "ci": {
+    "last_updated": "2026-07-15",
+    "last_tested": "2026-07-15",
+    "tested_commit": "2840798",
+    "tested_artifact_hashes": {
+      "packs/netapp_ontap/README.md": "sha256:cccf5dccaca449ec9ea52ebf161103e075b14ca877932cbd17e6d232a133b707",
+      "packs/netapp_ontap/sc4s/app_parsers/syslog/app-netapp_ontap.conf": "sha256:fdeaaa434ce39d2bc93f862d55b1472f94655829fa1e795fb3fbd4e66d2ccce7",
+      "packs/netapp_ontap/sc4s/env.example": "sha256:cd940555c0265a81758326070406c9a601e5c47d6a92d2a3ee18ca8794992060",
+      "packs/netapp_ontap/scripts/send_tls_20093.sh": "sha256:1c868312bb6ed2d8f6c5c75243adae2a8c28a26d3664a0e3fe02367740be67a3",
+      "packs/netapp_ontap/splunk/default/eventtypes.conf": "sha256:e940e647859b3c8eaadc6edf5de0bc1c36c75cab92307a6f376385326b1695bb",
+      "packs/netapp_ontap/splunk/default/props.conf": "sha256:997d426b7e4b8f337ffadd07740b5d879d5477498ac054b192c00ed165d43f76",
+      "packs/netapp_ontap/splunk/default/tags.conf": "sha256:3434cfca4211703b4f8f6a9cf989b521d038b288100f01dcd9620f7ed672a0dc",
+      "packs/netapp_ontap/splunk/default/transforms.conf": "sha256:7a3cda377e97d7014234210bc5aa52ed525bddfcae9b27bf3f9c7da1662d21e3",
+      "packs/netapp_ontap/test-events/netapp_ontap_test_events.txt": "sha256:6c69d4db29eb35d65f89a658428b46c20592cb02dbe16573529d4e42b88674b6",
+      "packs/netapp_ontap/validation/preflight-2026-06-07.md": "sha256:1f177d22b041b01e86cbb588a1ccfda10bf2434de8869f9967adb1338199e0c6",
+      "packs/netapp_ontap/splunk/default/data/ui/views/netapp_ontap_overview.xml": "sha256:5384e43f3514a42f19aeffcf06758e64828d31817306f041bf234ec6ab476ce9",
+      "packs/netapp_ontap/scripts/e2e_docker_compose.sh": "sha256:e93d2a9d53ebd66ee109c284af086280c2473accc3c05d1a797377d97f58c9a8"
+    }
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "sechub-resources-pack-replay",
+    "pack_aware": true,
+    "testbed": {
+      "sc4s_target": "SC4S TEST",
+      "splunk_target": "Splunk TEST",
+      "allow_production": false
+    },
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tls",
+          "port": 20093,
+          "protocol": "rfc5425",
+          "purpose": "Dedicated NetApp ONTAP EMS listener"
+        }
+      ],
+      "required_indexes": [
+        "infraops"
+      ],
+      "required_splunk_capabilities": [
+        "HEC token can write to infraops",
+        "Search role can read infraops"
+      ]
+    },
+    "replay": {
+      "fixture_sets": [
+        "netapp_ontap_ems_legacy_bsd"
+      ],
+      "event_count": 2,
+      "marker_prefix": "SC4S_NETAPP_ONTAP_TEST_",
+      "transport": "tls_rfc5425",
+      "framing": "octet_counted",
+      "script": "scripts/send_tls_20093.sh"
+    },
+    "readback": {
+      "spl": "index=infraops sechub_fixture_marker=\"SC4S_NETAPP_ONTAP_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product ontap_node ontap_event_id ontap_sequence severity signature signature_id _raw",
+      "expected_count": 2,
+      "must_verify": [
+        "count",
+        "index",
+        "sourcetype",
+        "source",
+        "host/fromhost",
+        "timestamp",
+        "raw preservation",
+        "expected normalized fields"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "date": "2026-06-07",
+      "blocked_layer": "listener",
+      "summary": "2026-06-07 local preflight found no TCP/TLS listener on 127.0.0.1:20093 for the dedicated NetApp ONTAP route; openssl s_client returned connection refused before fixture replay or Splunk indexed read-back could run. Local Splunk management/web ports 8089 and 8000 were also not reachable.",
+      "evidence_path": "validation/preflight-2026-06-07.md"
+    },
+    "evidence": [
+      "validation/preflight-2026-06-07.md"
+    ],
+    "e2e_docker_harness": {
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/netapp_ontap/scripts/e2e_docker_compose.sh run",
+      "commands": {
+        "plan": "packs/netapp_ontap/scripts/e2e_docker_compose.sh plan",
+        "write_compose": "packs/netapp_ontap/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/netapp_ontap/scripts/e2e_docker_compose.sh run",
+        "down": "packs/netapp_ontap/scripts/e2e_docker_compose.sh down"
+      },
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "splunk_requirements": {
+        "required_index": "infraops",
+        "hec_enabled": true,
+        "search_required": true,
+        "readback_spl": "index=infraops sechub_fixture_marker=\"SC4S_NETAPP_ONTAP_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product ontap_node ontap_event_id ontap_sequence severity signature signature_id _raw"
+      },
+      "sc4s_requirements": {
+        "listener": {
+          "source_id": "NETAPP_ONTAP",
+          "transport": "tls",
+          "port": 20093,
+          "framing": "rfc5425_octet_counted",
+          "env_var": "SC4S_LISTEN_NETAPP_ONTAP_TLS_PORT"
+        },
+        "parser_artifact": "sc4s/app_parsers/syslog/app-netapp_ontap.conf"
+      },
+      "coverage_matrix": [
+        {
+          "source_shape_variant": "ontap_ems_legacy_bsd_syslog",
+          "fixture_set": "netapp_ontap_ems_legacy_bsd",
+          "event_family": "ems_legacy",
+          "sourcetype": "ontap:ems",
+          "event_count": 2,
+          "markers": [
+            "SC4S_NETAPP_ONTAP_TEST_EMS_NOTICE_001",
+            "SC4S_NETAPP_ONTAP_TEST_EMS_ERROR_002"
+          ],
+          "required_fields": [
+            "vendor",
+            "product",
+            "ontap_node",
+            "ontap_event_id",
+            "ontap_sequence",
+            "severity",
+            "signature",
+            "signature_id"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Does not prove a real ONTAP appliance, ONTAP release, EMS/audit category mix, or production logging configuration.",
+        "Does not prove host/source identification strategy, new-format ONTAP records, collector wrapper behavior, or source-local timezone handling.",
+        "Does not provide field validation; sanctioned ONTAP appliance output or vendor-certified examples are still required for trust/quality promotion."
+      ]
+    }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "custom_application_syslog",
+    "supported_transport_refs": [
+      "tls_rfc5425",
+      "tcp_syslog",
+      "udp_syslog"
+    ],
+    "notes": "ONTAP EMS can forward syslog to a dedicated SC4S listener/source tag.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "netapp_ontap_overview_splunk_test",
+      "title": "NetApp ONTAP — dashboard example",
+      "source_path": "dashboards/screenshots/netapp-ontap-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the NetApp ONTAP dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  }
+}

@@ -1,0 +1,207 @@
+<form version="1.1" theme="dark">
+  <label>Okta System Log - Overview</label>
+  <description>Fixture-backed Okta System Log JSON relay overview. Panels use fields proven by synthetic-equivalent fixtures and Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Okta events</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Denied or warning outcomes</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ (result="DENY" OR action="DENY" OR severity="WARN") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Admin / lifecycle / token events</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype IN ("okta:system:lifecycle","okta:system:policy","okta:system:api_token","okta:system:app","okta:system:risk") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by Okta family</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ | eval okta_family=case(sourcetype="okta:system:authn","authn",sourcetype="okta:system:mfa","mfa",sourcetype="okta:system:lifecycle","lifecycle",sourcetype="okta:system:policy","policy",sourcetype="okta:system:api_token","api_token",sourcetype="okta:system:app","app",sourcetype="okta:system:risk","risk",true(),sourcetype) | timechart count by okta_family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ | eval okta_family=case(sourcetype="okta:system:authn","authn",sourcetype="okta:system:mfa","mfa",sourcetype="okta:system:lifecycle","lifecycle",sourcetype="okta:system:policy","policy",sourcetype="okta:system:api_token","api_token",sourcetype="okta:system:app","app",sourcetype="okta:system:risk","risk",true(),sourcetype) | stats count by okta_family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Results and severity</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ | eval outcome=coalesce(result, action, severity, event_type) | stats count by outcome | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top Okta actors</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ | eval okta_user=coalesce(user, 'actor.alternateId', actor_display_name, actor_id) | stats count by okta_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top source IPs</title>
+      <chart>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ | eval source_ip=coalesce(src_ip, src, 'client.ipAddress') | stats count by source_ip | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>MFA and authentication triage</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype IN ("okta:system:authn","okta:system:mfa") host=$host_tok$ | table _time host user src_ip event_type result result_reason session_id user_agent credential_type authentication_provider signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>User lifecycle, policy, and API token changes</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype IN ("okta:system:lifecycle","okta:system:policy","okta:system:api_token","okta:system:app","okta:system:risk") host=$host_tok$ | table _time host user src_ip event_type result object object_id object_type target_user policy_id oauth_client_id grant_type scopes session_id request_id signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Application assignment and risk events</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype IN ("okta:system:app","okta:system:risk") host=$host_tok$ | table _time host user src_ip event_type result severity object object_id object_type target_user session_id request_id signature marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Okta System Log events</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="okta:system:*" host=$host_tok$ | table _time host sourcetype event_type event_id user actor_display_name actor_id src_ip action result result_reason severity signature object object_id object_type target_user credential_type authentication_provider policy_id oauth_client_id grant_type scopes session_id user_agent request_id marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

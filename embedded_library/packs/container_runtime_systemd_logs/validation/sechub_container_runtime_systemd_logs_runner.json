@@ -1,0 +1,1775 @@
+{
+  "dashboard_view_payloads": [
+    {
+      "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+      "auth_scheme": "Splunk REST session key",
+      "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+      "content_type": "application/x-www-form-urlencoded",
+      "endpoint": "/servicesNS/nobody/search/data/ui/views/container_runtime_systemd_logs_overview",
+      "method": "POST",
+      "name": "container_runtime_systemd_logs_overview",
+      "payload": {
+        "eai:data": "<form version=\"1.1\" theme=\"dark\">\n  <label>Container runtime and systemd service logs - Overview</label>\n  <description>Fixture-backed overview for Docker json-file, CRI runtime, Docker Engine event, systemd/journald service, and Docker journald-driver container records. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>\n  <fieldset submitButton=\"false\">\n    <input type=\"time\" token=\"time_tok\" searchWhenChanged=\"true\">\n      <label>Time range</label>\n      <default>\n        <earliest>-24h@h</earliest>\n        <latest>now</latest>\n      </default>\n    </input>\n    <input type=\"text\" token=\"host_tok\" searchWhenChanged=\"true\">\n      <label>Host filter</label>\n      <default>*</default>\n      <initialValue>*</initialValue>\n    </input>\n  </fieldset>\n\n  <row>\n    <panel>\n      <title>Total container/runtime events</title>\n      <single>\n        <search>\n          <query>index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=$host_tok$ | stats count</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">none</option>\n      </single>\n    </panel>\n    <panel>\n      <title>stderr / error records</title>\n      <single>\n        <search>\n          <query>index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\") host=$host_tok$ (stream=stderr OR message=\"*error*\" OR container_log=\"*error*\") | stats count</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">all</option>\n      </single>\n    </panel>\n    <panel>\n      <title>Docker Engine events</title>\n      <single>\n        <search>\n          <query>index=osnix sourcetype=\"docker:engine:event\" host=$host_tok$ | stats count</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">all</option>\n      </single>\n    </panel>\n    <panel>\n      <title>Journald service/container records</title>\n      <single>\n        <search>\n          <query>index=osnix (sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=$host_tok$ | stats count</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">all</option>\n      </single>\n    </panel>\n  </row>\n\n  <row>\n    <panel>\n      <title>Volume over time by sourcetype</title>\n      <chart>\n        <search>\n          <query>index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=$host_tok$ | timechart count by sourcetype</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"charting.chart\">line</option>\n        <option name=\"charting.legend.placement\">bottom</option>\n        <option name=\"drilldown\">none</option>\n      </chart>\n    </panel>\n  </row>\n\n  <row>\n    <panel>\n      <title>Source-mode distribution</title>\n      <chart>\n        <search>\n          <query>index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=$host_tok$ | stats count by sourcetype vendor product action | sort -count</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"charting.chart\">bar</option>\n        <option name=\"charting.legend.placement\">bottom</option>\n        <option name=\"drilldown\">none</option>\n      </chart>\n    </panel>\n    <panel>\n      <title>Stream / action distribution</title>\n      <chart>\n        <search>\n          <query>index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=$host_tok$ | eval action=coalesce(action,\"-\"), stream=coalesce(stream,\"-\"), event_type=coalesce(event_type,\"-\"), service_unit=coalesce(service_unit,\"-\"), program=coalesce(program,\"-\") | stats count by action stream event_type service_unit program | sort -count</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"charting.chart\">bar</option>\n        <option name=\"charting.legend.placement\">bottom</option>\n        <option name=\"drilldown\">none</option>\n      </chart>\n    </panel>\n  </row>\n\n  <row>\n    <panel>\n      <title>Container log stderr/error triage</title>\n      <table>\n        <search>\n          <query>index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\") host=$host_tok$ (stream=stderr OR message=\"*error*\" OR container_log=\"*error*\") | table _time host sourcetype source vendor product stream cri_flag action message container_log signature signature_id marker_family _raw | sort -_time | head 100</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">row</option>\n        <option name=\"count\">20</option>\n      </table>\n    </panel>\n  </row>\n\n  <row>\n    <panel>\n      <title>Docker Engine lifecycle events</title>\n      <table>\n        <search>\n          <query>index=osnix sourcetype=\"docker:engine:event\" host=$host_tok$ | table _time host sourcetype source vendor product event_type action container_id signature signature_id marker_family Type Action Actor.ID Actor.Attributes.name Actor.Attributes.image scope time timeNano _raw | sort -_time | head 100</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">row</option>\n        <option name=\"count\">20</option>\n      </table>\n    </panel>\n  </row>\n\n  <row>\n    <panel>\n      <title>systemd/journald service review</title>\n      <table>\n        <search>\n          <query>index=osnix sourcetype=\"systemd:journald:service\" host=$host_tok$ | table _time host sourcetype source vendor product service_unit program severity action message signature signature_id marker_family _HOSTNAME _SYSTEMD_UNIT SYSLOG_IDENTIFIER PRIORITY _TRANSPORT MESSAGE _raw | sort -_time | head 100</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">row</option>\n        <option name=\"count\">20</option>\n      </table>\n    </panel>\n  </row>\n\n  <row>\n    <panel>\n      <title>Docker journald-driver container context</title>\n      <table>\n        <search>\n          <query>index=osnix sourcetype=\"docker:journald:container\" host=$host_tok$ | table _time host sourcetype source vendor product container_id container_name image_name stream action message signature signature_id marker_family CONTAINER_ID CONTAINER_ID_FULL CONTAINER_NAME IMAGE_NAME _HOSTNAME SYSLOG_IDENTIFIER MESSAGE _raw | sort -_time | head 100</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">row</option>\n        <option name=\"count\">20</option>\n      </table>\n    </panel>\n  </row>\n\n  <row>\n    <panel>\n      <title>Onboarding coverage by source/sourcetype/host</title>\n      <table>\n        <search>\n          <query>index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=$host_tok$ | stats count dc(marker_family) as fixture_markers values(vendor) as vendors values(product) as products min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">row</option>\n        <option name=\"count\">20</option>\n      </table>\n    </panel>\n  </row>\n\n  <row>\n    <panel>\n      <title>Recent raw container/runtime events</title>\n      <table>\n        <search>\n          <query>index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=$host_tok$ | table _time host sourcetype source vendor product stream cri_flag event_type action container_id container_name image_name service_unit program severity message container_log signature signature_id marker_family _raw | sort -_time | head 50</query>\n          <earliest>$time_tok.earliest$</earliest>\n          <latest>$time_tok.latest$</latest>\n        </search>\n        <option name=\"drilldown\">row</option>\n        <option name=\"count\">20</option>\n      </table>\n    </panel>\n  </row>\n</form>\n",
+        "name": "container_runtime_systemd_logs_overview"
+      },
+      "source_path": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml",
+      "token_env_var": "SPLUNK_SESSION_KEY"
+    }
+  ],
+  "execution": {
+    "dashboard_view_installs": {
+      "attempted_dashboard_view_installs": 1,
+      "ok": true,
+      "results": [
+        {
+          "endpoint": "/servicesNS/nobody/search/data/ui/views/container_runtime_systemd_logs_overview",
+          "name": "container_runtime_systemd_logs_overview",
+          "result": {
+            "body_preview": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!--This is to override browser formatting; see server.conf[httpServer] to disable. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+            "deleted_existing_view_status": 200,
+            "ok": true,
+            "recreated_after_conflict": true,
+            "status": 201
+          },
+          "source_path": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        }
+      ]
+    },
+    "fixture_hec_indexing": {
+      "attempted_hec_events": 9,
+      "ok": true,
+      "results": [
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 1,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDOUT_001",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        },
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 2,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDERR_002",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        },
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 3,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDOUT_003",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        },
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 4,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDERR_004",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        },
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 5,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_PARTIAL_009",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        },
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 6,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_EVENT_005",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        },
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 7,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_DOCKER_006",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        },
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 8,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_SERVICE_007",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        },
+        {
+          "fixture_set": "container_runtime_systemd_mixed_records",
+          "line": 9,
+          "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JOURNALD_CONTAINER_008",
+          "pack": "container_runtime_systemd_logs",
+          "result": {
+            "body_preview": "{\"text\":\"Success\",\"code\":0}",
+            "hec_ack_id": null,
+            "hec_code": 0,
+            "hec_response_json": true,
+            "hec_text": "Success",
+            "ok": true,
+            "status": 200
+          }
+        }
+      ]
+    },
+    "fixture_readbacks": {
+      "attempt_count": 1,
+      "attempted_fixture_readbacks": 1,
+      "attempts": [
+        {
+          "attempt": 1,
+          "result": {
+            "attempted_fixture_readbacks": 1,
+            "ok": true,
+            "results": [
+              {
+                "count_ok": true,
+                "empty_fields": [],
+                "expected_count": 9,
+                "fields_ok": true,
+                "index_ok": true,
+                "missing_fields": [],
+                "missing_indexes": [],
+                "must_verify": [
+                  "event count",
+                  "index",
+                  "sourcetype",
+                  "source",
+                  "vendor",
+                  "product",
+                  "source-mode separation",
+                  "container/service identity fields",
+                  "eventtypes/tags",
+                  "timestamp"
+                ],
+                "must_verify_fields": [
+                  "_time",
+                  "index",
+                  "sourcetype",
+                  "source",
+                  "vendor",
+                  "product",
+                  "stream",
+                  "cri_flag",
+                  "event_type",
+                  "action",
+                  "container_id",
+                  "container_name",
+                  "image_name",
+                  "service_unit",
+                  "program",
+                  "severity",
+                  "message",
+                  "signature",
+                  "signature_id",
+                  "marker_family",
+                  "_raw"
+                ],
+                "pack": "container_runtime_systemd_logs",
+                "required_indexes": [
+                  "osnix"
+                ],
+                "result": {
+                  "body_preview_redacted": true,
+                  "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+                  "error_count": 0,
+                  "json_line_count": 9,
+                  "message_count": 0,
+                  "nonblank_line_count": 9,
+                  "observed_indexes": [
+                    "osnix"
+                  ],
+                  "observed_sources": [
+                    "container_runtime_systemd_logs"
+                  ],
+                  "observed_sourcetypes": [
+                    "container:cri:runtime",
+                    "docker:container:json_file",
+                    "docker:engine:event",
+                    "docker:journald:container",
+                    "systemd:journald:service"
+                  ],
+                  "ok": true,
+                  "result_fields": [
+                    "_raw",
+                    "_time",
+                    "action",
+                    "container_id",
+                    "container_name",
+                    "cri_flag",
+                    "event_type",
+                    "image_name",
+                    "index",
+                    "marker_family",
+                    "message",
+                    "product",
+                    "program",
+                    "service_unit",
+                    "severity",
+                    "signature",
+                    "signature_id",
+                    "source",
+                    "sourcetype",
+                    "stream",
+                    "vendor"
+                  ],
+                  "result_nonempty_fields": [
+                    "_raw",
+                    "_time",
+                    "action",
+                    "container_id",
+                    "container_name",
+                    "cri_flag",
+                    "event_type",
+                    "image_name",
+                    "index",
+                    "marker_family",
+                    "message",
+                    "product",
+                    "program",
+                    "service_unit",
+                    "severity",
+                    "signature",
+                    "signature_id",
+                    "source",
+                    "sourcetype",
+                    "stream",
+                    "vendor"
+                  ],
+                  "result_row_count": 9,
+                  "status": 200
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "ok": true,
+      "results": [
+        {
+          "count_ok": true,
+          "empty_fields": [],
+          "expected_count": 9,
+          "fields_ok": true,
+          "index_ok": true,
+          "missing_fields": [],
+          "missing_indexes": [],
+          "must_verify": [
+            "event count",
+            "index",
+            "sourcetype",
+            "source",
+            "vendor",
+            "product",
+            "source-mode separation",
+            "container/service identity fields",
+            "eventtypes/tags",
+            "timestamp"
+          ],
+          "must_verify_fields": [
+            "_time",
+            "index",
+            "sourcetype",
+            "source",
+            "vendor",
+            "product",
+            "stream",
+            "cri_flag",
+            "event_type",
+            "action",
+            "container_id",
+            "container_name",
+            "image_name",
+            "service_unit",
+            "program",
+            "severity",
+            "message",
+            "signature",
+            "signature_id",
+            "marker_family",
+            "_raw"
+          ],
+          "pack": "container_runtime_systemd_logs",
+          "required_indexes": [
+            "osnix"
+          ],
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 9,
+            "message_count": 0,
+            "nonblank_line_count": 9,
+            "observed_indexes": [
+              "osnix"
+            ],
+            "observed_sources": [
+              "container_runtime_systemd_logs"
+            ],
+            "observed_sourcetypes": [
+              "container:cri:runtime",
+              "docker:container:json_file",
+              "docker:engine:event",
+              "docker:journald:container",
+              "systemd:journald:service"
+            ],
+            "ok": true,
+            "result_fields": [
+              "_raw",
+              "_time",
+              "action",
+              "container_id",
+              "container_name",
+              "cri_flag",
+              "event_type",
+              "image_name",
+              "index",
+              "marker_family",
+              "message",
+              "product",
+              "program",
+              "service_unit",
+              "severity",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "stream",
+              "vendor"
+            ],
+            "result_nonempty_fields": [
+              "_raw",
+              "_time",
+              "action",
+              "container_id",
+              "container_name",
+              "cri_flag",
+              "event_type",
+              "image_name",
+              "index",
+              "marker_family",
+              "message",
+              "product",
+              "program",
+              "service_unit",
+              "severity",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "stream",
+              "vendor"
+            ],
+            "result_row_count": 9,
+            "status": 200
+          }
+        }
+      ],
+      "retry_config": {
+        "retries": 6,
+        "wait_seconds": 5.0
+      }
+    },
+    "panel_exports": {
+      "attempted_panel_exports": 13,
+      "ok": true,
+      "results": [
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Total container/runtime events",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 1,
+            "message_count": 0,
+            "nonblank_line_count": 1,
+            "observed_indexes": [],
+            "observed_sources": [],
+            "observed_sourcetypes": [],
+            "ok": true,
+            "result_fields": [
+              "count"
+            ],
+            "result_nonempty_fields": [
+              "count"
+            ],
+            "result_row_count": 1,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 1,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "stderr / error records",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 1,
+            "message_count": 0,
+            "nonblank_line_count": 1,
+            "observed_indexes": [],
+            "observed_sources": [],
+            "observed_sourcetypes": [],
+            "ok": true,
+            "result_fields": [
+              "count"
+            ],
+            "result_nonempty_fields": [
+              "count"
+            ],
+            "result_row_count": 1,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 2,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Docker Engine events",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 1,
+            "message_count": 0,
+            "nonblank_line_count": 1,
+            "observed_indexes": [],
+            "observed_sources": [],
+            "observed_sourcetypes": [],
+            "ok": true,
+            "result_fields": [
+              "count"
+            ],
+            "result_nonempty_fields": [
+              "count"
+            ],
+            "result_row_count": 1,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 3,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Journald service/container records",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 1,
+            "message_count": 0,
+            "nonblank_line_count": 1,
+            "observed_indexes": [],
+            "observed_sources": [],
+            "observed_sourcetypes": [],
+            "ok": true,
+            "result_fields": [
+              "count"
+            ],
+            "result_nonempty_fields": [
+              "count"
+            ],
+            "result_row_count": 1,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 4,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Volume over time by sourcetype",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 49,
+            "message_count": 0,
+            "nonblank_line_count": 49,
+            "observed_indexes": [],
+            "observed_sources": [],
+            "observed_sourcetypes": [],
+            "ok": true,
+            "result_fields": [
+              "_span",
+              "_time",
+              "container:cri:runtime",
+              "docker:container:json_file",
+              "docker:engine:event",
+              "docker:journald:container",
+              "systemd:journald:service"
+            ],
+            "result_nonempty_fields": [
+              "_span",
+              "_time",
+              "container:cri:runtime",
+              "docker:container:json_file",
+              "docker:engine:event",
+              "docker:journald:container",
+              "systemd:journald:service"
+            ],
+            "result_row_count": 49,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 5,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Source-mode distribution",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 7,
+            "message_count": 0,
+            "nonblank_line_count": 7,
+            "observed_indexes": [],
+            "observed_sources": [],
+            "observed_sourcetypes": [
+              "container:cri:runtime",
+              "docker:container:json_file",
+              "docker:engine:event",
+              "systemd:journald:service"
+            ],
+            "ok": true,
+            "result_fields": [
+              "action",
+              "count",
+              "product",
+              "sourcetype",
+              "vendor"
+            ],
+            "result_nonempty_fields": [
+              "action",
+              "count",
+              "product",
+              "sourcetype",
+              "vendor"
+            ],
+            "result_row_count": 7,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 6,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Stream / action distribution",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 6,
+            "message_count": 0,
+            "nonblank_line_count": 6,
+            "observed_indexes": [],
+            "observed_sources": [],
+            "observed_sourcetypes": [],
+            "ok": true,
+            "result_fields": [
+              "action",
+              "count",
+              "event_type",
+              "program",
+              "service_unit",
+              "stream"
+            ],
+            "result_nonempty_fields": [
+              "action",
+              "count",
+              "event_type",
+              "program",
+              "service_unit",
+              "stream"
+            ],
+            "result_row_count": 6,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 7,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Container log stderr/error triage",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 2,
+            "message_count": 0,
+            "nonblank_line_count": 2,
+            "observed_indexes": [],
+            "observed_sources": [
+              "container_runtime_systemd_logs"
+            ],
+            "observed_sourcetypes": [
+              "container:cri:runtime",
+              "docker:container:json_file"
+            ],
+            "ok": true,
+            "result_fields": [
+              "_raw",
+              "_time",
+              "action",
+              "container_log",
+              "cri_flag",
+              "host",
+              "marker_family",
+              "message",
+              "product",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "stream",
+              "vendor"
+            ],
+            "result_nonempty_fields": [
+              "_raw",
+              "_time",
+              "action",
+              "container_log",
+              "cri_flag",
+              "host",
+              "marker_family",
+              "message",
+              "product",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "stream",
+              "vendor"
+            ],
+            "result_row_count": 2,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 8,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Docker Engine lifecycle events",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 1,
+            "message_count": 0,
+            "nonblank_line_count": 1,
+            "observed_indexes": [],
+            "observed_sources": [
+              "container_runtime_systemd_logs"
+            ],
+            "observed_sourcetypes": [
+              "docker:engine:event"
+            ],
+            "ok": true,
+            "result_fields": [
+              "Action",
+              "Actor.Attributes.image",
+              "Actor.Attributes.name",
+              "Actor.ID",
+              "Type",
+              "_raw",
+              "_time",
+              "action",
+              "container_id",
+              "event_type",
+              "host",
+              "marker_family",
+              "product",
+              "scope",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "time",
+              "timeNano",
+              "vendor"
+            ],
+            "result_nonempty_fields": [
+              "Action",
+              "Actor.Attributes.image",
+              "Actor.Attributes.name",
+              "Actor.ID",
+              "Type",
+              "_raw",
+              "_time",
+              "action",
+              "container_id",
+              "event_type",
+              "host",
+              "marker_family",
+              "product",
+              "scope",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "time",
+              "timeNano",
+              "vendor"
+            ],
+            "result_row_count": 1,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 9,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "systemd/journald service review",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 2,
+            "message_count": 0,
+            "nonblank_line_count": 2,
+            "observed_indexes": [],
+            "observed_sources": [
+              "container_runtime_systemd_logs"
+            ],
+            "observed_sourcetypes": [
+              "systemd:journald:service"
+            ],
+            "ok": true,
+            "result_fields": [
+              "MESSAGE",
+              "PRIORITY",
+              "SYSLOG_IDENTIFIER",
+              "_raw",
+              "_time",
+              "action",
+              "host",
+              "marker_family",
+              "message",
+              "product",
+              "program",
+              "service_unit",
+              "severity",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "vendor"
+            ],
+            "result_nonempty_fields": [
+              "MESSAGE",
+              "PRIORITY",
+              "SYSLOG_IDENTIFIER",
+              "_raw",
+              "_time",
+              "action",
+              "host",
+              "marker_family",
+              "message",
+              "product",
+              "program",
+              "service_unit",
+              "severity",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "vendor"
+            ],
+            "result_row_count": 2,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 10,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Docker journald-driver container context",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 1,
+            "message_count": 0,
+            "nonblank_line_count": 1,
+            "observed_indexes": [],
+            "observed_sources": [
+              "container_runtime_systemd_logs"
+            ],
+            "observed_sourcetypes": [
+              "docker:journald:container"
+            ],
+            "ok": true,
+            "result_fields": [
+              "CONTAINER_ID",
+              "CONTAINER_ID_FULL",
+              "CONTAINER_NAME",
+              "IMAGE_NAME",
+              "MESSAGE",
+              "SYSLOG_IDENTIFIER",
+              "_raw",
+              "_time",
+              "container_id",
+              "container_name",
+              "host",
+              "image_name",
+              "marker_family",
+              "message",
+              "product",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "stream",
+              "vendor"
+            ],
+            "result_nonempty_fields": [
+              "CONTAINER_ID",
+              "CONTAINER_ID_FULL",
+              "CONTAINER_NAME",
+              "IMAGE_NAME",
+              "MESSAGE",
+              "SYSLOG_IDENTIFIER",
+              "_raw",
+              "_time",
+              "container_id",
+              "container_name",
+              "host",
+              "image_name",
+              "marker_family",
+              "message",
+              "product",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "stream",
+              "vendor"
+            ],
+            "result_row_count": 1,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 11,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Onboarding coverage by source/sourcetype/host",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 5,
+            "message_count": 0,
+            "nonblank_line_count": 5,
+            "observed_indexes": [
+              "osnix"
+            ],
+            "observed_sources": [
+              "container_runtime_systemd_logs"
+            ],
+            "observed_sourcetypes": [
+              "container:cri:runtime",
+              "docker:container:json_file",
+              "docker:engine:event",
+              "docker:journald:container",
+              "systemd:journald:service"
+            ],
+            "ok": true,
+            "result_fields": [
+              "count",
+              "first_seen",
+              "fixture_markers",
+              "host",
+              "index",
+              "last_seen",
+              "products",
+              "source",
+              "sourcetype",
+              "vendors"
+            ],
+            "result_nonempty_fields": [
+              "count",
+              "first_seen",
+              "fixture_markers",
+              "host",
+              "index",
+              "last_seen",
+              "products",
+              "source",
+              "sourcetype",
+              "vendors"
+            ],
+            "result_row_count": 5,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 12,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        },
+        {
+          "minimum_result_rows": 1,
+          "evidence_boundary": "panel row count proves only dashboard SPL/readiness against indexed TEST data; it is not source validation",
+          "pack": "container_runtime_systemd_logs",
+          "panel_title": "Recent raw container/runtime events",
+          "result": {
+            "body_preview_redacted": true,
+            "body_retention": "successful Splunk export result rows are summarized only; raw body preview is omitted to avoid retaining fixture/raw event content from the disposable TEST search output",
+            "error_count": 0,
+            "json_line_count": 9,
+            "message_count": 0,
+            "nonblank_line_count": 9,
+            "observed_indexes": [],
+            "observed_sources": [
+              "container_runtime_systemd_logs"
+            ],
+            "observed_sourcetypes": [
+              "container:cri:runtime",
+              "docker:container:json_file",
+              "docker:engine:event",
+              "docker:journald:container",
+              "systemd:journald:service"
+            ],
+            "ok": true,
+            "result_fields": [
+              "_raw",
+              "_time",
+              "action",
+              "container_id",
+              "container_log",
+              "container_name",
+              "cri_flag",
+              "event_type",
+              "host",
+              "image_name",
+              "marker_family",
+              "message",
+              "product",
+              "program",
+              "service_unit",
+              "severity",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "stream",
+              "vendor"
+            ],
+            "result_nonempty_fields": [
+              "_raw",
+              "_time",
+              "action",
+              "container_id",
+              "container_log",
+              "container_name",
+              "cri_flag",
+              "event_type",
+              "host",
+              "image_name",
+              "marker_family",
+              "message",
+              "product",
+              "program",
+              "service_unit",
+              "severity",
+              "signature",
+              "signature_id",
+              "source",
+              "sourcetype",
+              "stream",
+              "vendor"
+            ],
+            "result_row_count": 9,
+            "status": 200
+          },
+          "row_count_ok": true,
+          "search_ordinal": 13,
+          "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+        }
+      ]
+    },
+    "screenshot_capture": {
+      "attempted_screenshots": 1,
+      "ok": true,
+      "results": [
+        {
+          "auth": {
+            "attempted": true,
+            "method": "username_password"
+          },
+          "dimensions": {
+            "height": 2636,
+            "width": 1920
+          },
+          "example_only": true,
+          "final_pack_output_path": "packs/container_runtime_systemd_logs/dashboards/screenshots/container-runtime-systemd-logs-overview-splunk-test.png",
+          "evidence_boundary": "dashboard screenshot documentation example only; not source validation or replay/read-back evidence",
+          "ok": true,
+          "output_path": "packs/container_runtime_systemd_logs/dashboards/screenshots/container-runtime-systemd-logs-overview-splunk-test.png",
+          "pack": "container_runtime_systemd_logs",
+          "page_guard": {
+            "current_url": "http://127.0.0.1:8000/en-US/app/search/container_runtime_systemd_logs_overview",
+            "ok": true,
+            "title": "Loading..."
+          },
+          "queue": "stale_screenshot_refresh_targets",
+          "registration_candidate": {
+            "alt": "Splunk TEST dashboard screenshot for Container runtime and systemd service logs using safe fixture events.",
+            "artifact_id": "splunk_dashboard_overview",
+            "caption": "Real Splunk TEST UI screenshot of the Container runtime and systemd service logs dashboard populated with safe pack fixture events.",
+            "example_only": true,
+            "format": "png",
+            "id": "container_runtime_systemd_logs_overview_splunk_test",
+            "notes": "Candidate metadata only until the captured PNG is reviewed and committed. Captured from a disposable Splunk TEST UI after loading this pack's dashboard XML and indexing safe pack-local fixture events. No customer data or production Splunk data is present. Screenshot examples are documentation aids only, not source validation or replay/read-back evidence.",
+            "provenance": "Captured from a disposable Splunk TEST UI at 2026-06-26T06:21:13.305572+00:00 after loading the pack dashboard XML, installing current pack Splunk knowledge, indexing safe pack-local fixture events in the same runner invocation, and passing fixture read-back plus dashboard panel export gates. No customer data or production Splunk data is present. This screenshot is a documentation example only, not source validation or replay/read-back evidence.",
+            "sanitized": true,
+            "scope": "splunk_test_documentation_example_only",
+            "source_path": "dashboards/screenshots/container-runtime-systemd-logs-overview-splunk-test.png",
+            "title": "Container runtime and systemd service logs \u2014 dashboard example"
+          },
+          "sha256": "sha256:c1e057bedcd4b0a997842680026f992e9b64576ae10b23d8adb2985488a6df97",
+          "staged_for_review": false,
+          "view": "container_runtime_systemd_logs_overview"
+        }
+      ]
+    },
+    "splunk_app_reload": {
+      "endpoint": "/services/apps/local/_reload",
+      "materialized_app_count": 1,
+      "evidence_boundary": "Splunk app reload is dashboard render setup only; it is not source validation or screenshot evidence.",
+      "ok": true,
+      "result": {
+        "body_preview": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!--This is to override browser formatting; see server.conf[httpServer] to disable. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .",
+        "ok": true,
+        "status": 200
+      }
+    }
+  },
+  "fixture_hec_events": [
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "{\"time\":\"2026-06-08T10:00:00.123456789Z\",\"stream\":\"stdout\",\"log\":\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDOUT_001 service=checkout level=info msg=order accepted request_id=req-001\\n\"}",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDOUT_001",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "docker:container:json_file"
+      },
+      "line": 1,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDOUT_001",
+      "pack": "container_runtime_systemd_logs"
+    },
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "{\"time\":\"2026-06-08T10:00:01.123456789Z\",\"stream\":\"stderr\",\"log\":\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDERR_002 service=checkout level=error msg=payment gateway timeout request_id=req-002\\n\"}",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDERR_002",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "docker:container:json_file"
+      },
+      "line": 2,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JSON_STDERR_002",
+      "pack": "container_runtime_systemd_logs"
+    },
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "2026-06-08T10:00:02.123456789Z stdout F SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDOUT_003 service=api level=info msg=\"ready\" container=api-0",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDOUT_003",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "container:cri:runtime"
+      },
+      "line": 3,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDOUT_003",
+      "pack": "container_runtime_systemd_logs"
+    },
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "2026-06-08T10:00:03.123456789Z stderr F SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDERR_004 service=worker level=error msg=\"job failed\" container=worker-0",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDERR_004",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "container:cri:runtime"
+      },
+      "line": 4,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_STDERR_004",
+      "pack": "container_runtime_systemd_logs"
+    },
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "2026-06-08T10:00:08.123456789Z stdout P SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_PARTIAL_009 service=api level=info msg=\"chunked response part 1\" container=api-0",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_PARTIAL_009",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "container:cri:runtime"
+      },
+      "line": 5,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_CRI_PARTIAL_009",
+      "pack": "container_runtime_systemd_logs"
+    },
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "{\"Type\":\"container\",\"Action\":\"start\",\"Actor\":{\"ID\":\"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef\",\"Attributes\":{\"name\":\"example-api\",\"image\":\"registry.example.test/example/api:1.0\",\"marker\":\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_EVENT_005\"}},\"scope\":\"local\",\"time\":1780912804,\"timeNano\":1780912804123456789}",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_EVENT_005",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "docker:engine:event"
+      },
+      "line": 6,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_EVENT_005",
+      "pack": "container_runtime_systemd_logs"
+    },
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "{\"__REALTIME_TIMESTAMP\":\"1780912805123456\",\"_HOSTNAME\":\"node-a.example.test\",\"_SYSTEMD_UNIT\":\"docker.service\",\"SYSLOG_IDENTIFIER\":\"dockerd\",\"PRIORITY\":\"6\",\"MESSAGE\":\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_DOCKER_006 container runtime initialized for synthetic node\"}",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_DOCKER_006",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "systemd:journald:service"
+      },
+      "line": 7,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_DOCKER_006",
+      "pack": "container_runtime_systemd_logs"
+    },
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "{\"__REALTIME_TIMESTAMP\":\"1780912806123456\",\"_HOSTNAME\":\"node-a.example.test\",\"_SYSTEMD_UNIT\":\"example-app.service\",\"SYSLOG_IDENTIFIER\":\"example-app\",\"_TRANSPORT\":\"stdout\",\"PRIORITY\":\"6\",\"MESSAGE\":\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_SERVICE_007 background sync completed job_id=job-007\"}",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_SERVICE_007",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "systemd:journald:service"
+      },
+      "line": 8,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_JOURNALD_SERVICE_007",
+      "pack": "container_runtime_systemd_logs"
+    },
+    {
+      "endpoint": "/services/collector/event",
+      "fixture_path": "packs/container_runtime_systemd_logs/test-events/container_runtime_systemd_logs_test_events.txt",
+      "fixture_set": "container_runtime_systemd_mixed_records",
+      "hec_event": {
+        "event": "{\"__REALTIME_TIMESTAMP\":\"1780912807123456\",\"_HOSTNAME\":\"node-a.example.test\",\"SYSLOG_IDENTIFIER\":\"container-runtime\",\"_TRANSPORT\":\"stdout\",\"CONTAINER_ID\":\"abcdef123456\",\"CONTAINER_ID_FULL\":\"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\",\"CONTAINER_NAME\":\"/example-api\",\"IMAGE_NAME\":\"registry.example.test/example/api:1.0\",\"MESSAGE\":\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JOURNALD_CONTAINER_008 request handled status=200\"}",
+        "fields": {
+          "sechub_fixture_marker": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JOURNALD_CONTAINER_008",
+          "sechub_fixture_set": "container_runtime_systemd_mixed_records",
+          "sechub_pack": "container_runtime_systemd_logs"
+        },
+        "host": "container_runtime_systemd_logs-splunk-test",
+        "index": "osnix",
+        "source": "container_runtime_systemd_logs",
+        "sourcetype": "docker:journald:container"
+      },
+      "line": 9,
+      "marker_token": "SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_DOCKER_JOURNALD_CONTAINER_008",
+      "pack": "container_runtime_systemd_logs"
+    }
+  ],
+  "fixture_readback_exports": [
+    {
+      "expected_count": 9,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "source-mode separation",
+        "container/service identity fields",
+        "eventtypes/tags",
+        "timestamp"
+      ],
+      "must_verify_fields": [
+        "_time",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "stream",
+        "cri_flag",
+        "event_type",
+        "action",
+        "container_id",
+        "container_name",
+        "image_name",
+        "service_unit",
+        "program",
+        "severity",
+        "message",
+        "signature",
+        "signature_id",
+        "marker_family",
+        "_raw"
+      ],
+      "must_verify_notes": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "source-mode separation",
+        "container/service identity fields",
+        "eventtypes/tags",
+        "timestamp"
+      ],
+      "pack": "container_runtime_systemd_logs",
+      "required_indexes": [
+        "osnix"
+      ],
+      "splunk_rest_export": {
+        "earliest_time": "-24h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "index=osnix sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product stream cri_flag event_type action container_id container_name image_name service_unit program severity message signature signature_id marker_family _raw"
+      }
+    }
+  ],
+  "generated_at": "2026-06-26T06:20:30Z",
+  "inventory_summary": {
+    "dashboard_render_plan_count": 1,
+    "dashboard_search_diagnostics": [],
+    "dashboard_view_payload_count": 1,
+    "dashboard_xml_count": 1,
+    "dashboarded_packs": 1,
+    "dashboarded_without_screenshot": 0,
+    "dashboarded_without_screenshot_packs": [],
+    "fixture_hec_event_count": 9,
+    "fixture_hec_plan_diagnostics": [],
+    "fixture_plan_diagnostics": [],
+    "fixture_readback_export_count": 1,
+    "panel_rest_export_count": 13,
+    "registered_screenshot_count": 1,
+    "render_plan_diagnostics": [],
+    "screenshot_errors": [
+      {
+        "artifact_id": "splunk_dashboard_overview",
+        "dashboard_path": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml",
+        "error": "screenshot is older than linked dashboard XML; refresh from Splunk TEST before treating it as current",
+        "id": "container_runtime_systemd_logs_overview_splunk_test",
+        "pack": "container_runtime_systemd_logs",
+        "path": "packs/container_runtime_systemd_logs/dashboards/screenshots/container-runtime-systemd-logs-overview-splunk-test.png"
+      }
+    ],
+    "splunk_knowledge_artifact_count": 4,
+    "splunk_knowledge_plan_diagnostics": [],
+    "total_packs": 1
+  },
+  "materialized_splunk_apps": {
+    "app_count": 1,
+    "apps": [
+      {
+        "app_dir": "/home/jarvis/.local/splunk-test/splunk/etc/apps/sechub_container_runtime_systemd_logs_test",
+        "file_count": 5,
+        "files": [
+          {
+            "actual_sha256": "sha256:2aa0416369070a44ad1113f697319e08c6320fccb4b6c1649dffa35300a1f5c0",
+            "kind": "props",
+            "source_path": "packs/container_runtime_systemd_logs/splunk/default/props.conf",
+            "target_app_path": "default/props.conf"
+          },
+          {
+            "actual_sha256": "sha256:85defa691f25b3a5dad292019a6ce72ba474de9027aa99c302ad17ada6dceeda",
+            "kind": "transforms",
+            "source_path": "packs/container_runtime_systemd_logs/splunk/default/transforms.conf",
+            "target_app_path": "default/transforms.conf"
+          },
+          {
+            "actual_sha256": "sha256:366f5b07dd9086edb9c1edbf3f06a1c096e8c072dc3dab7a6884c13c6e721e9d",
+            "kind": "eventtypes",
+            "source_path": "packs/container_runtime_systemd_logs/splunk/default/eventtypes.conf",
+            "target_app_path": "default/eventtypes.conf"
+          },
+          {
+            "actual_sha256": "sha256:5979c2c045874d04d8be531cf7bff9138df2fae7130d42eca82f91f20b6c76a1",
+            "kind": "tags",
+            "source_path": "packs/container_runtime_systemd_logs/splunk/default/tags.conf",
+            "target_app_path": "default/tags.conf"
+          },
+          {
+            "actual_sha256": "sha256:10d3ea9c96984b602aee465e877d65598b5bd72b42861b813f24916175f38023",
+            "kind": "dashboard_view",
+            "source_path": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml",
+            "target_app_path": "default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+          }
+        ],
+        "evidence_boundary": "Materialized Splunk TEST app files are dashboard render setup only; they are not source validation or screenshot evidence.",
+        "pack": "container_runtime_systemd_logs",
+        "splunk_app_name": "sechub_container_runtime_systemd_logs_test"
+      }
+    ],
+    "diagnostics": [],
+    "output_dir": "/home/jarvis/.local/splunk-test/splunk/etc/apps",
+    "pack_filter": [
+      "container_runtime_systemd_logs"
+    ]
+  },
+  "missing_screenshot_targets": [],
+  "mode": "index_fixtures_reload_splunk_apps_install_views_and_execute_panel_exports",
+  "panel_rest_exports": [
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Total container/runtime events",
+      "search_ordinal": 1,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| stats count",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "stderr / error records",
+      "search_ordinal": 2,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\") host=* (stream=stderr OR message=\"*error*\" OR container_log=\"*error*\")\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| stats count",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Docker Engine events",
+      "search_ordinal": 3,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix sourcetype=\"docker:engine:event\" host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| stats count",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Journald service/container records",
+      "search_ordinal": 4,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| stats count",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Volume over time by sourcetype",
+      "search_ordinal": 5,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| timechart count by sourcetype",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Source-mode distribution",
+      "search_ordinal": 6,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| stats count by sourcetype vendor product action | sort -count",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Stream / action distribution",
+      "search_ordinal": 7,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| eval action=coalesce(action,\"-\"), stream=coalesce(stream,\"-\"), event_type=coalesce(event_type,\"-\"), service_unit=coalesce(service_unit,\"-\"), program=coalesce(program,\"-\") | stats count by action stream event_type service_unit program | sort -count",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Container log stderr/error triage",
+      "search_ordinal": 8,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\") host=* (stream=stderr OR message=\"*error*\" OR container_log=\"*error*\")\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| table _time host sourcetype source vendor product stream cri_flag action message container_log signature signature_id marker_family _raw | sort -_time | head 100",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Docker Engine lifecycle events",
+      "search_ordinal": 9,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix sourcetype=\"docker:engine:event\" host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| table _time host sourcetype source vendor product event_type action container_id signature signature_id marker_family Type Action Actor.ID Actor.Attributes.name Actor.Attributes.image scope time timeNano _raw | sort -_time | head 100",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "systemd/journald service review",
+      "search_ordinal": 10,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix sourcetype=\"systemd:journald:service\" host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| table _time host sourcetype source vendor product service_unit program severity action message signature signature_id marker_family _HOSTNAME _SYSTEMD_UNIT SYSLOG_IDENTIFIER PRIORITY _TRANSPORT MESSAGE _raw | sort -_time | head 100",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Docker journald-driver container context",
+      "search_ordinal": 11,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix sourcetype=\"docker:journald:container\" host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| table _time host sourcetype source vendor product container_id container_name image_name stream action message signature signature_id marker_family CONTAINER_ID CONTAINER_ID_FULL CONTAINER_NAME IMAGE_NAME _HOSTNAME SYSLOG_IDENTIFIER MESSAGE _raw | sort -_time | head 100",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Onboarding coverage by source/sourcetype/host",
+      "search_ordinal": 12,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| stats count dc(marker_family) as fixture_markers values(vendor) as vendors values(product) as products min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    },
+    {
+      "pack": "container_runtime_systemd_logs",
+      "panel_title": "Recent raw container/runtime events",
+      "search_ordinal": 13,
+      "splunk_rest_export": {
+        "auth_header_template": "Authorization: Splunk ${SPLUNK_SESSION_KEY}",
+        "auth_scheme": "Splunk REST session key",
+        "base_url_env_var": "SPLUNK_MANAGEMENT_BASE_URL",
+        "earliest_time": "-24h@h",
+        "endpoint": "/services/search/jobs/export",
+        "latest_time": "now",
+        "method": "POST",
+        "output_mode": "json",
+        "search": "search index=osnix (sourcetype=\"docker:container:json_file\" OR sourcetype=\"container:cri:runtime\" OR sourcetype=\"docker:engine:event\" OR sourcetype=\"systemd:journald:service\" OR sourcetype=\"docker:journald:container\") host=*\n| search sechub_fixture_marker=\"SC4S_CONTAINER_RUNTIME_SYSTEMD_TEST_*\"\n| table _time host sourcetype source vendor product stream cri_flag event_type action container_id container_name image_name service_unit program severity message container_log signature signature_id marker_family _raw | sort -_time | head 50",
+        "token_env_var": "SPLUNK_SESSION_KEY"
+      },
+      "view": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml"
+    }
+  ],
+  "splunk_knowledge_artifacts": [
+    {
+      "actual_sha256": "sha256:2aa0416369070a44ad1113f697319e08c6320fccb4b6c1649dffa35300a1f5c0",
+      "expected_sha256": "sha256:2aa0416369070a44ad1113f697319e08c6320fccb4b6c1649dffa35300a1f5c0",
+      "hash_matches_manifest": true,
+      "kind": "props",
+      "pack": "container_runtime_systemd_logs",
+      "repo_path": "packs/container_runtime_systemd_logs/splunk/default/props.conf",
+      "splunk_app_name": "sechub_container_runtime_systemd_logs_test",
+      "target_app_path": "default/props.conf"
+    },
+    {
+      "actual_sha256": "sha256:85defa691f25b3a5dad292019a6ce72ba474de9027aa99c302ad17ada6dceeda",
+      "expected_sha256": "sha256:85defa691f25b3a5dad292019a6ce72ba474de9027aa99c302ad17ada6dceeda",
+      "hash_matches_manifest": true,
+      "kind": "transforms",
+      "pack": "container_runtime_systemd_logs",
+      "repo_path": "packs/container_runtime_systemd_logs/splunk/default/transforms.conf",
+      "splunk_app_name": "sechub_container_runtime_systemd_logs_test",
+      "target_app_path": "default/transforms.conf"
+    },
+    {
+      "actual_sha256": "sha256:366f5b07dd9086edb9c1edbf3f06a1c096e8c072dc3dab7a6884c13c6e721e9d",
+      "expected_sha256": "sha256:366f5b07dd9086edb9c1edbf3f06a1c096e8c072dc3dab7a6884c13c6e721e9d",
+      "hash_matches_manifest": true,
+      "kind": "eventtypes",
+      "pack": "container_runtime_systemd_logs",
+      "repo_path": "packs/container_runtime_systemd_logs/splunk/default/eventtypes.conf",
+      "splunk_app_name": "sechub_container_runtime_systemd_logs_test",
+      "target_app_path": "default/eventtypes.conf"
+    },
+    {
+      "actual_sha256": "sha256:5979c2c045874d04d8be531cf7bff9138df2fae7130d42eca82f91f20b6c76a1",
+      "expected_sha256": "sha256:5979c2c045874d04d8be531cf7bff9138df2fae7130d42eca82f91f20b6c76a1",
+      "hash_matches_manifest": true,
+      "kind": "tags",
+      "pack": "container_runtime_systemd_logs",
+      "repo_path": "packs/container_runtime_systemd_logs/splunk/default/tags.conf",
+      "splunk_app_name": "sechub_container_runtime_systemd_logs_test",
+      "target_app_path": "default/tags.conf"
+    }
+  ],
+  "stale_screenshot_refresh_targets": [
+    {
+      "existing_registration_count": 1,
+      "full_page": true,
+      "output_path_template": "packs/${PACK_ID}/dashboards/screenshots/${VIEW_NAME}-splunk-test.png",
+      "pack": "container_runtime_systemd_logs",
+      "stale_reason": "screenshot is older than linked dashboard XML; refresh from Splunk TEST before treating it as current",
+      "stale_screenshot_id": "container_runtime_systemd_logs_overview_splunk_test",
+      "viewport": {
+        "height": 1400,
+        "width": 1920
+      },
+      "web_views": [
+        {
+          "name": "container_runtime_systemd_logs_overview",
+          "output_path": "packs/container_runtime_systemd_logs/dashboards/screenshots/container-runtime-systemd-logs-overview-splunk-test.png",
+          "source_path": "packs/container_runtime_systemd_logs/splunk/default/data/ui/views/container_runtime_systemd_logs_overview.xml",
+          "web_path": "/en-US/app/search/container_runtime_systemd_logs_overview",
+          "web_url_template": "${SPLUNK_WEB_BASE_URL}/en-US/app/search/container_runtime_systemd_logs_overview"
+        }
+      ]
+    }
+  ]
+}

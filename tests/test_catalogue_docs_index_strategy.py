@@ -33,7 +33,7 @@ def test_local_docs_index_strategy_doc_covers_required_design_sections() -> None
         "catalogue/generated/docs-index",
         "sc4s-inbuilt",
         "sc4s-inbuilt-lite",
-        "sechub-resource",
+        "sechub-resources-pack",
         "community-extra",
         "official",
         "curated",

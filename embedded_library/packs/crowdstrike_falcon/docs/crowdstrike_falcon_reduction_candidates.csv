@@ -1,0 +1,9 @@
+field_or_event,default_posture,security_value,reduction_candidate,pre_enable_validation,rollback
+CommandLine,retain,Process lineage and response triage,No,Replay/read-back must prove command context survives,Remove optional trim rule
+ImageFileName,retain,Executable identity and detection pivot,No,Replay/read-back must prove process image survives,Remove optional trim rule
+SHA256HashData,retain,File/process hash pivoting,No,Replay/read-back must prove hash survives,Remove optional trim rule
+DomainName,retain,DNS detection and incident scoping,No,Replay/read-back must prove query context survives,Remove optional trim rule
+LocalAddressIP4/RemoteAddressIP4/ports,retain,Network connection reconstruction,No,Replay/read-back must prove tuple survives,Remove optional trim rule
+cid,retain_sanitized_or_controlled,Tenant/customer boundary can be sensitive but helps correlation,Review required,Confirm tenant-safe handling and read-back before trimming/masking,Disable masking rule
+SensorHeartbeat high-volume success rows,retain_by_default,Sensor state and containment visibility,Possible optional suppression only after local sampling,Replay/read-back must prove stale/missing sensor detection still works,Disable optional suppression
+UserIdentity enrichment rows,retain_by_default,Identity/device correlation,Possible optional dedupe only after local sampling,Replay/read-back must prove identity context remains available,Disable optional dedupe

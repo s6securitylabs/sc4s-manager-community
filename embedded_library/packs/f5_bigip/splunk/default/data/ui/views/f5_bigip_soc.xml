@@ -1,0 +1,251 @@
+<form version="1.1" theme="dark">
+  <label>F5 BIG-IP - SOC Overview</label>
+  <description>Ingestion health, ASM attack events, LTM traffic limiting, SSL/TCL errors, iRule events, DNS, load-balancer failures, and HTTP access for F5 BIG-IP sourcetypes. Not field-validated: panels are conservative and based on synthetic-equivalent fixture evidence only.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total F5 BIG-IP events</title>
+      <single>
+        <search>
+          <query>index IN (netops, netwaf) vendor=f5 product=bigip host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>ASM attack violations</title>
+      <single>
+        <search>
+          <query>index=netwaf sourcetype="f5:bigip:asm:syslog" violations=* host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,20]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>SSL errors</title>
+      <single>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:ltm:ssl:error" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,50]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>LB failures (pool member down)</title>
+      <single>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:ltm:failed:irule" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events by sourcetype over time</title>
+      <chart>
+        <search>
+          <query>index IN (netops, netwaf) vendor=f5 product=bigip host=$host_tok$ | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>ASM attack events (WAF violations)</title>
+      <table>
+        <search>
+          <query>index=netwaf sourcetype="f5:bigip:asm:syslog" violations=* host=$host_tok$ | eval attacker=coalesce(src_ip, src, "unknown") | table _time host attacker dest_ip violations support_id action severity signature_id | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top ASM violation types</title>
+      <chart>
+        <search>
+          <query>index=netwaf sourcetype="f5:bigip:asm:syslog" violations=* host=$host_tok$ | stats count by violations | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SSL/TLS errors</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:ltm:ssl:error" host=$host_tok$ | table _time host src_ip dest_ip message_code severity signature _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>LTM traffic limiting events</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:ltm:traffic" action=traffic_limit host=$host_tok$ | table _time host src_ip transport packet_rate message_code | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Load balancer failures (failed pool members)</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:ltm:failed:irule" host=$host_tok$ | table _time host src_ip dest_ip pool pool_member_ip pool_member_port reason signature | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>HTTP iRule events</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:ltm:http:irule" host=$host_tok$ | table _time host src_ip dest_ip method uri signature | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>GTM DNS requests (top queried names)</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:gtm:dns:request:irule" host=$host_tok$ | stats count by qname, src_ip | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>GTM DNS responses (non-zero rcode errors)</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:gtm:dns:response:irule" rcode!=0 host=$host_tok$ | stats count by qname, rcode | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Access JSON events (APM session activity)</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:ltm:access_json" host=$host_tok$ | table _time host src_ip dest_ip event_type method uri action | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>TCL scripting errors</title>
+      <table>
+        <search>
+          <query>index=netops sourcetype="f5:bigip:ltm:tcl:error" host=$host_tok$ | table _time host message_code severity signature _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SPL for manual triage (copy and run)</title>
+      <html>
+        <![CDATA[
+        <div style="font-family:monospace;font-size:12px;padding:8px;">
+          <b>All F5 events drilldown:</b><br/>
+          <code>index IN (netops, netwaf) vendor=f5 product=bigip | table _time index sourcetype host src_ip dest_ip action signature severity violations support_id _raw</code><br/><br/>
+          <b>ASM attacks from a specific source IP:</b><br/>
+          <code>index=netwaf sourcetype="f5:bigip:asm:syslog" src_ip="&lt;IP&gt;" | table _time violations support_id dest_ip action</code><br/><br/>
+          <b>Pool member down events:</b><br/>
+          <code>index=netops sourcetype="f5:bigip:ltm:failed:irule" | stats count by pool, pool_member_ip, reason | sort -count</code><br/><br/>
+          <i>Note: panels use synthetic-equivalent fixture evidence; not field-validated on live F5 BIG-IP sources.</i>
+        </div>
+        ]]>
+      </html>
+    </panel>
+  </row>
+
+</form>

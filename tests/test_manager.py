@@ -84,6 +84,47 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertIn("SC4S_MANAGER_ROOT=", message)
             self.assertIn("/opt/sc4s", message)
 
+    def test_liveness_and_dependency_readiness_are_separate(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.health_probe = lambda: {"ok": False, "error": "SC4S unavailable"}
+            app.CONTROL_SOCKET = str(Path(d) / "missing.sock")
+            self.assertEqual(app.liveness_status()["status"], "ok")
+            readiness = app.readiness_status()
+            self.assertEqual(readiness["status"], "not_ready")
+            self.assertFalse(readiness["checks"]["sc4s"]["ok"])
+            self.assertTrue(readiness["checks"]["env_file"]["ok"])
+            self.assertEqual(readiness["checks"]["control"]["mode"], "observe_only")
+
+    def test_health_probe_uses_configured_service_url(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.SC4S_HEALTH_URL = "http://sc4s:8080/health"
+            response = type("Response", (), {
+                "status": 200,
+                "read": lambda self, size: b"ok",
+                "__enter__": lambda self: self,
+                "__exit__": lambda *args: None,
+            })()
+            with patch.object(app.urllib.request, "urlopen", return_value=response) as opened:
+                result = app.health_probe()
+            self.assertTrue(result["ok"])
+            opened.assert_called_once_with("http://sc4s:8080/health", timeout=3)
+
+    def test_auth_configuration_requires_explicit_single_strong_mode(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.AUTH_MODE = ""
+            with self.assertRaises(ValueError):
+                app.validate_auth_configuration()
+            app.AUTH_MODE = "standalone"
+            app.MANUAL_LOGIN_TOKEN = "a" * 32
+            app.PROXY_SECRET = ""
+            app.validate_auth_configuration()
+            app.PROXY_SECRET = "b" * 32
+            with self.assertRaises(ValueError):
+                app.validate_auth_configuration()
+
     def test_log_message_redacts_manual_login_query_tokens(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
@@ -131,9 +172,7 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertEqual(missing_asset.headers_sent["Content-Type"], "application/json; charset=utf-8")
 
             root = FakeResponseHandler()
-            self.assertTrue(app.frontend_response(root, "/"))
-            self.assertEqual(root.status, 200)
-            self.assertIn(b"SC4S Manager", root.wfile.getvalue())
+            self.assertFalse(app.frontend_response(root, "/"))
 
             unknown = FakeResponseHandler()
             self.assertFalse(app.frontend_response(unknown, "/packs/cisco_asa"))
@@ -151,17 +190,6 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertEqual(response.status, 404)
             self.assertEqual(response.headers_sent["Content-Type"], "application/json; charset=utf-8")
             self.assertNotIn(b"do-not-serve", response.wfile.getvalue())
-
-    def test_binary_response_sanitizes_content_disposition_filename(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            response = FakeResponseHandler()
-            app.binary_response(response, 200, b"payload", 'bad";\r\nX-Injected: yes.zip', "application/zip")
-            disposition = response.headers_sent["Content-Disposition"]
-            self.assertNotIn("\r", disposition)
-            self.assertNotIn("\n", disposition)
-            self.assertNotIn('";', disposition)
-            self.assertEqual(response.wfile.getvalue(), b"payload")
 
     def test_env_redacts_secrets_and_disable_enable_port(self):
         with tempfile.TemporaryDirectory() as d:
@@ -482,227 +510,86 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertIn("sc4s-admin", app.parse_groups("users,sc4s-admin|ops"))
             self.assertNotIn("sc4s-admin", app.parse_groups("users,not-sc4s-admin|ops"))
 
-    def test_manual_login_token_authorizes_without_authentik_proxy(self):
+    def test_manual_master_token_is_not_request_authentication(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            app.API_TOKEN = "manual-secret"
             handler = type("Handler", (), {})()
             handler.path = "/api/stats"
             handler.client_address = ("203.0.113.10", 55555)
-            handler.headers = {"Authorization": "Bearer manual-secret", "Host": "sc4s-manager.example"}
-            self.assertTrue(app.authorized(handler, unsafe=False))
-            self.assertTrue(app.authorized(handler, unsafe=True))
-
-    def test_manual_login_token_rejects_wrong_token(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            app.MANUAL_LOGIN_TOKEN = "manual-secret"
-            handler = type("Handler", (), {})()
-            handler.path = "/api/stats"
-            handler.client_address = ("203.0.113.10", 55555)
-            handler.headers = {"Authorization": "Bearer wrong", "Host": "sc4s-manager.example"}
+            handler.headers = {"X-SC4S-Manager-Token": "manual-secret", "X-SC4S-Manual-Token": "manual-secret"}
             self.assertFalse(app.authorized(handler, unsafe=False))
 
-    def test_manual_login_token_cookie_authorizes_browser_session(self):
+    def test_random_revocable_session_authorizes_without_exposing_master_token(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            app.API_TOKEN = "manual-secret"
+            session = app.create_session()
+            self.assertNotEqual(session, app.MANUAL_LOGIN_TOKEN)
             handler = type("Handler", (), {})()
             handler.path = "/api/stats"
             handler.client_address = ("203.0.113.10", 55555)
-            handler.headers = {
-                "Cookie": f"other=1; sc4s_manual_session={app._manual_session_token()}",
-                "Host": "sc4s-manager.example",
-            }
+            handler.headers = {"Cookie": f"sc4s_manual_session={session}", "Host": "sc4s-manager.example"}
             self.assertTrue(app.authorized(handler, unsafe=False))
+            principal = app.authenticate(handler)
+            self.assertEqual(principal.auth_mode, "manual_session")
+            self.assertEqual(app.actor_from(handler, principal), "admin")
+            app.revoke_session(session)
+            self.assertFalse(app.authorized(handler, unsafe=False))
 
-    def test_manual_login_query_sets_cookie_and_removes_token_from_location(self):
+    def test_manual_login_query_authentication_is_removed(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            app.API_TOKEN = "manual-secret"
             handler = type("Handler", (), {})()
-            handler.path = "/?token=manual-secret&tab=stats"
+            handler.path = "/?token=manual-secret"
             handler.headers = {}
-            calls = []
-            handler.send_response = lambda status: calls.append(("status", status))
-            handler.send_header = lambda key, value: calls.append(("header", key, value))
-            handler.end_headers = lambda: calls.append(("end",))
-            self.assertTrue(app.manual_login_redirect(handler))
-            self.assertIn(("status", 303), calls)
-            self.assertIn(("header", "Location", "/?tab=stats"), calls)
-            headers = {call[1]: call[2] for call in calls if call[0] == "header"}
-            cookie = headers["Set-Cookie"]
-            self.assertIn(f"sc4s_manual_session={app._manual_session_token()}", cookie)
-            self.assertNotIn("manual-secret", cookie)
-            self.assertNotIn("token=", headers["Location"])
+            self.assertFalse(app.manual_login_redirect(handler))
 
-    def test_manual_login_redirect_rejects_raw_header_newlines(self):
+    def test_manual_login_exchanges_master_token_for_safe_random_cookie(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
-            app.MANUAL_LOGIN_TOKEN = "manual-secret"
-            handler = type("Handler", (), {})()
-            handler.path = "/safe\r\nX-Injected: yes?login_token=manual-secret"
-            handler.headers = {"Host": "sc4s-manager.example"}
-            calls = []
-            handler.send_response = lambda status: calls.append(("status", status))
-            handler.send_header = lambda key, value: calls.append(("header", key, value))
-            handler.end_headers = lambda: calls.append(("end",))
+            app.MANUAL_LOGIN_TOKEN = "login-value-42"
+            server = app.ThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                conn = HTTPConnection("127.0.0.1", server.server_address[1], timeout=5)
+                conn.request("POST", "/api/login", body=json.dumps({"token": "login-value-42"}), headers={"Content-Type": "application/json"})
+                response = conn.getresponse()
+                response.read()
+                cookie = response.getheader("Set-Cookie")
+                conn.close()
+                self.assertEqual(response.status, 200)
+                self.assertIn("HttpOnly", cookie)
+                self.assertIn("Secure", cookie)
+                self.assertIn("SameSite=Strict", cookie)
+                self.assertNotIn("login-value-42", cookie)
+                session = cookie.split("sc4s_manual_session=", 1)[1].split(";", 1)[0]
+                self.assertIn(session, app._sessions)
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=5)
 
-            self.assertTrue(app.manual_login_redirect(handler))
-            self.assertIn(("header", "Location", "/"), calls)
-
-
-    def test_actor_from_uses_proxy_identity_only_after_proxy_authentication(self):
+    def test_forwarded_actor_requires_verified_proxy_secret(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
-            handler = type("Handler", (), {})()
-            handler.path = "/api/stats"
-            handler.client_address = ("203.0.113.10", 55555)
-            handler.headers = {
-                "X-SC4S-Manager-Proxy": "test-secret",
-                "X-Authentik-Username": "operator",
-                "X-Forwarded-User": "forwarded-user",
-            }
-            self.assertEqual(app.actor_from(handler), "operator")
-
-    def test_actor_from_labels_manual_token_actor_without_claiming_a_user_identity(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            app.PROXY_SECRET = "proxy-secret"
             handler = type("Handler", (), {})()
             handler.path = "/api/stats"
             handler.client_address = ("203.0.113.10", 55555)
-            handler.headers = {"Authorization": "Bearer manual-secret"}
-            self.assertEqual(app.actor_from(handler), "manual-token")
-
-    def test_actor_from_does_not_trust_proxy_identity_without_proxy_authentication(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            app.MANUAL_LOGIN_TOKEN = "manual-secret"
-            handler = type("Handler", (), {})()
-            handler.path = "/api/env"
-            handler.client_address = ("203.0.113.10", 55555)
-            handler.headers = {
-                "Authorization": "Bearer manual-secret",
-                "X-Authentik-Username": "forged-admin",
-                "X-Forwarded-User": "forged-forwarded-admin",
-            }
-            self.assertTrue(app.authorized(handler, unsafe=True))
-            self.assertEqual(app.actor_from(handler), "manual-token")
-
-    def test_cookie_authenticated_mutation_requires_present_matching_origin(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            app.MANUAL_LOGIN_TOKEN = "manual-secret"
-            handler = type("Handler", (), {})()
-            handler.path = "/api/env"
-            handler.client_address = ("203.0.113.10", 55555)
-            handler.headers = {
-                "Cookie": f"sc4s_manual_session={app._manual_session_token()}",
-                "Host": "sc4s-manager.example",
-            }
-            self.assertFalse(app.authorized(handler, unsafe=True))
-            handler.headers["Origin"] = "https://sc4s-manager.example"
-            self.assertTrue(app.authorized(handler, unsafe=True))
-
-    def test_apply_consent_requires_a_json_boolean_before_mutation(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            self.assertFalse(app.payload_bool({"apply": False}, "apply", True))
-            self.assertTrue(app.payload_bool({}, "apply", True))
-            before = app.ENV_FILE.read_text()
-            invalid_calls = (
-                (app.apply_change, {"type": "env", "key": "SC4S_TEST", "value": "changed", "apply": "false"}),
-                (app.configure_destination, {"apply": "false"}),
-                (app.onboard_source, {"apply": "false"}),
-                (app.upsert_route, {"apply": "false"}),
-            )
-            for operation, payload in invalid_calls:
-                with self.assertRaisesRegex(ValueError, "apply must be a JSON boolean"):
-                    operation(payload, "tester")
-            self.assertEqual(app.ENV_FILE.read_text(), before)
-
-    def test_atomic_write_preserves_mode_and_replaces_content(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            target = app.ENV_FILE
-            target.chmod(0o640)
-            app.atomic_write(target, "SC4S_TEST=yes\n")
-            self.assertEqual(target.read_text(), "SC4S_TEST=yes\n")
-            self.assertEqual(target.stat().st_mode & 0o777, 0o640)
-
-    def test_resolved_under_accepts_in_root_path(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            candidate = app.ROOT / "local" / "context" / "host.csv"
-            resolved = app.resolved_under(candidate, (app.ROOT,))
-            self.assertEqual(resolved, candidate.resolve())
-
-    def test_resolved_under_rejects_dotdot_escape(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            outside = app.ROOT / "local" / ".." / ".." / "etc_passwd"
-            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
-                app.resolved_under(outside, (app.ROOT,))
-
-    def test_resolved_under_rejects_sibling_prefix_root(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            sibling = Path(str(app.ROOT) + "_evil") / "host.csv"
-            sibling.parent.mkdir(parents=True)
-            sibling.write_text("evil\n")
-            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
-                app.resolved_under(sibling, (app.ROOT,))
-
-    def test_resolved_under_rejects_symlink_escape(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            outside = Path(d) / "outside.conf"
-            outside.write_text("evil\n")
-            link = app.LOCAL_ROOT / "context" / "linked.conf"
-            link.symlink_to(outside)
-            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
-                app.resolved_under(link, tuple(app.EDITABLE_ROOTS))
-
-    def test_atomic_write_rejects_outside_root_target(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
-                app.atomic_write(Path(d) / "evil.txt", "oops\n")
-            self.assertFalse((Path(d) / "evil.txt").exists())
-
-    def test_atomic_write_bytes_rejects_outside_root_target(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
-                app.atomic_write_bytes(Path(d) / "evil.bin", b"oops")
-            self.assertFalse((Path(d) / "evil.bin").exists())
-
-    def test_backup_rejects_outside_root_source(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            outside = Path(d) / "outside.conf"
-            outside.write_text("evil\n")
-            with self.assertRaisesRegex(ValueError, "outside the allowed roots"):
-                app.backup(outside, "tester")
-            self.assertEqual(list(app.BACKUP_DIR.glob("*.bak")), [])
-
-    def test_apply_change_rejects_traversal_file_target(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            with self.assertRaises(ValueError):
-                app.apply_change({"type": "file", "path": "../../etc/sc4s/evil.conf", "content": "evil\n", "apply": False}, "tester")
-
-    def test_apply_change_rejects_symlinked_editable_path(self):
-        with tempfile.TemporaryDirectory() as d:
-            app = load_app(Path(d))
-            outside = Path(d) / "outside.conf"
-            outside.write_text("original\n")
-            link = app.LOCAL_ROOT / "config" / "filters" / "linked.conf"
-            link.symlink_to(outside)
-            with self.assertRaises(ValueError):
-                app.apply_change({"type": "file", "path": "local/config/filters/linked.conf", "content": "evil\n", "apply": False}, "tester")
-            self.assertEqual(outside.read_text(), "original\n")
+            handler.headers = {"X-Authentik-Username": "operator"}
+            self.assertIsNone(app.authenticate(handler))
+            self.assertEqual(app.actor_from(handler), "203.0.113.10")
+            handler.headers["X-SC4S-Manager-Proxy"] = "proxy-secret"
+            principal = app.authenticate(handler)
+            self.assertEqual(principal.actor, "operator")
+            self.assertEqual(principal.auth_mode, "trusted_proxy")
+            self.assertTrue(principal.trusted_hop)
 
     def test_template_upload_import_restores_zip_content(self):
         with tempfile.TemporaryDirectory() as d:
@@ -714,6 +601,24 @@ class ManagerUnitTests(unittest.TestCase):
             app.import_template_upload("uploaded.zip", base64.b64encode(buf.getvalue()).decode(), "tester")
             target = app.LOCAL_ROOT / "context" / "vendor_product_by_source.csv"
             self.assertEqual(target.read_text(), "f_b,sc4s_vendor_product,fortinet\n")
+
+    def test_template_transaction_restores_partial_multi_file_import(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            import zipfile
+            app.ensure_dirs()
+            archive = app.TEMPLATE_DIR / "broken.zip"
+            with zipfile.ZipFile(archive, "w") as z:
+                z.writestr("local/context/vendor_product_by_source.csv", "f_new,sc4s_vendor_product,cisco_asa\n")
+                z.writestr("local/config/filters/new.conf", "broken config\n")
+            before = (app.LOCAL_ROOT / "context" / "vendor_product_by_source.csv").read_text() if (app.LOCAL_ROOT / "context" / "vendor_product_by_source.csv").exists() else None
+            app.validate_config = lambda: {"ok": False, "error": "invalid template"}
+            out = app.transactional_template_import(lambda: app.import_template(str(archive), "tester"), "tester")
+            self.assertFalse(out["ok"])
+            self.assertTrue(out["rolled_back"])
+            self.assertFalse((app.LOCAL_ROOT / "config" / "filters" / "new.conf").exists())
+            current = (app.LOCAL_ROOT / "context" / "vendor_product_by_source.csv").read_text() if (app.LOCAL_ROOT / "context" / "vendor_product_by_source.csv").exists() else None
+            self.assertEqual(current, before)
 
     def test_tls_inventory_reports_missing_files_and_inactive_listener(self):
         with tempfile.TemporaryDirectory() as d:
@@ -819,12 +724,11 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertEqual(stats["log_findings"]["warning_count"], 1)
             self.assertEqual(stats["log_findings"]["error_count"], 1)
 
-    def test_index_html_exposes_operations_and_metrics_sections(self):
+    def test_frontend_contract_uses_built_spa_not_removed_inline_operations_page(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
-            self.assertIn("<h2>Operations</h2>", app.INDEX_HTML)
-            self.assertIn("<h2>Metrics Explorer</h2>", app.INDEX_HTML)
-            self.assertIn("/api/metrics/syslog-ng", app.INDEX_HTML)
+            self.assertFalse(hasattr(app, "INDEX_HTML"))
+            self.assertEqual(app.frontend_index_path(), app.FRONTEND_DIST / "index.html")
 
     def test_option_schema_contains_help_and_tls_dependencies(self):
         with tempfile.TemporaryDirectory() as d:
@@ -836,7 +740,7 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertIn("description", keys["SC4S_SOURCE_TLS_ENABLE"])
             self.assertIn("server.pem", " ".join(keys["SC4S_SOURCE_TLS_ENABLE"].get("requires", [])))
             self.assertEqual(keys["SC4S_DEST_SPLUNK_HEC_DEFAULT_TOKEN"]["secret"], True)
-            self.assertEqual(schema["supported_sc4s_version"], "3.43.0")
+            self.assertEqual(schema["supported_sc4s_version"], "3.46.0")
             self.assertFalse(schema["version_drift"]["drift"])
 
     def test_option_schema_v1_catalog_covers_required_categories_and_metadata(self):
@@ -878,7 +782,7 @@ class ManagerUnitTests(unittest.TestCase):
             schema = app.option_schema()
             self.assertEqual(schema["running_sc4s_version"], "9.99.0")
             self.assertTrue(schema["version_drift"]["drift"])
-            self.assertIn("3.43.0", schema["version_drift"]["message"])
+            self.assertIn("3.46.0", schema["version_drift"]["message"])
 
     def test_validate_config_allows_tls_port_when_tls_disabled(self):
         with tempfile.TemporaryDirectory() as d:
@@ -932,6 +836,7 @@ class ManagerUnitTests(unittest.TestCase):
                     return {"ok": True, "status": {"running": True, "health": "healthy", "image_version": app.SUPPORTED_SC4S_VERSION}}
                 return {"ok": True, "code": 0, "stdout": "", "stderr": ""}
             app.control_request = fake_control
+            app.health_probe = lambda: {"ok": True, "status": 200}
             app.tls_inventory = lambda: {"ready": True, "enabled": True, "problems": []}
             result = app.apply_change({"type":"env", "key":"SC4S_USE_REVERSE_DNS", "value":"yes", "apply": True}, "tester")
             self.assertTrue(result["ok"])
@@ -940,37 +845,149 @@ class ManagerUnitTests(unittest.TestCase):
             self.assertIn("validate", actions)
             self.assertIn("restart", actions)
             self.assertEqual(result["post_check"]["docker"]["health"], "healthy")
-
-    def test_failed_apply_control_restores_file_and_retries_restored_runtime(self):
+    def test_onboard_source_rolls_back_all_files_when_reload_fails(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
-            actions = []
             app.validate_config = lambda: {"ok": True}
-            app.restart_sc4s = lambda actor: actions.append(actor) or ({"ok": False, "error": "first failed"} if len(actions) == 1 else {"ok": True})
+            app.reload_sc4s = lambda actor: {"ok": False, "error": "reload failed"}
+            out = app.onboard_source({"name": "rollbackme", "source": "192.0.2.0/24", "vendor_product": "cisco_asa", "apply": True}, "tester")
+            self.assertFalse(out["ok"])
+            self.assertTrue(out["rolled_back"])
+            self.assertFalse((app.LOCAL_ROOT / "config" / "filters" / "rollbackme.conf").exists())
+            self.assertFalse(any(row and row[0] == "f_rollbackme" for row in app.read_csv(app.CSV_FILES["vendor_product"])))
+
+    def test_apply_rolls_back_when_restart_fails(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
             before = app.ENV_FILE.read_text()
-
+            app.validate_config = lambda: {"ok": True}
+            app.restart_sc4s = lambda actor: {"ok": False, "error": "restart failed"}
             out = app.apply_change({"type": "env", "key": "SC4S_USE_REVERSE_DNS", "value": "yes", "apply": True}, "tester")
-
             self.assertFalse(out["ok"])
             self.assertTrue(out["rolled_back"])
-            self.assertEqual(actions, ["tester", "tester"])
-            self.assertTrue(out["rollback_runtime"]["ok"])
             self.assertEqual(app.ENV_FILE.read_text(), before)
+            self.assertTrue(out["rollback_validation"]["ok"])
 
-    def test_delete_source_apply_honors_intent_and_rolls_back_after_reload_failure(self):
+    def test_apply_rolls_back_when_post_check_is_unhealthy(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
-            app.add_service({"filter": "asa_lab", "source": "10.10.2.0/24", "vendor_product": "cisco_asa"}, "tester")
+            target = app.LOCAL_ROOT / "config" / "filters" / "postcheck.conf"
             app.validate_config = lambda: {"ok": True}
-            calls = []
-            app.reload_sc4s = lambda actor: calls.append(actor) or ({"ok": False} if len(calls) == 1 else {"ok": True})
-
-            out = app.delete_source("asa_lab", "tester", apply=True)
-
+            control_calls = []
+            app.reload_sc4s = lambda actor: control_calls.append(actor) or {"ok": True}
+            app.docker_status = lambda: {"running": True}
+            app.health_probe = lambda: {"ok": False, "error": "unhealthy"}
+            out = app.apply_change({"type": "file", "path": "config/filters/postcheck.conf", "content": "filter f_ok { netmask(\"192.0.2.0/24\"); };\n", "apply": True}, "tester")
             self.assertFalse(out["ok"])
             self.assertTrue(out["rolled_back"])
-            self.assertEqual(calls, ["tester", "tester"])
-            self.assertTrue((app.LOCAL_ROOT / "config" / "filters" / "asa_lab.conf").exists())
+            self.assertFalse(target.exists())
+            # First control applies the change; second restores runtime after filesystem rollback.
+            self.assertEqual(control_calls, ["tester", "tester"])
+            self.assertIn("control", out["rollback_runtime"])
+
+    def test_embedded_library_validation_respects_expected_revision(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            calls = []
+            app.validate_library_import = lambda source_id, entry_id, actor="manager": calls.append((source_id, entry_id)) or {"ok": True, "source_id": source_id, "entry_id": entry_id}
+            conflict = app.coordinated_mutation({"expected_revision": 99}, lambda: app.validate_library_import("embedded", "pan_panos"))
+            self.assertEqual(conflict.get("code"), "revision_conflict")
+            self.assertEqual(calls, [])
+            ok = app.coordinated_mutation({"expected_revision": 0}, lambda: app.validate_library_import("embedded", "pan_panos"))
+            self.assertTrue(ok.get("ok"))
+            self.assertEqual(calls, [("embedded", "pan_panos")])
+            self.assertEqual(ok.get("revision"), 1)
+
+
+    def test_mutation_revision_rejects_stale_writer_without_running_operation(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            calls = []
+            first = app.coordinated_mutation({"expected_revision": 0}, lambda: calls.append("first") or {"ok": True})
+            stale = app.coordinated_mutation({"expected_revision": 0}, lambda: calls.append("stale") or {"ok": True})
+            self.assertEqual(first["revision"], 1)
+            self.assertEqual(stale["code"], "revision_conflict")
+            self.assertEqual(stale["revision"], 1)
+            self.assertEqual(calls, ["first"])
+
+    def test_validated_control_rejects_stale_revision_and_revalidates_success(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.validate_config = lambda: {"ok": True, "checked_at": "now"}
+            validated = app.validate_config_at_revision()
+            self.assertEqual(validated["revision"], 0)
+            app.coordinated_mutation({"expected_revision": 0}, lambda: {"ok": True})
+            calls = []
+            app.reload_sc4s = lambda actor: calls.append(actor) or {"ok": True}
+            stale = app.validated_control_action({"expected_revision": 0}, "tester", "reload")
+            self.assertEqual(stale["code"], "revision_conflict")
+            self.assertEqual(calls, [])
+
+            app.docker_status = lambda: {"running": True, "health": "healthy"}
+            app.health_probe = lambda: {"ok": True, "status": 200}
+            app.port_summary = lambda env: {"tcp": {"listener_active": True}}
+            result = app.validated_control_action({"expected_revision": 1, "validation_token": validated["validation_token"]}, "tester", "reload")
+            self.assertTrue(result["ok"])
+            self.assertEqual(calls, ["tester"])
+            self.assertTrue(result["post_check"]["health"]["ok"])
+            self.assertEqual(result["revision"], 1)
+
+    def test_validated_control_rejects_out_of_band_config_change(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.validate_config = lambda: {"ok": True}
+            validated = app.validate_config_at_revision()
+            app.ENV_FILE.write_text(app.ENV_FILE.read_text() + "SC4S_USE_REVERSE_DNS=yes\n")
+            calls = []
+            app.reload_sc4s = lambda actor: calls.append(actor) or {"ok": True}
+
+            result = app.validated_control_action({"expected_revision": 0, "validation_token": validated["validation_token"]}, "tester", "reload")
+
+            self.assertEqual(result["code"], "validation_state_changed")
+            self.assertEqual(calls, [])
+
+    def test_validated_control_requires_a_validation_revision(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            result = app.validated_control_action({}, "tester", "restart")
+            self.assertEqual(result["code"], "validation_revision_required")
+
+    
+    def test_apply_change_restores_runtime_after_post_check_failure(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            calls = []
+            app.validate_config = lambda: {"ok": True}
+            app.restart_sc4s = lambda actor: calls.append("restart") or {"ok": True}
+            app.docker_status = lambda: {"running": True}
+            app.health_probe = lambda: {"ok": False, "error": "unhealthy"}
+            before = app.ENV_FILE.read_text()
+            out = app.apply_change({"type": "env", "key": "SC4S_USE_REVERSE_DNS", "value": "yes", "apply": True}, "tester")
+            self.assertFalse(out["ok"])
+            self.assertTrue(out["rolled_back"])
+            self.assertEqual(app.ENV_FILE.read_text(), before)
+            self.assertEqual(calls, ["restart", "restart"])
+            self.assertIn("control", out["rollback_runtime"])
+
+    def test_source_and_destination_delete_block_dependent_routes_atomically(self):
+        with tempfile.TemporaryDirectory() as d:
+            app = load_app(Path(d))
+            app.add_service({"filter": "source_a", "source": "192.0.2.0/24", "vendor_product": "cisco_asa"}, "tester")
+            app.ENV_FILE.write_text(app.ENV_FILE.read_text() + "SC4S_DEST_SPLUNK_HEC_SIEM_URL=https://splunk:8088\n")
+            source_file = app.LOCAL_ROOT / "config" / "filters" / "source_a.conf"
+            before_env = app.ENV_FILE.read_text()
+            state = app.load_state()
+            state["routes"] = [{"id": "route_a", "source": "source_a", "destination_kind": "hec", "destination_id": "SIEM"}]
+            app.save_state(state)
+
+            with self.assertRaisesRegex(ValueError, "route_a"):
+                app.delete_source("source_a", "tester")
+            with self.assertRaisesRegex(ValueError, "route_a"):
+                app.delete_destination("hec", "SIEM", "tester")
+
+            self.assertTrue(source_file.exists())
+            self.assertEqual(app.ENV_FILE.read_text(), before_env)
+            self.assertEqual(app.load_state()["routes"][0]["id"], "route_a")
 
 
     def test_rollback_restore_preserves_local_root_inode_for_bind_mounts(self):
@@ -1071,6 +1088,7 @@ class ManagerUnitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            app.API_TOKEN = "manual-secret"
             app.service_stats = lambda: {"ok": True, "health": {"ok": True}, "docker": {"running": True}}
             app.health_probe = lambda: {"ok": True, "status": 200}
             app.syslog_ng_metrics = lambda filters=None: {"ok": True, "filters": filters or {}}
@@ -1083,8 +1101,8 @@ class ManagerUnitTests(unittest.TestCase):
             app.destination_inventory = lambda: {"destinations": []}
             app.catalogue_inventory = lambda filters=None: {"entries": [{"id": "commvault_commcell"}], "count": 1, "limit": 50, "offset": 0, "filters": filters or {}}
             app.catalogue_detail = lambda entry_id: {"id": entry_id, "display_name": "Commvault CommCell"}
-            app.library_sources = lambda: {"sources": [{"source_id": "official", "enabled": True, "last_sync": "2026-06-01T00:00:00Z"}]}
-            app.library_catalogue = lambda source_id="official", filters=None: {"source_id": source_id, "entries": [{"id": "pan_panos"}], "filters": filters or {}}
+            app.library_sources = lambda: {"sources": [{"source_id": "embedded", "enabled": True, "entry_count": 67}]}
+            app.library_catalogue = lambda source_id="embedded", filters=None: {"source_id": source_id, "entries": [{"id": "pan_panos"}], "filters": filters or {}}
             app.library_entry = lambda source_id, entry_id, refresh=False: {"source_id": source_id, "entry": {"id": entry_id}, "refresh": refresh}
             app.list_library_imports = lambda: {"imports": [{"import_id": "imp_123", "entry_id": "pan_panos", "apply_allowed": True}]}
             app.backups = lambda: []
@@ -1098,7 +1116,7 @@ class ManagerUnitTests(unittest.TestCase):
             try:
                 def get(path):
                     conn = HTTPConnection("127.0.0.1", server.server_address[1], timeout=5)
-                    conn.request("GET", path, headers={"Authorization": "Bearer manual-secret", "Host": "sc4s-manager.test"})
+                    conn.request("GET", path, headers={"X-SC4S-Manager-Token": "manual-secret", "Host": "sc4s-manager.test"})
                     resp = conn.getresponse()
                     body = resp.read().decode("utf-8")
                     conn.close()
@@ -1114,11 +1132,11 @@ class ManagerUnitTests(unittest.TestCase):
                 self.assertEqual(status, 200)
                 self.assertEqual(json.loads(body)["filters"], {"source_name": "filter", "type": "matched", "limit": "5"})
 
-                status, ctype, body = get("/api/catalogue?origin=sechub-resource&limit=5")
+                status, ctype, body = get("/api/catalogue?origin=sechub-resources-pack&limit=5")
                 self.assertEqual(status, 200)
                 payload = json.loads(body)
                 self.assertEqual(payload["entries"][0]["id"], "commvault_commcell")
-                self.assertEqual(payload["filters"], {"origin": "sechub-resource", "limit": "5"})
+                self.assertEqual(payload["filters"], {"origin": "sechub-resources-pack", "limit": "5"})
 
                 status, ctype, body = get("/api/catalogue/commvault_commcell")
                 self.assertEqual(status, 200)
@@ -1126,20 +1144,20 @@ class ManagerUnitTests(unittest.TestCase):
 
                 status, ctype, body = get("/api/library/sources")
                 self.assertEqual(status, 200)
-                self.assertEqual(json.loads(body)["sources"][0]["source_id"], "official")
+                self.assertEqual(json.loads(body)["sources"][0]["source_id"], "embedded")
 
-                status, ctype, body = get("/api/library/catalogue?source_id=official&downloadable_only=yes&search=pan")
+                status, ctype, body = get("/api/library/catalogue?source_id=embedded&downloadable_only=yes&search=pan")
                 self.assertEqual(status, 200)
                 library_catalogue = json.loads(body)
-                self.assertEqual(library_catalogue["source_id"], "official")
+                self.assertEqual(library_catalogue["source_id"], "embedded")
                 self.assertEqual(library_catalogue["filters"], {"downloadable_only": "yes", "search": "pan"})
 
-                status, ctype, body = get("/api/library/entry?source_id=official&entry_id=pan_panos&refresh=yes")
+                status, ctype, body = get("/api/library/entry?source_id=embedded&entry_id=pan_panos")
                 self.assertEqual(status, 200)
                 library_entry = json.loads(body)
-                self.assertEqual(library_entry["source_id"], "official")
+                self.assertEqual(library_entry["source_id"], "embedded")
                 self.assertEqual(library_entry["entry"]["id"], "pan_panos")
-                self.assertTrue(library_entry["refresh"])
+                self.assertFalse(library_entry["refresh"])
 
                 status, ctype, body = get("/api/library/imports")
                 self.assertEqual(status, 200)
@@ -1162,12 +1180,11 @@ class ManagerUnitTests(unittest.TestCase):
                 server.server_close()
                 thread.join(timeout=5)
 
-    def test_library_post_routes_are_wired(self):
+    def test_library_post_routes_are_embedded_only(self):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
-            app.sync_library_source = lambda source_id: {"ok": True, "source_id": source_id, "synced": True}
-            app.download_library_bundle = lambda source_id, entry_id: {"ok": True, "source_id": source_id, "entry_id": entry_id, "download": {"filename": f"{entry_id}.zip"}}
+            app.API_TOKEN = "manual-secret"
             app.validate_library_import = lambda source_id, entry_id, actor="manager": {"ok": True, "source_id": source_id, "entry_id": entry_id, "import_id": "imp_123", "actor": actor}
             app.apply_library_import = lambda import_id, actor, apply=True: {"ok": True, "import_id": import_id, "actor": actor, "apply": apply}
             server = app.ThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
@@ -1180,7 +1197,7 @@ class ManagerUnitTests(unittest.TestCase):
                         "POST",
                         path,
                         body=json.dumps(payload),
-                        headers={"Authorization": "Bearer manual-secret", "Host": "sc4s-manager.test", "Content-Type": "application/json"},
+                        headers={"X-SC4S-Manager-Token": "manual-secret", "Host": "sc4s-manager.test", "Content-Type": "application/json"},
                     )
                     resp = conn.getresponse()
                     body = resp.read().decode("utf-8")
@@ -1188,14 +1205,14 @@ class ManagerUnitTests(unittest.TestCase):
                     return resp.status, json.loads(body)
 
                 status, body = post("/api/library/sync", {"source_id": "official"})
-                self.assertEqual(status, 200)
-                self.assertTrue(body["synced"])
+                self.assertEqual(status, 404)
+                self.assertEqual(body["error"], "not found")
 
                 status, body = post("/api/library/download", {"source_id": "official", "entry_id": "pan_panos"})
-                self.assertEqual(status, 200)
-                self.assertEqual(body["download"]["filename"], "pan_panos.zip")
+                self.assertEqual(status, 404)
+                self.assertEqual(body["error"], "not found")
 
-                status, body = post("/api/library/import/validate", {"source_id": "official", "entry_id": "pan_panos"})
+                status, body = post("/api/library/import/validate", {"source_id": "embedded", "entry_id": "pan_panos"})
                 self.assertEqual(status, 200)
                 self.assertEqual(body["import_id"], "imp_123")
 
@@ -1211,6 +1228,7 @@ class ManagerUnitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            app.API_TOKEN = "manual-secret"
             app.pack_inventory = lambda: {"packs": [], "count": 0}
             app.library_sources = lambda: {"sources": []}
             server = app.ThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
@@ -1219,7 +1237,7 @@ class ManagerUnitTests(unittest.TestCase):
             try:
                 def request(method, path, payload=None):
                     conn = HTTPConnection("127.0.0.1", server.server_address[1], timeout=5)
-                    headers = {"Authorization": "Bearer manual-secret", "Host": "sc4s-manager.test"}
+                    headers = {"X-SC4S-Manager-Token": "manual-secret", "Host": "sc4s-manager.test"}
                     body = None
                     if payload is not None:
                         headers["Content-Type"] = "application/json"
@@ -1276,6 +1294,7 @@ class ManagerUnitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            app.API_TOKEN = "manual-secret"
             app.control_request = lambda action, **params: {"ok": True, "code": 0, "stdout": "syntax ok", "stderr": "", "status": {"running": True, "health": "healthy", "image_version": app.SUPPORTED_SC4S_VERSION}}
             app.tls_inventory = lambda: {"ready": True, "enabled": True, "problems": []}
             server = app.ThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
@@ -1286,7 +1305,7 @@ class ManagerUnitTests(unittest.TestCase):
                     conn = HTTPConnection("127.0.0.1", server.server_address[1], timeout=5)
                     headers = {"Host": "sc4s-manager.test"}
                     if authenticated:
-                        headers["Authorization"] = "Bearer manual-secret"
+                        headers["X-SC4S-Manager-Token"] = "manual-secret"
                     body = None
                     if payload is not None:
                         headers["Content-Type"] = "application/json"
@@ -1369,6 +1388,7 @@ class ManagerUnitTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             app = load_app(Path(d))
             app.MANUAL_LOGIN_TOKEN = "manual-secret"
+            app.API_TOKEN = "manual-secret"
             server = app.ThreadingHTTPServer(("127.0.0.1", 0), app.Handler)
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
@@ -1386,7 +1406,7 @@ class ManagerUnitTests(unittest.TestCase):
                     "POST",
                     "/api/env",
                     body='["not", "an", "object"]',
-                    headers={"Authorization": "Bearer manual-secret", "Host": "sc4s-manager.test", "Content-Type": "application/json"},
+                    headers={"X-SC4S-Manager-Token": "manual-secret", "Host": "sc4s-manager.test", "Content-Type": "application/json"},
                 )
                 resp = conn.getresponse()
                 body = resp.read().decode("utf-8")

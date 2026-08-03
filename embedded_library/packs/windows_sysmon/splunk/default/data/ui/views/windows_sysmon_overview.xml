@@ -1,0 +1,313 @@
+<form version="1.1" theme="dark">
+  <label>Microsoft Windows Sysmon - Overview</label>
+  <description>Fixture-backed Windows Sysmon XML relay overview for process, network, image-load, process-access, file creation/time-change, DNS, registry, named-pipe, and process-tampering, WMI filter/consumer/binding, driver-load, remote-thread, raw-access, clipboard-change, and file-delete-detected records. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Windows Sysmon events</title>
+      <single>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:process" OR sourcetype="windows:sysmon:network" OR sourcetype="windows:sysmon:image_load" OR sourcetype="windows:sysmon:process_access" OR sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:dns" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:registry" OR sourcetype="windows:sysmon:pipe" OR sourcetype="windows:sysmon:tampering" OR sourcetype="windows:sysmon:wmi" OR sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:raw_access" OR sourcetype="windows:sysmon:clipboard" OR sourcetype="windows:sysmon:remote_thread" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Process / access events</title>
+      <single>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:process" OR sourcetype="windows:sysmon:process_access" OR sourcetype="windows:sysmon:remote_thread") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Network / DNS activity</title>
+      <single>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:network" OR sourcetype="windows:sysmon:dns") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Image / file activity</title>
+      <single>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:image_load" OR sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Windows Sysmon volume over time by action</title>
+      <chart>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:process" OR sourcetype="windows:sysmon:network" OR sourcetype="windows:sysmon:image_load" OR sourcetype="windows:sysmon:process_access" OR sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:dns" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:registry" OR sourcetype="windows:sysmon:pipe" OR sourcetype="windows:sysmon:tampering" OR sourcetype="windows:sysmon:wmi" OR sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:raw_access" OR sourcetype="windows:sysmon:clipboard" OR sourcetype="windows:sysmon:remote_thread" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | timechart count by action</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:process" OR sourcetype="windows:sysmon:network" OR sourcetype="windows:sysmon:image_load" OR sourcetype="windows:sysmon:process_access" OR sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:dns" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:registry" OR sourcetype="windows:sysmon:pipe" OR sourcetype="windows:sysmon:tampering" OR sourcetype="windows:sysmon:wmi" OR sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:raw_access" OR sourcetype="windows:sysmon:clipboard" OR sourcetype="windows:sysmon:remote_thread" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | stats count by action sourcetype event_id | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top users and endpoints</title>
+      <chart>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:process" OR sourcetype="windows:sysmon:network" OR sourcetype="windows:sysmon:image_load" OR sourcetype="windows:sysmon:process_access" OR sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:dns" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:registry" OR sourcetype="windows:sysmon:pipe" OR sourcetype="windows:sysmon:tampering" OR sourcetype="windows:sysmon:wmi" OR sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:raw_access" OR sourcetype="windows:sysmon:clipboard" OR sourcetype="windows:sysmon:remote_thread" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | stats count values(action) as actions values(computer) as computers by user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top processes and command lines</title>
+      <table>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:process" OR sourcetype="windows:sysmon:network" OR sourcetype="windows:sysmon:image_load" OR sourcetype="windows:sysmon:process_access" OR sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:dns" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:registry" OR sourcetype="windows:sysmon:pipe" OR sourcetype="windows:sysmon:tampering" OR sourcetype="windows:sysmon:wmi" OR sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:raw_access" OR sourcetype="windows:sysmon:clipboard" OR sourcetype="windows:sysmon:remote_thread" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ process_path=* | stats count values(action) as actions values(user) as users values(command_line) as command_lines values(parent_process_path) as parent_processes by process_name process_path | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Network connections</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:network" host=$host_tok$ | stats count values(process_path) as processes values(user) as users values(initiated) as initiated by src_ip src_port dest_ip dest_port dest_host transport | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>DNS queries</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:dns" host=$host_tok$ | stats count values(process_path) as processes values(user) as users values(query_status) as statuses values(query_results) as results by query_name | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Image loads and signature status</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:image_load" host=$host_tok$ | stats count values(user) as users values(process_path) as processes values(hashes) as hashes by image_loaded signed file_signature signature_status | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Process access targets</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:process_access" host=$host_tok$ | stats count values(user) as users values(process_path) as source_processes values(target_process_path) as target_processes values(call_trace) as call_traces by target_process_name target_process_id granted_access | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Remote thread creation</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:remote_thread" host=$host_tok$ | stats count values(user) as users values(source_process_path) as source_processes values(target_process_path) as target_processes values(start_address) as start_addresses values(start_module) as start_modules values(start_function) as start_functions by source_process_name source_process_id target_process_name target_process_id new_thread_id | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>File creation and deletion context</title>
+      <table>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | stats count values(action) as actions values(user) as users values(process_path) as processes values(hashes) as hashes values(is_executable) as executable_flags values(archived) as archived_flags values(delete_detected) as delete_detected values(creation_utc_time) as creation_times values(previous_creation_utc_time) as previous_creation_times by target_filename file_name | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Registry modification context</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:registry" host=$host_tok$ | stats count values(user) as users values(process_path) as processes values(registry_details) as details values(registry_new_name) as new_names by registry_event_type target_object | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Named pipe activity</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:pipe" host=$host_tok$ | stats count values(action) as actions values(user) as users values(process_path) as processes by pipe_name | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Process tampering events</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:tampering" host=$host_tok$ | stats count values(user) as users values(tamper_type) as tamper_types by process_path process_name process_id | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+
+  <row>
+    <panel>
+      <title>Driver loads, raw access, and clipboard changes</title>
+      <table>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:raw_access" OR sourcetype="windows:sysmon:clipboard" OR sourcetype="windows:sysmon:remote_thread" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | stats count values(user) as users values(process_path) as processes values(loaded_driver) as loaded_drivers values(device) as devices values(clipboard_session) as clipboard_sessions values(client_info) as client_info values(hashes) as hashes values(archived) as archived_flags by action event_id file_name signed file_signature signature_status | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+
+  <row>
+    <panel>
+      <title>WMI filter, consumer, and binding activity</title>
+      <table>
+        <search>
+          <query>index=oswinsec sourcetype="windows:sysmon:wmi" host=$host_tok$ | stats count values(user) as users values(wmi_event_type) as event_types values(wmi_operation) as operations values(wmi_namespace) as namespaces values(wmi_query) as queries values(wmi_type) as consumer_types values(wmi_destination) as destinations values(wmi_consumer) as consumers values(wmi_filter) as filters by action wmi_name | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage by source, host, and sourcetype</title>
+      <table>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:process" OR sourcetype="windows:sysmon:network" OR sourcetype="windows:sysmon:image_load" OR sourcetype="windows:sysmon:process_access" OR sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:dns" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:registry" OR sourcetype="windows:sysmon:pipe" OR sourcetype="windows:sysmon:tampering" OR sourcetype="windows:sysmon:wmi" OR sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:raw_access" OR sourcetype="windows:sysmon:clipboard" OR sourcetype="windows:sysmon:remote_thread" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | stats count min(_time) as first_seen max(_time) as last_seen values(event_id) as event_ids values(action) as actions by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort sourcetype host</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Windows Sysmon events</title>
+      <table>
+        <search>
+          <query>index=oswinsec (sourcetype="windows:sysmon:process" OR sourcetype="windows:sysmon:network" OR sourcetype="windows:sysmon:image_load" OR sourcetype="windows:sysmon:process_access" OR sourcetype="windows:sysmon:file_create" OR sourcetype="windows:sysmon:file_time" OR sourcetype="windows:sysmon:dns" OR sourcetype="windows:sysmon:file_delete" OR sourcetype="windows:sysmon:registry" OR sourcetype="windows:sysmon:pipe" OR sourcetype="windows:sysmon:tampering" OR sourcetype="windows:sysmon:wmi" OR sourcetype="windows:sysmon:driver_load" OR sourcetype="windows:sysmon:raw_access" OR sourcetype="windows:sysmon:clipboard" OR sourcetype="windows:sysmon:remote_thread" OR sourcetype="windows:sysmon:file_delete_detected") host=$host_tok$ | table _time index sourcetype source host vendor product event_id action signature signature_id user computer process_path process_name command_line src_ip src_port dest_ip dest_port dest_host query_name target_filename image_loaded target_process_path granted_access target_object registry_event_type registry_details registry_new_name pipe_name device clipboard_session client_info loaded_driver wmi_event_type wmi_operation wmi_namespace wmi_name wmi_query wmi_type wmi_destination wmi_consumer wmi_filter tamper_type source_process_path source_process_name target_process_name new_thread_id start_address start_module start_function delete_detected marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+  </row>
+</form>

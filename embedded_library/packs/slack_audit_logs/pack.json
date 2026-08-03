@@ -1,0 +1,1221 @@
+{
+  "schema_version": "0.1",
+  "id": "slack_audit_logs",
+  "version": "0.1.1",
+  "url": "https://docs.slack.dev/admins/audit-logs-api",
+  "description": "Curated SecHub Resources SC4S pack for Slack Enterprise Audit Logs API records relayed as one JSON object per line, with fixture-backed user session, anomaly, app security, file security, workspace administration, and user/admin role audit families.",
+  "display_name": "Slack Audit Logs",
+  "vendor": "slack",
+  "product": "audit_logs",
+  "default_index": "netauth",
+  "default_source": "slack_audit_logs",
+  "listener": {
+    "source_id": "SLACK_AUDIT_LOGS",
+    "transport": "tcp",
+    "port": 20096,
+    "env": {
+      "SC4S_LISTEN_SLACK_AUDIT_LOGS_TCP_PORT": "20096",
+      "SOURCE_ALL_SET_APPEND": "SLACK_AUDIT_LOGS"
+    }
+  },
+  "sourcetypes": {
+    "user_session": "slack:audit",
+    "anomaly": "slack:audit",
+    "app_security": "slack:audit",
+    "file_security": "slack:audit",
+    "workspace_admin": "slack:audit",
+    "user_admin_role": "slack:audit"
+  },
+  "event_families": [
+    {
+      "id": "user_session",
+      "label": "Slack user session audit events",
+      "match_engine": "pcre",
+      "match": "\\\"action\\\"\\s*:\\s*\\\"user_login\\\"",
+      "expected_sourcetype": "slack:audit",
+      "primary_id_field": "id",
+      "required_fields": [
+        "date_create",
+        "action",
+        "actor",
+        "entity",
+        "context"
+      ],
+      "timestamp_fields": [
+        "date_create"
+      ]
+    },
+    {
+      "id": "anomaly",
+      "label": "Slack anomaly audit events",
+      "match_engine": "pcre",
+      "match": "\\\"action\\\"\\s*:\\s*\\\"anomaly\\\"",
+      "expected_sourcetype": "slack:audit",
+      "primary_id_field": "id",
+      "required_fields": [
+        "date_create",
+        "action",
+        "actor",
+        "entity",
+        "context",
+        "details"
+      ],
+      "timestamp_fields": [
+        "date_create"
+      ]
+    },
+    {
+      "id": "app_security",
+      "label": "Slack app security audit events",
+      "match_engine": "pcre",
+      "match": "\\\"action\\\"\\s*:\\s*\\\"app_approved\\\"",
+      "expected_sourcetype": "slack:audit",
+      "primary_id_field": "id",
+      "required_fields": [
+        "date_create",
+        "action",
+        "actor",
+        "entity",
+        "context"
+      ],
+      "timestamp_fields": [
+        "date_create"
+      ]
+    },
+    {
+      "id": "file_security",
+      "label": "Slack file security audit events",
+      "match_engine": "pcre",
+      "match": "\\\"action\\\"\\s*:\\s*\\\"file_downloaded\\\"",
+      "expected_sourcetype": "slack:audit",
+      "primary_id_field": "id",
+      "required_fields": [
+        "date_create",
+        "action",
+        "actor",
+        "entity",
+        "context"
+      ],
+      "timestamp_fields": [
+        "date_create"
+      ]
+    },
+    {
+      "id": "workspace_admin",
+      "label": "Slack workspace administration audit events",
+      "match_engine": "pcre",
+      "match": "\\\"action\\\"\\s*:\\s*\\\"workspace_settings_changed\\\"",
+      "expected_sourcetype": "slack:audit",
+      "primary_id_field": "id",
+      "required_fields": [
+        "date_create",
+        "action",
+        "actor",
+        "entity",
+        "context"
+      ],
+      "timestamp_fields": [
+        "date_create"
+      ]
+    },
+    {
+      "id": "user_admin_role",
+      "label": "Slack user/admin role audit events",
+      "match_engine": "pcre",
+      "match": "\\\"action\\\"\\s*:\\s*\\\"user_role_changed\\\"",
+      "expected_sourcetype": "slack:audit",
+      "primary_id_field": "id",
+      "required_fields": [
+        "date_create",
+        "action",
+        "actor",
+        "entity",
+        "context"
+      ],
+      "timestamp_fields": [
+        "date_create"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "slack",
+    "product": "audit_logs",
+    "vendor_product": "slack:audit_logs",
+    "slack_audit_family": "Derived from Slack audit action token",
+    "id": "Slack Audit Logs API event identifier",
+    "event_id": "Alias of Slack id",
+    "date_create": "Slack Audit Logs API UTC epoch seconds timestamp",
+    "action": "Slack audit action token",
+    "signature": "Action token used as triage signature",
+    "signature_id": "Slack event id or action fallback",
+    "actor_id": "Actor user id where present",
+    "actor_name": "Actor display/name where present",
+    "actor_email": "Actor email where present; sensitive",
+    "actor_type": "Actor object type",
+    "user": "Actor user name/email/id fallback",
+    "src_user": "Actor alias",
+    "target_user": "Entity user name/email/id where present",
+    "target_user_id": "Entity user id where present",
+    "target_user_email": "Entity user email where present; sensitive",
+    "object": "Entity id/type fallback",
+    "object_type": "Slack entity type",
+    "src_ip": "Context IP address",
+    "src": "Source IP alias",
+    "user_agent": "Context user-agent",
+    "session_id": "Slack session id where present",
+    "workspace_id": "Workspace/enterprise id where present",
+    "workspace_name": "Workspace/enterprise name where present",
+    "workspace_domain": "Workspace domain where present",
+    "reason": "Anomaly reason where present",
+    "previous_ip_address": "Previous IP address for anomaly rows where present",
+    "previous_user_agent": "Previous user-agent for anomaly rows where present",
+    "file_hash": "File MD5/hash context where present",
+    "file_url_private": "Synthetic private file URL context where present; sensitive",
+    "marker": "Synthetic fixture marker only"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-slack_audit_logs.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/slack_audit_logs_overview.xml"
+    ],
+    "test_events": [
+      "test-events/slack_audit_logs_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20096.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/slack_audit_logs_reduction_candidates.csv",
+      "validation/preflight-2026-06-19.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Slack Audit Logs JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20096,
+      "notes": "Dedicated TCP listener for one collector-unwrapped Slack audit JSON record per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20096,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Slack Enterprise Audit Logs API JSON",
+    "min": "Slack docs.slack.dev Audit Logs API documentation current as of 2026-06-19",
+    "max": null,
+    "notes": "Grounded in public Slack Audit Logs API documentation and Elastic field-family corroboration. Native API entries[] envelope must be unwrapped by a collector before this relay path."
+  },
+  "source_delivery": {
+    "mode": "api_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Slack Enterprise Audit Logs API JSON entries must be collected, unwrapped from entries[], and relayed as one JSON object per line; SC4S does not poll Slack or manage OAuth tokens/cursors/checkpoints.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-19",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Slack public Audit Logs API docs and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Slack audit JSON records only. Local replay preflight is blocked by missing Slack audit listener/Splunk management search path; no live Slack API relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Slack Audit Logs JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "slack_audit_logs_json"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_SLACK_AUDIT_LOGS_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20096.sh"
+    },
+    "readback": {
+      "spl": "index=netauth sechub_fixture_marker=\"SC4S_SLACK_AUDIT_LOGS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product slack_audit_family action event_id user src_user actor_id actor_email target_user target_user_id object object_type src_ip user_agent session_id workspace_id workspace_domain reason previous_ip_address previous_user_agent file_hash file_url_private marker _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "Slack audit family",
+        "action",
+        "event_id",
+        "date_create timestamp",
+        "actor/user fields",
+        "entity/object fields",
+        "context IP/user-agent/session fields",
+        "anomaly details where applicable",
+        "raw JSON"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-19",
+      "summary": "2026-06-19 local preflight found no Slack audit TCP listener and no Splunk management/search path on 8089 in this repository run. Splunk Web on 8000 accepted TCP, but fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-19.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-19.md",
+        "summary": "Command-grounded local preflight evidence for missing Slack audit listener/testbed; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20096,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Slack Audit Logs JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netauth"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netauth",
+        "Search role can read netauth"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "slack_audit_logs_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/slack_audit_logs/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/slack_audit_logs/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/slack_audit_logs/compose.yaml",
+      "compose_project": "sechub-slack-audit-logs-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netauth index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/slack_audit_logs/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/slack_audit_logs/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/slack_audit_logs/scripts/send_tcp_20096.sh 127.0.0.1 20096",
+        "splunk_summary_readback": "index=netauth sechub_fixture_marker=\"SC4S_SLACK_AUDIT_LOGS_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netauth sechub_fixture_marker=\"SC4S_SLACK_AUDIT_LOGS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product slack_audit_family action event_id user src_user actor_id actor_email target_user target_user_id object object_type src_ip user_agent session_id workspace_id workspace_domain reason previous_ip_address previous_user_agent file_hash file_url_private marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netauth",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/slack_audit_logs/splunk -> /opt/splunk/etc/apps/sechub_slack_audit_logs:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20096,
+          "host_port_env": "SC4S_SLACK_AUDIT_LOGS_PORT",
+          "source_id": "SLACK_AUDIT_LOGS"
+        },
+        "parser_mount": "packs/slack_audit_logs/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "slack_audit_logs_api",
+          "source_shape": "json_relay",
+          "event_family": "user_session",
+          "sourcetype": "slack:audit",
+          "data_structures": [
+            "Slack Audit Logs API entry"
+          ],
+          "markers": [
+            "SC4S_SLACK_AUDIT_LOGS_TEST_SESSION_001"
+          ]
+        },
+        {
+          "source": "slack_audit_logs_api",
+          "source_shape": "json_relay",
+          "event_family": "anomaly",
+          "sourcetype": "slack:audit",
+          "data_structures": [
+            "Slack anomalous activity audit entry"
+          ],
+          "markers": [
+            "SC4S_SLACK_AUDIT_LOGS_TEST_ANOMALY_002"
+          ]
+        },
+        {
+          "source": "slack_audit_logs_api",
+          "source_shape": "json_relay",
+          "event_family": "app_security",
+          "sourcetype": "slack:audit",
+          "data_structures": [
+            "Slack app approval audit entry"
+          ],
+          "markers": [
+            "SC4S_SLACK_AUDIT_LOGS_TEST_APP_003"
+          ]
+        },
+        {
+          "source": "slack_audit_logs_api",
+          "source_shape": "json_relay",
+          "event_family": "file_security",
+          "sourcetype": "slack:audit",
+          "data_structures": [
+            "Slack file access audit entry"
+          ],
+          "markers": [
+            "SC4S_SLACK_AUDIT_LOGS_TEST_FILE_004"
+          ]
+        },
+        {
+          "source": "slack_audit_logs_api",
+          "source_shape": "json_relay",
+          "event_family": "workspace_admin",
+          "sourcetype": "slack:audit",
+          "data_structures": [
+            "Slack workspace administration audit entry"
+          ],
+          "markers": [
+            "SC4S_SLACK_AUDIT_LOGS_TEST_WORKSPACE_005"
+          ]
+        },
+        {
+          "source": "slack_audit_logs_api",
+          "source_shape": "json_relay",
+          "event_family": "user_admin_role",
+          "sourcetype": "slack:audit",
+          "data_structures": [
+            "Slack user/admin role audit entry"
+          ],
+          "markers": [
+            "SC4S_SLACK_AUDIT_LOGS_TEST_ROLE_006"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live Slack Enterprise tenant/API or collector replay/read-back.",
+        "No OAuth token custody, cursor pagination/checkpoint, rate-limit, retry, or deduplication proof.",
+        "No native API entries[] envelope unwrapping proof inside the disposable harness; fixtures are already one event per line.",
+        "No Slack message-content monitoring, DLP/eDiscovery coverage, or complete Audit Logs action coverage.",
+        "No production or field validation; synthetic-equivalent fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for the declared JSON relay shape, not live Slack tenant/API/collector validation or field validation."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "slack_audit_logs_json",
+      "label": "Slack Audit Logs synthetic-equivalent JSON events",
+      "path": "test-events/slack_audit_logs_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_SLACK_AUDIT_LOGS_TEST_SESSION_001",
+        "SC4S_SLACK_AUDIT_LOGS_TEST_ANOMALY_002",
+        "SC4S_SLACK_AUDIT_LOGS_TEST_APP_003",
+        "SC4S_SLACK_AUDIT_LOGS_TEST_FILE_004",
+        "SC4S_SLACK_AUDIT_LOGS_TEST_WORKSPACE_005",
+        "SC4S_SLACK_AUDIT_LOGS_TEST_ROLE_006"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_utc_epoch",
+        "primary_field": "date_create",
+        "primary_timezone": "UTC epoch seconds in fixtures",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Slack Audit Logs timestamp policy"
+        ],
+        "notes": "Fixtures use documented Slack date_create epoch seconds."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact Slack audit JSON with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "user_session",
+        "anomaly",
+        "app_security",
+        "file_security",
+        "workspace_admin",
+        "user_admin_role"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-slack_audit_logs.conf",
+      "target_path": "local/config/app_parsers/syslog/app-slack_audit_logs.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/slack_audit_logs.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/slack_audit_logs_overview.xml",
+      "target_path": "splunk/default/data/ui/views/slack_audit_logs_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/slack_audit_logs_test_events.txt",
+      "target_path": "test-events/slack_audit_logs_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20096.sh",
+      "target_path": "scripts/send_tcp_20096.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/slack_audit_logs_reduction_candidates.csv",
+      "target_path": "docs/slack_audit_logs_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_19",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-19.md",
+      "target_path": "validation/preflight-2026-06-19.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Official Slack Audit Logs API docs plus Elastic Slack integration field-family corroboration; fixtures are synthetic-equivalent examples shaped to public documentation.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example users, domains, workspace IDs, app/file IDs, documentation IP ranges, and synthetic markers; no customer, tenant, token, Slack message content, or production workspace data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-19",
+      "notes": "Initial conservative Slack Audit Logs API relay pack built from public evidence without trust promotion."
+    },
+    "upstream": {
+      "repo": null,
+      "ref": null,
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "actor_name",
+            "actor_email",
+            "actor_id"
+          ],
+          "status": "partial",
+          "notes": "Slack actor user context."
+        },
+        "src_user": {
+          "source_fields": [
+            "actor_name",
+            "actor_email",
+            "actor_id"
+          ],
+          "status": "partial",
+          "notes": "Actor alias."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Slack audit action token."
+        },
+        "signature": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Audit action token as triage signature."
+        },
+        "signature_id": {
+          "source_fields": [
+            "id",
+            "event_id",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Slack event id or action fallback, not a global SIEM identity."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "context.ip_address"
+          ],
+          "status": "partial",
+          "notes": "Slack context IP address."
+        },
+        "src_ip": {
+          "source_fields": [
+            "src_ip",
+            "context.ip_address"
+          ],
+          "status": "partial",
+          "notes": "Slack context IP address."
+        },
+        "user_agent": {
+          "source_fields": [
+            "user_agent",
+            "context.ua"
+          ],
+          "status": "partial",
+          "notes": "Slack context user agent."
+        },
+        "object": {
+          "source_fields": [
+            "object",
+            "object_type",
+            "target_user_id",
+            "workspace_id"
+          ],
+          "status": "partial",
+          "notes": "Changed entity/context object."
+        },
+        "reason": {
+          "source_fields": [
+            "reason",
+            "details.reason"
+          ],
+          "status": "partial",
+          "notes": "Anomaly reason where present."
+        }
+      },
+      "notes": "Partial audit/authentication/change guidance only; not full CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "user",
+            "actor_name",
+            "actor_email",
+            "actor_id"
+          ],
+          "status": "partial",
+          "notes": "Slack actor user."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Slack audit action."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "id",
+            "event_id"
+          ],
+          "status": "partial",
+          "notes": "Slack audit event identifier."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Slack context IP."
+        },
+        "http_request.user_agent": {
+          "source_fields": [
+            "user_agent"
+          ],
+          "status": "partial",
+          "notes": "Slack context user-agent."
+        },
+        "session.uid": {
+          "source_fields": [
+            "session_id"
+          ],
+          "status": "partial",
+          "notes": "Slack context session id."
+        },
+        "resource.name": {
+          "source_fields": [
+            "object",
+            "object_type",
+            "workspace_id",
+            "workspace_domain"
+          ],
+          "status": "partial",
+          "notes": "Slack entity/workspace context."
+        },
+        "finding.title": {
+          "source_fields": [
+            "reason"
+          ],
+          "status": "partial",
+          "notes": "Anomaly reason helper mapping only."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Slack audit action."
+        },
+        "event.id": {
+          "source_fields": [
+            "id",
+            "event_id"
+          ],
+          "status": "partial",
+          "notes": "Slack audit event id."
+        },
+        "event.category": {
+          "source_fields": [
+            "slack_audit_family"
+          ],
+          "status": "partial",
+          "notes": "Derived family."
+        },
+        "user.name": {
+          "source_fields": [
+            "user",
+            "actor_name"
+          ],
+          "status": "partial",
+          "notes": "Actor user name."
+        },
+        "user.email": {
+          "source_fields": [
+            "actor_email"
+          ],
+          "status": "partial",
+          "notes": "Actor email where present."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Context IP."
+        },
+        "user_agent.original": {
+          "source_fields": [
+            "user_agent"
+          ],
+          "status": "partial",
+          "notes": "Context user agent."
+        },
+        "session.id": {
+          "source_fields": [
+            "session_id"
+          ],
+          "status": "partial",
+          "notes": "Slack session id."
+        },
+        "organization.id": {
+          "source_fields": [
+            "workspace_id"
+          ],
+          "status": "partial",
+          "notes": "Workspace/enterprise id."
+        },
+        "organization.name": {
+          "source_fields": [
+            "workspace_name",
+            "workspace_domain"
+          ],
+          "status": "partial",
+          "notes": "Workspace/enterprise name/domain."
+        },
+        "file.hash.md5": {
+          "source_fields": [
+            "file_hash"
+          ],
+          "status": "partial",
+          "notes": "File hash where present; fixture value is synthetic."
+        },
+        "url.full": {
+          "source_fields": [
+            "file_url_private"
+          ],
+          "status": "partial",
+          "notes": "Synthetic private file URL context where present."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/slack_audit_logs/README.md": "sha256:4940244233674a6e6ee2bb521587a912531bd7360588dd9747ca34672d5d161d",
+      "packs/slack_audit_logs/docs/slack_audit_logs_reduction_candidates.csv": "sha256:64e13fb3d51434e78e8d7bdf733282e11530f0b5703d329ab1eb9ef1b4ed516e",
+      "packs/slack_audit_logs/sc4s/app_parsers/syslog/app-slack_audit_logs.conf": "sha256:c241b7200ae729e2f3e6604d13fcdf86e6ccf5a2cc3d6945662eb1500184510e",
+      "packs/slack_audit_logs/sc4s/env.example": "sha256:800da2f0604f7f928e2a15329835a2656d7ab2d8b23b935039904d8e9a1a7c9e",
+      "packs/slack_audit_logs/scripts/send_tcp_20096.sh": "sha256:c847cd6b54d62d703e4ca69a2ae38abf842a73d249d74bc9dd67dfea5d93691b",
+      "packs/slack_audit_logs/splunk/default/eventtypes.conf": "sha256:8c48bbf17ca0adffdb0e968a060a67d4d042fd9ff0629386c2d154f7cfd39cde",
+      "packs/slack_audit_logs/splunk/default/props.conf": "sha256:9831065139eba1764af20ccc822829d90b65bc4946440dc135f8cadcfdc03836",
+      "packs/slack_audit_logs/splunk/default/tags.conf": "sha256:bae42e672003ee22c39f0fd41e4af0d962d79ec09c33c49be4f38b6b51a742b8",
+      "packs/slack_audit_logs/splunk/default/data/ui/views/slack_audit_logs_overview.xml": "sha256:d7a8754490921185c397ef7b267cca4aa8a8ee2e3fcd9775a08787e86cd1192d",
+      "packs/slack_audit_logs/splunk/default/transforms.conf": "sha256:c27a16fd10c81839ea2193d01464b188a7db53a67a6ebb4863bc224ea9898e5d",
+      "packs/slack_audit_logs/test-events/slack_audit_logs_test_events.txt": "sha256:97be7b76ae72b62ee75239c11a9b576ddd2cec4fd1860ede550aa71783075e0f",
+      "packs/slack_audit_logs/validation/preflight-2026-06-19.md": "sha256:6fb975580776b4770a094a08f4973ed09306ff1c2a2f01e38c8843c87b18266d",
+      "packs/slack_audit_logs/scripts/e2e_docker_compose.sh": "sha256:5ee185b2a4b6ee785eedf059b0b1283c027947552261a9cc1c8fba9924a54b8e"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "saas",
+    "audit",
+    "identity",
+    "security_operations",
+    "json"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "audit_json_relay",
+      "label": "Slack Audit Logs API event JSON relay",
+      "description": "One Slack Audit Logs API entry per JSON record after a collector unwraps entries[].",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "slack_audit_logs_api",
+        "collector_relay",
+        "cribl_or_siem_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "user_session",
+        "anomaly",
+        "app_security",
+        "file_security",
+        "workspace_admin",
+        "user_admin_role"
+      ],
+      "test_event_sets": [
+        "slack_audit_logs_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Slack API relay replay/read-back captured.",
+        "Only collector-unwrapped one-line JSON audit entries are fixture-backed; native API entries[] response envelopes need collector splitting.",
+        "Per-action details vary and initial fixtures cover only selected public-evidence-backed actions."
+      ]
+    },
+    {
+      "id": "api_entries_envelope",
+      "label": "Slack Audit Logs API entries[] response envelope",
+      "description": "Native Slack API response envelope; collector must unwrap entries before this SC4S relay route.",
+      "default": false,
+      "evidence_status": "curated",
+      "source_modes": [
+        "slack_audit_logs_api_response"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "api_response_entries_array"
+      ],
+      "event_families": [],
+      "test_event_sets": [],
+      "supported_targets": [
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "readme"
+      ],
+      "known_limitations": [
+        "Not the default SC4S event boundary; one API response may contain many entries and must be split by collector."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/slack_audit_logs_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "action",
+        "id",
+        "date_create",
+        "actor.user.id",
+        "actor.user.email",
+        "entity.type",
+        "context.ip_address",
+        "context.ua",
+        "context.session_id",
+        "details.reason"
+      ],
+      "notes": "Cribl/collector should unwrap Slack entries[] and relay one audit event per record without default field dropping."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Slack Enterprise tenant/API replay or Splunk indexed read-back captured.",
+    "SC4S does not poll Slack or manage Slack credentials, cursors, checkpoints, or rate limits.",
+    "Native Slack API entries[] envelopes are not the default SC4S event boundary.",
+    "Fixture-backed action coverage is narrow and does not prove complete Slack Audit Logs coverage or message-content monitoring."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Slack audit JSON relay",
+      "description": "Parser and required Splunk JSON knowledge only; no drops or masking.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-slack_audit_logs.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Slack audit analyst knowledge",
+      "description": "Adds fixture-backed eventtypes, tags, and dashboard example; no drops or masking.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced Slack reduction review candidates",
+      "description": "Advisory privacy/noise reduction candidates only. No lossy reduction artifact is shipped or enabled by default.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/slack_audit_logs_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling, approval, and replay/read-back."
+    }
+  ],
+  "reduction_rules": [],
+  "dashboard_screenshots": [
+    {
+      "id": "slack_audit_logs_overview_splunk_test",
+      "title": "Slack Audit Logs — dashboard example",
+      "source_path": "dashboards/screenshots/slack-audit-logs-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Slack Audit Logs dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

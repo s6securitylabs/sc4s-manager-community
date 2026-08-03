@@ -1,0 +1,22 @@
+/*
+ * SecHub Resources Splunk Edge Processor pipeline template candidate: pan_panos_low_risk_traffic_reduce
+ * Source: Palo Alto Networks PAN-OS/Panorama syslog CSV
+ * Sourcetypes/source-type definitions: pan:traffic, pan:threat, pan:wildfire, pan:system, pan:config, pan:hipmatch, pan:userid, pan:globalprotect, pan:auth, pan:decryption, pan:tunnel, pan:correlation, pan:iptag, pan:gtp, pan:sctp, pan:log
+ * Status: conservative candidate only; NOT validated in Splunk Edge Processor.
+ * Default behavior: route unchanged events to $destination. No drops, masking, or field deletion are enabled.
+ * Optional reduction ideas (must be implemented only after preview/replay/read-back validation):
+ * - Consider reducing only validated, low-risk `pan:traffic` allow/end session records for sanctioned applications and trusted zones after confirming detections do not depend on them.
+ * - Always retain deny/block, threat, wildfire, system, config, auth, GlobalProtect, decryption, tunnel, correlation, and unknown/fallback families unless a local evidence-backed exception is approved.
+ * Rollback: disable this pipeline/template and route the source directly to the destination/index `netfw`.
+ */
+
+$source = ${source};
+$destination = ${destination};
+
+$pipeline =
+  | from $source
+  | eval sechub_edge_template_id = "pan_panos_low_risk_traffic_reduce"
+  | eval sechub_edge_template_status = "candidate_not_validated"
+  /* Insert local, approved reduction predicates here after Edge Processor preview/install/read-back validation. */
+  /* Example shape only: | where NOT (<local_allowlisted_low_value_condition>) */
+  | into $destination;

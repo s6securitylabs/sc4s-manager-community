@@ -1,0 +1,864 @@
+{
+  "schema_version": "0.1",
+  "id": "juniper_srx_junos",
+  "version": "0.1.5",
+  "url": "https://raw.githubusercontent.com/splunk/splunk-connect-for-syslog/main/docs/sources/vendor/Juniper/junos.md",
+  "description": "Conservative SecHub Resources SC4S pack for Juniper SRX/Junos RFC5424 structured syslog security events. Extends upstream SC4S Junos structured inventory with public-example grounded fixtures, minimal routing, and Splunk search-time field extraction without stating lab validation.",
+  "display_name": "Juniper SRX Junos Structured Syslog",
+  "vendor": "juniper",
+  "product": "srx",
+  "default_index": "netfw",
+  "default_source": "juniper_srx_junos",
+  "listener": {
+    "source_id": "JUNIPER_SRX_JUNOS",
+    "transport": "tcp",
+    "port": 20044,
+    "env": {
+      "SC4S_LISTEN_JUNIPER_SRX_JUNOS_TCP_PORT": "20044",
+      "SOURCE_ALL_SET_APPEND": "JUNIPER_SRX_JUNOS"
+    }
+  },
+  "sourcetypes": {
+    "flow": "juniper:junos:firewall",
+    "idp": "juniper:junos:idp",
+    "utm": "juniper:junos:utm"
+  },
+  "event_families": [
+    {
+      "id": "flow",
+      "label": "Juniper SRX RT_FLOW session events",
+      "match_engine": "pcre",
+      "match": "RT_FLOW_SESSION_(?:CREATE|DENY)",
+      "expected_sourcetype": "juniper:junos:firewall",
+      "primary_id_field": "juniper_event",
+      "required_fields": [
+        "juniper_program",
+        "juniper_event",
+        "src_ip",
+        "dest_ip"
+      ],
+      "timestamp_fields": [
+        "rfc5424_timestamp"
+      ]
+    },
+    {
+      "id": "idp",
+      "label": "Juniper SRX RT_IDP attack events",
+      "match_engine": "pcre",
+      "match": "IDP_ATTACK_LOG_EVENT",
+      "expected_sourcetype": "juniper:junos:idp",
+      "primary_id_field": "attack-name",
+      "required_fields": [
+        "juniper_program",
+        "juniper_event",
+        "src_ip",
+        "dest_ip",
+        "attack-name"
+      ],
+      "timestamp_fields": [
+        "rfc5424_timestamp",
+        "epoch-time"
+      ]
+    },
+    {
+      "id": "utm",
+      "label": "Juniper SRX RT_UTM web-filter events",
+      "match_engine": "pcre",
+      "match": "WEBFILTER_URL_BLOCKED",
+      "expected_sourcetype": "juniper:junos:utm",
+      "primary_id_field": "juniper_event",
+      "required_fields": [
+        "juniper_program",
+        "juniper_event",
+        "src_ip",
+        "dest_ip",
+        "url"
+      ],
+      "timestamp_fields": [
+        "rfc5424_timestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Juniper",
+    "product": "SRX",
+    "vendor_product": "juniper:srx",
+    "src": "src_ip",
+    "dest": "dest_ip",
+    "dest_port": "dest_port",
+    "transport": "protocol-id or protocol-name",
+    "action": "action or derived from event name",
+    "signature": "juniper_event or attack-name",
+    "signature_id": "juniper_event or attack-name",
+    "severity": "threat-severity when present",
+    "user": "username",
+    "url": "url"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-juniper_srx_junos.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/juniper_srx_junos_overview.xml"
+    ],
+    "test_events": [
+      "test-events/juniper_srx_junos_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20044.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-22.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20044,
+      "notes": "Dedicated SecHub Resources TCP listener for lab/onboarding; fixtures are RFC5424-style line-delimited events.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20045,
+      "notes": "Preferred hardened production transport where Junos/intermediary configuration supports TLS/RFC5425. Fixture file is line-delimited RFC5424 and the send helper does not implement octet-counted TLS.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "udp_syslog",
+      "label": "UDP syslog",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Legacy/lab-compatible only; avoid for production when reliable TCP/TLS is available.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Juniper SRX/Junos structured syslog",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in upstream SC4S Junos structured parser/docs and public Elastic Filebeat Juniper SRX RFC5424 structured-data examples. Exact Junos/SRX release coverage requires device replay."
+  },
+  "validation": {
+    "date_validated": "not lab validated; curated 2026-06-05",
+    "validated_by": "Hermes autonomous curation (public evidence only)",
+    "source_log_version": "Upstream SC4S Junos docs/parser inventory plus public Elastic Filebeat Juniper SRX example-event shapes; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Public evidence confirms RFC5424 structured Junos SRX event shapes for RT_FLOW, RT_IDP, and RT_UTM. Live SRX/Junos replay and Splunk read-back evidence is not yet captured; keep quality_status=curated and trust_level=unverified."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "sechub-resources-pack-replay",
+    "pack_aware": true,
+    "testbed": {
+      "sc4s_target": "SC4S TEST",
+      "splunk_target": "Splunk TEST",
+      "allow_production": false
+    },
+    "preflight": {
+      "listener_check": "ss -ltn 'sport = :20044'",
+      "connect_check": "timeout 3 bash -lc '</dev/tcp/127.0.0.1/20044'",
+      "splunk_management_check": "timeout 3 bash -lc '</dev/tcp/127.0.0.1/8089'",
+      "splunk_web_check": "timeout 3 bash -lc '</dev/tcp/127.0.0.1/8000'"
+    },
+    "replay": {
+      "fixture_sets": [
+        "juniper_srx_junos_rfc5424_structured"
+      ],
+      "event_count": 4,
+      "marker_prefix": "SC4S_JUNIPER_SRX_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20044.sh",
+      "listener": "JUNIPER_SRX_JUNOS",
+      "port": 20044,
+      "expected_index": "netfw"
+    },
+    "readback": {
+      "spl": "index=netfw sechub_fixture_marker=\"SC4S_JUNIPER_SRX_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product vendor_product juniper_program juniper_event action signature signature_id severity src src_ip src_port dest dest_ip dest_port transport user url policy_name source_zone destination_zone eventtype _raw",
+      "expected_count": 4,
+      "must_verify": [
+        "index",
+        "sourcetype",
+        "source",
+        "host",
+        "_time",
+        "vendor",
+        "product",
+        "juniper_program",
+        "juniper_event",
+        "action",
+        "signature",
+        "signature_id",
+        "eventtype",
+        "src_ip",
+        "dest_ip",
+        "_raw"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "date": "2026-06-22",
+      "blocked_layer": "listener",
+      "summary": "2026-06-22 local preflight found no TCP syslog listener on 127.0.0.1:20044; ss returned only the header row and TCP connect returned Connection refused. Local Splunk management port 127.0.0.1:8089 refused TCP connections. Local Splunk Web 127.0.0.1:8000 accepted TCP, but no authenticated search or indexed read-back was run. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-22.md"
+    },
+    "evidence": [
+      "validation/preflight-2026-06-22.md"
+    ],
+    "e2e_docker_harness": {
+      "id": "juniper_srx_junos_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/juniper_srx_junos/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/juniper_srx_junos/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/juniper_srx_junos/compose.yaml",
+      "compose_project": "sechub-juniper-srx-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netfw index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/juniper_srx_junos/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/juniper_srx_junos/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/juniper_srx_junos/scripts/send_tcp_20044.sh 127.0.0.1 20044",
+        "splunk_summary_readback": "index=netfw sechub_fixture_marker=\"SC4S_JUNIPER_SRX_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netfw sechub_fixture_marker=\"SC4S_JUNIPER_SRX_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product vendor_product juniper_program juniper_event action signature signature_id severity src src_ip src_port dest dest_ip dest_port transport user url policy_name source_zone destination_zone eventtype _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netfw",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/juniper_srx_junos/splunk -> /opt/splunk/etc/apps/sechub_juniper_srx_junos:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20044,
+          "host_port_env": "SC4S_JUNIPER_SRX_JUNOS_PORT",
+          "source_id": "JUNIPER_SRX_JUNOS"
+        },
+        "parser_mount": "packs/juniper_srx_junos/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "juniper_srx_junos",
+          "source_shape": "tcp_rfc5424_structured_syslog",
+          "event_families": [
+            "flow",
+            "idp",
+            "utm"
+          ],
+          "expected_sourcetypes": [
+            "juniper:junos:firewall",
+            "juniper:junos:idp",
+            "juniper:junos:utm"
+          ],
+          "data_structures": [
+            "RT_FLOW session create/deny structured-data records",
+            "RT_IDP attack structured-data records",
+            "RT_UTM web-filter structured-data records"
+          ],
+          "markers": [
+            "SC4S_JUNIPER_SRX_TEST_FLOW_CREATE_001",
+            "SC4S_JUNIPER_SRX_TEST_FLOW_DENY_002",
+            "SC4S_JUNIPER_SRX_TEST_IDP_ATTACK_003",
+            "SC4S_JUNIPER_SRX_TEST_UTM_WEB_004"
+          ],
+          "must_verify": [
+            "count=4",
+            "index=netfw",
+            "Juniper firewall/IDP/UTM sourcetype coverage",
+            "source=JUNIPER_SRX_JUNOS",
+            "structured-data source/destination/action fields",
+            "eventtype/tags",
+            "raw RFC5424 preservation"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No real SRX/Junos appliance replay/read-back is captured by adding this harness.",
+        "Junos release-specific field completeness, TLS/RFC5425 production transport, collector wrapping, and broader SRX security log taxonomy remain unvalidated.",
+        "Trust and quality labels must stay curated/unverified until replay/read-back evidence is stored and reviewed."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "juniper_srx_junos_rfc5424_structured",
+      "label": "Juniper SRX RFC5424 structured syslog fixtures",
+      "path": "test-events/juniper_srx_junos_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "rfc5424_structured_syslog",
+      "envelope": "ietf_rfc5424",
+      "serialization": "custom_application",
+      "event_count": 4,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_JUNIPER_SRX_TEST_FLOW_CREATE_001",
+        "SC4S_JUNIPER_SRX_TEST_FLOW_DENY_002",
+        "SC4S_JUNIPER_SRX_TEST_IDP_ATTACK_003",
+        "SC4S_JUNIPER_SRX_TEST_UTM_WEB_004"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "rfc5424_timestamp",
+        "primary_timezone": "timezone-qualified RFC5424 timestamp in fixture",
+        "fallback_fields": [
+          "epoch-time for IDP examples"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [],
+        "notes": "Fixtures include timezone-qualified RFC5424 timestamps. IDP fixtures also include epoch-time, but Splunk props use the RFC5424 header time for consistency."
+      },
+      "field_delimiting": {
+        "style": "rfc5424_structured_data_kv",
+        "field_separator": "space-delimited key=\"value\" pairs inside [junos@...] structured data",
+        "quote_character": "double quote",
+        "escape_policy": "Synthetic-equivalent fixtures retain Junos key/value quoting while replacing identities with documentation-safe values.",
+        "notes": "Structured-data keys vary by SRX event family; extraction coverage is intentionally narrow."
+      },
+      "expected_families": [
+        "flow",
+        "idp",
+        "utm"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-juniper_srx_junos.conf",
+      "target_path": "local/config/app_parsers/syslog/app-juniper_srx_junos.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/juniper_srx_junos.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/juniper_srx_junos_overview.xml",
+      "target_path": "splunk/default/data/ui/views/juniper_srx_junos_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/juniper_srx_junos_test_events.txt",
+      "target_path": "test-events/juniper_srx_junos_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20044.sh",
+      "target_path": "scripts/send_tcp_20044.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_compose_helper",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_harness_script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "preflight_2026_06_22",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-22.md",
+      "target_path": "validation/preflight-2026-06-22.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Upstream SC4S Junos documentation/parser, official Juniper system logging documentation, and Elastic Filebeat Juniper SRX public test logs used as event-shape evidence.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures are synthetic-equivalent and use RFC5737 documentation IP ranges plus example hostnames/domains/users. No customer samples or proprietary Splunk TA content are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes autonomous curation",
+      "reviewed_at": "2026-06-05",
+      "notes": "Selected as a high-value firewall/security source absent from curated packs, with upstream SC4S inventory and public sample-message evidence. Conservative curation only; no validation statement."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": [
+        "docs/sources/vendor/Juniper/junos.md",
+        "package/etc/conf.d/conflib/syslog/app-syslog-juniper_junos_structured.conf"
+      ]
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "source-address"
+          ],
+          "status": "partial",
+          "notes": "Source address from structured data."
+        },
+        "dest": {
+          "source_fields": [
+            "dest_ip",
+            "destination-address"
+          ],
+          "status": "partial",
+          "notes": "Destination address from structured data."
+        },
+        "dest_port": {
+          "source_fields": [
+            "dest_port",
+            "destination-port"
+          ],
+          "status": "partial",
+          "notes": "Available in covered SRX events."
+        },
+        "transport": {
+          "source_fields": [
+            "protocol-id",
+            "protocol-name"
+          ],
+          "status": "partial",
+          "notes": "Protocol numeric/name varies by family."
+        },
+        "action": {
+          "source_fields": [
+            "action",
+            "juniper_event"
+          ],
+          "status": "partial",
+          "notes": "IDP action is explicit; flow/UTM actions are derived conservatively from event name."
+        },
+        "signature": {
+          "source_fields": [
+            "juniper_event",
+            "attack-name"
+          ],
+          "status": "partial",
+          "notes": "Attack name for IDP, event name for flow/UTM."
+        },
+        "signature_id": {
+          "source_fields": [
+            "juniper_event",
+            "attack-name"
+          ],
+          "status": "partial",
+          "notes": "Same source as signature until product-version-specific IDs are validated."
+        },
+        "severity": {
+          "source_fields": [
+            "threat-severity"
+          ],
+          "status": "partial",
+          "notes": "Present in IDP examples only."
+        },
+        "user": {
+          "source_fields": [
+            "username"
+          ],
+          "status": "partial",
+          "notes": "Often N/A or unknown-user in appliance events."
+        }
+      },
+      "notes": "Network Traffic, Intrusion Detection, and Web mappings are partial and grounded in a small set of public SRX structured examples."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Direct source IP when extracted."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Direct destination IP when extracted."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action",
+            "juniper_event"
+          ],
+          "status": "partial",
+          "notes": "Derived/explicit by event family."
+        },
+        "severity": {
+          "source_fields": [
+            "severity",
+            "threat-severity"
+          ],
+          "status": "partial",
+          "notes": "IDP threat severity only."
+        }
+      },
+      "notes": "Optional OCSF mapping is incomplete."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Direct source IP when extracted."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Direct destination IP when extracted."
+        },
+        "event.action": {
+          "source_fields": [
+            "action",
+            "juniper_event"
+          ],
+          "status": "partial",
+          "notes": "Derived/explicit by event family."
+        },
+        "event.reason": {
+          "source_fields": [
+            "reason"
+          ],
+          "status": "partial",
+          "notes": "UTM/flow reason when present."
+        },
+        "url.original": {
+          "source_fields": [
+            "url"
+          ],
+          "status": "partial",
+          "notes": "UTM URL when present."
+        }
+      },
+      "notes": "Optional ECS mapping is incomplete."
+    }
+  },
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Juniper SRX ingestion",
+      "description": "Parser, listener env example, fixtures, and minimal Splunk props. No drops or reductions.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-juniper_srx_junos.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; preserves events."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Juniper SRX security knowledge",
+      "description": "Adds eventtypes and tags for flow, IDP, and UTM searches. No drops or reductions.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Still non-lossy."
+    }
+  ],
+  "known_limitations": [
+    "Not validated until real Juniper SRX/Junos records are replayed through SC4S and read back from Splunk.",
+    "Fixture coverage is limited to common flow, IDP, and UTM structured syslog shapes and does not cover the full Junos event catalog.",
+    "Official vendor documentation confirms syslog/logging configuration, but complete emitted field semantics need product-version-specific validation.",
+    "No default reduction/drop rules are included."
+  ],
+  "ci": {
+    "last_updated": "2026-06-22",
+    "last_tested": "2026-06-14",
+    "tested_commit": "3c60a14",
+    "tested_artifact_hashes": {
+      "packs/juniper_srx_junos/sc4s/app_parsers/syslog/app-juniper_srx_junos.conf": "sha256:b317c0b0f84434e1664e64b0842034a4d901d0ff60ef2fbb2148fcf8cbe6e35c",
+      "packs/juniper_srx_junos/sc4s/env.example": "sha256:a9a3c0c3433ade93a0a15f1307d1e0bc3a873109b6c20b4f74d911b51dedb79c",
+      "packs/juniper_srx_junos/splunk/default/props.conf": "sha256:59f2738677ba1b3da56e1a98d77ce5579413cb8b7f53d50542f4381d5bd3ab85",
+      "packs/juniper_srx_junos/splunk/default/transforms.conf": "sha256:7697673596a59165b2d1c629552430c1fb90912ef848cddbf19071f242a32fb1",
+      "packs/juniper_srx_junos/splunk/default/eventtypes.conf": "sha256:96f9bb427c4c8d86bc4dcb7e711207c48c39329ea2893d4eeb72ce3601112237",
+      "packs/juniper_srx_junos/splunk/default/tags.conf": "sha256:87f01c0ffe0cd4987b8dc0d998bf2bd88285246bc50c96033f506b90e691050b",
+      "packs/juniper_srx_junos/splunk/default/data/ui/views/juniper_srx_junos_overview.xml": "sha256:71a51685aa35d3e9c93af61b7e0bd37bde4759a895513f8b4b861a8c56c7e6c8",
+      "packs/juniper_srx_junos/test-events/juniper_srx_junos_test_events.txt": "sha256:f8795e832b92cd44b9f4ed9f67b84ca744316d3bc737d111427a6fa163f3be82",
+      "packs/juniper_srx_junos/scripts/send_tcp_20044.sh": "sha256:b1dcabf576460f56d1d5352f397cc77a5671a14567d66f407492205628e261a8",
+      "packs/juniper_srx_junos/scripts/e2e_docker_compose.sh": "sha256:810cbec0a46f9427c27bc1ea704de93f5b4d4eb52a27b2bb3cca3241c407af29",
+      "packs/juniper_srx_junos/README.md": "sha256:3a6609192180289157212a5819eaf53c8a6d7879f6c4c56d8c065ae9c80b027a",
+      "packs/juniper_srx_junos/validation/preflight-2026-06-22.md": "sha256:74a21db9c4d6e636d5414e636135200a3e0960dfd467162762e7003645503a2f"
+    }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "structured_syslog",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "tls_rfc5425",
+      "udp_syslog"
+    ],
+    "notes": "Junos structured syslog is native syslog delivery.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "juniper_srx_junos_overview_splunk_test",
+      "title": "Juniper SRX Junos Structured Syslog — dashboard example",
+      "source_path": "dashboards/screenshots/juniper-srx-junos-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Juniper SRX Junos Structured Syslog dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  }
+}

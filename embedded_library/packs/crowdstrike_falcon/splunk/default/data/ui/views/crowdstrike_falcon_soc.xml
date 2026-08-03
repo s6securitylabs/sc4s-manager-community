@@ -1,0 +1,338 @@
+<form version="1.1" theme="dark">
+  <label>CrowdStrike Falcon - SOC Overview</label>
+  <description>Ingestion health, detections, identity protection, RTR sessions, Spotlight vulnerabilities, threat intel, FDR process/network/file activity, and Falcon audit events. Not field-validated: panels are conservative and based on synthetic-equivalent fixture evidence only. Spotlight panels use crowdstrike:falcon:api:spotlight (dedicated relay required); do not confuse with FDR or Event Streams sourcetypes.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host / device filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Falcon events</title>
+      <single>
+        <search>
+          <query>index=epintel | extract reload=true | search vendor="CrowdStrike" product="falcon_platform_json_relay" (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="useColors">0</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Active detections</title>
+      <single>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:eventstream:detection" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,5]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Spotlight open vulnerabilities</title>
+      <single>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:api:spotlight" | extract reload=true | spath | eval vulnerability_status=mvindex(coalesce(vulnerability_status,status),0), device_name=mvindex(coalesce(device_name,'host_info.hostname'),0), dest=coalesce(dest,device_name), cve_id=mvindex(coalesce(cve_id,'cve.id'),0), severity=upper(mvindex(coalesce(severity,'cve.severity'),0)) | search vulnerability_status="open" (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,50]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>RTR sessions</title>
+      <single>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:eventstream:rtr" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,3]</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events by sourcetype over time</title>
+      <chart>
+        <search>
+          <query>index=epintel | extract reload=true | search vendor="CrowdStrike" product="falcon_platform_json_relay" (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Detections (DetectionSummaryEvent / EppDetectionSummaryEvent / DataProtectionDetectionSummaryEvent)</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:eventstream:detection" | extract reload=true | spath | eval device_name=mvindex(coalesce(device_name,'event.ComputerName','event.Hostname'),0), dest=coalesce(dest,device_name), user=mvindex(coalesce(user,'event.UserName'),0), detect_id=mvindex(coalesce(detect_id,'event.DetectId','event.CompositeId'),0), detect_name=mvindex(coalesce(detect_name,'event.DetectName','event.Name'),0), detect_description=mvindex(coalesce(detect_description,'event.DetectDescription','event.Description'),0), tactic=mvindex(coalesce(tactic,'event.Tactic'),0), technique=mvindex(coalesce(technique,'event.Technique'),0), severity_name=mvindex(coalesce(severity_name,'event.SeverityName'),0), response_action=mvindex(coalesce(response_action,'event.ResponseAction'),0), sev=coalesce(severity_name, severity, "unknown") | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time device_name user detect_id detect_name detect_description tactic technique sev response_action _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Identity protection events</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:eventstream:identity" | extract reload=true | spath | eval identity_incident_id=mvindex(coalesce(identity_incident_id,'event.IdentityProtectionIncidentId'),0), detect_id=mvindex(coalesce(detect_id,'event.DetectId'),0), device_name=mvindex(coalesce(device_name,'event.EndpointName','event.SourceEndpointHostName'),0), dest=coalesce(dest,device_name), endpoint_ip=mvindex(coalesce(endpoint_ip,'event.EndpointIp','event.SourceEndpointIpAddress'),0), user=mvindex(coalesce(user,'event.UserName','event.SourceAccountName'),0), detect_name=mvindex(coalesce(detect_name,'event.IncidentType','event.DetectName'),0), tactic=mvindex(coalesce(tactic,'event.Tactic'),0), technique=mvindex(coalesce(technique,'event.Technique'),0), severity_name=mvindex(coalesce(severity_name,'event.SeverityName'),0), sev=coalesce(severity_name, severity, "unknown") | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time identity_incident_id detect_id device_name endpoint_ip user detect_name tactic technique sev _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>RTR remote response sessions</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:eventstream:rtr" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time user device_name session_id crowdstrike_event_simpleName | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Spotlight vulnerabilities - open (critical/high first)</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:api:spotlight" | extract reload=true | spath | eval vulnerability_status=mvindex(coalesce(vulnerability_status,status),0), device_name=mvindex(coalesce(device_name,'host_info.hostname'),0), dest=coalesce(dest,device_name), os_version=mvindex(coalesce(os_version,'host_info.os_version'),0), cve_id=mvindex(coalesce(cve_id,'cve.id'),0), severity=upper(mvindex(coalesce(severity,'cve.severity'),0)), remediation=mvindex(coalesce(remediation,'remediation.summary'),0), affected_product=mvindex(coalesce(affected_product,mvindex('apps{}.product_name_version',0)),0) | search vulnerability_status="open" (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | eval crit=case(severity="CRITICAL",0,severity="HIGH",1,severity="MEDIUM",2,true(),3) | table _time device_name os_version cve_id severity affected_product vulnerability_status remediation | sort crit, -_time | head 200</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Spotlight - CVE summary (open only)</title>
+      <chart>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:api:spotlight" | extract reload=true | spath | eval vulnerability_status=mvindex(coalesce(vulnerability_status,status),0), device_name=mvindex(coalesce(device_name,'host_info.hostname'),0), dest=coalesce(dest,device_name), cve_id=mvindex(coalesce(cve_id,'cve.id'),0), severity=upper(mvindex(coalesce(severity,'cve.severity'),0)) | search vulnerability_status="open" (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | stats count by cve_id, severity | sort -count | head 30</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Spotlight - affected products (open only)</title>
+      <chart>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:api:spotlight" | extract reload=true | spath | eval vulnerability_status=mvindex(coalesce(vulnerability_status,status),0), device_name=mvindex(coalesce(device_name,'host_info.hostname'),0), dest=coalesce(dest,device_name), affected_product=mvindex(coalesce(affected_product,mvindex('apps{}.product_name_version',0)),0) | search vulnerability_status="open" (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | stats dc(device_name) AS affected_hosts by affected_product | sort -affected_hosts | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Falcon audit events (AuthActivity / UserActivity)</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:eventstream:audit" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | eval ok=coalesce(result, "unknown") | table _time user src_ip operation service ok | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Firewall policy matches (FirewallMatchEvent)</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:eventstream:policy" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time device_name src_ip src_port dest_ip dest_port transport policy_name rule_name rule_action process | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>FDR - suspicious process activity</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:fdr:process" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time device_name user process parent_process process_command_line file_hash crowdstrike_event_simpleName | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>FDR - network connections</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:fdr:network" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time device_name src_ip src_port dest_ip dest_port transport user process crowdstrike_event_simpleName | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>FDR - suspicious DNS (SuspiciousDnsRequest)</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:fdr:dns" | extract reload=true | search crowdstrike_event_simpleName="SuspiciousDnsRequest" (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time device_name user query dns_request_type process | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>FDR - file write events (executables/scripts)</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:fdr:file" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time device_name user file_name file_path file_hash file_access_type process crowdstrike_event_simpleName | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>FDR - sensor heartbeat, config state, and user identity</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:fdr:asset" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time device_name user user_domain user_id containment_state sensor_state config_build config_state_hash crowdstrike_event_simpleName | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>FDR - asset/config source-shape coverage</title>
+      <chart>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:fdr:asset" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | stats count by crowdstrike_event_simpleName | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Threat intelligence indicators</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:api:intel" | extract reload=true | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | table _time indicator_value indicator_type indicator_confidence malware_family threat_actor threat_type kill_chain_phase | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Devices inventory (api:devices)</title>
+      <table>
+        <search>
+          <query>index=epintel sourcetype="crowdstrike:falcon:api:devices" | extract reload=true | spath | eval device_name=mvindex(coalesce(device_name,hostname),0), dest=coalesce(dest,device_name), host_status=mvindex(coalesce(host_status,status),0), agent_ver=agent_version, os_ver=os_version | search (host=$host_tok$ OR device_name=$host_tok$ OR dest=$host_tok$) | stats latest(_time) AS last_seen_epoch, latest(agent_ver) AS agent_ver, latest(os_ver) AS os_ver, latest(host_status) AS device_status by device_name, external_ip, local_ip | eval last_seen=strftime(last_seen_epoch,"%Y-%m-%d %H:%M:%S") | table device_name local_ip external_ip os_ver agent_ver device_status last_seen | sort device_name | head 200</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>SPL for manual triage (copy and run)</title>
+      <html>
+        <![CDATA[
+        <div style="font-family:monospace;font-size:12px;padding:8px;">
+          <b>All detections drilldown:</b><br/>
+          <code>index=epintel sourcetype="crowdstrike:falcon:eventstream:detection" | table _time device_name user detect_id detect_name tactic technique severity_name response_action _raw</code><br/><br/>
+          <b>Spotlight - critical CVEs across all hosts:</b><br/>
+          <code>index=epintel sourcetype="crowdstrike:falcon:api:spotlight" severity="CRITICAL" vulnerability_status="open" | stats dc(device_name) AS hosts, values(device_name) AS device_list by cve_id, affected_product, remediation | sort -hosts</code><br/><br/>
+          <b>NOTE: Spotlight requires crowdstrike:falcon:api:spotlight from a dedicated API relay. Do NOT confuse with FDR or Event Stream sourcetypes.</b><br/><br/>
+          <b>RTR sessions (last 7d):</b><br/>
+          <code>index=epintel sourcetype="crowdstrike:falcon:eventstream:rtr" earliest=-7d | table _time user device_name session_id crowdstrike_event_simpleName</code><br/><br/>
+          <i>Note: panels use synthetic-equivalent fixture evidence; not field-validated on live CrowdStrike sources.</i>
+        </div>
+        ]]>
+      </html>
+    </panel>
+  </row>
+
+</form>

@@ -1,0 +1,184 @@
+<form version="1.1" theme="dark">
+  <label>VPN daemon logs - Overview</label>
+  <description>Fixture-backed overview for OpenVPN peer, certificate, session/virtual-IP/pool assignment, authentication-failure, and strongSwan _updown tunnel rows. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total VPN daemon events</title>
+      <single>
+        <search>
+          <query>index=netauth (sourcetype="vpn:openvpn:peer" OR sourcetype="vpn:openvpn:verify" OR sourcetype="vpn:openvpn:session" OR sourcetype="vpn:openvpn:auth" OR sourcetype="vpn:strongswan:updown") host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>OpenVPN auth failures</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="vpn:openvpn:auth" host=$host_tok$ action="auth_failed" result="failure" | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>OpenVPN session rows</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="vpn:openvpn:session" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>strongSwan tunnel rows</title>
+      <single>
+        <search>
+          <query>index=netauth sourcetype="vpn:strongswan:updown" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Volume over time by sourcetype</title>
+      <chart>
+        <search>
+          <query>index=netauth (sourcetype="vpn:openvpn:peer" OR sourcetype="vpn:openvpn:verify" OR sourcetype="vpn:openvpn:session" OR sourcetype="vpn:openvpn:auth" OR sourcetype="vpn:strongswan:updown") host=$host_tok$ | timechart count by sourcetype</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Action and result distribution</title>
+      <chart>
+        <search>
+          <query>index=netauth (sourcetype="vpn:openvpn:peer" OR sourcetype="vpn:openvpn:verify" OR sourcetype="vpn:openvpn:session" OR sourcetype="vpn:openvpn:auth" OR sourcetype="vpn:strongswan:updown") host=$host_tok$ | stats count by sourcetype action result signature signature_id | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top VPN peers and source endpoints</title>
+      <table>
+        <search>
+          <query>index=netauth (sourcetype="vpn:openvpn:peer" OR sourcetype="vpn:openvpn:session" OR sourcetype="vpn:openvpn:auth" OR sourcetype="vpn:strongswan:updown") host=$host_tok$ | stats count values(action) as actions values(result) as results values(src_ip) as src_ips values(src_port) as src_ports values(tunnel_ip) as tunnel_ips values(pool_ipv4) as pool_ipv4s values(pool_ipv6) as pool_ipv6s values(peer_ip) as peer_ips values(local_ip) as local_ips values(tunnel_network) as tunnel_networks by user client_context peer_id sourcetype | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>OpenVPN session, virtual IP, and failure review</title>
+      <table>
+        <search>
+          <query>index=netauth (sourcetype="vpn:openvpn:peer" OR sourcetype="vpn:openvpn:session" OR sourcetype="vpn:openvpn:auth") host=$host_tok$ | table _time host sourcetype source vendor product client_context user src src_ip src_port tunnel_ip pool_ipv4 pool_ipv6 action result reason signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>OpenVPN certificate verification context</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="vpn:openvpn:verify" host=$host_tok$ | table _time host sourcetype source vendor product client_context cert_depth certificate_subject action result signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>strongSwan tunnel up/down review</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="vpn:strongswan:updown" host=$host_tok$ | table _time host sourcetype source vendor product peer_id user vendor_raw_action action result peer_ip local_ip tunnel_network src dest signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage by source/sourcetype/host</title>
+      <table>
+        <search>
+          <query>index=netauth (sourcetype="vpn:openvpn:peer" OR sourcetype="vpn:openvpn:verify" OR sourcetype="vpn:openvpn:session" OR sourcetype="vpn:openvpn:auth" OR sourcetype="vpn:strongswan:updown") host=$host_tok$ | stats count dc(marker) as fixture_markers values(vendor) as vendors values(product) as products min(_time) as first_seen max(_time) as last_seen by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw VPN daemon relay rows</title>
+      <table>
+        <search>
+          <query>index=netauth (sourcetype="vpn:openvpn:peer" OR sourcetype="vpn:openvpn:verify" OR sourcetype="vpn:openvpn:session" OR sourcetype="vpn:openvpn:auth" OR sourcetype="vpn:strongswan:updown") host=$host_tok$ | table _time host sourcetype source vendor product action result signature signature_id client_context peer_id src_ip src_port tunnel_ip pool_ipv4 pool_ipv6 peer_ip local_ip tunnel_network reason certificate_subject marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

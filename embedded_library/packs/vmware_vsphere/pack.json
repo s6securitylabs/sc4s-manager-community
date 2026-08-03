@@ -1,0 +1,1135 @@
+{
+  "schema_version": "0.1",
+  "id": "vmware_vsphere",
+  "version": "0.1.40",
+  "url": "https://docs.vmware.com/",
+  "description": "Curated SecHub Resources SC4S pack for VMware vSphere, ESXi, vCenter, VSAN, and NSX syslog routing. Extends upstream SC4S VMware vSphere inventory with conservative Library metadata, fixtures, Splunk knowledge, strict source-identification routing, and explicit validation gaps.",
+  "display_name": "VMware vSphere / ESXi / vCenter",
+  "vendor": "vmware",
+  "product": "vsphere",
+  "default_index": "infraops",
+  "default_source": "vmware_vsphere",
+  "listener": {
+    "source_id": "VMWARE_VSPHERE",
+    "transport": "tls",
+    "port": 20051,
+    "env": {
+      "SC4S_LISTEN_VMWARE_VSPHERE_TLS_PORT": "20051",
+      "SOURCE_ALL_SET_APPEND": "VMWARE_VSPHERE"
+    }
+  },
+  "sourcetypes": {
+    "esx_hostd": "vmware:esxlog:hostd",
+    "esx_vmkernel": "vmware:esxlog:vmkernel",
+    "vcenter_vpxd": "vmware:vclog:vpxd",
+    "nsx_dfw": "vmware:nsxlog:dfwpktlogs",
+    "vsphere_sdata": "vmware:esxlog:sdata"
+  },
+  "event_families": [
+    {
+      "id": "esx_hostd",
+      "label": "VMware ESXi hostd service events",
+      "match_engine": "pcre",
+      "match": "hostd\\[[0-9]+\\].*SC4S_VMWARE_VSPHERE_TEST_ESX_HOSTD_001",
+      "expected_sourcetype": "vmware:esxlog:hostd",
+      "primary_id_field": "program",
+      "required_fields": [
+        "host",
+        "program"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "vcenter_vpxd",
+      "label": "VMware vCenter vpxd service events",
+      "match_engine": "pcre",
+      "match": "vpxd\\[[0-9]+\\].*SC4S_VMWARE_VSPHERE_TEST_VCENTER_VPXD_002",
+      "expected_sourcetype": "vmware:vclog:vpxd",
+      "primary_id_field": "program",
+      "required_fields": [
+        "host",
+        "program"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "esx_vmkernel",
+      "label": "VMware ESXi vmkernel service events",
+      "match_engine": "pcre",
+      "match": "vmkernel.*SC4S_VMWARE_VSPHERE_TEST_ESX_VMKERNEL_005",
+      "expected_sourcetype": "vmware:esxlog:vmkernel",
+      "primary_id_field": "program",
+      "required_fields": [
+        "host",
+        "program"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "nsx_dfw",
+      "label": "VMware NSX distributed firewall packet logs",
+      "match_engine": "pcre",
+      "match": "dfwpktlogs\\[[0-9]+\\].*SC4S_VMWARE_VSPHERE_TEST_NSX_DFW_00[36]",
+      "expected_sourcetype": "vmware:nsxlog:dfwpktlogs",
+      "primary_id_field": "rule",
+      "required_fields": [
+        "src",
+        "dst",
+        "proto"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "vsphere_sdata",
+      "label": "VMware vSphere Originator structured-data events",
+      "match_engine": "pcre",
+      "match": "Originator@6876.*SC4S_VMWARE_VSPHERE_TEST_SDATA_004",
+      "expected_sourcetype": "vmware:esxlog:sdata",
+      "primary_id_field": "eventID",
+      "required_fields": [
+        "Originator@6876"
+      ],
+      "timestamp_fields": [
+        "rfc5424_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "vmware",
+    "product": "vsphere",
+    "vendor_product": "vmware:vsphere",
+    "action": "program, operation, fixture-derived family, or normalized NSX PASS/DROP/REJECT packet decision",
+    "vmware_nsx_raw_action": "raw NSX DFW PASS/DROP/REJECT packet decision token preserved separately from normalized action when present",
+    "signature": "result, NSX DFW rule token, eventID, or human message",
+    "signature_id": "eventID, NSX DFW rule token, or parser-specific identifier",
+    "eventID": "raw VMware RFC5424 structured-data eventID value preserved by Splunk KV parsing for structured-data fallback events when present",
+    "op": "raw ESXi/vCenter operation token such as Login or TaskEvent preserved by Splunk KV parsing when present",
+    "user": "raw ESXi/vCenter user value preserved by Splunk KV parsing when present before aliasing to src_user",
+    "target": "raw ESXi/vCenter task or login target value preserved by Splunk KV parsing when present before aliasing to dest",
+    "severity": "severity when present or safely derived from fixture-backed VMware service message text such as vmkernel or structured-data WARNING",
+    "src": "src parsed from NSX DFW src/port packet tuple when present",
+    "src_ip": "src_ip alias from NSX DFW src packet tuple when present",
+    "dest": "target when present in ESXi/vCenter task or login records; dst parsed from NSX DFW packet tuple when present",
+    "dest_ip": "dest_ip alias from NSX DFW dst packet tuple when present",
+    "dst": "raw NSX DFW destination-IP token extracted from fixture-backed packet tuples before aliasing to dest_ip and common dest",
+    "src_port": "sport parsed from NSX DFW packet tuple when present",
+    "dest_port": "dport parsed from NSX DFW packet tuple when present",
+    "transport": "proto parsed from NSX DFW packet tuple when present",
+    "proto": "raw NSX DFW protocol token extracted from fixture-backed packet tuples before aliasing to transport",
+    "sport": "raw NSX DFW source-port token extracted from fixture-backed packet tuples before aliasing to src_port",
+    "dport": "raw NSX DFW destination-port token extracted from fixture-backed packet tuples before aliasing to dest_port",
+    "vmware_nsx_raw_direction": "raw NSX DFW IN/OUT packet direction token preserved separately from normalized direction when present",
+    "direction": "explicit IN/OUT token from NSX DFW packet tuple normalized to lowercase when present",
+    "src_user": "user when present in ESXi/vCenter login events",
+    "rule": "NSX DFW rule token extracted from fixture-backed packet logs when present; surfaced separately from signature/signature_id for firewall-rule triage",
+    "result": "result when present in ESXi/vCenter task or login events"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-vmware_vsphere.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/vmware_vsphere_soc.xml"
+    ],
+    "test_events": [
+      "test-events/vmware_vsphere_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tls_20051.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "validation/preflight-2026-06-22.md",
+      "validation/e2e-lab-2026-06-26.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425",
+      "transport": "tls",
+      "recommended": true,
+      "default_port": 20051,
+      "notes": "Recommended SecHub Resources default for production import; use VMware ESXi/vCenter syslog forwarding or an intermediate relay for TLS where possible.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "raw"
+    },
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Use only where TLS is unavailable or terminated upstream.",
+      "syslog_protocol": "rfc5424_over_tcp",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    },
+    {
+      "id": "udp_bsd",
+      "label": "UDP/BSD syslog",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Legacy/lab only. Upstream SC4S warns that load-balanced UDP can corrupt split VMware event handling.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "tls_rfc5425",
+  "source_log_version": {
+    "name": "VMware vSphere, ESXi, vCenter, and NSX syslog",
+    "min": "unknown",
+    "max": null,
+    "notes": "Grounded in upstream SC4S v3.43.0 parser/docs inventory and synthetic-equivalent fixtures. Real VMware version evidence is required before validation promotion."
+  },
+  "validation": {
+    "date_validated": "not lab validated; curated 2026-06-05",
+    "validated_by": "Hermes autonomous curation (documentation/upstream-grounded only)",
+    "source_log_version": "Upstream SC4S v3.43.0 VMware vSphere parser/docs inventory; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Pack artifacts and fixtures are curated from upstream SC4S VMware vSphere source documentation, parser routing semantics, and public upstream/content-pack NSX DFW action-token evidence. No real ESXi/vCenter/NSX replay or Splunk read-back evidence is captured; quality_status remains curated and trust_level remains unverified."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "sechub-resources-pack-replay",
+    "pack_aware": true,
+    "testbed": {
+      "sc4s_target": "SC4S TEST",
+      "splunk_target": "Splunk TEST",
+      "allow_production": false
+    },
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tls",
+          "port": 20051,
+          "protocol": "rfc5425",
+          "purpose": "Dedicated VMware vSphere listener"
+        }
+      ],
+      "required_indexes": [
+        "infraops",
+        "netfw"
+      ],
+      "required_splunk_capabilities": [
+        "HEC token can write to required indexes",
+        "Search role can read required indexes"
+      ]
+    },
+    "replay": {
+      "fixture_sets": [
+        "vmware_vsphere_mixed_syslog"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_VMWARE_VSPHERE_TEST_",
+      "transport": "tls_rfc5425",
+      "framing": "octet_counted",
+      "script": "scripts/send_tls_20051.sh"
+    },
+    "readback": {
+      "spl": "index IN (infraops, netfw) \"SC4S_VMWARE_VSPHERE_TEST_\" earliest=-2h | table _time index sourcetype source host vendor product action vmware_nsx_raw_action vmware_nsx_raw_direction direction signature signature_id severity src dest src_ip dest_ip dst src_port dest_port transport proto sport dport rule target user src_user result eventtype _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "count",
+        "index",
+        "sourcetype",
+        "source",
+        "host/fromhost",
+        "timestamp",
+        "raw preservation",
+        "expected normalized fields",
+        "eventtypes and tags"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "date": "2026-06-26",
+      "blocked_layer": "indexed_readback",
+      "summary": "Dedicated sc4s-validation-lab replay reached healthy Splunk TEST and SC4S TEST containers, created infraops/netfw indexes, and attempted to replay six VMware fixtures through TLS/RFC5425 127.0.0.1:20051. Splunk summary/detail read-back returned no matching fixture fields and the explicit count assertion observed 0 of 6 expected marker events. SC4S stats did not show VMware/vSphere/NSX fixture movement. This is a failed/blocked indexed-readback attempt, not validation evidence.",
+      "evidence_path": "validation/e2e-lab-2026-06-26.md"
+    },
+    "evidence": [
+      "validation/preflight-2026-06-22.md",
+      "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "validation/e2e-lab-2026-06-26.md"
+    ],
+    "e2e_docker_harness": {
+      "id": "vmware_vsphere_compose_e2e",
+      "status": "blocked_indexed_readback",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/vmware_vsphere/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/vmware_vsphere/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/vmware_vsphere/compose.yaml",
+      "compose_project": "sechub-vmware-vsphere-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "infraops and netfw index preflight/create"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/vmware_vsphere/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/vmware_vsphere/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/vmware_vsphere/scripts/send_tls_20051.sh 127.0.0.1 20051",
+        "splunk_summary_readback": "index IN (infraops, netfw) \"SC4S_VMWARE_VSPHERE_TEST_\" earliest=-2h | stats count by index sourcetype source host",
+        "splunk_detail_readback": "index IN (infraops, netfw) \"SC4S_VMWARE_VSPHERE_TEST_\" earliest=-2h | table _time index sourcetype source host vendor product action vmware_nsx_raw_action vmware_nsx_raw_direction direction signature signature_id severity src dest src_ip dest_ip dst src_port dest_port transport proto sport dport rule target user src_user result eventtype _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "infraops",
+        "additional_required_indexes": [
+          "netfw"
+        ],
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/vmware_vsphere/splunk -> /opt/splunk/etc/apps/sechub_vmware_vsphere (writable in disposable TEST so Splunk bootstrap can chown app files)"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tls",
+          "container_port": 20051,
+          "host_port_env": "SC4S_VMWARE_VSPHERE_PORT",
+          "source_id": "VMWARE_VSPHERE"
+        },
+        "parser_mount": "packs/vmware_vsphere/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "vmware_vsphere",
+          "source_shape": "bsd_syslog_esxi_service",
+          "event_family": "esx_hostd",
+          "sourcetype": "vmware:esxlog:hostd",
+          "data_structures": [
+            "ESXi hostd service message"
+          ],
+          "markers": [
+            "SC4S_VMWARE_VSPHERE_TEST_ESX_HOSTD_001"
+          ]
+        },
+        {
+          "source": "vmware_vsphere",
+          "source_shape": "bsd_syslog_vcenter_service",
+          "event_family": "vcenter_vpxd",
+          "sourcetype": "vmware:vclog:vpxd",
+          "data_structures": [
+            "vCenter vpxd service message"
+          ],
+          "markers": [
+            "SC4S_VMWARE_VSPHERE_TEST_VCENTER_VPXD_002"
+          ]
+        },
+        {
+          "source": "vmware_vsphere",
+          "source_shape": "bsd_syslog_esxi_kernel",
+          "event_family": "esx_vmkernel",
+          "sourcetype": "vmware:esxlog:vmkernel",
+          "data_structures": [
+            "ESXi vmkernel storage warning"
+          ],
+          "markers": [
+            "SC4S_VMWARE_VSPHERE_TEST_ESX_VMKERNEL_005"
+          ]
+        },
+        {
+          "source": "vmware_vsphere",
+          "source_shape": "bsd_syslog_nsx_dfw_packet",
+          "event_family": "nsx_dfw",
+          "sourcetype": "vmware:nsxlog:dfwpktlogs",
+          "data_structures": [
+            "NSX DFW PASS/DROP packet tuple"
+          ],
+          "markers": [
+            "SC4S_VMWARE_VSPHERE_TEST_NSX_DFW_003",
+            "SC4S_VMWARE_VSPHERE_TEST_NSX_DFW_006"
+          ]
+        },
+        {
+          "source": "vmware_vsphere",
+          "source_shape": "rfc5424_structured_data",
+          "event_family": "vsphere_sdata",
+          "sourcetype": "vmware:esxlog:sdata",
+          "data_structures": [
+            "VMware Originator@6876 structured-data event"
+          ],
+          "markers": [
+            "SC4S_VMWARE_VSPHERE_TEST_SDATA_004"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "live ESXi/vCenter/NSX source-version emission is not proven by this harness",
+        "malformed, split, or multiline VMware syslog behavior remains outside the fixture replay scope",
+        "VSAN-specific and broader NSX policy lifecycle events remain deferred until exact emitted-record evidence exists",
+        "collector wrapper, UDP/BSD forwarding, and production TLS forwarding behavior require separate source-shape validation"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "vmware_vsphere_mixed_syslog",
+      "label": "VMware vSphere BSD/RFC5424 mixed syslog fixtures",
+      "path": "test-events/vmware_vsphere_test_events.txt",
+      "format": "hybrid",
+      "wire_format": "mixed_bsd_syslog_and_rfc5424_sdata",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "serialization": "mixed_raw_kv_sdata",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_VMWARE_VSPHERE_TEST_ESX_HOSTD_001",
+        "SC4S_VMWARE_VSPHERE_TEST_VCENTER_VPXD_002",
+        "SC4S_VMWARE_VSPHERE_TEST_NSX_DFW_003",
+        "SC4S_VMWARE_VSPHERE_TEST_NSX_DFW_006",
+        "SC4S_VMWARE_VSPHERE_TEST_SDATA_004",
+        "SC4S_VMWARE_VSPHERE_TEST_ESX_VMKERNEL_005"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "syslog_header_timezone",
+        "primary_field": "syslog_header",
+        "primary_timezone": "BSD fixtures require source/receiver timezone; RFC5424 fixture includes UTC offset",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "rfc3164_offset"
+        ],
+        "notes": "VMware can emit malformed or split syslog; prefer RFC5424/RFC5425 or configure source timezone explicitly."
+      },
+      "field_delimiting": {
+        "style": "mixed_syslog_message_kv_sdata",
+        "field_separator": "space-delimited key/value examples and RFC5424 structured data",
+        "quote_character": "double quotes where needed",
+        "escape_policy": "Synthetic-equivalent fixtures avoid secrets/customer identifiers and use RFC5737/example.test values.",
+        "notes": "Each line is self-contained; real VMware deployments may require grouping for malformed split events."
+      },
+      "expected_families": [
+        "esx_hostd",
+        "vcenter_vpxd",
+        "nsx_dfw",
+        "vsphere_sdata",
+        "esx_vmkernel"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-vmware_vsphere.conf",
+      "target_path": "local/config/app_parsers/syslog/app-vmware_vsphere.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/vmware_vsphere.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_soc",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/vmware_vsphere_soc.xml",
+      "target_path": "splunk/default/data/ui/views/vmware_vsphere_soc.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/vmware_vsphere_test_events.txt",
+      "target_path": "test-events/vmware_vsphere_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tls_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tls_20051.sh",
+      "target_path": "scripts/send_tls_20051.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "preflight_2026_06_22",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-22.md",
+      "target_path": "validation/preflight-2026-06-22.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "dashboard_splunk_fixture_validation_2026_06_16",
+      "group": "docs",
+      "source_path": "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "target_path": "validation/dashboard-splunk-fixture-validation-2026-06-16.md",
+      "kind": "validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Upstream SC4S generated entries vmware_vsphere, vmware_esx_json, vmware_esx_invalidmultiline, and VMware Lite addon entries; upstream SC4S docs/sources/vendor/VMWare/vsphere.md; upstream parser files under package/etc/conf.d/conflib/syslog, netsource, and post-filter; public upstream SC4S tests/test_vmware.py NSX DFW PASS packet examples; public VMware NSX Log Insight content-pack patterns for PASS/DROP/REJECT firewall decisions.",
+      "upstream": {
+        "repo_url": "https://github.com/splunk/splunk-connect-for-syslog",
+        "requested_ref": "v3.43.0",
+        "resolved_commit": "5206370a6e9e5a2f3389b82291f68f86fc91c337",
+        "source_paths": [
+          "docs/sources/vendor/VMWare/vsphere.md",
+          "package/etc/conf.d/conflib/syslog/app-syslog-vmware_vsphere.conf",
+          "package/etc/conf.d/conflib/netsource/app-netsource-vmware_vsphere.conf",
+          "package/etc/conf.d/conflib/netsource/app-netsource-vmware_esx_json.conf",
+          "package/etc/conf.d/conflib/netsource/app-netsource-vmware_esx_invalidmultiline.conf",
+          "package/etc/conf.d/conflib/post-filter/app-postfilter-vmware_vsphere_invalidmultiline.conf",
+          "tests/test_vmware.py"
+        ],
+        "sync_timestamp": "as recorded in catalogue/generated/upstream/sc4s-inbuilt.json"
+      },
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use RFC5737 and example.test identities and do not include customer samples, secrets, tokens, or proprietary Splunk TA content. NSX DFW fixtures preserve public PASS/DROP packet-token shape while keeping trust conservative until lab read-back exists."
+    },
+    "curation": {
+      "reviewed_by": "Hermes autonomous curation",
+      "reviewed_at": "2026-06-05",
+      "notes": "Selected because demand research ranks VMware ESXi/vSphere/Aria as the highest current SecHub Resources coverage gap. Conservative pack only; validation evidence is still required."
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "src",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Present in NSX firewall examples when supplied; Splunk props surface the packet source as both src and src_ip."
+        },
+        "dest": {
+          "source_fields": [
+            "target",
+            "dst",
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Present as ESXi/vCenter task/login target or NSX firewall destination when supplied; NSX packet destinations are surfaced as dst, dest_ip, and common dest."
+        },
+        "src_port": {
+          "source_fields": [
+            "sport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "NSX firewall examples only."
+        },
+        "dest_port": {
+          "source_fields": [
+            "dport",
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "NSX firewall examples only."
+        },
+        "transport": {
+          "source_fields": [
+            "proto",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "NSX firewall examples only."
+        },
+        "direction": {
+          "source_fields": [
+            "vmware_nsx_raw_direction",
+            "direction"
+          ],
+          "status": "partial",
+          "notes": "Explicit NSX DFW packet direction token such as IN/OUT, preserved as vmware_nsx_raw_direction and normalized to lowercase direction for fixture-backed packet logs only."
+        },
+        "action": {
+          "source_fields": [
+            "op",
+            "action",
+            "vmware_nsx_raw_action",
+            "program"
+          ],
+          "status": "partial",
+          "notes": "PASS is normalized to allowed; DROP/REJECT are normalized to blocked for NSX DFW packet logs while the raw token remains available as vmware_nsx_raw_action. Other VMware families remain partial and family-specific."
+        },
+        "signature": {
+          "source_fields": [
+            "result",
+            "rule",
+            "eventID",
+            "vmkernel_message"
+          ],
+          "status": "partial",
+          "notes": "Best effort based on public parser shapes, NSX DFW rule tokens, structured-data event IDs, and fixture-backed vmkernel storage warning text."
+        },
+        "signature_id": {
+          "source_fields": [
+            "eventID",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Structured-data fixture exposes eventID and NSX DFW fixtures expose the packet-log rule token; Splunk props surface these stable identifiers as signature_id where present. Real VMware/NSX read-back evidence is still required."
+        },
+        "rule": {
+          "source_fields": [
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "NSX DFW packet-log rule token extracted from fixture-backed packet logs and preserved separately for firewall-rule triage; not complete NSX policy validation."
+        },
+        "severity": {
+          "source_fields": [
+            "severity",
+            "vmkernel_message",
+            "structured_data_message"
+          ],
+          "status": "partial",
+          "notes": "Splunk props surface a derived severity field from explicit severity tokens such as WARNING in fixture-backed vmkernel and structured-data messages; not a complete VMware severity taxonomy."
+        },
+        "user": {
+          "source_fields": [
+            "user",
+            "src_user"
+          ],
+          "status": "partial",
+          "notes": "Present in synthetic ESXi/vCenter examples when supplied by the source; aliased to src_user for authentication-style searches."
+        },
+        "result": {
+          "source_fields": [
+            "result"
+          ],
+          "status": "partial",
+          "notes": "Present in ESXi/vCenter login or task examples when supplied by the source."
+        }
+      },
+      "notes": "CIM mapping is intentionally partial for virtualization and network observability."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Mapped only when present."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "dst",
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Mapped only when present in NSX firewall examples."
+        },
+        "dst_endpoint.name": {
+          "source_fields": [
+            "target"
+          ],
+          "status": "partial",
+          "notes": "Mapped when ESXi/vCenter examples expose a task or authentication target."
+        },
+        "src_endpoint.port": {
+          "source_fields": [
+            "sport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Mapped only for NSX firewall examples."
+        },
+        "dst_endpoint.port": {
+          "source_fields": [
+            "dport",
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "Mapped only for NSX firewall examples."
+        },
+        "network.protocol_name": {
+          "source_fields": [
+            "proto",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "Mapped only for NSX firewall examples."
+        },
+        "traffic_direction": {
+          "source_fields": [
+            "vmware_nsx_raw_direction",
+            "direction"
+          ],
+          "status": "partial",
+          "notes": "Mapped only when NSX DFW packet logs carry an explicit IN/OUT direction token; the raw token remains available as vmware_nsx_raw_direction and no direction is inferred for other VMware events."
+        },
+        "actor.user.name": {
+          "source_fields": [
+            "user",
+            "src_user"
+          ],
+          "status": "partial",
+          "notes": "Mapped only when present."
+        },
+        "activity_name": {
+          "source_fields": [
+            "op",
+            "action",
+            "program",
+            "vmware_nsx_raw_action",
+            "eventID"
+          ],
+          "status": "partial",
+          "notes": "Family-specific action/event label; NSX DFW keeps the raw PASS/DROP/REJECT token available separately from normalized action."
+        },
+        "status": {
+          "source_fields": [
+            "result"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed ESXi/vCenter examples expose simple result values such as success or completed; this is not a full OCSF status taxonomy."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "eventID",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Best-effort identifier mapping for VMware structured-data eventID and NSX DFW rule when present; not a complete OCSF event identity requirements."
+        },
+        "rule.name": {
+          "source_fields": [
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed NSX DFW rule token only; no complete NSX policy inventory or rule lifecycle validation is published."
+        },
+        "severity": {
+          "source_fields": [
+            "severity",
+            "vmkernel_message",
+            "structured_data_message"
+          ],
+          "status": "partial",
+          "notes": "Mapped only when Splunk props surface a derived severity from fixture-backed service text carrying an explicit warning/error/notice token."
+        }
+      },
+      "notes": "Optional OCSF mapping is not complete."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "source.ip": {
+          "source_fields": [
+            "src",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Mapped only when present."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "dst",
+            "dest_ip"
+          ],
+          "status": "partial",
+          "notes": "Mapped only when present in NSX firewall examples."
+        },
+        "destination.domain": {
+          "source_fields": [
+            "target"
+          ],
+          "status": "partial",
+          "notes": "Best-effort destination/target name for ESXi/vCenter task or login examples; not a DNS guarantee."
+        },
+        "source.port": {
+          "source_fields": [
+            "sport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "NSX firewall examples only."
+        },
+        "destination.port": {
+          "source_fields": [
+            "dport",
+            "dest_port"
+          ],
+          "status": "partial",
+          "notes": "NSX firewall examples only."
+        },
+        "network.transport": {
+          "source_fields": [
+            "proto",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "NSX firewall examples only."
+        },
+        "network.direction": {
+          "source_fields": [
+            "vmware_nsx_raw_direction",
+            "direction"
+          ],
+          "status": "partial",
+          "notes": "Mapped only from explicit NSX DFW IN/OUT packet direction tokens; vmware_nsx_raw_direction preserves the vendor token while direction is normalized to lowercase."
+        },
+        "event.action": {
+          "source_fields": [
+            "op",
+            "action",
+            "vmware_nsx_raw_action",
+            "program"
+          ],
+          "status": "partial",
+          "notes": "Best-effort action. NSX DFW raw PASS/DROP/REJECT is preserved as vmware_nsx_raw_action while normalized action carries allowed/blocked."
+        },
+        "event.code": {
+          "source_fields": [
+            "eventID",
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Mapped only for structured-data fixtures that expose VMware eventID or NSX DFW fixtures that expose a rule identifier."
+        },
+        "rule.id": {
+          "source_fields": [
+            "rule"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed NSX DFW rule token only; used for analyst grouping without stating complete NSX rule metadata."
+        },
+        "log.level": {
+          "source_fields": [
+            "severity",
+            "vmkernel_message",
+            "structured_data_message"
+          ],
+          "status": "partial",
+          "notes": "Mapped from the derived severity field only when fixture-backed service text carries explicit warning/error/notice tokens."
+        },
+        "user.name": {
+          "source_fields": [
+            "user",
+            "src_user"
+          ],
+          "status": "partial",
+          "notes": "Mapped only when present."
+        },
+        "event.outcome": {
+          "source_fields": [
+            "result"
+          ],
+          "status": "partial",
+          "notes": "Maps simple result values such as success when present; no full outcome taxonomy is published."
+        }
+      },
+      "notes": "Optional ECS mapping is not complete."
+    }
+  },
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic VMware vSphere ingestion",
+      "description": "Parser, dedicated listener env example, fixtures, and Splunk props. No drops, reductions, or multiline grouping.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-vmware_vsphere.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; preserves events."
+    },
+    {
+      "id": "standard",
+      "label": "Standard VMware vSphere knowledge",
+      "description": "Adds eventtypes and tags for ESXi, vCenter, fixture-backed vCenter task completion, fixture-backed vmkernel storage warnings, fixture-backed structured-data fallback and warning discovery, fixture-backed login success, NSX, and NSX firewall searches with non-lossy NSX PASS/DROP/REJECT action-token normalization plus allowed/blocked analyst facets. No drops or reductions.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Still non-lossy; enable after local review/import."
+    }
+  ],
+  "ci": {
+    "last_updated": "2026-06-27",
+    "last_tested": "2026-06-07",
+    "tested_commit": "local-ci-20260606",
+    "tested_artifact_hashes": {
+      "packs/vmware_vsphere/README.md": "sha256:0f209cd7c0139db730ff51eecdbb852e8890d174575c6e01aa2995d88e6196f4",
+      "packs/vmware_vsphere/sc4s/app_parsers/syslog/app-vmware_vsphere.conf": "sha256:dd4a94e9caad90ec11d0bf1f3f16913403dc22bae399237e7ce86b2610107b4b",
+      "packs/vmware_vsphere/sc4s/env.example": "sha256:03f7d28922477a9883a345620ee02d29138961c0c27bbcd83edd2ae07b04f2ca",
+      "packs/vmware_vsphere/splunk/default/props.conf": "sha256:7c4f0c9283526edd45eeaac97dc8ceba7fee683c123fb1d71e71aec2e463d884",
+      "packs/vmware_vsphere/splunk/default/transforms.conf": "sha256:3edc19b6f52e07cd8ab7a7301cf522cfe0832beee80330a118df2879e05ffbcb",
+      "packs/vmware_vsphere/splunk/default/eventtypes.conf": "sha256:6cefa5db440b24c5f876065af491c3cd3941c9dbd65b347c6e9f7eeaba6f0726",
+      "packs/vmware_vsphere/splunk/default/tags.conf": "sha256:fb67c55a8d9f3b298dd4fac7d0e505de0c2e71fcb16769bd587f2df8c5438901",
+      "packs/vmware_vsphere/test-events/vmware_vsphere_test_events.txt": "sha256:e6c9c0029b5fbc13dcd06d4ebca4c7acd698047d06e49d343f49698cc856735a",
+      "packs/vmware_vsphere/scripts/send_tls_20051.sh": "sha256:d45551ff28f4784008195d5a9236df6d9150b966cfc14a0c652afb3c2f5873ac",
+      "packs/vmware_vsphere/splunk/default/data/ui/views/vmware_vsphere_soc.xml": "sha256:78efbb96c06486d367f1c528c47da5b09a9a846fe9194aa1c650eb3efe370a34",
+      "packs/vmware_vsphere/validation/dashboard-splunk-fixture-validation-2026-06-16.md": "sha256:e2a0db3576d2624f0fd7874b380360e83b6a6110b3ae06d306b51737fa23ea30",
+      "packs/vmware_vsphere/validation/preflight-2026-06-22.md": "sha256:c8326eabe9996199b4d99de928aaa5fe00c88538116c88bc95b33769f818a3be",
+      "packs/vmware_vsphere/validation/e2e-lab-2026-06-26.md": "sha256:543ef34b463ad40f94bac1f3c73d12798c7da84b96562234e01c120e2ddb853f",
+      "packs/vmware_vsphere/scripts/e2e_docker_compose.sh": "sha256:be10c5758dd2f0d3d324a232d7ff6ffe71918b0c348a82b64c40be0d4b6efdad"
+    }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "raw_syslog",
+    "supported_transport_refs": [
+      "tls_rfc5425",
+      "tcp_syslog",
+      "udp_bsd"
+    ],
+    "notes": "ESXi/vCenter/NSX components natively forward syslog; relay may terminate TLS.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "vmware_vsphere_soc_splunk_test",
+      "title": "VMware vSphere / ESXi / vCenter — dashboard example",
+      "source_path": "dashboards/screenshots/vmware-vsphere-soc-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the VMware vSphere / ESXi / vCenter dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_soc"
+    }
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  }
+}

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { AppLayout } from './AppLayout';
 
 describe('AppLayout navigation', () => {
-  it('includes the SecHub Resources route alongside dashboard, catalogue, packs, and exports', () => {
+  it('includes the embedded Library route alongside dashboard, catalogue, packs, and exports', () => {
     const markup = renderToStaticMarkup(
       <MantineProvider>
         <AppLayout path="/">
@@ -22,7 +22,7 @@ describe('AppLayout navigation', () => {
     expect(markup).toContain('/packs');
     expect(markup).toContain('Exports');
     expect(markup).toContain('Switch to dark mode');
-    expect(markup).toContain('Operator console for Library source status, local packs, staged source changes, and export evidence.');
+    expect(markup).toContain('Operator console for embedded Library status, local packs, staged source changes, and export evidence.');
     const removedRemoteRoute = '/' + 'market' + 'place';
     const removedPackRoute = '/' + 'pro' + 'files';
     expect(markup).not.toContain(removedRemoteRoute);

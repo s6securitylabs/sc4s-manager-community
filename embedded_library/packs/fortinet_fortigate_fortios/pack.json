@@ -1,0 +1,934 @@
+{
+  "schema_version": "0.1",
+  "id": "fortinet_fortigate_fortios",
+  "version": "0.1.9",
+  "url": "https://raw.githubusercontent.com/splunk/splunk-connect-for-syslog/main/docs/sources/vendor/Fortinet/fortios.md",
+  "description": "Curated SecHub Resources SC4S pack for Fortinet FortiGate/FortiOS key=value syslog records. Extends upstream SC4S FortiOS inventory with conservative metadata, parser/env artifacts, Splunk knowledge, synthetic-equivalent fixtures, and explicit validation gaps.",
+  "display_name": "Fortinet FortiGate/FortiOS",
+  "vendor": "fortinet",
+  "product": "fortigate-fortios",
+  "default_index": "netfw",
+  "default_source": "fortinet_fortigate_fortios",
+  "listener": {
+    "source_id": "FORTINET_FORTIGATE_FORTIOS",
+    "transport": "tls",
+    "port": 20032,
+    "env": {
+      "SC4S_LISTEN_FORTINET_FORTIGATE_FORTIOS_TLS_PORT": "20032",
+      "SOURCE_ALL_SET_APPEND": "FORTINET_FORTIGATE_FORTIOS"
+    }
+  },
+  "sourcetypes": {
+    "traffic": "fortinet:fortigate",
+    "utm": "fortinet:fortigate",
+    "vpn": "fortinet:fortigate"
+  },
+  "event_families": [
+    {
+      "id": "traffic",
+      "label": "FortiGate traffic events",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])type=\\\"?traffic\\\"?.+(^|[[:space:]])srcip=.+(^|[[:space:]])dstip=",
+      "expected_sourcetype": "fortinet:fortigate",
+      "primary_id_field": "sessionid",
+      "required_fields": [
+        "date",
+        "time",
+        "logid",
+        "type",
+        "srcip",
+        "dstip"
+      ],
+      "timestamp_fields": [
+        "date",
+        "time",
+        "eventtime",
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "utm",
+      "label": "FortiGate UTM/security events",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])type=\\\"?utm\\\"?|(^|[[:space:]])(threat|virus)=",
+      "expected_sourcetype": "fortinet:fortigate",
+      "primary_id_field": "logid",
+      "required_fields": [
+        "date",
+        "time",
+        "logid",
+        "type"
+      ],
+      "timestamp_fields": [
+        "date",
+        "time",
+        "eventtime",
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "vpn",
+      "label": "FortiGate VPN events",
+      "match_engine": "pcre",
+      "match": "(^|[[:space:]])subtype=\\\"?vpn\\\"?|(^|[[:space:]])tunnel(id|type)=",
+      "expected_sourcetype": "fortinet:fortigate",
+      "primary_id_field": "tunnelid",
+      "required_fields": [
+        "date",
+        "time",
+        "logid",
+        "subtype"
+      ],
+      "timestamp_fields": [
+        "date",
+        "time",
+        "eventtime",
+        "syslog_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Fortinet",
+    "product": "fortigate-fortios",
+    "vendor_product": "fortinet:fortigate-fortios",
+    "src": "srcip",
+    "dest": "dstip",
+    "dest_port": "dstport",
+    "transport": "proto",
+    "action": "action",
+    "signature": "threat_or_msg",
+    "signature_id": "logid",
+    "user": "user",
+    "dvc": "FortiGate device name aliased from fixture-backed devname when present for appliance audit/read-back context",
+    "serial": "FortiGate device serial aliased from fixture-backed devid when present for appliance audit/read-back context",
+    "src_port": "FortiGate source port aliased from fixture-backed srcport for traffic/UTM read-back context",
+    "src_interface": "FortiGate ingress interface aliased from fixture-backed srcintf where present",
+    "dest_interface": "FortiGate egress interface aliased from fixture-backed dstintf where present"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-fortinet_fortigate_fortios.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/fortinet_fortigate_fortios_overview.xml"
+    ],
+    "test_events": [
+      "test-events/fortinet_fortigate_fortios_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tls_20032.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425",
+      "transport": "tls",
+      "recommended": true,
+      "default_port": 20032,
+      "notes": "Recommended production transport for FortiGate/FortiOS logs into SC4S.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog",
+      "transport": "tcp",
+      "recommended": false,
+      "default_port": 20032,
+      "notes": "Use when TLS termination is handled elsewhere or source cannot use TLS.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "udp_syslog",
+      "label": "UDP syslog",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Supported for lab/legacy use only; avoid for production where event loss matters.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tls_rfc5425",
+  "source_log_version": {
+    "name": "FortiGate/FortiOS key=value syslog format",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in generated upstream SC4S FortiOS parser/docs inventory inspected 2026-06-04 and Fortinet official FortiOS 7.4.0 log-message-field examples. Exact firmware/version field coverage remains an evidence gap."
+  },
+  "validation": {
+    "date_validated": "not lab validated; curated 2026-06-04",
+    "validated_by": "Hermes autonomous curation (upstream/public-format grounded only)",
+    "source_log_version": "Upstream SC4S FortiOS parser/docs inventory plus Fortinet official FortiOS 7.4.0 example log-message fields; synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Curated from upstream SC4S FortiOS parser/docs and Fortinet official FortiOS log-message-field examples including key=value traffic records with date/time/logid/type/subtype/srcip/dstip/action fields. Live FortiGate replay and Splunk read-back evidence is not yet captured; keep quality_status=curated and trust_level=unverified."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "sechub-resources-pack-replay",
+    "pack_aware": true,
+    "testbed": {
+      "sc4s_target": "SC4S TEST",
+      "splunk_target": "Splunk TEST",
+      "allow_production": false
+    },
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tls",
+          "port": 20032,
+          "protocol": "rfc5425",
+          "purpose": "Dedicated Fortinet FortiGate/FortiOS listener"
+        }
+      ],
+      "required_indexes": [
+        "netfw"
+      ],
+      "required_splunk_capabilities": [
+        "HEC token can write to netfw",
+        "Search role can read netfw"
+      ]
+    },
+    "replay": {
+      "fixture_sets": [
+        "fortinet_fortigate_fortios_headerless_kv"
+      ],
+      "event_count": 3,
+      "marker_prefix": "SC4S_FORTINET_FORTIGATE_TEST_",
+      "transport": "tls_rfc5425",
+      "framing": "octet_counted",
+      "script": "scripts/send_tls_20032.sh"
+    },
+    "readback": {
+      "spl": "index=netfw sechub_fixture_marker=\"SC4S_FORTINET_FORTIGATE_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product type subtype action src src_port dest dest_port src_interface dest_interface transport signature signature_id user dvc serial _raw",
+      "expected_count": 3,
+      "must_verify": [
+        "count",
+        "index",
+        "sourcetype",
+        "source",
+        "host/fromhost",
+        "timestamp",
+        "raw preservation",
+        "expected normalized fields",
+        "expected eventtypes/tags"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "date": "2026-06-27",
+      "blocked_layer": "listener",
+      "summary": "Dedicated lab attempt started Splunk TEST and SC4S TEST but fixture replay failed with openssl write:errno=104; follow-up listener inspection showed only the SC4S health endpoint listening and no syslog-ng listener bound on TCP/20032. Harness was tightened to fail closed on missing syslog-ng/listener before replay.",
+      "evidence_path": "validation/e2e-lab-2026-06-27.md"
+    },
+    "evidence": [
+      "validation/preflight-2026-06-07.md",
+      "validation/e2e-lab-2026-06-27.md"
+    ],
+    "e2e_docker_harness": {
+      "id": "fortinet_fortigate_fortios_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/fortinet_fortigate_fortios/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/fortinet_fortigate_fortios/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/fortinet_fortigate_fortios/compose.yaml",
+      "compose_project": "sechub-fortinet-fortigate-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netfw index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/fortinet_fortigate_fortios/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/fortinet_fortigate_fortios/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/fortinet_fortigate_fortios/scripts/send_tls_20032.sh 127.0.0.1 20032",
+        "splunk_summary_readback": "index=netfw sechub_fixture_marker=\"SC4S_FORTINET_FORTIGATE_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netfw sechub_fixture_marker=\"SC4S_FORTINET_FORTIGATE_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product type subtype action src src_port dest dest_port src_interface dest_interface transport signature signature_id user dvc serial eventtype _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netfw",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/fortinet_fortigate_fortios/splunk -> /opt/splunk/etc/apps/sechub_fortinet_fortigate_fortios:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tls",
+          "container_port": 20032,
+          "host_port_env": "SC4S_FORTINET_FORTIGATE_FORTIOS_PORT",
+          "source_id": "FORTINET_FORTIGATE_FORTIOS"
+        },
+        "parser_mount": "packs/fortinet_fortigate_fortios/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "fortinet_fortigate_fortios",
+          "source_shape": "tls_rfc5425_key_value_syslog",
+          "event_families": [
+            "traffic",
+            "utm",
+            "vpn"
+          ],
+          "expected_sourcetypes": [
+            "fortinet:fortigate"
+          ],
+          "data_structures": [
+            "FortiOS key=value traffic records",
+            "FortiOS UTM/security key=value records",
+            "FortiOS VPN tunnel key=value records"
+          ],
+          "markers": [
+            "SC4S_FORTINET_FORTIGATE_TEST_TRAFFIC_900000001",
+            "SC4S_FORTINET_FORTIGATE_TEST_UTM_900000002",
+            "SC4S_FORTINET_FORTIGATE_TEST_VPN_900000003"
+          ],
+          "must_verify": [
+            "count=3",
+            "index=netfw",
+            "sourcetype=fortinet:fortigate",
+            "source=FORTINET_FORTIGATE_FORTIOS",
+            "traffic/utm/vpn family coverage",
+            "source/destination/port/interface fields",
+            "action/status/signature fields",
+            "device identity fields",
+            "raw key=value preservation"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No real FortiGate/FortiOS appliance replay/read-back is captured by adding this harness.",
+        "Firmware-version field completeness, FortiAnalyzer relay behavior, collector wrapping, API/export shapes, and the full FortiOS log taxonomy remain unvalidated.",
+        "Trust and quality labels must stay curated/unverified until replay/read-back evidence is stored and reviewed."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "fortinet_fortigate_fortios_headerless_kv",
+      "label": "FortiGate/FortiOS headerless key=value fixtures",
+      "path": "test-events/fortinet_fortigate_fortios_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "headerless_fortinet_key_value_payload",
+      "envelope": "none",
+      "serialization": "space_delimited_key_value",
+      "event_count": 3,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_FORTINET_FORTIGATE_TEST_TRAFFIC_900000001",
+        "SC4S_FORTINET_FORTIGATE_TEST_UTM_900000002",
+        "SC4S_FORTINET_FORTIGATE_TEST_VPN_900000003"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "date time tz",
+        "primary_timezone": "fixture tz=+0000; production source timezone requires confirmation",
+        "fallback_fields": [
+          "syslog_header",
+          "eventtime"
+        ],
+        "fallback_time_mode": "syslog_header_timezone",
+        "fallback_timezone": "UTC in TLS send helper; source-defined in production syslog envelope",
+        "requires_source_timezone_when_fields_missing": [
+          "tz"
+        ],
+        "notes": "The fixture file is intentionally headerless key=value text. The TLS send helper wraps payloads in RFC5424/RFC5425 with a timezone-qualified UTC timestamp."
+      },
+      "field_delimiting": {
+        "style": "key_value",
+        "field_separator": "space",
+        "key_value_separator": "=",
+        "quote_character": "double quote for string values in supplied fixtures",
+        "escape_policy": "Additional real-product fixtures are needed before stating complete FortiOS quoting/escaping coverage.",
+        "notes": "Treat each physical line as one event. The parser follows conservative key=value behavior and preserves the original event."
+      },
+      "expected_families": [
+        "traffic",
+        "utm",
+        "vpn"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-fortinet_fortigate_fortios.conf",
+      "target_path": "local/config/app_parsers/syslog/app-fortinet_fortigate_fortios.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/fortinet_fortigate_fortios.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/fortinet_fortigate_fortios_overview.xml",
+      "target_path": "splunk/default/data/ui/views/fortinet_fortigate_fortios_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/fortinet_fortigate_fortios_test_events.txt",
+      "target_path": "test-events/fortinet_fortigate_fortios_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tls_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tls_20032.sh",
+      "target_path": "scripts/send_tls_20032.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Generated upstream SC4S entries fortinet_fortios_md, fortigate_fortios, and Lite fortinet addon; official Fortinet FortiOS log-message-field examples; synthetic-equivalent fixtures authored from that public key=value shape.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "upstream": {
+        "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+        "requested_ref": "main as represented by generated catalogue",
+        "resolved_commit": "not recorded in generated fixture",
+        "source_paths": [
+          "docs/sources/vendor/Fortinet/fortios.md",
+          "package/etc/conf.d/conflib/syslog/app-syslog-fortigate_fortios.conf",
+          "package/lite/etc/addons/fortinet/app-syslog-fortigate_fortios.conf"
+        ],
+        "catalogue_hashes": {
+          "docs/sources/vendor/Fortinet/fortios.md": "sha256:377ed8434820ebd2a830dfc9d2866a3c802b020f1a99194749d0ded9c630e01d",
+          "package/etc/conf.d/conflib/syslog/app-syslog-fortigate_fortios.conf": "sha256:c92646205ea7bd90dee84db5a22dc7cdba924749828ded253d6def3d37744a08"
+        }
+      },
+      "official_examples": [
+        {
+          "url": "https://docs.fortinet.com/document/fortigate/7.4.0/fortios-log-message-reference/357866/log-message-fields",
+          "evidence_type": "official_vendor_example_event",
+          "excerpt": "Fortinet official FortiOS 7.4.0 Log message fields page includes example key=value traffic record beginning date=2017-11-15 time=11:44:16 logid=\"0000000013\" type=\"traffic\" subtype=\"forward\" ... srcip=10.1.100.155 ... dstip=35.197.51.42 ... action=\"close\"."
+        }
+      ]
+    },
+    "curation": {
+      "reviewed_by": "Hermes autonomous curation",
+      "reviewed_at": "2026-06-04",
+      "notes": "Created a conservative curated pack for a high-impact firewall/VPN/security source. No proprietary Fortinet TA content copied. Keep unverified until live FortiGate/FortiOS replay and Splunk read-back evidence exists."
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic FortiGate ingestion",
+      "description": "Parser, listener env example, fixtures, and required Splunk props. No event drops.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-fortinet_fortigate_fortios.conf"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf"
+        }
+      ],
+      "reduction_rules": []
+    },
+    {
+      "id": "standard",
+      "label": "Standard SOC FortiGate knowledge",
+      "description": "Adds eventtypes and tags for traffic, UTM, and VPN analysis. No event drops.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf"
+        }
+      ],
+      "reduction_rules": []
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced FortiGate controls",
+      "description": "Reserved for reviewed optional reduction/noise controls after real replay evidence. No enhanced drops ship in this version.",
+      "enabled_by_default": false,
+      "artifact_references": [],
+      "reduction_rules": []
+    }
+  ],
+  "reduction_rules": [],
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "vendor": {
+          "source_fields": [
+            "vendor"
+          ],
+          "status": "complete",
+          "notes": "Set by SC4S/Splunk props."
+        },
+        "product": {
+          "source_fields": [
+            "product"
+          ],
+          "status": "complete",
+          "notes": "Set to fortigate-fortios."
+        },
+        "src": {
+          "source_fields": [
+            "srcip",
+            "remip"
+          ],
+          "status": "partial",
+          "notes": "Traffic uses srcip; VPN examples may use remip."
+        },
+        "dest": {
+          "source_fields": [
+            "dstip"
+          ],
+          "status": "partial",
+          "notes": "Present for traffic/UTM network events only."
+        },
+        "dest_port": {
+          "source_fields": [
+            "dstport"
+          ],
+          "status": "partial",
+          "notes": "Present for transport events."
+        },
+        "transport": {
+          "source_fields": [
+            "proto",
+            "transport"
+          ],
+          "status": "partial",
+          "notes": "Common numeric protocol values are mapped in props."
+        },
+        "action": {
+          "source_fields": [
+            "action",
+            "status"
+          ],
+          "status": "partial",
+          "notes": "FortiOS action/status semantics vary by log family."
+        },
+        "signature": {
+          "source_fields": [
+            "threat",
+            "virus",
+            "msg"
+          ],
+          "status": "partial",
+          "notes": "UTM threat fields preferred; msg fallback for generic events."
+        },
+        "signature_id": {
+          "source_fields": [
+            "logid",
+            "eventid"
+          ],
+          "status": "partial",
+          "notes": "logid is commonly available but family-specific meanings require validation."
+        },
+        "user": {
+          "source_fields": [
+            "user",
+            "srcuser",
+            "unauthuser"
+          ],
+          "status": "partial",
+          "notes": "Available for some VPN/auth/UTM records."
+        },
+        "dvc": {
+          "source_fields": [
+            "devname",
+            "dvc"
+          ],
+          "status": "partial",
+          "notes": "FortiGate device name is preserved via FIELDALIAS from devname when present; appliance identity requires live-source validation."
+        },
+        "serial": {
+          "source_fields": [
+            "devid",
+            "serial"
+          ],
+          "status": "partial",
+          "notes": "FortiGate device identifier is preserved via FIELDALIAS from devid when present; do not treat synthetic fixture serials as real device evidence."
+        },
+        "src_port": {
+          "source_fields": [
+            "srcport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Present for traffic/UTM network events; preserved from FortiGate srcport when emitted."
+        },
+        "src_interface": {
+          "source_fields": [
+            "srcintf",
+            "src_interface"
+          ],
+          "status": "partial",
+          "notes": "FortiGate ingress interface context when emitted; useful for route/policy audit but requires live-source validation for local interface naming."
+        },
+        "dest_interface": {
+          "source_fields": [
+            "dstintf",
+            "dest_interface"
+          ],
+          "status": "partial",
+          "notes": "FortiGate egress interface context when emitted; useful for route/policy audit but requires live-source validation for local interface naming."
+        }
+      }
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "device.name": {
+          "source_fields": [
+            "devname",
+            "dvc"
+          ],
+          "status": "partial",
+          "notes": "Pack-scoped appliance name mapping from fixture-backed FortiGate devname."
+        },
+        "device.uid": {
+          "source_fields": [
+            "devid",
+            "serial"
+          ],
+          "status": "partial",
+          "notes": "Pack-scoped appliance identifier mapping from fixture-backed FortiGate devid."
+        },
+        "src_endpoint.port": {
+          "source_fields": [
+            "srcport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed FortiGate source-port context for network/security events."
+        },
+        "src_endpoint.interface_name": {
+          "source_fields": [
+            "srcintf",
+            "src_interface"
+          ],
+          "status": "partial",
+          "notes": "Ingress interface name when FortiOS emits srcintf; not a complete interface inventory mapping."
+        },
+        "dst_endpoint.interface_name": {
+          "source_fields": [
+            "dstintf",
+            "dest_interface"
+          ],
+          "status": "partial",
+          "notes": "Egress interface name when FortiOS emits dstintf; not a complete interface inventory mapping."
+        }
+      }
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "observer.name": {
+          "source_fields": [
+            "devname",
+            "dvc"
+          ],
+          "status": "partial",
+          "notes": "FortiGate appliance name when present."
+        },
+        "observer.serial_number": {
+          "source_fields": [
+            "devid",
+            "serial"
+          ],
+          "status": "partial",
+          "notes": "FortiGate appliance serial/identifier when present."
+        },
+        "source.port": {
+          "source_fields": [
+            "srcport",
+            "src_port"
+          ],
+          "status": "partial",
+          "notes": "Fixture-backed FortiGate source-port context."
+        },
+        "observer.ingress.interface.name": {
+          "source_fields": [
+            "srcintf",
+            "src_interface"
+          ],
+          "status": "partial",
+          "notes": "Ingress interface name when FortiOS emits srcintf."
+        },
+        "observer.egress.interface.name": {
+          "source_fields": [
+            "dstintf",
+            "dest_interface"
+          ],
+          "status": "partial",
+          "notes": "Egress interface name when FortiOS emits dstintf."
+        }
+      }
+    }
+  },
+  "ci": {
+    "last_updated": "2026-06-27",
+    "last_tested": "2026-06-27",
+    "tested_commit": "1c4af24",
+    "tested_artifact_hashes": {
+      "sc4s/app_parsers/syslog/app-fortinet_fortigate_fortios.conf": "sha256:3fda68a73903ef6b7a2f4626790fe3f58df1a7342f56146ae21d33ab53f37b41",
+      "sc4s/env.example": "sha256:b5be89ef9aa67921db1bba1299c734fa8e100f7a20702de973a8a8611bbd1d29",
+      "splunk/default/props.conf": "sha256:2324be0f0d70214f987858fc8a2254152ad6ff2e27b97f58c991482f2ec852c7",
+      "splunk/default/transforms.conf": "sha256:e30275cfe218c0c7b3efd15247f68f8ed43247e2daecd332230229473b04615e",
+      "splunk/default/eventtypes.conf": "sha256:794965b4b2d3202595929aa738dde0d13707181207390da534584e4167376071",
+      "splunk/default/tags.conf": "sha256:e02908cd420e252d2600946fbe5a3bdacdbb0b8f0933d37da2a3650480e7deba",
+      "test-events/fortinet_fortigate_fortios_test_events.txt": "sha256:c7068c5be25d925edd79eef3b0ecd922c99a7a06cb784151bd651b943acc351a",
+      "scripts/send_tls_20032.sh": "sha256:af720d73cec958b4ac9f95c7cd003705c66a88f6badbae2839da6f4a7d885a67",
+      "scripts/e2e_docker_compose.sh": "sha256:d4093b164c431216f318bd4da84a7b8625ee9e34595debb18229a6a99d402301",
+      "README.md": "sha256:23ea6b03b7eaa9eaf3534a6ed9beefd72cb26ff41e844e0de3bd1cd7fbf63fe8",
+      "splunk/default/data/ui/views/fortinet_fortigate_fortios_overview.xml": "sha256:3dde8229f9c660121f42520001ed07fee4e523bfc490053ff9265221f5c33ce2",
+      "validation/e2e-lab-2026-06-27.md": "sha256:49334ffb889b1e92ff3876190701f1bd1beb095be1c30abebc8eb96d66ae3cf0"
+    }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "key_value_syslog",
+    "supported_transport_refs": [
+      "tls_rfc5425",
+      "tcp_syslog",
+      "udp_syslog"
+    ],
+    "notes": "FortiGate/FortiOS logs are native syslog key=value records.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "fortinet_fortigate_fortios_overview_splunk_test",
+      "title": "Fortinet FortiGate/FortiOS — dashboard example",
+      "source_path": "dashboards/screenshots/fortinet-fortigate-fortios-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Fortinet FortiGate/FortiOS dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  }
+}

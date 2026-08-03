@@ -1,0 +1,159 @@
+<form version="1.1" theme="light">
+  <label>Microsoft Cloud / M365 Event Hub SOC Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for broad Microsoft Cloud/M365 Event Hub or Cribl JSON relay. Covers declared synthetic-equivalent sourcetypes only; this is not replay/read-back or tenant validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="user_filter" searchWhenChanged="true">
+      <label>User / actor contains</label>
+      <default>*</default>
+    </input>
+    <input type="text" token="operation_filter" searchWhenChanged="true">
+      <label>Operation contains</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+
+  <search id="base_ms_cloud">
+    <query>(index=main OR index=netauth OR index=infraops OR index=netdlp OR index=epintel) (sourcetype="microsoft:365:management" OR sourcetype="microsoft:365:exchange:audit" OR sourcetype="microsoft:365:sharepoint:audit" OR sourcetype="microsoft:entra:audit" OR sourcetype="microsoft:entra:signin" OR sourcetype="microsoft:entra:identityprotection" OR sourcetype="microsoft:azure:resource" OR sourcetype="microsoft:azure:activity" OR sourcetype="microsoft:purview:dlp" OR sourcetype="microsoft:purview:audit" OR sourcetype="microsoft:defender:advancedhunting" OR sourcetype="microsoft:intune:audit")
+| eval ms_family=case(sourcetype="microsoft:365:management","M365 Management", sourcetype="microsoft:365:exchange:audit","Exchange Online", sourcetype="microsoft:365:sharepoint:audit","SharePoint/OneDrive routed", sourcetype="microsoft:entra:audit","Entra Audit", sourcetype="microsoft:entra:signin","Entra Sign-in", sourcetype="microsoft:entra:identityprotection","Entra Identity Protection", sourcetype="microsoft:azure:resource","Azure Resource", sourcetype="microsoft:azure:activity","Azure Activity", sourcetype="microsoft:purview:dlp","Purview DLP", sourcetype="microsoft:purview:audit","Purview Audit/Labels", sourcetype="microsoft:defender:advancedhunting","Defender Advanced Hunting", sourcetype="microsoft:intune:audit","Intune Audit", true(),sourcetype)
+| eval op_value=spath(_raw,"operationName.value"), status_value=spath(_raw,"status.value"), actor_upn=spath(_raw,"actor.userPrincipalName"), target_display=spath(_raw,"targetResources{0}.displayName"), entra_target_display=spath(_raw,"properties.targetResources{0}.displayName"), provider_value=spath(_raw,"resourceProviderName.value")
+| eval actor=coalesce(user, UserId, userPrincipalName, identity, InitiatingProcessAccountUpn, caller, actor_upn), src_ip_norm=coalesce(src_ip, src, ClientIP, ipAddress, callerIpAddress), operation_norm=coalesce(operation, action, Operation, operationName, op_value, activity), result_norm=coalesce(result, result_code, result_description, ResultStatus, resultType, resultDescription, status_value, activityResult, riskState), object_norm=coalesce(object, ObjectId, resourceId, SiteUrl, DeviceName, SourceFileName, target_display, entra_target_display, SensitivityLabelName), app_norm=coalesce(app, Application, AppName, appDisplayName), marker_value=coalesce(marker, mvindex(spath(_raw,"marker"),0)), original_sourcetype=coalesce(ms_source_sourcetype, sourceType, sourcetype)
+| where like(coalesce(actor,""), "%$user_filter$%") OR "$user_filter$"="*"
+| where like(coalesce(operation_norm,""), "%$operation_filter$%") OR "$operation_filter$"="*"</query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+
+  <row>
+    <panel><title>Total Microsoft cloud events</title><single><search base="base_ms_cloud"><query>| stats count</query></search><option name="underLabel">Declared fixture-backed sourcetypes only</option></single></panel>
+    <panel><title>Identity events</title><single><search base="base_ms_cloud"><query>| search sourcetype IN ("microsoft:entra:audit","microsoft:entra:signin","microsoft:entra:identityprotection") | stats count</query></search><option name="underLabel">Audit, sign-in, risky users</option></single></panel>
+    <panel><title>Azure events</title><single><search base="base_ms_cloud"><query>| search sourcetype IN ("microsoft:azure:resource","microsoft:azure:activity") | stats count</query></search><option name="underLabel">Resource and Activity Log</option></single></panel>
+    <panel><title>Purview events</title><single><search base="base_ms_cloud"><query>| search sourcetype IN ("microsoft:purview:dlp","microsoft:purview:audit") | stats count</query></search><option name="underLabel">DLP and audit/labels</option></single></panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Event volume by Microsoft service family</title>
+      <chart><search base="base_ms_cloud"><query>| timechart span=15m count by ms_family limit=15 useother=f</query></search><option name="charting.chart">area</option><option name="charting.chart.stackMode">stacked</option></chart>
+    </panel>
+    <panel>
+      <title>Family distribution</title>
+      <chart><search base="base_ms_cloud"><query>| stats count by ms_family | sort - count</query></search><option name="charting.chart">pie</option></chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Intake health by index, source, host, and sourcetype</title>
+      <table><search base="base_ms_cloud"><query>| stats count dc(marker_value) as fixture_markers min(_time) as first_seen max(_time) as last_seen values(original_sourcetype) as original_sourcetypes by index source host sourcetype ms_family | convert ctime(first_seen) ctime(last_seen) | sort - count</query></search><option name="count">25</option></table>
+    </panel>
+    <panel>
+      <title>Top operations by service family</title>
+      <table><search base="base_ms_cloud"><query>| stats count dc(actor) as actors values(result_norm) as results by ms_family operation_norm | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top users / actors</title>
+      <table><search base="base_ms_cloud"><query>| where isnotnull(actor) | stats count dc(operation_norm) as distinct_operations values(ms_family) as families values(src_ip_norm) as src_ips by actor | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+    <panel>
+      <title>Source IP activity</title>
+      <table><search base="base_ms_cloud"><query>| where isnotnull(src_ip_norm) | stats count dc(actor) as distinct_users dc(operation_norm) as distinct_operations values(ms_family) as families by src_ip_norm | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Entra sign-in, Conditional Access, and risk</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:entra:signin" | eval ca_status=coalesce(conditionalAccessStatus,"unknown"), signin_result=coalesce(result_norm,"unknown"), signin_risk=coalesce(risk_level, riskLevelAggregated,"unknown") | stats count by ca_status signin_result signin_risk appDisplayName actor src_ip_norm | sort - count</query></search><option name="count">25</option></table>
+    </panel>
+    <panel>
+      <title>Entra audit and risky users</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype IN ("microsoft:entra:audit","microsoft:entra:identityprotection") | eval risk=coalesce(risk_level,riskLevel,riskState,"n/a") | stats count values(result_norm) as results values(risk) as risk values(object_norm) as targets by ms_family operation_norm actor | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Exchange Online audit activity</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:365:exchange:audit" | stats count values(result_norm) as results values(object_norm) as objects by actor operation_norm | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+    <panel>
+      <title>SharePoint / OneDrive-routed file activity</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:365:sharepoint:audit" | eval site=coalesce(SiteUrl, object_norm), file=coalesce(SourceFileName, ObjectId, object_norm) | stats count values(site) as sites values(file) as files by actor operation_norm | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Teams / generic M365 management activity</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:365:management" | stats count by Workload operation_norm actor result_norm | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+    <panel>
+      <title>Azure resource operations</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:azure:resource" | rex field=resourceId "/providers/(?&lt;azure_provider&gt;[^/]+)/(?&lt;azure_resource_type&gt;[^/]+)/(?&lt;azure_resource_name&gt;[^/]+)" | stats count values(result_norm) as results values(src_ip_norm) as src_ips by azure_provider azure_resource_type azure_resource_name operation_norm actor | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Azure Activity administrative changes</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:azure:activity" | rex field=resourceId "/providers/(?&lt;azure_activity_provider&gt;[^/]+)/(?&lt;azure_activity_type&gt;[^/]+)/(?&lt;azure_activity_name&gt;[^/]+)" | stats count values(status_value) as status values(src_ip_norm) as src_ips by operation_norm actor resourceGroupName azure_activity_provider azure_activity_type azure_activity_name correlationId | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+    <panel>
+      <title>Azure Key Vault activity</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:azure:resource" resourceId="*Microsoft.KeyVault*" | rex field=resourceId "/vaults/(?&lt;keyvault_name&gt;[^/]+)" | stats count values(result_norm) as results values(src_ip_norm) as src_ips by keyvault_name operation_norm actor | sort - count</query></search><option name="count">25</option></table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Purview DLP rule matches</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:purview:dlp" | stats count values(result_norm) as results values(SensitiveInfoTypeData{}) as sensitive_info by PolicyName RuleName actor operation_norm | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+    <panel>
+      <title>Purview audit and sensitivity labels</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:purview:audit" | stats count values(ResultStatus) as results values(SensitivityLabelName) as labels values(ObjectId) as objects by Workload operation_norm actor src_ip_norm | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Intune audit / device compliance administration</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:intune:audit" | stats count values(result_norm) as results values(target_display) as targets by operation_norm actor category | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+    <panel>
+      <title>Defender advanced hunting endpoint/security activity</title>
+      <table><search base="base_ms_cloud"><query>| search sourcetype="microsoft:defender:advancedhunting" | stats count values(FileName) as files values(DeviceName) as devices by category operation_norm actor | sort - count | head 25</query></search><option name="count">25</option></table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Fixture smoke markers</title>
+      <table><search base="base_ms_cloud"><query>| search "SC4S_MICROSOFT_CLOUD_TEST_" | stats count values(index) as indexes values(sourcetype) as sourcetypes values(original_sourcetype) as original_sourcetypes by marker_value | sort marker_value</query></search><option name="count">15</option></table>
+    </panel>
+    <panel>
+      <title>Coverage boundaries / known service gaps</title>
+      <html>
+        <p>This dashboard covers current fixture-backed Microsoft Cloud/M365 sourcetypes: M365 management, Exchange, SharePoint/OneDrive-routed audit, Entra audit, Entra sign-in, Entra Identity Protection risky user shape, Azure resource, Azure Activity administrative shape, Purview DLP, Purview audit/sensitivity labels, Defender advanced hunting, and Intune audit/device compliance administration.</p>
+        <p>It still does not prove full Microsoft XDR, Defender for Cloud, Defender for Identity, Defender for Office 365, Defender for Cloud Apps, Sentinel, complete Intune operational inventory, complete Identity Protection detections, or full Conditional Access policy detail coverage. Add explicit sourcetypes, fixtures, extraction/read-back checks, and real Splunk indexed evidence before promoting those from gaps to validated SOC coverage.</p>
+      </html>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Microsoft cloud context</title>
+      <table><search base="base_ms_cloud"><query>| table _time index sourcetype source host ms_family actor src_ip_norm operation_norm result_norm object_norm app_norm marker_value _raw | sort - _time | head 50</query></search><option name="count">20</option><option name="wrap">true</option></table>
+    </panel>
+  </row>
+</form>

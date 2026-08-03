@@ -1,0 +1,1400 @@
+{
+  "schema_version": "0.1",
+  "id": "google_cloud_workspace_audit",
+  "version": "0.1.8",
+  "url": "https://cloud.google.com/logging/docs/audit",
+  "description": "Curated SecHub Resources SC4S pack for Google Cloud Audit LogEntry/AuditLog JSON and Google Workspace Admin Reports Activity JSON relayed as one JSON object per line.",
+  "display_name": "Google Cloud and Workspace Audit",
+  "vendor": "google",
+  "product": "cloud_workspace_audit",
+  "default_index": "main",
+  "default_source": "google_cloud_workspace_audit",
+  "listener": {
+    "source_id": "GOOGLE_CLOUD_WORKSPACE_AUDIT",
+    "transport": "tcp",
+    "port": 20111,
+    "env": {
+      "SC4S_LISTEN_GOOGLE_CLOUD_WORKSPACE_AUDIT_TCP_PORT": "20111",
+      "SOURCE_ALL_SET_APPEND": "GOOGLE_CLOUD_WORKSPACE_AUDIT"
+    }
+  },
+  "sourcetypes": {
+    "gcp_admin_activity": "google:audit:json",
+    "gcp_data_access": "google:audit:json",
+    "gcp_system_event": "google:audit:json",
+    "gcp_policy_denied": "google:audit:json",
+    "workspace_login": "google:audit:json",
+    "workspace_admin": "google:audit:json",
+    "workspace_drive": "google:audit:json",
+    "workspace_token": "google:audit:json",
+    "workspace_groups": "google:audit:json",
+    "workspace_calendar": "google:audit:json",
+    "workspace_saml": "google:audit:json"
+  },
+  "event_families": [
+    {
+      "id": "gcp_admin_activity",
+      "label": "Google Cloud Admin Activity audit logs",
+      "match_engine": "pcre",
+      "match": "\"logName\"\\s*:\\s*\"[^\"]*cloudaudit.googleapis.com%2Factivity\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "protoPayload.methodName",
+      "required_fields": [
+        "timestamp",
+        "logName",
+        "protoPayload.serviceName",
+        "protoPayload.methodName"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "gcp_data_access",
+      "label": "Google Cloud Data Access audit logs",
+      "match_engine": "pcre",
+      "match": "\"logName\"\\s*:\\s*\"[^\"]*cloudaudit.googleapis.com%2Fdata_access\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "protoPayload.resourceName",
+      "required_fields": [
+        "timestamp",
+        "logName",
+        "protoPayload.serviceName",
+        "protoPayload.methodName"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "gcp_system_event",
+      "label": "Google Cloud System Event audit logs",
+      "match_engine": "pcre",
+      "match": "\"logName\"\\s*:\\s*\"[^\"]*cloudaudit.googleapis.com%2Fsystem_event\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "protoPayload.methodName",
+      "required_fields": [
+        "timestamp",
+        "logName",
+        "protoPayload.serviceName",
+        "protoPayload.methodName"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "gcp_policy_denied",
+      "label": "Google Cloud Policy Denied audit logs",
+      "match_engine": "pcre",
+      "match": "\"logName\"\\s*:\\s*\"[^\"]*cloudaudit.googleapis.com%2Fpolicy\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "protoPayload.methodName",
+      "required_fields": [
+        "timestamp",
+        "logName",
+        "protoPayload.serviceName",
+        "protoPayload.methodName",
+        "protoPayload.status.code"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "workspace_login",
+      "label": "Google Workspace login audit activities",
+      "match_engine": "pcre",
+      "match": "\"kind\"\\s*:\\s*\"admin#reports#activity\".*\"applicationName\"\\s*:\\s*\"login\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "id.uniqueQualifier",
+      "required_fields": [
+        "id.time",
+        "id.applicationName",
+        "actor.email",
+        "events.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "workspace_admin",
+      "label": "Google Workspace admin audit activities",
+      "match_engine": "pcre",
+      "match": "\"kind\"\\s*:\\s*\"admin#reports#activity\".*\"applicationName\"\\s*:\\s*\"admin\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "id.uniqueQualifier",
+      "required_fields": [
+        "id.time",
+        "id.applicationName",
+        "actor.email",
+        "events.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "workspace_drive",
+      "label": "Google Workspace Drive audit activities",
+      "match_engine": "pcre",
+      "match": "\"kind\"\\s*:\\s*\"admin#reports#activity\".*\"applicationName\"\\s*:\\s*\"drive\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "id.uniqueQualifier",
+      "required_fields": [
+        "id.time",
+        "id.applicationName",
+        "actor.email",
+        "events.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "workspace_token",
+      "label": "Google Workspace OAuth token activities",
+      "match_engine": "pcre",
+      "match": "\"kind\"\\s*:\\s*\"admin#reports#activity\".*\"applicationName\"\\s*:\\s*\"token\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "id.uniqueQualifier",
+      "required_fields": [
+        "id.time",
+        "id.applicationName",
+        "actor.email",
+        "events.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "workspace_groups",
+      "label": "Google Workspace Groups membership activities",
+      "match_engine": "pcre",
+      "match": "\"kind\"\\s*:\\s*\"admin#reports#activity\".*\"applicationName\"\\s*:\\s*\"groups\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "id.uniqueQualifier",
+      "required_fields": [
+        "id.time",
+        "id.applicationName",
+        "actor.email",
+        "events.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "workspace_calendar",
+      "label": "Google Workspace Calendar access-control activities",
+      "match_engine": "pcre",
+      "match": "\\\"kind\\\"\\s*:\\s*\\\"admin#reports#activity\\\".*\\\"applicationName\\\"\\s*:\\s*\\\"calendar\\\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "id.uniqueQualifier",
+      "required_fields": [
+        "id.time",
+        "id.applicationName",
+        "actor.email",
+        "events.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    },
+    {
+      "id": "workspace_saml",
+      "label": "Google Workspace SAML login activities",
+      "match_engine": "pcre",
+      "match": "\\\"kind\\\"\\s*:\\s*\\\"admin#reports#activity\\\".*\\\"applicationName\\\"\\s*:\\s*\\\"saml\\\"",
+      "expected_sourcetype": "google:audit:json",
+      "primary_id_field": "id.uniqueQualifier",
+      "required_fields": [
+        "id.time",
+        "id.applicationName",
+        "actor.email",
+        "events.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "id.time"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "google",
+    "product": "cloud_workspace_audit",
+    "vendor_product": "google:cloud_workspace_audit",
+    "google_audit_family": "Derived family from GCP logName or Workspace applicationName",
+    "cloud_project": "Google Cloud project id where present",
+    "gcp_service": "Google Cloud audit serviceName",
+    "method": "Google Cloud audit methodName",
+    "app": "Workspace applicationName or GCP service",
+    "user": "GCP principalEmail or Workspace actor email",
+    "src_user": "User alias",
+    "src_ip": "GCP callerIp or Workspace ipAddress",
+    "src": "Source IP alias",
+    "action": "GCP method or Workspace event name",
+    "signature": "Action alias",
+    "signature_id": "Resource name, Workspace unique qualifier, or action",
+    "resource_name": "Google Cloud audit resourceName",
+    "status": "GCP status code/severity or Workspace severity; policy-denied fixtures preserve permission-denied code/message",
+    "marker": "Synthetic fixture marker only",
+    "workspace_oauth_app": "Workspace OAuth application name from token activity parameters where present",
+    "workspace_oauth_client_id": "Workspace OAuth client id from token activity parameters where present",
+    "workspace_oauth_client_type": "Workspace OAuth client type from token activity parameters where present",
+    "workspace_group_email": "Workspace Groups target group email from activity parameters where present",
+    "workspace_member_email": "Workspace Groups member/user email from activity parameters where present",
+    "workspace_member_role": "Workspace Groups member role from activity parameters where present",
+    "gcp_permission": "Google Cloud AuditLog authorizationInfo permission from fixture-backed authorization decisions where present",
+    "gcp_permission_granted": "Google Cloud AuditLog authorizationInfo granted boolean from fixture-backed allow/deny decisions where present",
+    "workspace_calendar_id": "Workspace Calendar calendar_id parameter from fixture-backed Calendar audit activity where present",
+    "workspace_calendar_access_level": "Workspace Calendar access_level parameter from fixture-backed Calendar ACL activity where present",
+    "workspace_calendar_grantee_email": "Workspace Calendar grantee_email parameter from fixture-backed Calendar ACL activity where present",
+    "workspace_saml_application": "Workspace SAML application_name parameter from fixture-backed SAML login activity where present",
+    "workspace_saml_failure_type": "Workspace SAML failure_type parameter from fixture-backed SAML failed-login activity where present"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-google_cloud_workspace_audit.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/google_cloud_workspace_audit_overview.xml"
+    ],
+    "test_events": [
+      "test-events/google_cloud_workspace_audit_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20111.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/google_cloud_workspace_audit_reduction_candidates.csv",
+      "validation/preflight-2026-06-22.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Google audit JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20111,
+      "notes": "Dedicated TCP listener for one Google Cloud LogEntry or Workspace Activity JSON record per line from Pub/Sub/API/collector relays.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog / Google audit JSON relay",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20111,
+      "notes": "TLS/RFC5425 relay can be used if the collector wraps each JSON record in a syslog envelope.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Google Cloud Logging LogEntry/AuditLog and Google Workspace Reports API Activity JSON",
+    "min": "public Google Cloud/Workspace REST documentation current as of 2026-06-13",
+    "max": null,
+    "notes": "Grounded in public Google schemas and synthetic-equivalent fixtures; API/Pub/Sub/collector envelopes and service/app-specific extensions, including Workspace Calendar optional branches beyond ACL activity and SAML optional branches beyond login failure context, must be validated locally."
+  },
+  "validation": {
+    "date_validated": null,
+    "validated_by": null,
+    "source_log_version": {
+      "name": "Google Cloud Logging LogEntry/AuditLog and Google Workspace Reports API Activity JSON",
+      "min": "public Google Cloud/Workspace REST documentation current as of 2026-06-13",
+      "max": null,
+      "notes": "Grounded in public Google schemas and synthetic-equivalent fixtures; API/Pub/Sub/collector envelopes and service/app-specific extensions, including Workspace Calendar optional branches beyond ACL activity and SAML optional branches beyond login failure context, must be validated locally."
+    },
+    "sc4s_version": null,
+    "splunk_version": null,
+    "evidence": "Schema/fixture/export checks only. Local replay/read-back is blocked; see validation/preflight-2026-06-22.md."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Google Cloud / Workspace audit relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "google_cloud_workspace_audit_mixed"
+      ],
+      "event_count": 12,
+      "marker_prefix": "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20111.sh"
+    },
+    "readback": {
+      "spl": "index=main sechub_fixture_marker=\"SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product google_audit_family cloud_project gcp_service method app user src_user src_ip action signature signature_id resource_name status gcp_permission gcp_permission_granted workspace_oauth_app workspace_oauth_client_id workspace_oauth_client_type workspace_group_email workspace_member_email workspace_member_role workspace_calendar_id workspace_calendar_access_level workspace_calendar_grantee_email workspace_saml_application workspace_saml_failure_type marker _raw",
+      "expected_index": "main",
+      "expected_sourcetypes": [
+        "google:audit:json"
+      ],
+      "must_verify": [
+        "event_count",
+        "index",
+        "sourcetype",
+        "source",
+        "host",
+        "vendor",
+        "product",
+        "google_audit_family",
+        "user",
+        "src_ip",
+        "action",
+        "signature",
+        "signature_id",
+        "workspace_oauth_app",
+        "workspace_oauth_client_id",
+        "workspace_oauth_client_type",
+        "workspace_group_email",
+        "workspace_member_email",
+        "workspace_member_role",
+        "gcp_permission",
+        "gcp_permission_granted",
+        "workspace_calendar_id",
+        "workspace_calendar_access_level",
+        "workspace_calendar_grantee_email",
+        "workspace_saml_application",
+        "workspace_saml_failure_type",
+        "marker",
+        "_raw"
+      ],
+      "expected_count": 12
+    },
+    "last_attempt": {
+      "date": "2026-06-22",
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "summary": "Local preflight found no Google Cloud / Workspace SC4S TEST listener on TCP 20111 after listener-port deconfliction; Splunk TEST management/web ports 8089/8000 were also unreachable, so replay/read-back was not attempted.",
+      "evidence_path": "validation/preflight-2026-06-22.md"
+    },
+    "evidence": [
+      "validation/preflight-2026-06-22.md"
+    ],
+    "preflight": {
+      "required_listeners": [
+        "tcp/20111"
+      ],
+      "required_indexes": [
+        "main"
+      ],
+      "required_splunk_capabilities": [
+        "search over index=main",
+        "JSON field extraction",
+        "eventtype/tag knowledge import"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "google_cloud_workspace_audit_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/google_cloud_workspace_audit/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/google_cloud_workspace_audit/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/google_cloud_workspace_audit/compose.yaml",
+      "compose_project": "sechub-google-cloud-workspace-audit-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "main index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/google_cloud_workspace_audit/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/google_cloud_workspace_audit/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/google_cloud_workspace_audit/scripts/send_tcp_20111.sh 127.0.0.1 20111",
+        "splunk_summary_readback": "index=main sechub_fixture_marker=\"SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=main sechub_fixture_marker=\"SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product google_audit_family cloud_project gcp_service method app user src_user src_ip action signature signature_id resource_name status gcp_permission gcp_permission_granted workspace_oauth_app workspace_oauth_client_id workspace_oauth_client_type workspace_group_email workspace_member_email workspace_member_role workspace_calendar_id workspace_calendar_access_level workspace_calendar_grantee_email workspace_saml_application workspace_saml_failure_type marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "main",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/google_cloud_workspace_audit/splunk -> /opt/splunk/etc/apps/sechub_google_cloud_workspace_audit:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20111,
+          "host_port_env": "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_PORT",
+          "source_id": "GOOGLE_CLOUD_WORKSPACE_AUDIT"
+        },
+        "parser_mount": "packs/google_cloud_workspace_audit/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "google_cloud_workspace_audit",
+          "source_shape": "google_audit_json_lines_relay_over_tcp_syslog",
+          "event_families": [
+            "gcp_admin_activity",
+            "gcp_data_access",
+            "gcp_system_event",
+            "gcp_policy_denied",
+            "workspace_login",
+            "workspace_admin",
+            "workspace_drive",
+            "workspace_token",
+            "workspace_groups",
+            "workspace_calendar",
+            "workspace_saml"
+          ],
+          "expected_sourcetypes": [
+            "google:audit:json"
+          ],
+          "data_structures": [
+            "Google Cloud LogEntry/AuditLog JSON",
+            "Workspace Reports Activity JSON"
+          ],
+          "markers": [
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_ADMIN_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_DATA_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_DATA_DENIED_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_SYSTEM_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_POLICY_DENIED_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_LOGIN_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_ADMIN_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_DRIVE_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_TOKEN_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_GROUPS_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_CALENDAR_001",
+            "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_SAML_001"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Live Google Cloud project and Workspace tenant emission are not proven by this harness",
+        "Pub/Sub/API/export collector behavior, credential custody, pagination/checkpoints, destination envelope metadata, and export completeness remain unproven",
+        "Field validation with retained real source-version telemetry requires sanctioned Google samples or a non-production Google relay"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "google_cloud_workspace_audit_mixed",
+      "path": "test-events/google_cloud_workspace_audit_test_events.txt",
+      "description": "Synthetic-equivalent one-line Google Cloud AuditLog LogEntry (including Admin Activity, Data Access allow/deny authorization decisions, System Event, and Policy Denied) and Workspace Reports Activity JSON records (login, admin, Drive, OAuth token, Groups, Calendar access-control activity, and SAML login activity).",
+      "format": "custom_application",
+      "serialization": "json",
+      "wire_format": "json_lines",
+      "envelope": "none",
+      "event_count": 12,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_ADMIN_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_DATA_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_DATA_DENIED_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_SYSTEM_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_GCP_POLICY_DENIED_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_LOGIN_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_ADMIN_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_DRIVE_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_TOKEN_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_GROUPS_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_CALENDAR_001",
+        "SC4S_GOOGLE_CLOUD_WORKSPACE_AUDIT_TEST_WORKSPACE_SAML_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "timestamp for GCP records; id.time for Workspace records",
+        "primary_timezone": "UTC for ISO-8601 Z timestamps",
+        "fallback_fields": [
+          "id.time",
+          "timestamp"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Google collector timestamp normalization policy"
+        ],
+        "notes": "Fixtures use UTC ISO-8601 timestamps from Google Cloud LogEntry timestamp or Workspace Reports Activity id.time."
+      },
+      "field_delimiting": "json",
+      "expected_families": [
+        "gcp_admin_activity",
+        "gcp_data_access",
+        "gcp_system_event",
+        "gcp_policy_denied",
+        "workspace_login",
+        "workspace_admin",
+        "workspace_drive",
+        "workspace_token",
+        "workspace_groups",
+        "workspace_calendar",
+        "workspace_saml"
+      ],
+      "label": "Google Cloud / Workspace audit mixed JSON fixtures"
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-google_cloud_workspace_audit.conf",
+      "target_path": "local/config/app_parsers/syslog/app-google_cloud_workspace_audit.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/google_cloud_workspace_audit.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/google_cloud_workspace_audit_overview.xml",
+      "target_path": "splunk/default/data/ui/views/google_cloud_workspace_audit_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/google_cloud_workspace_audit_test_events.txt",
+      "target_path": "test-events/google_cloud_workspace_audit_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20111.sh",
+      "target_path": "scripts/send_tcp_20111.sh",
+      "kind": "script",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "documentation",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/google_cloud_workspace_audit_reduction_candidates.csv",
+      "target_path": "docs/google_cloud_workspace_audit_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "blocked_preflight",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-22.md",
+      "target_path": "validation/preflight-2026-06-22.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Official Google Cloud Logging LogEntry/AuditLog docs, Cloud Logging export docs, Google Workspace Reports API Activity docs, and public ecosystem integration docs.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use documentation IP ranges, example project/customer/user values, synthetic object names, and synthetic markers; no tenant/project secrets, tokens, or production audit records."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-13",
+      "notes": "Selected from the 2026-06-13 hourly source-gap queue after GitHub audit/security; public Google schemas were sufficient for conservative fixture authoring."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "fields": {
+        "user": {
+          "source_fields": [
+            "protoPayload.authenticationInfo.principalEmail",
+            "actor.email",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Cloud/Workspace principal identity; not full authentication CIM compliance."
+        },
+        "src_user": {
+          "source_fields": [
+            "user",
+            "actor.email"
+          ],
+          "status": "partial",
+          "notes": "Principal/actor alias."
+        },
+        "src_ip": {
+          "source_fields": [
+            "protoPayload.requestMetadata.callerIp",
+            "ipAddress",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Caller/client IP where present."
+        },
+        "action": {
+          "source_fields": [
+            "protoPayload.methodName",
+            "events{}.name",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "API method or Workspace event action."
+        },
+        "signature": {
+          "source_fields": [
+            "action",
+            "method"
+          ],
+          "status": "partial",
+          "notes": "Analyst grouping value."
+        },
+        "signature_id": {
+          "source_fields": [
+            "protoPayload.resourceName",
+            "id.uniqueQualifier",
+            "signature_id"
+          ],
+          "status": "partial",
+          "notes": "Resource name or Workspace unique qualifier; not a global event ID."
+        },
+        "status": {
+          "source_fields": [
+            "protoPayload.status.code",
+            "severity",
+            "status"
+          ],
+          "status": "partial",
+          "notes": "GCP status code/severity only; not a complete status taxonomy."
+        },
+        "app": {
+          "source_fields": [
+            "id.applicationName",
+            "workspace_oauth_app",
+            "app"
+          ],
+          "status": "partial",
+          "notes": "Workspace/GCP application or OAuth app helper context where present."
+        },
+        "workspace_group_email": {
+          "source_fields": [
+            "group_email",
+            "workspace_group_email"
+          ],
+          "status": "partial",
+          "notes": "Groups activity target group context; not complete identity-group CIM compliance."
+        },
+        "gcp_permission": {
+          "source_fields": [
+            "protoPayload.authorizationInfo.permission",
+            "gcp_permission"
+          ],
+          "status": "partial",
+          "notes": "GCP authorization permission helper for AuditLog access reviews; not full authorization CIM compliance."
+        },
+        "gcp_permission_granted": {
+          "source_fields": [
+            "protoPayload.authorizationInfo.granted",
+            "gcp_permission_granted"
+          ],
+          "status": "partial",
+          "notes": "Boolean authorization decision helper for fixture-backed GCP access allow/deny rows."
+        },
+        "workspace_calendar_id": {
+          "source_fields": [
+            "calendar_id",
+            "workspace_calendar_id"
+          ],
+          "status": "partial",
+          "notes": "Workspace Calendar identifier from Calendar audit activity parameters."
+        },
+        "workspace_calendar_access_level": {
+          "source_fields": [
+            "access_level",
+            "workspace_calendar_access_level"
+          ],
+          "status": "partial",
+          "notes": "Workspace Calendar ACL level helper for access-review triage."
+        },
+        "workspace_calendar_grantee_email": {
+          "source_fields": [
+            "grantee_email",
+            "workspace_calendar_grantee_email"
+          ],
+          "status": "partial",
+          "notes": "Workspace Calendar ACL grantee email helper; not complete identity/access CIM compliance."
+        },
+        "workspace_saml_application": {
+          "source_fields": [
+            "application_name",
+            "workspace_saml_application"
+          ],
+          "status": "partial",
+          "notes": "SAML application helper from Workspace SAML login activity parameters."
+        },
+        "workspace_saml_failure_type": {
+          "source_fields": [
+            "failure_type",
+            "workspace_saml_failure_type"
+          ],
+          "status": "partial",
+          "notes": "SAML failure reason helper for failed-login triage; not complete authentication failure taxonomy."
+        }
+      },
+      "notes": "Partial cloud/SaaS audit guidance only; not full CIM certification.",
+      "primary": true
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "fields": {
+        "actor.user.email_addr": {
+          "source_fields": [
+            "protoPayload.authenticationInfo.principalEmail",
+            "actor.email",
+            "user",
+            "workspace_calendar_grantee_email"
+          ],
+          "status": "partial",
+          "notes": "Principal/actor email where present."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "protoPayload.requestMetadata.callerIp",
+            "ipAddress",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Caller/client IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "protoPayload.methodName",
+            "events{}.name",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Cloud method or Workspace event action."
+        },
+        "cloud.project_uid": {
+          "source_fields": [
+            "resource.labels.project_id",
+            "cloud_project"
+          ],
+          "status": "partial",
+          "notes": "Google Cloud project id where present."
+        },
+        "resource.name": {
+          "source_fields": [
+            "protoPayload.resourceName",
+            "resource_name"
+          ],
+          "status": "partial",
+          "notes": "Cloud resource name where present."
+        },
+        "status_code": {
+          "source_fields": [
+            "protoPayload.status.code",
+            "status"
+          ],
+          "status": "partial",
+          "notes": "GCP status code where present; policy-denied fixtures use permission-denied code semantics."
+        },
+        "app_name": {
+          "source_fields": [
+            "workspace_oauth_app",
+            "app",
+            "workspace_saml_application"
+          ],
+          "status": "partial",
+          "notes": "OAuth/application context where present."
+        },
+        "group.name": {
+          "source_fields": [
+            "workspace_group_email"
+          ],
+          "status": "partial",
+          "notes": "Workspace group email helper mapping for membership activity."
+        },
+        "authorization.privilege": {
+          "source_fields": [
+            "protoPayload.authorizationInfo.permission",
+            "gcp_permission",
+            "workspace_calendar_access_level"
+          ],
+          "status": "partial",
+          "notes": "GCP permission string or Workspace Calendar access level mapped as authorization privilege context for access-review triage."
+        },
+        "authorization.decision": {
+          "source_fields": [
+            "protoPayload.authorizationInfo.granted",
+            "gcp_permission_granted"
+          ],
+          "status": "partial",
+          "notes": "GCP granted boolean helper; false indicates denied authorization in the fixture-backed data-access branch."
+        },
+        "resource.uid": {
+          "source_fields": [
+            "calendar_id",
+            "workspace_calendar_id",
+            "resource_name"
+          ],
+          "status": "partial",
+          "notes": "Resource identifier helper including Workspace Calendar IDs where present."
+        },
+        "status_detail": {
+          "source_fields": [
+            "failure_type",
+            "workspace_saml_failure_type"
+          ],
+          "status": "partial",
+          "notes": "SAML failure detail helper where present."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only.",
+      "secondary": true
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "fields": {
+        "user.email": {
+          "source_fields": [
+            "protoPayload.authenticationInfo.principalEmail",
+            "actor.email",
+            "user",
+            "workspace_calendar_grantee_email"
+          ],
+          "status": "partial",
+          "notes": "Principal or actor email."
+        },
+        "source.ip": {
+          "source_fields": [
+            "protoPayload.requestMetadata.callerIp",
+            "ipAddress",
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Caller/client IP."
+        },
+        "event.action": {
+          "source_fields": [
+            "protoPayload.methodName",
+            "events{}.name",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Cloud method or Workspace event action."
+        },
+        "cloud.project.id": {
+          "source_fields": [
+            "resource.labels.project_id",
+            "cloud_project"
+          ],
+          "status": "partial",
+          "notes": "GCP project label where present."
+        },
+        "event.dataset": {
+          "source_fields": [
+            "google_audit_family"
+          ],
+          "status": "partial",
+          "notes": "Derived family, not a native Google field."
+        },
+        "event.outcome": {
+          "source_fields": [
+            "protoPayload.status.code",
+            "protoPayload.status.message",
+            "status",
+            "gcp_permission_granted",
+            "workspace_saml_failure_type"
+          ],
+          "status": "partial",
+          "notes": "Derived helper mapping for GCP status/severity and authorization grant state; false grant or non-zero status indicates failure/denial context."
+        },
+        "oauth2.client.id": {
+          "source_fields": [
+            "workspace_oauth_client_id",
+            "client_id"
+          ],
+          "status": "partial",
+          "notes": "Workspace OAuth client identifier from token activity parameters where present."
+        },
+        "group.email": {
+          "source_fields": [
+            "workspace_group_email"
+          ],
+          "status": "partial",
+          "notes": "Workspace group email helper mapping for membership activity."
+        },
+        "google.audit.permission": {
+          "source_fields": [
+            "protoPayload.authorizationInfo.permission",
+            "gcp_permission"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped ECS helper for GCP AuditLog authorization permission context."
+        },
+        "google.audit.permission_granted": {
+          "source_fields": [
+            "protoPayload.authorizationInfo.granted",
+            "gcp_permission_granted"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped ECS helper for GCP AuditLog authorization grant decisions."
+        },
+        "google.workspace.calendar.id": {
+          "source_fields": [
+            "calendar_id",
+            "workspace_calendar_id"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped ECS helper for Workspace Calendar IDs."
+        },
+        "google.workspace.calendar.access_level": {
+          "source_fields": [
+            "access_level",
+            "workspace_calendar_access_level"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped ECS helper for Calendar ACL access level."
+        },
+        "google.workspace.saml.application": {
+          "source_fields": [
+            "application_name",
+            "workspace_saml_application"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped ECS helper for Workspace SAML application names."
+        },
+        "google.workspace.saml.failure_type": {
+          "source_fields": [
+            "failure_type",
+            "workspace_saml_failure_type"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped ECS helper for Workspace SAML failure context."
+        }
+      },
+      "notes": "ECS mapping is partial helper guidance for search-time normalization.",
+      "optional": true
+    }
+  },
+  "ci": {
+    "pack_validation": "passed",
+    "fixture_validation": "passed",
+    "tested_artifact_hashes": {
+      "sc4s/app_parsers/syslog/app-google_cloud_workspace_audit.conf": "sha256:e209e709f987cb05aa414bba39ecc049f02efb6758bb2fe5d940d77e4a6e0852",
+      "sc4s/env.example": "sha256:05ac79df975d467e1721c5998915688a0e62b5eb629065fc9c853f9802dbb329",
+      "splunk/default/props.conf": "sha256:6f593670e2a8855e6fd177201bda24c5cf97607c354bb0c644f41fe7ffdcad44",
+      "splunk/default/transforms.conf": "sha256:b888b85448879eee69253d12799465592adc38e0a3852e8ec71110247bc7438f",
+      "splunk/default/eventtypes.conf": "sha256:7bfcda213ed930464d8b28a320ead61619e8d911792804faaf725cc8e12025b9",
+      "splunk/default/tags.conf": "sha256:5e301ba19aecfb74cc2d10806df57dd6d72fefde28acf4a99237b154812e67fa",
+      "test-events/google_cloud_workspace_audit_test_events.txt": "sha256:bb45d96e2d77ace3a9f3f591b667147567672337185cb1b154ff5648fd6d682d",
+      "README.md": "sha256:519aee54286d3bde5e31a2d5143900078c0000c40868a617dbe7b6f010df76ab",
+      "docs/google_cloud_workspace_audit_reduction_candidates.csv": "sha256:8d87aecffeb577658ff1cff9980dc7eb31795f03b245501c0f6e303b92ad2464",
+      "validation/preflight-2026-06-22.md": "sha256:1b0d517faf9fad3b6c2a25a5e6c5c2e33dd21b2cab7c8763ab055b83e550d805",
+      "splunk/default/data/ui/views/google_cloud_workspace_audit_overview.xml": "sha256:600d6f3cccd5a7828612ee5370d49df222882e982d738680b0a7d019d1631914",
+      "scripts/send_tcp_20111.sh": "sha256:ea43408ff936d19d63cb6d5e731d5192739d282f3888be5c00470e8c5a6b96cd",
+      "scripts/e2e_docker_compose.sh": "sha256:f08c8168eff29bd9d7c2d695f2451565caefe63f850af944219e976c7bf048be"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "cloud",
+    "saas",
+    "audit",
+    "identity",
+    "data_access",
+    "security_operations",
+    "json"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "google_audit_json_relay",
+      "label": "Google Cloud / Workspace audit JSON relay",
+      "description": "One-line JSON records preserving Google Cloud LogEntry/AuditLog or Workspace Reports Activity structures.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "gcp_cloud_logging_export",
+        "gcp_pubsub_or_storage_relay",
+        "workspace_reports_api_relay",
+        "cribl_or_collector_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "gcp_admin_activity",
+        "gcp_data_access",
+        "gcp_system_event",
+        "gcp_policy_denied",
+        "workspace_login",
+        "workspace_admin",
+        "workspace_drive",
+        "workspace_token",
+        "workspace_groups",
+        "workspace_calendar",
+        "workspace_saml"
+      ],
+      "test_event_sets": [
+        "google_cloud_workspace_audit_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Google relay replay/read-back captured.",
+        "Selected GCP audit log and Workspace Activity families are fixture-backed; GCP authorizationInfo allow/deny coverage is narrow; Workspace Calendar coverage is limited to ACL activity; Workspace SAML coverage is limited to login success/failure activity with narrow failed-login context; service-specific payload extensions remain partial.",
+        "Pub/Sub/API/collector envelope metadata and service-specific payload extensions need local capture before SecHub can state broader coverage safely."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/google_cloud_workspace_audit_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "logName",
+        "protoPayload.serviceName",
+        "protoPayload.methodName",
+        "resource.type",
+        "kind",
+        "id.applicationName",
+        "events{}.name",
+        "actor.email",
+        "timestamp",
+        "id.time",
+        "calendar_id",
+        "access_level",
+        "grantee_email",
+        "application_name",
+        "failure_type"
+      ],
+      "notes": "Use only after sampling local Google exports. Do not drop authentication, caller IP, resource, service/method/action, Workspace events parameters, timestamps, or raw JSON by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Google Cloud/Workspace relay replay/read-back captured.",
+    "This pack does not implement API polling, Pub/Sub subscription, Storage export reading, or credential custody.",
+    "Selected GCP audit categories (Admin Activity, Data Access with narrow authorizationInfo allow/deny examples, System Event, Policy Denied) and Workspace login/admin/Drive/token/Groups/Calendar ACL/SAML login families are synthetic-fixture-backed; service-specific extensions remain partial.",
+    "Service-specific protoPayload extensions and Workspace application parameters vary and are not exhaustively normalized.",
+    "Data Access and Drive activity logs can be high-volume and sensitive; no reduction is enabled by default."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Google audit JSON intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-google_cloud_workspace_audit.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Google audit analyst knowledge",
+      "description": "Adds eventtypes/tags for GCP audit and Workspace login/admin/Drive/token/Groups/Calendar ACL events. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Google audit reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/google_cloud_workspace_audit_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "api_pubsub_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Google Cloud LogEntry and Workspace Activity JSON need Pub/Sub/API collection and relay.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "google_cloud_workspace_audit_overview_splunk_test",
+      "title": "Google Cloud and Workspace Audit — dashboard example",
+      "source_path": "dashboards/screenshots/google-cloud-workspace-audit-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Google Cloud and Workspace Audit dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

@@ -1,0 +1,1651 @@
+{
+  "artifacts": [
+    {
+      "artifact_path": "docs/sources/base/cef.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "bbc856d15be3ea70604c3e632257db2baf8b59d2d48df718dea54adeb958469c",
+      "source_id": "cef",
+      "vendor": "cef"
+    },
+    {
+      "artifact_path": "docs/sources/base/leef.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "f20ab82fc9e16629018cd5aa596038c26efeac80c6a6450bfb1844dcbcfd8b3c",
+      "source_id": "leef",
+      "vendor": "leef"
+    },
+    {
+      "artifact_path": "docs/sources/base/nix.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "bd3708b1632c273c3cce2bb691ecc7ea69585380c2888e5ca0829d7aa1ece292",
+      "source_id": "nix",
+      "vendor": "nix"
+    },
+    {
+      "artifact_path": "docs/sources/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "605f3173a2964ad4e3153e38571aa086839d042c659d279fc2bfdcbd350c6d6d",
+      "source_id": "index",
+      "vendor": "index"
+    },
+    {
+      "artifact_path": "docs/sources/simple.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "59c4fd10e16927379f326bbf25821bdb474f304b30239b7c5bd5417b44378595",
+      "source_id": "simple",
+      "vendor": "simple"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/AVI/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "b38c6606925a11c1c66f715773de1edcc34f733ee6035d56f1a18094137e8fd8",
+      "source_id": "avi_index_md",
+      "vendor": "avi"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Akamai/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "6877447f224c21829852c67e0ce034e750cf146065aa4000b87f147f53a63dac",
+      "source_id": "akamai_index_md",
+      "vendor": "akamai"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Alcatel/Switch.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "switch_md",
+      "sha256": "412f5f004a311aa581c6daaa80ded90ef4ab6ea6dd725d8178ba37e40c087808",
+      "source_id": "alcatel_switch_md",
+      "vendor": "alcatel"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Alsid/Alsid.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "alsid_md",
+      "sha256": "c6a633c2a512cf0ca23a8011516414608211f82e068110128b75606b01fed217",
+      "source_id": "alsid_alsid_md",
+      "vendor": "alsid"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Arista/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "2ca4893a25a38ba35938bd991f5c015276a7c09b7c0c00a103e6dee653cb8527",
+      "source_id": "arista_index_md",
+      "vendor": "arista"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Aruba/ap.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "ap_md",
+      "sha256": "7a8b1d33c075ed6d938ddc531e5049f9fc0176bb692c27027363f73c95492848",
+      "source_id": "aruba_ap_md",
+      "vendor": "aruba"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Aruba/clearpass.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "clearpass_md",
+      "sha256": "f93fa06e8ec1f24fea33818646f5af3ee96f9d462407b26b5c7901a18bcf3ac4",
+      "source_id": "aruba_clearpass_md",
+      "vendor": "aruba"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Aruba/silverpeak.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "silverpeak_md",
+      "sha256": "238ebedac60a6f207e2d6c7d0eb6f769bdbfd648b22fc4eabc6a9ef9f5855f8d",
+      "source_id": "aruba_silverpeak_md",
+      "vendor": "aruba"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Avaya/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "ac08639fdad14e9b3053b82804397b61bb9039cc4b3708955dfcdc5a1d71f0a5",
+      "source_id": "avaya_index_md",
+      "vendor": "avaya"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Aviatrix/aviatrix.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "aviatrix_md",
+      "sha256": "cda340ad99ea70c69ea9344ae8977bcdd6f4752bf101a0ae9fa788fe7065d432",
+      "source_id": "aviatrix_aviatrix_md",
+      "vendor": "aviatrix"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Barracuda/waf.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "waf_md",
+      "sha256": "63c28342a33d78b91b2e7ab077f7ef7456ab65844f6390b8d137b40baebe9217",
+      "source_id": "barracuda_waf_md",
+      "vendor": "barracuda"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Barracuda/waf_on_prem.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "waf_on_prem_md",
+      "sha256": "e629bbf6b6410329206540ab1546998566a89f4b4e9d926b31dbc85453593c38",
+      "source_id": "barracuda_waf_on_prem_md",
+      "vendor": "barracuda"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/BeyondTrust/sra.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "sra_md",
+      "sha256": "e1310657260822b24e2a18d943314dd1629ff7f85b614bcde0dcdf50a73eee1c",
+      "source_id": "beyondtrust_sra_md",
+      "vendor": "beyondtrust"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Broadcom/brightmail.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "brightmail_md",
+      "sha256": "98dd0fb218f8d1c4bbe1f35b3193c69b310bf226bf7f8621bb54a53592e6a29b",
+      "source_id": "broadcom_brightmail_md",
+      "vendor": "broadcom"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Broadcom/dlp.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "dlp_md",
+      "sha256": "01c3216b8dd93a37f1acca4b7ebb8e2dff24a4800b337ae15095b31e680225bf",
+      "source_id": "broadcom_dlp_md",
+      "vendor": "broadcom"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Broadcom/ep.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "ep_md",
+      "sha256": "ac2d82894f70c2ae3577442e8a52c49a525f1fe21076a1c12cc542f8f2935583",
+      "source_id": "broadcom_ep_md",
+      "vendor": "broadcom"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Broadcom/layer7_api_gateway.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "layer7_api_gateway_md",
+      "sha256": "60f9e80925904c8fe1be57ecb73ab33afa245c5324529c033f5e7762f3bc06d0",
+      "source_id": "broadcom_layer7_api_gateway_md",
+      "vendor": "broadcom"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Broadcom/proxy.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "proxy_md",
+      "sha256": "3298818602fa520c0cec82eee44bf87a31dda60a7c8cd4c3b3fdfd36ba4693a9",
+      "source_id": "broadcom_proxy_md",
+      "vendor": "broadcom"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Broadcom/sslva.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "sslva_md",
+      "sha256": "c66824fe52dd0351b4a6f8a1fb6dce990e401e80daa56ebce0f90ccf6d050290",
+      "source_id": "broadcom_sslva_md",
+      "vendor": "broadcom"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Brocade/switch.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "switch_md",
+      "sha256": "7d5fbe6b4e72f3c37576a4d3368cf519404b12cbece168d78171014e44e2fcd7",
+      "source_id": "brocade_switch_md",
+      "vendor": "brocade"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Buffalo/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "6c793bc995687ca73a2b5a89a09c9009cb271612491f275a34a3ea46727e933e",
+      "source_id": "buffalo_index_md",
+      "vendor": "buffalo"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Checkpoint/firewallos.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "firewallos_md",
+      "sha256": "687cbc19a4fdc2458a394e6493e3eb7e5253d0140e75d8de66ab9b864a4188a5",
+      "source_id": "checkpoint_firewallos_md",
+      "vendor": "checkpoint"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Checkpoint/logexporter_5424.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "logexporter_5424_md",
+      "sha256": "8a3dc1bb747d0ba51c439fa674664c4f8d7a9fbeefa4a75058ba0fbc025618fc",
+      "source_id": "checkpoint_logexporter_5424_md",
+      "vendor": "checkpoint"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Checkpoint/logexporter_legacy.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "logexporter_legacy_md",
+      "sha256": "f3fef5d5046b6ff43fee80392c6d08204ab1bbe52d9a49ad3d4ec7c8c5dbd55f",
+      "source_id": "checkpoint_logexporter_legacy_md",
+      "vendor": "checkpoint"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_ace.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_ace_md",
+      "sha256": "7606fbe43d901b16ef0c418a57352c17104acd1c052a27c16e39905200f699cf",
+      "source_id": "cisco_cisco_ace_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_acs.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_acs_md",
+      "sha256": "9052f21aa012694be25d8139625ef8cf3bb9ef3cf45bfbb6cee346f5b0c3ec55",
+      "source_id": "cisco_cisco_acs_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_asa.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_asa_md",
+      "sha256": "ef9c2de4e2febdab7f22bda51a5d9b8226a12c14b31a7a007a1cab4b022280b0",
+      "source_id": "cisco_cisco_asa_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_dna.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_dna_md",
+      "sha256": "96c1cf21623151aa7a952e8855ae63612f18a9af75728390be0786999c09eb79",
+      "source_id": "cisco_cisco_dna_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_esa.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_esa_md",
+      "sha256": "cae9fbcad5ce7979e5d34fdc94d916254240a8189372d563592fd58432e49ee9",
+      "source_id": "cisco_cisco_esa_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_imc.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_imc_md",
+      "sha256": "894d98c57269185e6dd678b6e013a7a2dd98c9beb78922bb7d4be32fc14b72cf",
+      "source_id": "cisco_cisco_imc_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_ios.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_ios_md",
+      "sha256": "b22ee47a5fde20eede10fcc4628d312c393b12be47c1d4fed1282f52d07d6e14",
+      "source_id": "cisco_cisco_ios_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_ise.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_ise_md",
+      "sha256": "2a81fc464890102953635ae9038c257c1d3b62ac9501a0df2c53ec3f1644dc06",
+      "source_id": "cisco_cisco_ise_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_meraki.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_meraki_md",
+      "sha256": "41a02d0f36ff584ea1087f490524b799289dd184fdc9e4d989e5ebe035d28575",
+      "source_id": "cisco_cisco_meraki_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_mm.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_mm_md",
+      "sha256": "a05cb315a427e1d61e9980d478e99be8d0b2b0986032a3132d20a4792edc4fa5",
+      "source_id": "cisco_cisco_mm_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_ms.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_ms_md",
+      "sha256": "b8c59cccf6be50180c4eb3eb46f9dd6458061416ce6aac27a355dc36906fc51e",
+      "source_id": "cisco_cisco_ms_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_tvcs.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_tvcs_md",
+      "sha256": "4720506397052a6fca5092c02199aea4f54a3637b055818c7b49a2fc6567af7f",
+      "source_id": "cisco_cisco_tvcs_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_ucm.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_ucm_md",
+      "sha256": "4e32cfd6ce35dfb0899ae78908a68b18dc0585b774cd51effcb606d88eeae6aa",
+      "source_id": "cisco_cisco_ucm_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_ucshx.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_ucshx_md",
+      "sha256": "8aae14e7b7b090041fc8a49b4e045d8ef60c6459858b7fe9eab0a3beb8ea0f1b",
+      "source_id": "cisco_cisco_ucshx_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_viptela.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_viptela_md",
+      "sha256": "49f6597ee83f400f65f3dc4f71157ce744beb5df3502ef80936d80a4bd8c3bd1",
+      "source_id": "cisco_cisco_viptela_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cisco/cisco_wsa.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cisco_wsa_md",
+      "sha256": "299157e4a684ab4b6732c80618f32fd2de0ba4846a309efad42a22c0b40b5f59",
+      "source_id": "cisco_cisco_wsa_md",
+      "vendor": "cisco"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Citrix/netscaler.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "netscaler_md",
+      "sha256": "d1eec386cf6db4079ddadbfd074c6c08fc75b9cdc870396392a239949ba216c0",
+      "source_id": "citrix_netscaler_md",
+      "vendor": "citrix"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Clearswift/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "56fff97019bda6cb5e5b77e74660e4e05e92f691d2172217daf6447ee6e724ea",
+      "source_id": "clearswift_index_md",
+      "vendor": "clearswift"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cohesity/cluster.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cluster_md",
+      "sha256": "2b473941db443d833ec77eb86dc248d29beda31ccc7603f176f0471752db8467",
+      "source_id": "cohesity_cluster_md",
+      "vendor": "cohesity"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/CyberArk/epv.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "epv_md",
+      "sha256": "55bc3665f643bb084c0d9783db0d7a192d2bb8e154b204558cd4a7430d14e154",
+      "source_id": "cyberark_epv_md",
+      "vendor": "cyberark"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/CyberArk/pta.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "pta_md",
+      "sha256": "25cae6ac8c4c9610213f1e27a9810e9c941af0919c6916d8b92597966fd26166",
+      "source_id": "cyberark_pta_md",
+      "vendor": "cyberark"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Cylance/protect.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "protect_md",
+      "sha256": "db01635728690cc337675b87a69446ebf65d7e14ed04394ded6da5d533d96849",
+      "source_id": "cylance_protect_md",
+      "vendor": "cylance"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/DARKTRACE/darktrace.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "darktrace_md",
+      "sha256": "56e6e4a014c821f2770940b86001071870eac7c58a40e9ef80aeeca3537b143b",
+      "source_id": "darktrace_darktrace_md",
+      "vendor": "darktrace"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/avamar.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "avamar_md",
+      "sha256": "b8a89e9b7ba76d07bdba74a311ed5376e91765284bc563dbc32a82762e44f102",
+      "source_id": "dell_avamar_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/cmc.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cmc_md",
+      "sha256": "5d31112ce8d4572641e31dee7e39e5fe901790ccfbddcb908dd316192deaf677",
+      "source_id": "dell_cmc_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/emc_powerstore.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "emc_powerstore_md",
+      "sha256": "9301c059836cf45aae4395cddcf8ff3298e97b1434a1cbab25e1ccd78659680b",
+      "source_id": "dell_emc_powerstore_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/emc_powerswitchn.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "emc_powerswitchn_md",
+      "sha256": "c9a1355cd0f45d6f0dc5eb989fb462744593fc0bb1cee3d40b453fb2c0c8dd24",
+      "source_id": "dell_emc_powerswitchn_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/idrac.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "idrac_md",
+      "sha256": "74c194bacca98c3d8feb0f64e2b804583452768990a8d96e4461a876510c7b63",
+      "source_id": "dell_idrac_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/ome.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "ome_md",
+      "sha256": "ca5c79203bad7284de91a1644020f5c7016598d53a4cab1bbcec2622b5b60ca8",
+      "source_id": "dell_ome_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/rsa_secureid.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "rsa_secureid_md",
+      "sha256": "8727ea4f8c4b194c0e58d77ae1124fb642618e532d7badfbda9d91fad3776c7b",
+      "source_id": "dell_rsa_secureid_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/sonic.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "sonic_md",
+      "sha256": "856c6f264dff7e7298c6ebe241820e0968330ebe309929e144cd196321598395",
+      "source_id": "dell_sonic_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Dell/sonicwall.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "sonicwall_md",
+      "sha256": "53f3630233e3b931547a55757c8d5d3a6e7ef6aedab1ade97218d65c7c01b7ac",
+      "source_id": "dell_sonicwall_md",
+      "vendor": "dell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/F5/bigip.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "bigip_md",
+      "sha256": "1442cd8d9157f2b1e44eae7c374a1459b1f62bac8403ad4907c1a1fa82878e65",
+      "source_id": "f5_bigip_md",
+      "vendor": "f5"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/FireEye/cms.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cms_md",
+      "sha256": "652ca32b9bcf87977a5cef401ec53ef6340bb478537969bb9b029bfeac561602",
+      "source_id": "fireeye_cms_md",
+      "vendor": "fireeye"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/FireEye/emps.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "emps_md",
+      "sha256": "d8320a4c492862a59c99837ce41145d179e4479df9d3d3e9be31a3e6c6495749",
+      "source_id": "fireeye_emps_md",
+      "vendor": "fireeye"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/FireEye/etp.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "etp_md",
+      "sha256": "049cbd2f45003798f4af4d7d43b443950473871bf87728e308666d23c5b7875e",
+      "source_id": "fireeye_etp_md",
+      "vendor": "fireeye"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/FireEye/hx.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "hx_md",
+      "sha256": "254736556ff77851dcf3a7f018797303a6c46aea2489e945883f1e03077e6d5c",
+      "source_id": "fireeye_hx_md",
+      "vendor": "fireeye"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Forcepoint/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "b200b8beb4a0eec87d2158d07a1215cbae1e1b88db2a16510ff674c41c9daa0e",
+      "source_id": "forcepoint_index_md",
+      "vendor": "forcepoint"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Forcepoint/webprotect.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "webprotect_md",
+      "sha256": "f3630acb97940186b2ba0cd215d48ff3940fbb17d78bac859500f0cc0bbe3d3b",
+      "source_id": "forcepoint_webprotect_md",
+      "vendor": "forcepoint"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Fortinet/fortimail.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "fortimail_md",
+      "sha256": "796d2616f8598f60c0f6894cb8a2d3a58daf71a8ec6e1513c5adf763f537bc8a",
+      "source_id": "fortinet_fortimail_md",
+      "vendor": "fortinet"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Fortinet/fortios.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "fortios_md",
+      "sha256": "377ed8434820ebd2a830dfc9d2866a3c802b020f1a99194749d0ded9c630e01d",
+      "source_id": "fortinet_fortios_md",
+      "vendor": "fortinet"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Fortinet/fortiweb.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "fortiweb_md",
+      "sha256": "f18306257e817e72acb756a51f3eafddf0902acd1de923c1c74e809c16686e34",
+      "source_id": "fortinet_fortiweb_md",
+      "vendor": "fortinet"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/GitHub/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "1b6fdfbce6219c0114aeb50949240d64533e236f3b2eabe6fe4e5bd643fca106",
+      "source_id": "github_index_md",
+      "vendor": "github"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/HAProxy/syslog.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "syslog_md",
+      "sha256": "29241ffa9a408c933296b50d29a77defa0e54da52ac9fb93ac7abe5305981d29",
+      "source_id": "haproxy_syslog_md",
+      "vendor": "haproxy"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/HPe/ilo.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "ilo_md",
+      "sha256": "a69bcdfad4feb4f9621885f1263de5e7d5adbb2063d180d246546d44937bb0ee",
+      "source_id": "hpe_ilo_md",
+      "vendor": "hpe"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/HPe/jedirect.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "jedirect_md",
+      "sha256": "7bf7c6b496e48a18c3d1bb5836ec3f1110c28d2d7d2f2970d95f74745889d9b5",
+      "source_id": "hpe_jedirect_md",
+      "vendor": "hpe"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/HPe/procurve.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "procurve_md",
+      "sha256": "c966eefbb127501eadfbb0627cdde3618fba2e2ffe78866423f6f7f8f3995e61",
+      "source_id": "hpe_procurve_md",
+      "vendor": "hpe"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/IBM/datapower.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "datapower_md",
+      "sha256": "0bbfe921ee5625f70697b2ae98e998baed9a8087e0d84b845d90791e00b7dc3a",
+      "source_id": "ibm_datapower_md",
+      "vendor": "ibm"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/ISC/bind.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "bind_md",
+      "sha256": "f8df56cd23bfe1e2c88fbac42f6c75a8b5978c1a626368321f6bd129fd775d35",
+      "source_id": "isc_bind_md",
+      "vendor": "isc"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/ISC/dhcpd.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "dhcpd_md",
+      "sha256": "a10bfca89dd39aa770c97053bfa1b7be616a390dfe7f37390ada6cb009ede595",
+      "source_id": "isc_dhcpd_md",
+      "vendor": "isc"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Imperva/incapusla.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "incapusla_md",
+      "sha256": "e40fb675f9f11fa5cfcf6766a63e309307a2c55963072f801f5ea4f9f48b4928",
+      "source_id": "imperva_incapusla_md",
+      "vendor": "imperva"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Imperva/waf.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "waf_md",
+      "sha256": "13bf41d9e3a5d98916c7a71849dac3dfc0bb77cc0ae5f49e74f1fbcfb756e660",
+      "source_id": "imperva_waf_md",
+      "vendor": "imperva"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/InfoBlox/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "b3d4aa4c1522f093671f98d0d109cffb87fef5a757c4f68b2d5bdd2408c74b87",
+      "source_id": "infoblox_index_md",
+      "vendor": "infoblox"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Juniper/junos.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "junos_md",
+      "sha256": "dd60e944e7f18480b238434d79b643310282426cf0c790aa0a791fb101f1b777",
+      "source_id": "juniper_junos_md",
+      "vendor": "juniper"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Juniper/netscreen.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "netscreen_md",
+      "sha256": "7b7faff242d5bc37185d1c09d056bb8032b17e87b03e3f7c092d16b788df8a41",
+      "source_id": "juniper_netscreen_md",
+      "vendor": "juniper"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Kaspersky/es.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "es_md",
+      "sha256": "417d4b1f382f0976595fdc94c49ebdfeb407813f7f377acae124a2799a3085c8",
+      "source_id": "kaspersky_es_md",
+      "vendor": "kaspersky"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Kaspersky/es_cef.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "es_cef_md",
+      "sha256": "21982208bae4c88e4a68da427fdb9a5e72ebbdb00a026c1bb41cf1d3de959e11",
+      "source_id": "kaspersky_es_cef_md",
+      "vendor": "kaspersky"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Kaspersky/es_leef.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "es_leef_md",
+      "sha256": "04c812e7821ef4f1c15f25a7ea776195b0e24305aa53fd0d6e4bf4d91347859c",
+      "source_id": "kaspersky_es_leef_md",
+      "vendor": "kaspersky"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Liveaction/liveaction_livenx.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "liveaction_livenx_md",
+      "sha256": "3e75c9201a618279fff90a6f1b911f9169575f5305afee57443fa3e98cea4e96",
+      "source_id": "liveaction_liveaction_livenx_md",
+      "vendor": "liveaction"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/McAfee/epo.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "epo_md",
+      "sha256": "eae800bfb0abf0b9d710f2b7351718d58953b16546d12119967defafec42fcb9",
+      "source_id": "mcafee_epo_md",
+      "vendor": "mcafee"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/McAfee/nsp.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "nsp_md",
+      "sha256": "0e17d7686bc100bb2c2c2bdb6c4c78970c86b6899a43f048ad08121671db9289",
+      "source_id": "mcafee_nsp_md",
+      "vendor": "mcafee"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/McAfee/wg.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "wg_md",
+      "sha256": "ed816cf978e619b3432af17cf8e95c76ffece97a3aa1de7105b7f0ca66f7df14",
+      "source_id": "mcafee_wg_md",
+      "vendor": "mcafee"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Microfocus/arcsight.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "arcsight_md",
+      "sha256": "d3f96b5e6b0d9ef6cc2ce4344cb7157f05cdd05523301c6682d334072ddf5d3c",
+      "source_id": "microfocus_arcsight_md",
+      "vendor": "microfocus"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Microfocus/windows.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "windows_md",
+      "sha256": "b918c1ecbb0f9854b9e3edc73164bc6cb514137d7a33b3277bb4c166b349f931",
+      "source_id": "microfocus_windows_md",
+      "vendor": "microfocus"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Microsoft/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "b178d1ce66593f2111cdc9585e773851cf880333ff9a435d7996ab1f4c6f288f",
+      "source_id": "microsoft_index_md",
+      "vendor": "microsoft"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Mikrotik/routeros.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "routeros_md",
+      "sha256": "c1479fd6eb9c239e385690701d2a4661941af5c5abc8a85b3e171d858af17f1e",
+      "source_id": "mikrotik_routeros_md",
+      "vendor": "mikrotik"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/NetApp/ontap.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "ontap_md",
+      "sha256": "e1c620e823dde78a0e022f0ff85168b2d1ed1cd6d2dfbe2709b60dd3f241077e",
+      "source_id": "netapp_ontap_md",
+      "vendor": "netapp"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/NetApp/storage-grid.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "storage_grid_md",
+      "sha256": "3e86dcfb816b3338eaae266d42f29afdb57fceb2c0fac1892bd75e06bad09ad8",
+      "source_id": "netapp_storage_grid_md",
+      "vendor": "netapp"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/NetScout/arbor_edge.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "arbor_edge_md",
+      "sha256": "5d01a954e9f9c31755387e7d4c3aff57dc71410f8654646d485b3f4b6050624e",
+      "source_id": "netscout_arbor_edge_md",
+      "vendor": "netscout"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Netmotion/mobilityserver.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "mobilityserver_md",
+      "sha256": "14b046f53fba1dd77236947eb62d564a72ff4d96e9ce8af041aaf0c8986ab3c7",
+      "source_id": "netmotion_mobilityserver_md",
+      "vendor": "netmotion"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Netmotion/reporting.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "reporting_md",
+      "sha256": "9de9ed30502483b1d1ce42c78a269def7446ac39c1eb5aef4de89a963dd7e00e",
+      "source_id": "netmotion_reporting_md",
+      "vendor": "netmotion"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Netwrix/endpoint_protector.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "endpoint_protector_md",
+      "sha256": "fd8acac037dfe911cf33082395567c20effc8a1e35076c3070c9b1ef87bf98c7",
+      "source_id": "netwrix_endpoint_protector_md",
+      "vendor": "netwrix"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Novell/netiq.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "netiq_md",
+      "sha256": "5872467fea3e9fe422c5efb7a104e2b7953e367cbf3e3ea63cc65c049bd26863",
+      "source_id": "novell_netiq_md",
+      "vendor": "novell"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Nutanix/cvm.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cvm_md",
+      "sha256": "07ffc5b682d76dacd3105b462ed724821644d6e5b2faeb674ef63a35c3d7ab6f",
+      "source_id": "nutanix_cvm_md",
+      "vendor": "nutanix"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/OPSWAT/metadefender_core.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "metadefender_core_md",
+      "sha256": "ce1091ad44ec3b3a45305aa834bf7d08b0e272a4cd244c432583485e15f0bec0",
+      "source_id": "opswat_metadefender_core_md",
+      "vendor": "opswat"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Ossec/ossec.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "ossec_md",
+      "sha256": "5efb508efbf08b5560d6b2c1e46ea318ec79756e5d71d0d8835c94e90a5562ed",
+      "source_id": "ossec_ossec_md",
+      "vendor": "ossec"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/PaloaltoNetworks/cortexxdr.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cortexxdr_md",
+      "sha256": "93cff87f00a2cdaf46705acc3f552fd90ca749d0c33d7efbc5ae616c000f7b30",
+      "source_id": "paloaltonetworks_cortexxdr_md",
+      "vendor": "paloaltonetworks"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/PaloaltoNetworks/panos.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "panos_md",
+      "sha256": "130b46af2d5f2b4829958936b198d275bff665a6566cc5a93852da5d3655999f",
+      "source_id": "paloaltonetworks_panos_md",
+      "vendor": "paloaltonetworks"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/PaloaltoNetworks/prisma.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "prisma_md",
+      "sha256": "cf5b853d7695a4d9a0352c301fe8056e5b40da50e3a8e14a9f63a50c40cec655",
+      "source_id": "paloaltonetworks_prisma_md",
+      "vendor": "paloaltonetworks"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/PaloaltoNetworks/traps.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "traps_md",
+      "sha256": "42d727cd3cb892f14bb1067f7d6e3a9ace9080ab0274b7be290d9b5561de4725",
+      "source_id": "paloaltonetworks_traps_md",
+      "vendor": "paloaltonetworks"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Pfsense/firewall.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "firewall_md",
+      "sha256": "32c5516187e3abcbe08689ec31ab59087342843f341d19d4d6df35aa40860e1a",
+      "source_id": "pfsense_firewall_md",
+      "vendor": "pfsense"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Polycom/rprm.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "rprm_md",
+      "sha256": "c6c6274ddd5d2a2121033fa8f305c68e9d0d8759e2d8394525de6f703b45ad1e",
+      "source_id": "polycom_rprm_md",
+      "vendor": "polycom"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Powertech/interact.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "interact_md",
+      "sha256": "4127caa45ec6a77e5568c9a1daa2cb232ddefe874b2441fc024a4ca71715359b",
+      "source_id": "powertech_interact_md",
+      "vendor": "powertech"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Proofpoint/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "0a7ac2b74519a49e6ac2e9f8f7e8b52b3e221b16fbee797aaa2c387950d67cc2",
+      "source_id": "proofpoint_index_md",
+      "vendor": "proofpoint"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Pulse/connectsecure.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "connectsecure_md",
+      "sha256": "cea4d973573d5711dd369510d84705c5afd160015ce13fbc3a33c5ed2af79fcb",
+      "source_id": "pulse_connectsecure_md",
+      "vendor": "pulse"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/PureStorage/array.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "array_md",
+      "sha256": "0dd994212c25f70c300eefeae869a070f2892bdbf4c1a67dc3bbcdeaf259f28c",
+      "source_id": "purestorage_array_md",
+      "vendor": "purestorage"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Qumulo/storage.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "storage_md",
+      "sha256": "beaeeef1f10686b86fa342960b02b37148d4c1a68d9fb69291b103649252de50",
+      "source_id": "qumulo_storage_md",
+      "vendor": "qumulo"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Radware/defensepro.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "defensepro_md",
+      "sha256": "e8fdc996ae45ffecc814860106898a1cef34138ec6be56346fa476ccd122bb8b",
+      "source_id": "radware_defensepro_md",
+      "vendor": "radware"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Raritan/dsx.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "dsx_md",
+      "sha256": "93e8fa3c73c4ef089910aadf02f191f3ef1250a33cc4705cdfb32e0397f4a858",
+      "source_id": "raritan_dsx_md",
+      "vendor": "raritan"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Ricoh/mfp.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "mfp_md",
+      "sha256": "702486965c1f5df1e02802dcfde58289be7c0facf7e6d8c6189d6fecb8a2905a",
+      "source_id": "ricoh_mfp_md",
+      "vendor": "ricoh"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Riverbed/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "b4346f9aa95ed23429bb7543e52860a249a251130305151013f140966cb4995c",
+      "source_id": "riverbed_index_md",
+      "vendor": "riverbed"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Riverbed/steelconnect.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "steelconnect_md",
+      "sha256": "a9cd54e4e7d4721f9e53003b27460ec12680592a213da93c792b0a5f9ce92fa3",
+      "source_id": "riverbed_steelconnect_md",
+      "vendor": "riverbed"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Riverbed/steelhead.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "steelhead_md",
+      "sha256": "10f63db7a4134132af1a0bb4dd7718d3ab81725e3558e898dfa62f5a27ff51df",
+      "source_id": "riverbed_steelhead_md",
+      "vendor": "riverbed"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Ruckus/SmartZone.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "smartzone_md",
+      "sha256": "ae77e53c017005c2f0eb5eafac34f816f69b4fdabbdfccf279297002bdb2c553",
+      "source_id": "ruckus_smartzone_md",
+      "vendor": "ruckus"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Schneider/apc.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "apc_md",
+      "sha256": "0a6ea5765437cb0830cc8daa0b9481e0f2faa0c81498688b3829ff905721f30e",
+      "source_id": "schneider_apc_md",
+      "vendor": "schneider"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/SecureAuthIdP/secureauth_idp.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "secureauth_idp_md",
+      "sha256": "c0d4581180de8fa52cd7f46cb131e7c2c31363a5853142e530b16140efe63295",
+      "source_id": "secureauthidp_secureauth_idp_md",
+      "vendor": "secureauthidp"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Semperis/DSP.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "dsp_md",
+      "sha256": "17969b6f503c9ddcb136284f6e3fd089369d127a8e067c38bf6011f1a53cfbf8",
+      "source_id": "semperis_dsp_md",
+      "vendor": "semperis"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Solace/evenbroker.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "evenbroker_md",
+      "sha256": "27ddfa26cf15ae5837dfd9c196b301f28e42c7fd7a144f57b9c92b91e0bab5e5",
+      "source_id": "solace_evenbroker_md",
+      "vendor": "solace"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Sophos/Firewall.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "firewall_md",
+      "sha256": "b0044aa86dab7aed3b625c2572e0a0ad85f9ff744fec72957e23d2842ae9874f",
+      "source_id": "sophos_firewall_md",
+      "vendor": "sophos"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Sophos/webappliance.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "webappliance_md",
+      "sha256": "031908bbfe11b3b26b20427b95f4d3ec37003371469109c5e1ebbe0c5a085550",
+      "source_id": "sophos_webappliance_md",
+      "vendor": "sophos"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Spectracom/index.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "index_md",
+      "sha256": "b5de87ca894d9dca9eeac982dc8e958f891e11777071313d298c59577463063b",
+      "source_id": "spectracom_index_md",
+      "vendor": "spectracom"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Splunk/heavyforwarder.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "heavyforwarder_md",
+      "sha256": "ba13182216b5c871940e670294cfa6a779049ea61cdf8bdae95403f6fb7a5ede",
+      "source_id": "splunk_heavyforwarder_md",
+      "vendor": "splunk"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Splunk/sc4s.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "sc4s_md",
+      "sha256": "a5ca85e89a2290f5273d33cd9efea543c246a6985411d8004c307fc6507f3398",
+      "source_id": "splunk_sc4s_md",
+      "vendor": "splunk"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/StealthWatch/StealthIntercept.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "stealthintercept_md",
+      "sha256": "12a9f9634e7b45cbb922c98e3dcd5dff3ec196ad24685638970b0a5db56f6e56",
+      "source_id": "stealthwatch_stealthintercept_md",
+      "vendor": "stealthwatch"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Suricata/Suricata.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "suricata_md",
+      "sha256": "e64aebe66caee57aaa9596e980cdf879108c7cadab71b264d0693f68f5df9090",
+      "source_id": "suricata_suricata_md",
+      "vendor": "suricata"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Tanium/platform.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "platform_md",
+      "sha256": "8dbd04943816c8317b41eeaad77a7d286b9c3e0cad508b65427e00a3b685fe9d",
+      "source_id": "tanium_platform_md",
+      "vendor": "tanium"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Tenable/ad.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "ad_md",
+      "sha256": "9c2d7b4163f0ed4b57e195fc1c98ff1e3cda34ec781866dcd292f9dd4d45895d",
+      "source_id": "tenable_ad_md",
+      "vendor": "tenable"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Tenable/nnm.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "nnm_md",
+      "sha256": "562605b8a96a8fe3c01e336ee0792cf9e2d11dacf3816b9e59ccdf4c68c18348",
+      "source_id": "tenable_nnm_md",
+      "vendor": "tenable"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Thales/thales_sta.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "thales_sta_md",
+      "sha256": "34c3468012af5cee51df1568ec21e692e336c25eb713635adcdac68dce80cb6a",
+      "source_id": "thales_thales_sta_md",
+      "vendor": "thales"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Thales/thales_vormetric.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "thales_vormetric_md",
+      "sha256": "c5f65460dbca2b4b3117473c21e1c2901a35f9539ba86f71cf75b6a52affd6e0",
+      "source_id": "thales_thales_vormetric_md",
+      "vendor": "thales"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Thycotic/secretserver.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "secretserver_md",
+      "sha256": "f57073ef34bb2f4e30a9a96eca90d9ffbf08b6bb3017771eeeadafbff5e014ae",
+      "source_id": "thycotic_secretserver_md",
+      "vendor": "thycotic"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Tintri/syslog.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "syslog_md",
+      "sha256": "66ffaedd31e244f2d757b8fc57c0b19944c654821c77e9f069ef112947760165",
+      "source_id": "tintri_syslog_md",
+      "vendor": "tintri"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Trellix/cms.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cms_md",
+      "sha256": "05f1a5d51ab0d938ce93d31379c796f0bef401f18c834bbde29ccaf4854106a5",
+      "source_id": "trellix_cms_md",
+      "vendor": "trellix"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Trellix/mps.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "mps_md",
+      "sha256": "fb2bd82c5498c5a0e568c01a52e0c564fbb8dd28417872903f01ae2dca18e72b",
+      "source_id": "trellix_mps_md",
+      "vendor": "trellix"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Trend/deepsecurity.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "deepsecurity_md",
+      "sha256": "91710de6911c8da36bb731556d917f9d5689f12a6970d27a935dfc0f74b9dea1",
+      "source_id": "trend_deepsecurity_md",
+      "vendor": "trend"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Ubiquiti/unifi.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "unifi_md",
+      "sha256": "f0d8c055bebf3bdf2812c238db6a7f62ed49fc6b2368a69dc555e3572574fedf",
+      "source_id": "ubiquiti_unifi_md",
+      "vendor": "ubiquiti"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/VMWare/airwatch.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "airwatch_md",
+      "sha256": "50912c2e387ec97a3407d0c95ba15de42ed0451a21216fb7610b4bfb01b8dd06",
+      "source_id": "vmware_airwatch_md",
+      "vendor": "vmware"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/VMWare/carbonblack.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "carbonblack_md",
+      "sha256": "031040dea1eb3945b2d306281a0d648e86e7b0dd1f8f6744357cd27c0112bd09",
+      "source_id": "vmware_carbonblack_md",
+      "vendor": "vmware"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/VMWare/horizonview.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "horizonview_md",
+      "sha256": "baa834efc2e3e5bda2513bd3d5c13f6b1f99dd8e5c1f0c2e1ac5aa51806465c3",
+      "source_id": "vmware_horizonview_md",
+      "vendor": "vmware"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/VMWare/vsphere.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "vsphere_md",
+      "sha256": "06236e2181c7004711e38646e5c8953964e9b57d2734ca55e82634f9ce19408b",
+      "source_id": "vmware_vsphere_md",
+      "vendor": "vmware"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Varonis/datadvantage.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "datadvantage_md",
+      "sha256": "f9c3acb5405bcb23d92ed63acfd47ed0fdd4f645613d4c3146d6ae937426132c",
+      "source_id": "varonis_datadvantage_md",
+      "vendor": "varonis"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Vectra/cognito.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cognito_md",
+      "sha256": "628039f78cba63e3b3143e90d07818f5a15b0d7334b866b77ac14b9ba8ab1afd",
+      "source_id": "vectra_cognito_md",
+      "vendor": "vectra"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Vectra/cognito_json.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "cognito_json_md",
+      "sha256": "9d1c154d86d95f4dfcbd8641956c087826b20e245f1622963a4b218ca088ae93",
+      "source_id": "vectra_cognito_json_md",
+      "vendor": "vectra"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Veeam/veeam.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "veeam_md",
+      "sha256": "2000323547512f4db2b5ee1283430364a3eed7d8b48870e148da5c22c6d69f31",
+      "source_id": "veeam_veeam_md",
+      "vendor": "veeam"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Wallix/bastion.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "bastion_md",
+      "sha256": "8ac594e46c74c4f2202ac601f452e21ee2f7f4c6f3ef3ca36d928c6aec66c260",
+      "source_id": "wallix_bastion_md",
+      "vendor": "wallix"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/XYPro/mergedaudit.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "mergedaudit_md",
+      "sha256": "3c7e53b04a6019976962c3339a33700e11e820849e88e9c626206d84090f1c6e",
+      "source_id": "xypro_mergedaudit_md",
+      "vendor": "xypro"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Zscaler/lss.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "lss_md",
+      "sha256": "f7bd8a10a8d295251cdd863284a5848e59312e914432ad7a2c7dfa5086a0f341",
+      "source_id": "zscaler_lss_md",
+      "vendor": "zscaler"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/Zscaler/nss.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "nss_md",
+      "sha256": "dd5a64a94cb85f609b8095daabdccc586cfa4f9f5980b0433cdcd94050c3612a",
+      "source_id": "zscaler_nss_md",
+      "vendor": "zscaler"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/a10networks/vthunder.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "vthunder_md",
+      "sha256": "729454ff4a40b29207846a5651b75a75521b020af418dc60d01dba785dfcde7e",
+      "source_id": "a10networks_vthunder_md",
+      "vendor": "a10networks"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/epic/epic_ehr.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "epic_ehr_md",
+      "sha256": "2c338803c3d0e539c66d85b84e39e673c86d7e734ead6f7220c3f3bb7abe8f93",
+      "source_id": "epic_epic_ehr_md",
+      "vendor": "epic"
+    },
+    {
+      "artifact_path": "docs/sources/vendor/syslog-ng/loggen.md",
+      "artifact_type": "source_documentation",
+      "origin": "sc4s-inbuilt",
+      "product": "loggen_md",
+      "sha256": "6dff62768f7a8b72d50ba076175a4df4b034778f8513da56d50553e126899da8",
+      "source_id": "syslog_ng_loggen_md",
+      "vendor": "syslog_ng"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/conflib/netsource/app-netsource-nix_syslog.conf",
+      "artifact_type": "netsource_app_parser",
+      "origin": "sc4s-inbuilt",
+      "product": "syslog",
+      "sha256": "bea76c32e2db9790b358c6af8cb3d8a4c58f14c74f47a4c25a1850474aa43d00",
+      "source_id": "nix_syslog",
+      "vendor": "nix"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/conflib/netsource/app-netsource-simple_source.conf",
+      "artifact_type": "netsource_app_parser",
+      "origin": "sc4s-inbuilt",
+      "product": "source",
+      "sha256": "81c63fbb37e582f39c87433100f3e2e7343593e6e9a503a3960cc7e25dfdd3f4",
+      "source_id": "simple_source",
+      "vendor": "simple"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/conflib/post-filter/app-postfilter-mark.conf",
+      "artifact_type": "postfilter",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "88ea16c6c279f89a3c3ff29dadda6e361f796f8c9ff43fc350a91ea7a035580f",
+      "source_id": "mark",
+      "vendor": "mark"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/conflib/syslog/app-syslog-cef.conf",
+      "artifact_type": "syslog_app_parser",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "1a602daf33a178745ab27816b0f3df723fa848f89c34c11cf8888e4baf1cd308",
+      "source_id": "cef",
+      "vendor": "cef"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/conflib/syslog/app-syslog-example.conf",
+      "artifact_type": "syslog_app_parser",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "ed583e0b1510d6f5a4971bde4ae12408e9e309488f97b8fc47aafc69533c8065",
+      "source_id": "example",
+      "vendor": "example"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/conflib/syslog/app-syslog-leef.conf",
+      "artifact_type": "syslog_app_parser",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "ce2731028e2485ebf5d6e703b3c8202f6cd27cdea9ab7a7aa31515c6fa7e3259",
+      "source_id": "leef",
+      "vendor": "leef"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/conflib/syslog/app-syslog-splunk_cooked.conf",
+      "artifact_type": "syslog_app_parser",
+      "origin": "sc4s-inbuilt",
+      "product": "cooked",
+      "sha256": "4f3ef8cdc3deb356d2c08670dfee8dc29bd019d3076a7b4497312d7cf81da1be",
+      "source_id": "splunk_cooked",
+      "vendor": "splunk"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/archive_file.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": "file",
+      "sha256": "be8a587a9d1927665196a332a0f8b0e11ac5629466d7c2682bf1e5dbeb701c9e",
+      "source_id": "archive_file",
+      "vendor": "archive"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_bsd/plugin.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "31fc3a16f9e7571b2b628c4346853ad97af8c30d49c66536193da98f7ff30427",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_bsd/plugin.jinja",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "c3fbdb9263e926f06ca0f508c47a4a88f4dadf388056783767f2d0fb6e7cb10d",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_bsd/plugin.py",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "f344209f86dce0b2258b88301c4545b9977a13b7d3e66ae2b68de13fab60aad3",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_hec/plugin.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "ae44a89bed133bda9993cb2a2f32a311742f132c442a224b4685b0948a221cd4",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_hec/plugin.jinja",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "cecc6162dc21068925c65946826be019ef100bab9a8d02761ec35ed15e569093",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_hec/plugin.py",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "615439395ee221b427711e3f935a787ce9fca5ea04824a3a135f836c0b168d27",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_psc/plugin.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "ce0864cd76ccba9f74d4ba4be9afbdcbf393d3c665aee418241e49afe232e811",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_syslog/plugin.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "f7e17de0618c4f95484400a60dec9e71950d4a81ff3c149b900c411a5ef09cfa",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_syslog/plugin.jinja",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "793c72779635c17bc21079dc488d2f4fad4610112dd7503bcb62c0e1edcd0fc1",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_syslog/plugin.py",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "2b788837dfbac4881a8e5fba31697987b1d4cd055d8a57ebc3dd3d3e3be93531",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/dest_vpsc/plugin.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "aee00274ce5857f107114bda5c4bb362e6a1d4040de054f98281a76db2bbc966",
+      "source_id": "plugin",
+      "vendor": "plugin"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/rawmsg_file.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": "file",
+      "sha256": "f6155ecc4eb62320a1588b84c3270d7ec120921f1b45d7d150ca5eea542b4246",
+      "source_id": "rawmsg_file",
+      "vendor": "rawmsg"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/splunk_hec_debug.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": "hec_debug",
+      "sha256": "090aadacea513aa74f3e1b70793a1bafa6d7da26c1fe4ebcfd4d62439dfe6d41",
+      "source_id": "splunk_hec_debug",
+      "vendor": "splunk"
+    },
+    {
+      "artifact_path": "package/shared/conf.d/destinations/stdout.conf",
+      "artifact_type": "destination",
+      "origin": "sc4s-inbuilt",
+      "product": null,
+      "sha256": "704b0d2462ec4845f4568ea20c999809bfc07069eb6d886eaf430966beb91792",
+      "source_id": "stdout",
+      "vendor": "stdout"
+    }
+  ],
+  "catalogue_version": "0.1",
+  "origin": "sc4s-inbuilt",
+  "upstream": {
+    "artifact_count": 182,
+    "generated_at": "2026-08-03T17:24:26Z",
+    "repo_url": "https://github.com/splunk/splunk-connect-for-syslog.git",
+    "requested_ref": "v3.46.0",
+    "resolved_commit": "d861082778c4ce35a1636dc83e19763338bf662e"
+  }
+}

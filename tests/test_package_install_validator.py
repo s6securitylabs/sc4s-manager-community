@@ -153,6 +153,14 @@ def test_validator_dry_run_executes_packaged_install_instructions(tmp_path):
     assert evidence["install"]["ok"] is True
     assert evidence["install"]["notes"] == "artifact install dry-run executed"
     assert any(cmd["mode"] == "artifact-install-dry-run" for cmd in evidence["commands"])
+    assert evidence["planner_gate_ok"] is True
+    assert evidence["lifecycle_gate_ok"] is False
+    assert evidence["upgrade"]["dry_run_ok"] is True
+    assert evidence["rollback"]["dry_run_ok"] is True
+    assert evidence["upgrade"]["ok"] is None
+    assert evidence["rollback"]["ok"] is None
+    assert any(cmd["mode"] == "artifact-upgrade-dry-run" for cmd in evidence["commands"])
+    assert any(cmd["mode"] == "artifact-rollback-dry-run" for cmd in evidence["commands"])
 
 
 def test_package_install_evidence_template_exists():

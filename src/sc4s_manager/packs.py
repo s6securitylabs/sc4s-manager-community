@@ -48,7 +48,7 @@ TIME_MODES = {
     "receiver_time",
     "unknown_requires_validation",
 }
-SOURCE_CLASSES = {"sc4s-inbuilt", "sc4s-inbuilt-lite", "sechub-resource", "community-extra"}
+SOURCE_CLASSES = {"sc4s-inbuilt", "sc4s-inbuilt-lite", "sechub-resource", "sechub-resources-pack", "community-extra"}
 SOURCE_TYPES = {"vendor_docs", "lab", "customer", "synthetic", "upstream_issue", "support_case", "upstream_sc4s", "mixed"}
 REDISTRIBUTION_TYPES = {"commit_safe", "private_only", "synthetic_only", "unknown"}
 SANITISATION_STATUSES = {"not_required", "sanitised", "synthetic_equivalent", "pending_review", "unknown"}

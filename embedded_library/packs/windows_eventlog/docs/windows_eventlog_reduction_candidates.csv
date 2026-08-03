@@ -1,0 +1,6 @@
+area,item,default_action,security_relevance,optional_reduction_candidate,notes
+security_logon,LogonType and source IP,retain,high,no,Needed for authentication investigations and impossible-travel/remote-logon triage.
+security_process,CommandLine and process path,retain,high,no,Process command lines are sensitive but central to endpoint investigation; do not drop by default.
+powershell,ScriptBlockText,retain,high,no,Script block content is high-value detection evidence; trim only with explicit local privacy/risk approval.
+defender,Threat Name and Path,retain,high,no,Detection name and path are required for malware triage and containment.
+operational_noise,Service health or verbose informational events,retain pending sampling,medium,yes,Profile does not ship such families yet; future enhanced reduction should be replay/read-back validated and disabled by default.

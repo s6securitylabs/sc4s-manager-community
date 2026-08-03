@@ -1,0 +1,157 @@
+<form version="1.1" theme="dark">
+  <label>NetApp ONTAP EMS - Overview</label>
+  <description>Fixture-backed onboarding and first-triage dashboard for NetApp ONTAP EMS legacy syslog smoke events. This is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Splunk host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="severity_tok" searchWhenChanged="true">
+      <label>ONTAP severity filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total ONTAP EMS events</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Error-severity rows</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") severity IN (Error,ERROR,error,Critical,CRITICAL,Alert,ALERT) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Notice / informational rows</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") severity IN (Notice,NOTICE,Info,INFO,Informational,INFORMATIONAL) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Distinct ONTAP event IDs</title>
+      <single>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats dc(ontap_event_id)</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>EMS volume over time</title>
+      <chart>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | timechart count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Severity distribution</title>
+      <chart>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats count by severity | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>ONTAP node and event-ID coverage</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats count, values(severity) as severities, values(signature) as signatures, values(ontap_sequence) as sequences by ontap_node, ontap_event_id | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>EMS operational review</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | table _time host source ontap_node ontap_event_id ontap_sequence severity signature signature_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage by host/source</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | stats count, dc(ontap_event_id) as event_ids, values(severity) as severities, values(ontap_node) as ontap_nodes, values(vendor_product) as vendor_product by host, source, sourcetype | sort -count | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Recent raw ONTAP EMS context</title>
+      <table>
+        <search>
+          <query>index=infraops sourcetype="ontap:ems" host=$host_tok$ (severity="$severity_tok$" OR "$severity_tok$"="*") | table _time host source sourcetype vendor product vendor_product ontap_node ontap_event_id ontap_sequence severity signature signature_id marker _raw | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

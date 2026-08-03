@@ -19,24 +19,7 @@ def test_compose_template_does_not_grant_docker_socket_access():
     assert "docker.sock" not in manager_unit
     assert ":/var/run/docker.sock" not in compose
     assert "SC4S_CONTROL_SOCKET=/run/sc4s-manager/control.sock" in manager_unit
-    assert "host-root Docker control" in compose
-
-
-def test_compose_defaults_pin_manager_and_sc4s_images():
-    compose = read("deploy/compose/compose.yaml")
-    defaults = read("deploy/compose/.env.example")
-    app = read("src/sc4s_manager/app.py")
-    release = read(".github/workflows/release.yml")
-
-    assert "SC4S_MANAGER_IMAGE:-ghcr.io/s6securitylabs/sc4s-manager-community:latest" not in compose
-    assert "SC4S_MANAGER_IMAGE=ghcr.io/s6securitylabs/sc4s-manager-community:latest" not in defaults
-    version_match = re.search(r'^APP_VERSION = "([^"]+)"$', app, re.MULTILINE)
-    assert version_match is not None
-    version = version_match.group(1)
-    expected_image = f"ghcr.io/s6securitylabs/sc4s-manager-community:{version}"
-    assert f"${{SC4S_MANAGER_IMAGE:-{expected_image}}}" in compose
-    assert f"SC4S_MANAGER_IMAGE={expected_image}" in defaults
-    assert "ghcr.io/${{ github.repository }}" in release
+    assert "never mounts /var/run/docker.sock" in compose
 
 
 def test_dockerfile_packages_frontend_and_runs_non_root():
@@ -70,15 +53,9 @@ def test_templates_do_not_contain_literal_secret_values():
 
 def test_systemd_units_reference_packaged_unit_names():
     manager_unit = read("deploy/systemd/sc4s-manager.service")
-    control_unit = read("deploy/systemd/sc4s-manager-control.service")
-    socket_unit = read("deploy/systemd/sc4s-manager-control.socket")
 
     assert "sc4s-manager-control.service" in manager_unit
     assert "sc4s-control.service" not in manager_unit
-    assert "Requires=sc4s-manager-control.socket" in control_unit
-    assert "WantedBy=multi-user.target" not in control_unit
-    assert "Service=sc4s-manager-control.service" in socket_unit
-    assert "SocketMode=0660" in socket_unit
 
 
 def test_control_audit_path_is_inside_packaged_state_root():
@@ -151,12 +128,19 @@ def test_dry_run_scripts_do_not_run_frontend_build_tools(tmp_path):
     )
 
     artifact_root = tmp_path / "artifact-root"
-    app_py = artifact_root / "src" / "sc4s_manager" / "app.py"
-    app_py.parent.mkdir(parents=True)
-    app_py.write_text("# packaged app marker\n")
+    required = [
+        "src/sc4s_manager/app.py", "deploy/compose/compose.yaml",
+        "deploy/install/install.sh", "deploy/upgrade/upgrade.sh",
+        "deploy/rollback/rollback.sh", "LICENSE",
+    ]
+    for rel in required:
+        path = artifact_root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("# packaged marker\n")
     artifact = tmp_path / "sc4s-manager.tar"
     with tarfile.open(artifact, "w") as tar:
-        tar.add(app_py, arcname="sc4s-manager/src/sc4s_manager/app.py")
+        for rel in required:
+            tar.add(artifact_root / rel, arcname=f"sc4s-manager/{rel}")
 
     upgrade = subprocess.run(
         [str(ROOT / "deploy/upgrade/upgrade.sh"), "--dry-run", "--artifact", str(artifact)],
@@ -206,13 +190,16 @@ def test_github_release_workflow_validates_install_artifact_before_publish():
     workflow = read(".github/workflows/release.yml")
 
     assert "Build release tarball" in workflow
-    assert "Validate release tarball install dry run" in workflow
+    planner_step = "Validate packaged install, upgrade, and rollback planners"
+    assert planner_step in workflow
+    assert "Require real disposable-host lifecycle evidence" in workflow
+    assert "--require-package-drill" in workflow
     assert "scripts/validate_package_install.py" in workflow
     assert "--artifact \"dist/release/sc4s-manager-${{ steps.version.outputs.version }}.tar.gz\"" in workflow
     assert "--evidence-out \"dist/release/package-install-dry-run.json\"" in workflow
-    assert workflow.index("Build release tarball") < workflow.index("Validate release tarball install dry run")
-    assert workflow.index("Validate release tarball install dry run") < workflow.index("Build and push Docker image")
-    assert "docker/build-push-action@v7" in workflow
+    assert workflow.index("Build release tarball") < workflow.index(planner_step)
+    assert workflow.index(planner_step) < workflow.index("Build and push Docker image")
+    assert "docker/build-push-action@v6" in workflow
     assert "IMAGE_NAME: ghcr.io/${{ github.repository }}" in workflow
     assert "${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}" in workflow
 

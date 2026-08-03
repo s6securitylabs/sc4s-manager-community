@@ -1,0 +1,927 @@
+{
+  "schema_version": "0.1",
+  "id": "legacy_openclaw_audit",
+  "version": "0.1.0",
+  "url": "https://hermes-agent.nousresearch.com/docs",
+  "description": "Curated SecHub Resources pack for legacy OpenClaw gateway, browser, channel-control, hook, and migration/cutover audit events, with analyst dashboards for unexpected access, channel policy drift, owner allowlists, dual-polling hazards, gateway bind/port risk, and credential/provider changes.",
+  "display_name": "Legacy OpenClaw Audit Logs",
+  "vendor": "openclaw",
+  "product": "legacy_openclaw",
+  "default_index": "netauth",
+  "default_source": "legacy_openclaw_audit",
+  "listener": {
+    "source_id": "LEGACY_OPENCLAW_AUDIT",
+    "transport": "tcp",
+    "port": 20132,
+    "env": {
+      "SC4S_LISTEN_LEGACY_OPENCLAW_AUDIT_TCP_PORT": "20132",
+      "SOURCE_ALL_SET_APPEND": "LEGACY_OPENCLAW_AUDIT"
+    }
+  },
+  "sourcetypes": {
+    "identity_session": "openclaw:legacy:audit",
+    "gateway_channel": "openclaw:legacy:audit",
+    "legacy_cutover_runtime": "openclaw:legacy:audit",
+    "credential_secret": "openclaw:legacy:audit",
+    "admin_config": "openclaw:legacy:audit",
+    "safety_policy": "openclaw:legacy:audit"
+  },
+  "event_families": [
+    {
+      "id": "identity_session",
+      "label": "Hermes/OpenClaw identity and session events",
+      "match_engine": "pcre",
+      "match": "(login|logout|session|oauth|sso|auth)",
+      "expected_sourcetype": "openclaw:legacy:audit",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "actor.user.name",
+        "client.ip"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "gateway_channel",
+      "label": "Gateway channel binding and delivery-route changes",
+      "match_engine": "pcre",
+      "match": "(channel|handoff|delivery|telegram|slack|signal|webhook)",
+      "expected_sourcetype": "openclaw:legacy:audit",
+      "primary_id_field": "channel_id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "channel.id",
+        "platform"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "legacy_cutover_runtime",
+      "label": "Legacy OpenClaw to Hermes gateway cutover and runtime-control events",
+      "match_engine": "pcre",
+      "match": "(cutover|migration|dual_polling|gateway_port|owner_allowlist|require_mention|command_logger|session_memory|openclaw)",
+      "expected_sourcetype": "openclaw:legacy:audit",
+      "primary_id_field": "event_id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "component"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "credential_secret",
+      "label": "Credential, token, secret, and provider configuration events",
+      "match_engine": "pcre",
+      "match": "(credential|token|secret|provider|model|api_key)",
+      "expected_sourcetype": "openclaw:legacy:audit",
+      "primary_id_field": "credential.id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "actor.user.name"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "admin_config",
+      "label": "Administrative configuration, profile, skill, cron, and plugin changes",
+      "match_engine": "pcre",
+      "match": "(config|profile|skill|plugin|cron|admin)",
+      "expected_sourcetype": "openclaw:legacy:audit",
+      "primary_id_field": "object.id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "actor.user.name",
+        "object.type"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    },
+    {
+      "id": "safety_policy",
+      "label": "Safety, prompt-injection, permission, and blocked-action events",
+      "match_engine": "pcre",
+      "match": "(safety|policy|blocked|prompt_injection|permission|approval)",
+      "expected_sourcetype": "openclaw:legacy:audit",
+      "primary_id_field": "rule.id",
+      "required_fields": [
+        "timestamp",
+        "event.action",
+        "rule.id"
+      ],
+      "timestamp_fields": [
+        "timestamp",
+        "@timestamp",
+        "time"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "nousresearch or openclaw depending on producer",
+    "product": "hermes_agent, hermes_gateway, or openclaw",
+    "vendor_product": "openclaw:legacy_openclaw",
+    "hermes_openclaw_family": "Derived SOC family from event.action, event.category, component, and marker",
+    "event_id": "Source event identifier where present",
+    "trace_id": "Request/run trace identifier where present",
+    "request_id": "Gateway/API request identifier",
+    "run_id": "Hermes agent run identifier",
+    "session_id": "Human/agent session identifier",
+    "profile": "Hermes profile name where present",
+    "component": "gateway, agent, scheduler, tool, provider, openclaw bridge, or channel adapter",
+    "actor_user": "Authenticated human or service actor",
+    "user": "Actor alias",
+    "src_user": "Actor alias",
+    "target_user": "Affected user/bot/account where present",
+    "src_ip": "Client or upstream source IP",
+    "src": "Source IP alias",
+    "country": "GeoIP country/region derived downstream, not trusted source truth",
+    "user_agent": "HTTP/API user agent",
+    "platform": "telegram, slack, signal, local, api, web, or other channel",
+    "channel_id": "Messaging channel/thread identifier; sensitive deployment metadata",
+    "thread_id": "Messaging thread/topic identifier",
+    "event_action": "Source action token",
+    "action": "Action alias",
+    "object": "Affected channel, skill, profile, cron job, tool, credential, provider, or policy object",
+    "object_type": "Affected object class",
+    "tool_name": "Hermes tool invoked",
+    "tool_result": "Outcome/status for tool invocation",
+    "provider": "Model/provider/credential provider label",
+    "model": "Model name where present",
+    "risk_reason": "Analyst-readable reason for risk/blocked/policy event",
+    "policy_decision": "allow, block, require_approval, redact, or similar policy result",
+    "marker": "Synthetic fixture marker only",
+    "runtime": "Runtime side such as hermes-gateway, hermes-agent, legacy-openclaw-gateway, openclaw-browser, cron, or collector",
+    "legacy_component": "Legacy OpenClaw component when the event was sourced from pre-Hermes config/logs",
+    "gateway_port": "Gateway/control port if logged; publish only non-secret listener metadata and prefer local/internal addresses",
+    "gateway_bind": "Gateway bind scope such as loopback/local/private/public; analysts should review anything beyond loopback/private",
+    "owner_allowlist_state": "Summary state for owner/chat allowlists without publishing real IDs in public fixtures",
+    "require_mention": "Whether group/channel use requires bot mention or equivalent explicit trigger",
+    "dual_polling_risk": "True/reason when Hermes and legacy OpenClaw may both poll the same messaging token/channel",
+    "migration_phase": "discovered, dry_run, cutover, rollback, validated, or blocked",
+    "hook_name": "OpenClaw/Hermes internal hook such as command-logger, session-memory, or compaction-notifier"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-legacy_openclaw_audit.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/legacy_openclaw_audit_overview.xml",
+      "splunk/default/data/ui/views/legacy_openclaw_audit_security_review.xml"
+    ],
+    "opensearch": [
+      "opensearch/dashboards/legacy_openclaw_audit_security.ndjson"
+    ],
+    "test_events": [
+      "test-events/legacy_openclaw_audit_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20132.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/legacy_openclaw_audit_reduction_candidates.csv",
+      "validation/preflight-2026-07-07.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Legacy OpenClaw JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20132,
+      "notes": "Dedicated TCP listener for one normalized Legacy OpenClaw JSON audit event per line from journald, gateway, webhook, or collector relays.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20132,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Legacy OpenClaw Audit Logs normalized JSON audit envelope",
+    "min": "Hermes Agent current public docs plus locally observed legacy OpenClaw config shape: gateway loopback control, Telegram channel policy, owner allowlist, command-logger/session-memory hooks, model/provider config, and migration dry-run/cutover states.",
+    "max": null,
+    "notes": "This is a conservative normalized audit-envelope pack for one product/application. Do not combine Hermes Agent and legacy OpenClaw events unless a downstream correlation view explicitly joins both products."
+  },
+  "source_delivery": {
+    "mode": "api_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "A local collector or journald/gateway relay must emit one audit JSON object per event for this product. SC4S must not own messaging-platform tokens, provider credentials, profile secrets, checkpoints, or raw message bodies.",
+    "validation_status": "metadata_classification_only; does not imply replay/read-back or field validation"
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-07-07",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Synthetic normalized Legacy OpenClaw Audit Logs envelope only; no live replay/read-back.",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic audit JSON records only. No live deployment replay, SC4S route, HEC delivery, OpenSearch indexing, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk/OpenSearch TEST replay/readback for Legacy OpenClaw Audit Logs",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "legacy_openclaw_audit_json"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_LEGACY_OPENCLAW_AUDIT_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20132.sh"
+    },
+    "readback": {
+      "spl": "index=netauth sourcetype=\"openclaw:legacy:audit\" sechub_fixture_marker=\"SC4S_LEGACY_OPENCLAW_AUDIT_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product event_action action actor_user user src_ip user_agent platform channel_id thread_id component object object_type tool_name provider model policy_decision risk_reason marker _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor/product",
+        "family/action routing",
+        "actor/user fields",
+        "source IP and user-agent",
+        "channel/thread context",
+        "tool/provider/policy fields",
+        "raw JSON preservation"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "no_testbed",
+      "date": "2026-07-07",
+      "summary": "Initial pack creation did not have a live Legacy OpenClaw audit relay, SC4S listener, Splunk search path, or OpenSearch test index available for replay/read-back.",
+      "evidence_path": "validation/preflight-2026-07-07.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-07-07.md",
+        "summary": "Creation-time blocked preflight; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20132,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Legacy OpenClaw audit JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netauth"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netauth",
+        "Search role can read netauth"
+      ],
+      "required_opensearch_capabilities": [
+        "Data stream or index can receive legacy-openclaw-audit-* records",
+        "OpenSearch Dashboards space can import saved objects and resolve the data view"
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "legacy_openclaw_audit_json",
+      "label": "Legacy OpenClaw synthetic normalized JSON audit events",
+      "path": "test-events/legacy_openclaw_audit_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_LEGACY_OPENCLAW_AUDIT_TEST_LOGIN_001",
+        "SC4S_LEGACY_OPENCLAW_AUDIT_TEST_FOREIGN_IP_002",
+        "SC4S_LEGACY_OPENCLAW_AUDIT_TEST_ALLOWLIST_003",
+        "SC4S_LEGACY_OPENCLAW_AUDIT_TEST_CUTOVER_004",
+        "SC4S_LEGACY_OPENCLAW_AUDIT_TEST_HOOK_005",
+        "SC4S_LEGACY_OPENCLAW_AUDIT_TEST_CREDENTIAL_006"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "timestamp",
+        "primary_timezone": "UTC with explicit Z offset in fixtures",
+        "fallback_fields": [
+          "@timestamp",
+          "time"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Legacy OpenClaw audit timestamp policy"
+        ],
+        "notes": "Fixtures use RFC3339 UTC timestamps with Z suffix."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact normalized JSON with a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "identity_session",
+        "gateway_channel",
+        "legacy_cutover_runtime",
+        "credential_secret",
+        "admin_config",
+        "safety_policy"
+      ],
+      "source_file": "test-events/legacy_openclaw_audit_test_events.txt",
+      "expected_sourcetype": "openclaw:legacy:audit"
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-legacy_openclaw_audit.conf",
+      "target_path": "local/config/app_parsers/syslog/app-legacy_openclaw_audit.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/legacy_openclaw_audit.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/legacy_openclaw_audit_overview.xml",
+      "target_path": "splunk/default/data/ui/views/legacy_openclaw_audit_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_security_review",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/legacy_openclaw_audit_security_review.xml",
+      "target_path": "splunk/default/data/ui/views/legacy_openclaw_audit_security_review.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "opensearch_dashboard_security",
+      "group": "docs",
+      "source_path": "opensearch/dashboards/legacy_openclaw_audit_security.ndjson",
+      "target_path": "opensearch/dashboards/legacy_openclaw_audit_security.ndjson",
+      "kind": "opensearch_dashboard_ndjson",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/legacy_openclaw_audit_test_events.txt",
+      "target_path": "test-events/legacy_openclaw_audit_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20132.sh",
+      "target_path": "scripts/send_tcp_20132.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/legacy_openclaw_audit_reduction_candidates.csv",
+      "target_path": "docs/legacy_openclaw_audit_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_07_07",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-07-07.md",
+      "target_path": "validation/preflight-2026-07-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Hermes Agent public documentation plus S6/OpenClaw deployment audit requirements; fixtures are synthetic normalized examples, not product logs.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example users, documentation IP ranges, synthetic channel IDs, synthetic trace IDs, and no real tokens, private chat content, customer hostnames, or production credentials."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-07-07",
+      "notes": "Initial analyst-oriented pack for Legacy OpenClaw audit ingestion and dashboarding."
+    },
+    "upstream": {
+      "repo": null,
+      "ref": null,
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "actor_user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Authenticated actor/service account."
+        },
+        "src_user": {
+          "source_fields": [
+            "actor_user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Actor alias."
+        },
+        "src_ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Client/upstream IP."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Source IP alias."
+        },
+        "user_agent": {
+          "source_fields": [
+            "user_agent"
+          ],
+          "status": "partial",
+          "notes": "HTTP/API user agent."
+        },
+        "action": {
+          "source_fields": [
+            "event_action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Audit action token."
+        },
+        "signature": {
+          "source_fields": [
+            "event_action",
+            "risk_reason"
+          ],
+          "status": "partial",
+          "notes": "Triage action/reason."
+        },
+        "signature_id": {
+          "source_fields": [
+            "event_id",
+            "trace_id",
+            "request_id"
+          ],
+          "status": "partial",
+          "notes": "Event/trace identifier."
+        },
+        "object": {
+          "source_fields": [
+            "object",
+            "object_type",
+            "channel_id",
+            "tool_name"
+          ],
+          "status": "partial",
+          "notes": "Affected object."
+        }
+      },
+      "notes": "Partial authentication/change/audit mapping only; not full CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "actor_user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Actor user/service."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Client IP."
+        },
+        "activity_name": {
+          "source_fields": [
+            "event_action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Source action."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "event_id",
+            "trace_id",
+            "request_id"
+          ],
+          "status": "partial",
+          "notes": "Event identifier."
+        }
+      },
+      "notes": "OCSF helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "event_action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Action token."
+        },
+        "event.category": {
+          "source_fields": [
+            "hermes_openclaw_family"
+          ],
+          "status": "partial",
+          "notes": "Derived family."
+        },
+        "user.name": {
+          "source_fields": [
+            "actor_user",
+            "user"
+          ],
+          "status": "partial",
+          "notes": "Actor."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip"
+          ],
+          "status": "partial",
+          "notes": "Client IP."
+        },
+        "user_agent.original": {
+          "source_fields": [
+            "user_agent"
+          ],
+          "status": "partial",
+          "notes": "User agent."
+        },
+        "service.name": {
+          "source_fields": [
+            "component"
+          ],
+          "status": "partial",
+          "notes": "Legacy OpenClaw component."
+        }
+      },
+      "notes": "ECS helper mapping for OpenSearch/Data Prepper."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/legacy_openclaw_audit/sc4s/app_parsers/syslog/app-legacy_openclaw_audit.conf": "sha256:6dc60f37368432982cd64427f77acc1e92950946d894b0a139f75bb8e29a8208",
+      "packs/legacy_openclaw_audit/sc4s/env.example": "sha256:7a4e2e618318ce833ec55618749592714ac22083887c2517ef94ed25a219aca2",
+      "packs/legacy_openclaw_audit/splunk/default/props.conf": "sha256:f5d7f655db1d6e98fb116306ccdbc74babf9a08bf5bb7b1088d17b8b213be356",
+      "packs/legacy_openclaw_audit/splunk/default/transforms.conf": "sha256:afdd396022a78395291405f9e1c1b3b6b55518495a34ec3154620babfa342957",
+      "packs/legacy_openclaw_audit/splunk/default/eventtypes.conf": "sha256:1b5b9802bba6893e120d9c5fcec45e163f2b036aaf8b6bf90d619a691ddb4513",
+      "packs/legacy_openclaw_audit/splunk/default/tags.conf": "sha256:68a7482d68752ee8d16ec295d4fdc6faa54a18070fba023f1fe1faa08e29184d",
+      "packs/legacy_openclaw_audit/splunk/default/data/ui/views/legacy_openclaw_audit_overview.xml": "sha256:adb6f3cbe6bd4d753ba524b3633c8f4b4f03a4d032b3efdb743ddf6822029be7",
+      "packs/legacy_openclaw_audit/splunk/default/data/ui/views/legacy_openclaw_audit_security_review.xml": "sha256:d75dd15ca617f1e77148fda18923e27e316de8a6113fce13a6767037918cd1ca",
+      "packs/legacy_openclaw_audit/opensearch/dashboards/legacy_openclaw_audit_security.ndjson": "sha256:a30bc004668ba8259979becd41b81158f6e3dc3e98b562b42c00fe81e8303b00",
+      "packs/legacy_openclaw_audit/test-events/legacy_openclaw_audit_test_events.txt": "sha256:bfc1fd2e929cec6483e25e261ed543aff7cefda994e7a4df50e580b761e66a9e",
+      "packs/legacy_openclaw_audit/scripts/send_tcp_20132.sh": "sha256:9c1f7df6c12c76fdb500109a4515b76d689ce12bbd0d88591f3fd8adbd7d9c46",
+      "packs/legacy_openclaw_audit/README.md": "sha256:b5cac19885660b962d77f6bc72de22d48d9e2b3ccc4cfc9540e6c792011a5d70",
+      "packs/legacy_openclaw_audit/docs/legacy_openclaw_audit_reduction_candidates.csv": "sha256:993e8c860a52f50cfea3f6f6bee8860cafbced44f040fcb65b830ff219ddd8cf",
+      "packs/legacy_openclaw_audit/validation/preflight-2026-07-07.md": "sha256:23d8effba6d9214c663e649dd8c92971da7b947cc263d08902d772a42637f578"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-07-07",
+    "last_tested": "2026-07-07"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "ai_agent_platform",
+    "gateway",
+    "identity",
+    "security_operations",
+    "json",
+    "audit"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "audit_json_relay",
+      "label": "Legacy OpenClaw normalized audit JSON relay",
+      "description": "One normalized audit event per JSON record from Hermes gateway/runtime/OpenClaw collectors.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "hermes_gateway_json",
+        "hermes_runtime_json",
+        "openclaw_channel_audit",
+        "collector_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "identity_session",
+        "gateway_channel",
+        "credential_secret",
+        "admin_config",
+        "safety_policy"
+      ],
+      "test_event_sets": [
+        "legacy_openclaw_audit_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "splunk_dashboard_security_review",
+        "opensearch_dashboard_security",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Legacy OpenClaw replay/read-back captured.",
+        "Actual deployment log field names must be mapped into this normalized envelope before claims of compatibility.",
+        "Messaging platform channel IDs and thread IDs may be sensitive and require local retention/access decisions."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/legacy_openclaw_audit_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "event.action",
+        "actor.user.name",
+        "client.ip",
+        "component",
+        "platform",
+        "channel.id",
+        "tool.name",
+        "policy.decision"
+      ],
+      "notes": "Relay should preserve audit context by default and never drop prompt/policy/action evidence silently."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "Start Data Prepper in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Keep Legacy OpenClaw credentials and checkpoints outside this pack."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import opensearch/dashboards/legacy_openclaw_audit_security.ndjson into a disposable OpenSearch Dashboards space and confirm data-view resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards have not been automatically translated to OpenSearch saved objects or live-tested; the included NDJSON starter must be treated as unvalidated design scaffolding until imported into a disposable space and read back against real indexed events."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative metadata mapping only; keep Legacy OpenClaw credentials, messaging-platform tokens, checkpoints, channel state, and raw prompt/message content outside this pack unless explicitly approved and validated."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative metadata mapping only; keep Legacy OpenClaw credentials, messaging-platform tokens, checkpoints, channel state, and raw prompt/message content outside this pack unless explicitly approved and validated."
+    }
+  },
+  "known_limitations": [
+    "No live Legacy OpenClaw deployment capture, SC4S replay, Splunk read-back, or OpenSearch import validation is present.",
+    "This pack defines a normalized audit envelope; deployments must map their actual Legacy OpenClaw log schema, journald fields, or gateway JSON into it.",
+    "SC4S does not collect Telegram/Slack/Signal tokens, Hermes provider keys, channel state, or model-provider credentials.",
+    "Geo/foreign-IP review depends on downstream enrichment such as Splunk iplocation or OpenSearch geoip processors; private/VPN/NAT ranges need local allowlist context."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "dashboard_screenshots": []
+}

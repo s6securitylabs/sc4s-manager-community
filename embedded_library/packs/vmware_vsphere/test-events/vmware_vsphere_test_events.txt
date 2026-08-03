@@ -1,0 +1,6 @@
+<134>Jun  5 12:10:01 esxi-1.example.test hostd[2100123]: Event SC4S_VMWARE_VSPHERE_TEST_ESX_HOSTD_001 user=EXAMPLE\\alice op=Login target=esxi-1.example.test result=success
+<134>Jun  5 12:10:02 vcenter-1.example.test vpxd[3100456]: Event SC4S_VMWARE_VSPHERE_TEST_VCENTER_VPXD_002 user=EXAMPLE\\bob op=TaskEvent target=vm-example-01 result=completed
+<134>Jun  5 12:10:05 esxi-1.example.test vmkernel[2100999]: cpu1:2097152)WARNING: Storage path example-test-lun changed state APD timeout marker=SC4S_VMWARE_VSPHERE_TEST_ESX_VMKERNEL_005
+<134>Jun  5 12:10:03 nsx-edge-1.example.test dfwpktlogs[4100789]: INET match PASS SC4S_VMWARE_VSPHERE_TEST_NSX_DFW_003 domain-c7/1001 IN 60 TCP 192.0.2.10/55000->198.51.100.20/443 S
+<134>Jun  5 12:10:06 nsx-edge-1.example.test dfwpktlogs[4100790]: INET match DROP SC4S_VMWARE_VSPHERE_TEST_NSX_DFW_006 domain-c7/1002 IN 60 TCP 192.0.2.30/55123->198.51.100.40/22 S
+<134>1 2026-06-05T12:10:04Z esxi-1.example.test vmkernel - - [Originator@6876 sub="vmkernel" eventID="SC4S_VMWARE_VSPHERE_TEST_SDATA_004"] cpu0:2097152)WARNING: Example structured-data event for VMware vSphere fixture

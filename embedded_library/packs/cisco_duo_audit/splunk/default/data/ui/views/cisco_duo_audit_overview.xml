@@ -1,0 +1,265 @@
+<form version="1.1" theme="dark">
+  <label>Cisco Duo Audit - Overview</label>
+  <description>Fixture-backed Cisco Duo Admin API authentication, activity, telephony, Trust Monitor, user/phone inventory, and integration inventory JSON relay overview. Panels use fields proven by synthetic-equivalent fixtures and Splunk JSON/search-time knowledge; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Duo audit events</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Denied or fraud authentications</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | search event_type="authentication" (result="failure" OR result="fraud" OR action="failure" OR action="fraud") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="useColors">1</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34","0xdc4e41"]</option>
+        <option name="rangeValues">[0,10]</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Policy/admin/telephony activity</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | search (event_type="activity" OR event_type="telephony") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Events over time by Duo family</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | eval family=coalesce(duo_family, event_type, "duo_audit") | timechart count by family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Event distribution</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | eval family=coalesce(duo_family, event_type, "duo_audit") | stats count by family | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Actions and results</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | eval duo_action=coalesce(action, vendor_raw_action, result, event_type) | stats count by duo_action | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Top Duo users/admins</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | eval duo_user=coalesce(user, src_user, email, username, 'user.name', 'actor.name') | stats count by duo_user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top source IPs</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | eval source_ip=coalesce(src_ip, src, 'access_device.ip', ip) | stats count by source_ip | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Duo applications</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | eval duo_app=coalesce(app, 'application.name', 'application.destination_name') | stats count by duo_app | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>MFA factors, reasons, and telephony usage</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | search (event_type="authentication" OR event_type="telephony") | eval factor=coalesce(factor,"n/a"), reason=coalesce(reason,"n/a"), result=coalesce(result,status,"n/a"), type=coalesce(type,"n/a"), context=coalesce(context,"n/a"), credits=coalesce(credits,"n/a") | stats count by event_type factor reason result type context credits | sort -count | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">10</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Telephony SMS/phone usage</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | search event_type="telephony" | table _time host context type credits phone telephony_id txid marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Administrative and policy activity</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | search event_type="activity" | eval duo_user=coalesce(user, username, 'actor.name') | table _time host duo_user action object object_type signature_id marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Trust Monitor events</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | search event_type="trust_monitor" | eval duo_user=coalesce(user, 'surfaced_auth.user.name', 'enabled_for.name'), trust_reason=coalesce(trust_explanation_type, priority_reason_type) | table _time host type state priority_event triaged_as_interesting duo_user src_ip app trust_reason signature_id sekey marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Duo user and phone inventory</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | search event_type="user_phone_inventory" | table _time host user user_id user_status phone_id phone_platform phone_model phone_type phone_last_seen phone_encrypted phone_screenlock phone_tampered marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Duo integration and Admin API permission inventory</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | search event_type="integration_inventory" | table _time host integration_key integration_name integration_type adminapi_read_log adminapi_read_resource adminapi_integrations adminapi_settings adminapi_write_resource user_access groups_allowed policy_key prompt_v4_enabled frameless_auth_prompt_enabled networks_for_api_access marker | sort -_time | head 100</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | stats count dc(marker) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index sourcetype source host event_type | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Duo audit events</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="cisco:duo:audit:json" host=$host_tok$ | extract reload=true | table _time host event_type duo_family user src_ip app action vendor_raw_action signature signature_id status factor reason object object_type context type credits phone telephony_id txid sekey state surfaced_timestamp priority_event triaged_as_interesting trust_explanation_type priority_reason_type user_id user_status phone_id phone_platform phone_model phone_type phone_last_seen phone_encrypted phone_screenlock phone_tampered phone_capabilities integration_key integration_name integration_type adminapi_read_log adminapi_read_resource adminapi_integrations adminapi_settings adminapi_write_resource user_access groups_allowed policy_key prompt_v4_enabled frameless_auth_prompt_enabled networks_for_api_access marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">row</option>
+        <option name="count">20</option>
+      </table>
+    </panel>
+  </row>
+</form>

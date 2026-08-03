@@ -63,8 +63,8 @@ STATIC_ROUTE_SPECS = [
     {"route": "/", "label": "Dashboard", "api_path": "/api/stats", "api_kind": "stats"},
     {
         "route": "/library",
-        "label": "SecHub Resources",
-        "api_path": "/api/library/catalogue?source_id=official",
+        "label": "SC4S Library",
+        "api_path": "/api/library/catalogue?source_id=embedded",
         "api_kind": "library_catalogue",
         "api_fallbacks": [
             {
@@ -433,7 +433,7 @@ class BrowserRouteRunner:
                 error=str(exc),
             )
         except Exception as exc:
-            raise AcceptanceError(f"request failed for {safe_url_for_error(url)}: {type(exc).__name__}") from exc
+            raise AcceptanceError(f"request failed for {url}: {type(exc).__name__}: {exc}") from exc
 
     def write_artifact(self, stem: str, payload: dict[str, Any]) -> str:
         self.artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -604,31 +604,6 @@ def sanitize_payload(value: Any) -> Any:
     return value
 
 
-def is_login_url(value: str) -> bool:
-    try:
-        parsed = urllib.parse.urlsplit(value)
-        return (
-            parsed.scheme == "https"
-            and parsed.hostname == "login.s6ops.com"
-            and parsed.port in (None, 443)
-            and not parsed.username
-            and not parsed.password
-            and parsed.path.startswith("/application/o/authorize/")
-        )
-    except (ValueError, UnicodeError):
-        return False
-
-
-def safe_url_for_error(value: str) -> str:
-    try:
-        parsed = urllib.parse.urlsplit(value)
-        host = parsed.hostname or "invalid-host"
-        port = f":{parsed.port}" if parsed.port else ""
-        return urllib.parse.urlunsplit((parsed.scheme, f"{host}{port}", parsed.path, "", ""))
-    except (ValueError, UnicodeError):
-        return "invalid-url"
-
-
 def summarize_public_result(name: str, result: FetchResult, public_base: str) -> dict[str, Any]:
     location = result.headers.get("Location") or result.redirected_to or ""
     return sanitize_payload({
@@ -639,7 +614,7 @@ def summarize_public_result(name: str, result: FetchResult, public_base: str) ->
         "final_url": result.final_url,
         "content_type": result.content_type,
         "body_prefix": excerpt(result.body_text, limit=500),
-        "login_boundary_seen": is_login_url(location) or ("application/o/authorize" in result.body_text.lower()),
+        "login_boundary_seen": ("login.s6ops.com" in location.lower()) or ("application/o/authorize" in result.body_text.lower()),
         "public_base": public_base,
     })
 
@@ -706,7 +681,7 @@ def summarize_api_payload(payload: Any, *, kind: str) -> dict[str, Any]:
             "count": payload.get("count", len(entries)),
             "validated_count": facet_count("quality_statuses", "validated"),
             "community_candidate_count": facet_count("source_statuses", "candidate"),
-            "curated_origin_count": facet_count("origins", "sechub-resource"),
+            "curated_origin_count": facet_count("origins", "sechub-resources-pack"),
             "first_entry": {
                 "id": first.get("id"),
                 "display_name": first.get("display_name"),
@@ -878,9 +853,9 @@ def build_journey_matrix(public_payload: dict[str, Any], auth_payload: dict[str,
         {
             "id": "J05-library-import-validate-apply-separation",
             "persona": "SC4S operator importing Library content",
-            "goal": "Use SecHub Resources while preserving source refresh, checksum/manifest validation, import record, and explicit validate/apply separation.",
+            "goal": "Use the embedded SC4S Library while preserving local snapshot validation, import record, and explicit validate/apply separation.",
             "ui_routes": ["/library"],
-            "api_readback": ["/api/library/catalogue?source_id=official"],
+            "api_readback": ["/api/library/catalogue?source_id=embedded"],
             "expected_evidence": "Library route is present, has API readback or explicit fallback reason, and does not promote community candidates or silently apply artifacts.",
             "status": "partial" if library_entry.get("api_fallback_reason") or route_status("/library") == "covered" else route_status("/library"),
             "artifact_paths": evidence_for("/library"),
@@ -999,7 +974,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         summary = BrowserRouteRunner(args).run()
     except AcceptanceError as exc:
-        print(json.dumps({"ok": False, "error": sanitize_text(str(exc))}, indent=2, sort_keys=True))
+        print(json.dumps({"ok": False, "error": str(exc)}, indent=2, sort_keys=True))
         return 1
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0

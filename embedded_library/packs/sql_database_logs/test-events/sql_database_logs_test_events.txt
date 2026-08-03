@@ -1,0 +1,7 @@
+2026-06-08 10:15:01.123 UTC [4312] app_user@exampledb LOG: connection authorized: user=app_user database=exampledb application_name=psql client=198.51.100.25 marker=SC4S_SQL_DATABASE_LOGS_TEST_POSTGRES_AUTH_001
+2026-06-08 10:15:08.456 UTC [4312] app_user@exampledb ERROR: permission denied for table reports marker=SC4S_SQL_DATABASE_LOGS_TEST_POSTGRES_ERROR_002
+2026-06-08 10:15:45.789 UTC [4313] app_user@exampledb LOG: duration: 1250.321 ms  statement: SELECT count(*) FROM public.orders WHERE status = 'open'; marker=SC4S_SQL_DATABASE_LOGS_TEST_POSTGRES_DURATION_006
+2026-06-08T10:16:00.000000Z 14 [Warning] [MY-010055] [Server] Access denied for user 'report_user'@'198.51.100.45' (using password: YES) marker=SC4S_SQL_DATABASE_LOGS_TEST_MYSQL_ERROR_003
+# Time: 2026-06-08T10:17:00.000000Z # User@Host: report_user[report_user] @ db-client.example.test [198.51.100.45] # Query_time: 2.345678 Lock_time: 0.001234 Rows_sent: 10 Rows_examined: 2048 marker=SC4S_SQL_DATABASE_LOGS_TEST_MYSQL_SLOW_004
+2026-06-08 10:18:00 17 Connect app_user@198.51.100.25 on exampledb using TCP/IP marker=SC4S_SQL_DATABASE_LOGS_TEST_MARIADB_GENERAL_005
+2026-06-08 10:19:00 18 [Warning] Access denied for user 'report_user'@'198.51.100.45' (using password: YES) marker=SC4S_SQL_DATABASE_LOGS_TEST_MARIADB_ERROR_007

@@ -1,0 +1,173 @@
+<form version="1.1" theme="light">
+  <label>Juniper SRX / Junos Structured Syslog Overview</label>
+  <description>Fixture-backed onboarding and first-triage view for Juniper SRX/Junos RT_FLOW, RT_IDP, and RT_UTM structured syslog rows. Dashboard presence does not imply replay/read-back validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="index" searchWhenChanged="true">
+      <label>Index</label>
+      <default>netfw</default>
+    </input>
+    <input type="text" token="host_filter" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <single>
+        <title>Total Juniper SRX events</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("juniper:junos:firewall","juniper:junos:idp","juniper:junos:utm") host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Flow events</title>
+        <search>
+          <query>index=$index$ sourcetype="juniper:junos:firewall" host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Blocked / denied rows</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("juniper:junos:firewall","juniper:junos:idp","juniper:junos:utm") host=$host_filter$ (action=blocked OR action=DROP OR action=drop OR juniper_event="RT_FLOW_SESSION_DENY" OR juniper_event="WEBFILTER_URL_BLOCKED") | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>IDP attack rows</title>
+        <search>
+          <query>index=$index$ sourcetype="juniper:junos:idp" host=$host_filter$ | stats count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Volume over time by source family</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("juniper:junos:firewall","juniper:junos:idp","juniper:junos:utm") host=$host_filter$ | eval juniper_family=case(sourcetype="juniper:junos:firewall","flow", sourcetype="juniper:junos:idp","idp", sourcetype="juniper:junos:utm","utm", true(),"other") | timechart count by juniper_family</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <chart>
+        <title>Action / event distribution</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("juniper:junos:firewall","juniper:junos:idp","juniper:junos:utm") host=$host_filter$ | eval juniper_action=coalesce(action,juniper_event) | top limit=12 juniper_action</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Top source / destination pairs</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("juniper:junos:firewall","juniper:junos:idp","juniper:junos:utm") host=$host_filter$ | stats count values(action) as actions values(juniper_event) as events values(transport) as transports values(dest_port) as dest_ports values(policy_name) as policies values(source_zone) as source_zones values(destination_zone) as destination_zones by src dest | sort - count | head 25</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Flow allow/deny review</title>
+        <search>
+          <query>index=$index$ sourcetype="juniper:junos:firewall" host=$host_filter$ | table _time host juniper_program juniper_event action src src_ip src_port dest dest_ip dest_port transport protocol_id policy_name source_zone destination_zone reason signature signature_id sc4s_marker marker _raw | sort - _time | head 75</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>IDP attack review</title>
+        <search>
+          <query>index=$index$ sourcetype="juniper:junos:idp" host=$host_filter$ | table _time host juniper_program juniper_event action severity signature signature_id src src_ip src_port dest dest_ip dest_port transport app user policy_name source_zone destination_zone sc4s_marker marker _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>UTM / web-filter review</title>
+        <search>
+          <query>index=$index$ sourcetype="juniper:junos:utm" host=$host_filter$ | table _time host juniper_program juniper_event action src src_ip src_port dest dest_ip dest_port url uri_path category reason profile user signature signature_id sc4s_marker marker _raw | sort - _time | head 50</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <chart>
+        <title>Policy, zone, and URL category coverage</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("juniper:junos:firewall","juniper:junos:idp","juniper:junos:utm") host=$host_filter$ | eval coverage=coalesce(policy_name,"policy_unknown") . " / " . coalesce(source_zone,"src_zone_unknown") . " -> " . coalesce(destination_zone,"dest_zone_unknown") . " / category=" . coalesce(category,"none") | top limit=15 coverage</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+      </chart>
+    </panel>
+    <panel>
+      <table>
+        <title>Source, sourcetype, and host coverage</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("juniper:junos:firewall","juniper:junos:idp","juniper:junos:utm") host=$host_filter$ | stats count min(_time) as first_seen max(_time) as last_seen dc(sc4s_marker) as fixture_markers values(juniper_program) as programs values(juniper_event) as events by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>Raw fixture/read-back context</title>
+        <search>
+          <query>index=$index$ sourcetype IN ("juniper:junos:firewall","juniper:junos:idp","juniper:junos:utm") host=$host_filter$ | table _time index sourcetype source host vendor product vendor_product juniper_program juniper_event action signature signature_id severity src src_ip src_port dest dest_ip dest_port transport protocol_id app user url category reason profile policy_name source_zone destination_zone sc4s_marker marker _raw | sort - _time | head 100</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <p><strong>Scope and evidence boundary:</strong> This dashboard is limited to fixture-backed Juniper SRX/Junos RFC5424 structured syslog smoke rows for RT_FLOW session create/deny, RT_IDP attack, and RT_UTM web-filter blocked events. It does not prove complete Junos event-catalogue coverage, Splunk Add-on parity, exact appliance/version validation, collector health, or SC4S/Splunk replay/read-back validation.</p>
+      </html>
+    </panel>
+  </row>
+</form>

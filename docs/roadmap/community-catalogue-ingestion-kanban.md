@@ -1,29 +1,35 @@
-# SC4S Manager community catalogue ingestion kanban
+# SC4S Manager community catalogue ingestion Kanban plan
 
 ## Goal
-
-Populate SC4S Manager with a searchable community catalogue that clearly separates official SC4S coverage, curated S6 packs, and community/source-corpus candidates from GitHub issues, pull requests, discussions, docs, tests, and examples.
-
-This roadmap depends on the local docs index strategy in `sc4s-manager-local-docs-index-strategy.md`. The local docs index provides the pinned upstream documentation, parser inventory, provenance, and search metadata needed before community material can be triaged safely.
+Populate SC4S Manager with a searchable, filterable catalogue that separates official SC4S built-in/Lite coverage, S6 curated packs, and community-sourced parser/config candidates from GitHub issues, PRs, discussions, docs, tests, and examples.
 
 ## Operating constraints
+- Product name is SC4S Manager.
+- `/opt/sc4s-manager` is service-owned; workers may need sudo for writes, and test artefacts must stay out of the repo unless intentionally generated source/evidence.
+- Dev test bootstrap uses `/tmp/sc4s-manager-test-venv` and `COVERAGE_FILE=/tmp/sc4s-manager.coverage`.
+- Community issue/PR content is not production-ready by default. Preserve provenance, URL attribution, source status, and validation state.
+- Do not promote community candidates to curated/validated unless static checks and representative Splunk ingestion evidence exist.
+- Tests must precede implementation for changed behavior.
 
-- `sc4s-inbuilt` and `sc4s-inbuilt-lite` describe official upstream SC4S material.
-- `sechub-resource` describes curated S6 pack material.
-- `community-extra` describes candidate material only.
-- A local docs index hit is evidence context, not validation proof.
-- Community issues, PRs, and discussion snippets must remain candidate-only until converted into file-backed artifacts and validated.
+## Target capability
+1. Official catalogue remains populated from pinned upstream SC4S refs/tags.
+2. Community candidates are ingested into a separate `community-extra` namespace.
+3. Catalogue entries expose provenance, candidate status, validation state, source URLs, and confidence/trust level.
+4. UI allows filtering by origin, vendor, product, quality/trust, artifact type, capability, source status, and validated-vs-candidate state.
+5. Docs explain how candidates become curated SecHub Resources SC4S packs.
+6. Release gates reject unvalidated community snippets being represented as validated/production-ready.
 
-## Kanban lanes
+## Candidate lifecycle reference
+- Detailed lifecycle and warning-state rules: `docs/roadmap/community-candidate-lifecycle.md`
 
-1. **Discover** — collect candidate URLs, vendor/product names, upstream paths, and local docs index matches.
-2. **Classify** — assign source class, input kind, provenance URL/path, and candidate warnings.
-3. **Curate** — convert useful material into reviewable pack files, fixtures, and source notes.
-4. **Validate** — run schema, fixture, parser/runtime, and Splunk-readback gates appropriate to the claim.
-5. **Promote or park** — promote only validated curated work; otherwise leave it as `community-extra` backlog.
+## Dependency: local docs index
+- Design and acceptance baseline: `docs/roadmap/sc4s-manager-local-docs-index-strategy.md`
+- Community catalogue ingestion must reuse the local docs index metadata/facets model so official docs, curated extras, and candidate snippets stay separate in search.
 
-## Acceptance
-
-- Community catalogue records reference the local docs index when upstream documentation or examples explain the candidate.
-- Search surfaces candidate status and warnings before any operator can import or stage work.
-- Promotion requires explicit maintainer review and validation evidence; no automated issue or docs scrape can mark a pack curated by itself.
+## Acceptance criteria
+- Backend unit tests prove parsing/normalization of issue/PR candidate records and separation from official/validated packs.
+- API contract tests prove facets and candidate provenance are returned without breaking existing catalogue clients.
+- Frontend tests/typecheck/build pass with modern filters for community/candidate fields.
+- Full backend suite passes with coverage gate.
+- Live manager API shows populated official catalogue plus any seeded community candidate fixtures with correct `community-extra` facets.
+- No secrets or credentials are written into generated catalogue files or evidence.

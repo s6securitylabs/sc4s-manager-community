@@ -548,8 +548,8 @@
     }
   ],
   "provenance": {
-    "origin": "sechub-resource",
-    "pack_class": "sechub-resource",
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
     "source": {
       "type": "mixed",
       "reference": "PAN-OS official syslog docs, pan.dev syslog landing page, Splunk Add-on for Palo Alto Networks docs, and upstream SC4S pan_panos parser metadata.",
@@ -850,5 +850,19 @@
       "scripts/send_tls_6514.sh": "sha256:8660b52443d42c280e52406cfeeaac87dd81f912f3aff270e1f740b8ce05fcae",
       "README.md": "sha256:5945bd0753daabde357a1d83c9ef6b901514e0bb0201b800004a999497a2498c"
     }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "csv",
+    "supported_transport_refs": [
+      "tls_rfc5425",
+      "tcp_rfc5424",
+      "udp_bsd",
+      "tcp_bsd"
+    ],
+    "notes": "PAN-OS/Panorama syslog CSV streams are native SC4S-compatible source delivery.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
   }
 }

@@ -9,28 +9,23 @@ const { sourcesPayload, healthPayload, cataloguePayload, entryPayload, importsPa
   sourcesPayload: {
     sources: [
       {
-        source_id: 'official',
+        source_id: 'embedded',
         enabled: true,
-        catalogue_url: 'https://sechub.s6ops.com/data/catalogue.json',
-        last_sync: '2026-06-01T00:00:00Z',
-        entry_count: 396,
-        manifest_download_count: 2,
+        entry_count: 67,
+        snapshot: { source_revision: '839c21b2e8d2739b84eaf2075cad8a7d9ee0710f' },
       },
     ],
   },
   healthPayload: {
-    source_id: 'official',
+    source_id: 'embedded',
     checked_at: '2026-06-14T00:00:00Z',
-    overall_ok: false,
-    catalogue: { entry_count: 396, product_release_count: 59 },
-    manifest: { download_count: 2 },
+    overall_ok: true,
+    catalogue: { entry_count: 67 },
+    manifest: { download_count: 0 },
     sample_entry: { ok: true, id: 'pan_panos' },
-    sample_bundle: { name: 'sample_bundle', ok: false, error_code: 'checksum_mismatch', message: 'downloaded bundle sha256 does not match entry detail', next_action: 'Do not apply the bundle.' },
+    sample_bundle: { ok: true, skipped: true },
     checks: [
-      { name: 'catalogue', url: 'https://sechub.s6ops.com/data/catalogue.json', ok: true },
-      { name: 'manifest', url: 'https://sechub.s6ops.com/downloads/manifest.json', ok: true },
-      { name: 'sample_entry', url: 'https://sechub.s6ops.com/data/entries/pan_panos.json', ok: true },
-      { name: 'sample_bundle', url: 'https://sechub.s6ops.com/downloads/pan_panos.zip', ok: false, error_code: 'checksum_mismatch', message: 'downloaded bundle sha256 does not match entry detail', next_action: 'Do not apply the bundle.' },
+      { name: 'snapshot_integrity', ok: true },
     ],
     trust_semantics: {
       remote_labels_are_advisory: true,
@@ -39,7 +34,7 @@ const { sourcesPayload, healthPayload, cataloguePayload, entryPayload, importsPa
     },
   },
   cataloguePayload: {
-    source_id: 'official',
+    source_id: 'embedded',
     filters: { downloadable_only: 'yes' },
     entries: [
       {
@@ -49,36 +44,11 @@ const { sourcesPayload, healthPayload, cataloguePayload, entryPayload, importsPa
         product: 'PAN-OS',
         version: '1.2.3',
         download_available: true,
-        product_releases: [{
-          kind: 'splunk_ta_product_release',
-          product_id: 'pan-panos',
-          display_name: 'Palo Alto PAN-OS',
-          app_id: 'Splunk_TA_pan_panos',
-          version: '1.2.4',
-          filename: 'Splunk_TA_pan_panos-1.2.4.tgz',
-          url: 'https://sechub.s6ops.com/downloads/Splunk_TA_pan_panos-1.2.4.tgz',
-          sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-          source_components: ['pan_panos'],
-          install_scope: 'product_deployment',
-          manager_importable: false,
-        }, {
-          kind: 'splunk_ta_product_release',
-          product_id: 'panorama',
-          display_name: 'Palo Alto Panorama',
-          app_id: 'Splunk_TA_panorama',
-          version: '2.0.0',
-          filename: 'Splunk_TA_panorama-2.0.0.tgz',
-          url: 'https://sechub.s6ops.com/downloads/Splunk_TA_panorama-2.0.0.tgz',
-          sha256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-          source_components: ['pan_panos'],
-          install_scope: 'product_deployment',
-          manager_importable: false,
-        }],
       },
     ],
   },
   entryPayload: {
-    source_id: 'official',
+    source_id: 'embedded',
     refresh: false,
     eligibility: { download_available: true, runtime_candidate_count: 2 },
     entry: {
@@ -86,14 +56,14 @@ const { sourcesPayload, healthPayload, cataloguePayload, entryPayload, importsPa
       display_name: 'Palo Alto PAN-OS',
       vendor: 'Palo Alto',
       product: 'PAN-OS',
-      download: { filename: 'pan_panos-1.2.3.zip' },
+      source_type: 'embedded_library',
     },
   },
   importsPayload: {
     imports: [
       {
         import_id: 'imp_pan_panos_20260601T000000Z',
-        source_id: 'official',
+        source_id: 'embedded',
         entry_id: 'pan_panos',
         created_at: '2026-06-01T00:00:00Z',
         apply_allowed: true,
@@ -131,8 +101,8 @@ vi.mock('@tanstack/react-query', () => ({
 }));
 
 describe('library helpers', () => {
-  it('formats official source with the canonical SecHub catalogue URL', () => {
-    expect(formatSourceLine(sourcesPayload.sources[0])).toContain('sechub.s6ops.com');
+  it('formats the pinned embedded snapshot revision', () => {
+    expect(formatSourceLine(sourcesPayload.sources[0])).toContain('839c21b2e8d2739b84eaf2075cad8a7d9ee0710f');
   });
 
   it('labels import states in plain language', () => {
@@ -147,7 +117,7 @@ describe('Library route', () => {
     for (const key of Object.keys(queryErrors)) delete queryErrors[key];
   });
 
-  it('renders the browse-download-check-install flow with plain-language labels', () => {
+  it('renders the embedded check-and-install flow with plain-language labels', () => {
     const markup = renderToStaticMarkup(
       <MantineProvider>
         <Library />
@@ -155,21 +125,13 @@ describe('Library route', () => {
     );
 
     expect(markup).toContain('SC4S Library');
-    expect(markup).toContain('Download');
     expect(markup).toContain('Check pack');
     expect(markup).toContain('Install to SC4S');
     expect(markup).toContain('SC4S config files to install');
-    expect(markup).toContain('Connection checks');
-    expect(markup).toContain('59 related product TA releases');
-    expect(markup).toContain('SecHub review labels are a starting point, not proof');
+    expect(markup).toContain('Local integrity check');
+    expect(markup).toContain('Embedded availability is not local proof');
     expect(markup).toContain('Nothing is installed until you approve it');
-    expect(markup).toContain('Product TA available');
-    expect(markup).toContain('separate deployment artifact');
-    expect(markup).toContain('Manager imports only this SC4S Library pack');
-    expect(markup).toContain('Open Palo Alto PAN-OS TA v1.2.4');
-    expect(markup).toContain('Open Palo Alto Panorama TA v2.0.0');
-    expect(markup).toContain('checksum_mismatch');
-    expect(markup).toContain('Do not apply the bundle');
+    expect(markup).toContain('It does not poll, refresh, or download from a remote source at runtime');
   });
 
   it('surfaces source, catalogue, detail, and import query failures instead of trusted empty states', () => {

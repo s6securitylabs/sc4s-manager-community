@@ -1,0 +1,1663 @@
+{
+  "schema_version": "0.1",
+  "id": "microsoft_defender_xdr",
+  "version": "0.1.6",
+  "url": "https://learn.microsoft.com/en-us/defender-xdr/advanced-hunting-schema-tables",
+  "description": "Curated SecHub Resources SC4S pack for Microsoft Defender XDR / Defender for Endpoint/Identity/Cloud Apps/Defender for Office 365 JSON relays, covering fixture-backed device process, network, file, registry, email, attachment, alert metadata/evidence, identity, directory, query, vulnerability-management, and cloud app activity records.",
+  "display_name": "Microsoft Defender XDR",
+  "vendor": "microsoft",
+  "product": "defender_xdr",
+  "default_index": "epintel",
+  "default_source": "microsoft_defender_xdr",
+  "listener": {
+    "source_id": "MICROSOFT_DEFENDER_XDR",
+    "transport": "tcp",
+    "port": 20067,
+    "env": {
+      "SC4S_LISTEN_MICROSOFT_DEFENDER_XDR_TCP_PORT": "20067",
+      "SOURCE_ALL_SET_APPEND": "MICROSOFT_DEFENDER_XDR"
+    }
+  },
+  "sourcetypes": {
+    "device_process": "microsoft:defender:xdr:device_process",
+    "device_network": "microsoft:defender:xdr:device_network",
+    "file_event": "microsoft:defender:xdr:file_event",
+    "alert_info": "microsoft:defender:xdr:alert_info",
+    "alert_evidence": "microsoft:defender:xdr:alert_evidence",
+    "identity_logon": "microsoft:defender:xdr:identity_logon",
+    "identity_directory": "microsoft:defender:xdr:identity_directory",
+    "identity_query": "microsoft:defender:xdr:identity_query",
+    "cloud_app": "microsoft:defender:xdr:cloud_app",
+    "email_event": "microsoft:defender:xdr:email_event",
+    "email_url": "microsoft:defender:xdr:email_url",
+    "device_registry": "microsoft:defender:xdr:device_registry",
+    "email_attachment": "microsoft:defender:xdr:email_attachment",
+    "vulnerability": "microsoft:defender:xdr:vulnerability"
+  },
+  "event_families": [
+    {
+      "id": "device_process",
+      "label": "Defender device process events",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"DeviceProcessEvents\"",
+      "expected_sourcetype": "microsoft:defender:xdr:device_process",
+      "primary_id_field": "ReportId",
+      "required_fields": [
+        "Timestamp",
+        "DeviceId",
+        "DeviceName",
+        "ActionType",
+        "FileName"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "device_network",
+      "label": "Defender device network events",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"DeviceNetworkEvents\"",
+      "expected_sourcetype": "microsoft:defender:xdr:device_network",
+      "primary_id_field": "ReportId",
+      "required_fields": [
+        "Timestamp",
+        "DeviceId",
+        "DeviceName",
+        "ActionType",
+        "RemoteIP"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "file_event",
+      "label": "Defender device file events",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"DeviceFileEvents\"",
+      "expected_sourcetype": "microsoft:defender:xdr:file_event",
+      "primary_id_field": "ReportId",
+      "required_fields": [
+        "Timestamp",
+        "DeviceId",
+        "DeviceName",
+        "ActionType",
+        "FileName"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "alert_info",
+      "label": "Defender alert metadata",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"AlertInfo\"",
+      "expected_sourcetype": "microsoft:defender:xdr:alert_info",
+      "primary_id_field": "AlertId",
+      "required_fields": [
+        "Timestamp",
+        "AlertId",
+        "Title",
+        "Severity"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "alert_evidence",
+      "label": "Defender alert evidence",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"AlertEvidence\"",
+      "expected_sourcetype": "microsoft:defender:xdr:alert_evidence",
+      "primary_id_field": "AlertId",
+      "required_fields": [
+        "Timestamp",
+        "AlertId",
+        "EntityType",
+        "EvidenceRole"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "identity_logon",
+      "label": "Defender for Identity logon events",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"IdentityLogonEvents\"",
+      "expected_sourcetype": "microsoft:defender:xdr:identity_logon",
+      "primary_id_field": "ReportId",
+      "required_fields": [
+        "Timestamp",
+        "ActionType",
+        "AccountUpn",
+        "DeviceName"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "identity_directory",
+      "label": "Defender for Identity directory events",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"IdentityDirectoryEvents\"",
+      "expected_sourcetype": "microsoft:defender:xdr:identity_directory",
+      "primary_id_field": "ReportId",
+      "required_fields": [
+        "Timestamp",
+        "ActionType",
+        "AccountUpn",
+        "DeviceName"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "identity_query",
+      "label": "Defender for Identity query events",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"IdentityQueryEvents\"",
+      "expected_sourcetype": "microsoft:defender:xdr:identity_query",
+      "primary_id_field": "ReportId",
+      "required_fields": [
+        "Timestamp",
+        "ActionType",
+        "AccountUpn",
+        "Query"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "cloud_app",
+      "label": "Defender for Cloud Apps events",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"CloudAppEvents\"",
+      "expected_sourcetype": "microsoft:defender:xdr:cloud_app",
+      "primary_id_field": "ReportId",
+      "required_fields": [
+        "Timestamp",
+        "ActionType",
+        "Application",
+        "AccountUpn"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "email_event",
+      "label": "Defender for Office 365 email events",
+      "match_engine": "pcre",
+      "match": "\\\"Table\\\"\\s*:\\s*\\\"EmailEvents\\\"",
+      "expected_sourcetype": "microsoft:defender:xdr:email_event",
+      "primary_id_field": "NetworkMessageId",
+      "required_fields": [
+        "Timestamp",
+        "NetworkMessageId",
+        "SenderFromAddress",
+        "RecipientEmailAddress",
+        "DeliveryAction"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "email_url",
+      "label": "Defender for Office 365 email URL evidence",
+      "match_engine": "pcre",
+      "match": "\\\"Table\\\"\\s*:\\s*\\\"EmailUrlInfo\\\"",
+      "expected_sourcetype": "microsoft:defender:xdr:email_url",
+      "primary_id_field": "NetworkMessageId",
+      "required_fields": [
+        "Timestamp",
+        "NetworkMessageId",
+        "Url"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "device_registry",
+      "label": "Defender device registry events",
+      "match_engine": "pcre",
+      "match": "\\\"Table\\\"\\s*:\\s*\\\"DeviceRegistryEvents\\\"",
+      "expected_sourcetype": "microsoft:defender:xdr:device_registry",
+      "primary_id_field": "ReportId",
+      "required_fields": [
+        "Timestamp",
+        "DeviceId",
+        "DeviceName",
+        "ActionType",
+        "RegistryKey"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "email_attachment",
+      "label": "Defender for Office 365 email attachment info",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"EmailAttachmentInfo\"",
+      "expected_sourcetype": "microsoft:defender:xdr:email_attachment",
+      "primary_id_field": "NetworkMessageId",
+      "required_fields": [
+        "Timestamp",
+        "NetworkMessageId",
+        "FileName",
+        "SHA256"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    },
+    {
+      "id": "vulnerability",
+      "label": "Defender TVM software vulnerability rows",
+      "match_engine": "pcre",
+      "match": "\"Table\"\\s*:\\s*\"DeviceTvmSoftwareVulnerabilities\"",
+      "expected_sourcetype": "microsoft:defender:xdr:vulnerability",
+      "primary_id_field": "CveId",
+      "required_fields": [
+        "Timestamp",
+        "DeviceId",
+        "DeviceName",
+        "SoftwareName",
+        "CveId",
+        "VulnerabilitySeverityLevel"
+      ],
+      "timestamp_fields": [
+        "Timestamp"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Microsoft",
+    "product": "defender_xdr",
+    "vendor_product": "microsoft:defender_xdr",
+    "defender_table": "Advanced hunting/export table name",
+    "device_name": "Defender DeviceName",
+    "device_id": "Defender DeviceId",
+    "action": "Defender ActionType",
+    "signature": "Alert title or ActionType",
+    "severity": "Alert severity",
+    "category": "Alert category",
+    "user": "AccountUpn or InitiatingProcessAccountUpn",
+    "process": "FileName for process events",
+    "process_command_line": "ProcessCommandLine",
+    "parent_process": "InitiatingProcessFileName",
+    "parent_process_command_line": "InitiatingProcessCommandLine",
+    "file_name": "FileName for file events",
+    "file_path": "FolderPath",
+    "file_hash": "SHA256",
+    "src_ip": "LocalIP for network events",
+    "src_port": "LocalPort for network events",
+    "dest_ip": "RemoteIP for network events",
+    "dest_port": "RemotePort for network events",
+    "transport": "Protocol",
+    "url": "RemoteUrl",
+    "alert_id": "AlertId",
+    "entity_type": "AlertEvidence EntityType",
+    "evidence_role": "AlertEvidence EvidenceRole",
+    "marker": "Synthetic fixture marker only",
+    "target_user": "TargetAccountUpn for directory events",
+    "user_sid": "AccountSid when present in identity events",
+    "target_user_sid": "TargetAccountSid for directory events",
+    "user_id": "AccountObjectId for identity/cloud app events",
+    "application": "Application for identity/cloud app records",
+    "logon_type": "IdentityLogonEvents LogonType",
+    "query": "IdentityQueryEvents Query value",
+    "query_type": "IdentityQueryEvents QueryType value",
+    "object_name": "CloudAppEvents ObjectName",
+    "object_type": "CloudAppEvents ObjectType",
+    "activity_type": "CloudAppEvents ActivityType",
+    "additional_fields": "AdditionalFields JSON string for identity directory context",
+    "network_message_id": "EmailEvents/EmailUrlInfo NetworkMessageId for message/URL correlation",
+    "internet_message_id": "EmailEvents InternetMessageId",
+    "sender": "EmailEvents SenderFromAddress or SenderMailFromAddress",
+    "recipient": "EmailEvents RecipientEmailAddress",
+    "subject": "EmailEvents Subject; fixture uses a safe synthetic value",
+    "delivery_action": "EmailEvents DeliveryAction",
+    "delivery_location": "EmailEvents DeliveryLocation",
+    "threat_types": "EmailEvents ThreatTypes",
+    "detection_methods": "EmailEvents DetectionMethods",
+    "confidence_level": "EmailEvents ConfidenceLevel",
+    "email_direction": "EmailEvents EmailDirection",
+    "url_domain": "EmailUrlInfo UrlDomain",
+    "url_location": "EmailUrlInfo UrlLocation",
+    "registry_key": "DeviceRegistryEvents RegistryKey",
+    "registry_value_name": "DeviceRegistryEvents RegistryValueName",
+    "registry_value_data": "DeviceRegistryEvents RegistryValueData",
+    "file_type": "EmailAttachmentInfo FileType",
+    "software_vendor": "DeviceTvmSoftwareVulnerabilities SoftwareVendor",
+    "software_name": "DeviceTvmSoftwareVulnerabilities SoftwareName",
+    "software_version": "DeviceTvmSoftwareVulnerabilities SoftwareVersion",
+    "cve": "DeviceTvmSoftwareVulnerabilities CveId",
+    "recommended_security_update": "DeviceTvmSoftwareVulnerabilities RecommendedSecurityUpdate",
+    "recommended_security_update_id": "DeviceTvmSoftwareVulnerabilities RecommendedSecurityUpdateId",
+    "dest": "Analyst destination alias from DeviceName or RemoteIP depending on Defender table",
+    "dest_device": "IdentityDirectoryEvents DestinationDeviceName",
+    "process_user": "InitiatingProcessAccountUpn actor/process account",
+    "parent_process_hash": "InitiatingProcessSHA256 parent process hash",
+    "previous_file_name": "DeviceFileEvents PreviousFileName for rename/move context",
+    "previous_file_path": "DeviceFileEvents PreviousFolderPath for rename/move context",
+    "service_source": "AlertInfo ServiceSource",
+    "detection_source": "AlertInfo DetectionSource",
+    "app_instance_id": "CloudAppEvents AppInstanceId",
+    "mail_from": "EmailEvents SenderMailFromAddress envelope sender"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-microsoft_defender_xdr.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/microsoft_defender_xdr_overview.xml"
+    ],
+    "test_events": [
+      "test-events/microsoft_defender_xdr_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20067.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/microsoft_defender_xdr_reduction_candidates.csv",
+      "validation/preflight-2026-06-07.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / Defender JSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20067,
+      "notes": "Dedicated TCP listener for one Defender XDR JSON record per line from API/Event Hub/Cribl relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20067,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "Microsoft Defender XDR advanced hunting / security alert JSON tables",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in public Microsoft Learn schema table documentation and synthetic-equivalent fixtures for selected endpoint, alert, identity, cloud app, email-security, and registry tables; collector wrapping must be validated locally."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-07",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Microsoft Learn public Defender XDR advanced hunting schema tables and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent Defender XDR JSON records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live Defender relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Microsoft Defender XDR JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "microsoft_defender_xdr_json"
+      ],
+      "event_count": 14,
+      "marker_prefix": "SC4S_MICROSOFT_DEFENDER_XDR_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20067.sh"
+    },
+    "readback": {
+      "spl": "index=epintel sechub_fixture_marker=\"SC4S_MICROSOFT_DEFENDER_XDR_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product defender_table action device_name device_id dest dest_device user process_user target_user process process_command_line parent_process parent_process_command_line parent_process_hash src_ip dest_ip dest_port transport url file_name file_path previous_file_name previous_file_path file_type object_name object_type application app_instance_id activity_type query query_type alert_id severity category signature service_source detection_source entity_type evidence_role network_message_id internet_message_id sender mail_from recipient delivery_action delivery_location threat_types detection_methods confidence_level email_direction url_domain url_location registry_key registry_value_name registry_value_data cve software_vendor software_name software_version recommended_security_update recommended_security_update_id marker _raw",
+      "expected_count": 14,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "defender_table",
+        "device identity",
+        "action/signature",
+        "process/network/file fields",
+        "alert_id/evidence correlation",
+        "timestamp",
+        "identity logon/directory/query fields",
+        "cloud app user/application/object fields",
+        "identity fields",
+        "cloud app fields",
+        "email message and URL correlation fields",
+        "registry key/value context",
+        "email attachment fields",
+        "TVM vulnerability fields",
+        "raw and analyst destination aliases",
+        "process actor and parent hash context",
+        "file rename previous-name/path context",
+        "alert service/detection source fields",
+        "cloud app instance context",
+        "email envelope sender and delivery context"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-07",
+      "summary": "2026-06-07 local preflight found no TCP listener on 127.0.0.1:20067 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-07.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-07.md",
+        "summary": "Command-grounded local preflight evidence for missing Defender XDR TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20067,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated Microsoft Defender XDR relay listener"
+        }
+      ],
+      "required_indexes": [
+        "epintel"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to epintel",
+        "Search role can read epintel"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "microsoft_defender_xdr_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/microsoft_defender_xdr/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/microsoft_defender_xdr/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/microsoft_defender_xdr/compose.yaml",
+      "compose_project": "sechub-microsoft-defender-xdr-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "epintel index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/microsoft_defender_xdr/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/microsoft_defender_xdr/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/microsoft_defender_xdr/scripts/send_tcp_20067.sh 127.0.0.1 20067",
+        "splunk_summary_readback": "index=epintel sechub_fixture_marker=\"SC4S_MICROSOFT_DEFENDER_XDR_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=epintel sechub_fixture_marker=\"SC4S_MICROSOFT_DEFENDER_XDR_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product defender_table action device_name device_id dest dest_device user process_user target_user process process_command_line parent_process parent_process_command_line parent_process_hash src_ip dest_ip dest_port transport url file_name file_path previous_file_name previous_file_path file_type object_name object_type application app_instance_id activity_type query query_type alert_id severity category signature service_source detection_source entity_type evidence_role network_message_id internet_message_id sender mail_from recipient delivery_action delivery_location threat_types detection_methods confidence_level email_direction url_domain url_location registry_key registry_value_name registry_value_data cve software_vendor software_name software_version recommended_security_update recommended_security_update_id marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "epintel",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/microsoft_defender_xdr/splunk -> /opt/splunk/etc/apps/sechub_microsoft_defender_xdr:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20067,
+          "host_port_env": "SC4S_MICROSOFT_DEFENDER_XDR_PORT",
+          "source_id": "MICROSOFT_DEFENDER_XDR"
+        },
+        "parser_mount": "packs/microsoft_defender_xdr/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "microsoft_defender_endpoint_xdr",
+          "source_shape": "json_relay",
+          "event_families": [
+            "device_process",
+            "device_network",
+            "file_event",
+            "device_registry"
+          ],
+          "expected_sourcetypes": [
+            "microsoft:defender:xdr:device_process",
+            "microsoft:defender:xdr:device_network",
+            "microsoft:defender:xdr:file_event",
+            "microsoft:defender:xdr:device_registry"
+          ],
+          "data_structures": [
+            "endpoint process record",
+            "endpoint network record",
+            "endpoint file record",
+            "endpoint registry record"
+          ],
+          "markers": [
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_PROCESS_001",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_NETWORK_002",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_FILE_003",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_REGISTRY_012"
+          ]
+        },
+        {
+          "source": "microsoft_defender_alert_identity",
+          "source_shape": "json_relay",
+          "event_families": [
+            "alert_info",
+            "alert_evidence",
+            "identity_logon",
+            "identity_directory",
+            "identity_query"
+          ],
+          "expected_sourcetypes": [
+            "microsoft:defender:xdr:alert_info",
+            "microsoft:defender:xdr:alert_evidence",
+            "microsoft:defender:xdr:identity_logon",
+            "microsoft:defender:xdr:identity_directory",
+            "microsoft:defender:xdr:identity_query"
+          ],
+          "data_structures": [
+            "alert metadata record",
+            "alert evidence record",
+            "identity logon record",
+            "identity directory record",
+            "identity query record"
+          ],
+          "markers": [
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_ALERTINFO_004",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_EVIDENCE_005",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_IDENTITY_LOGON_006",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_IDENTITY_DIRECTORY_007",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_IDENTITY_QUERY_008"
+          ]
+        },
+        {
+          "source": "microsoft_defender_email_cloud_tvm",
+          "source_shape": "json_relay",
+          "event_families": [
+            "email_event",
+            "email_url",
+            "email_attachment",
+            "vulnerability",
+            "cloud_app"
+          ],
+          "expected_sourcetypes": [
+            "microsoft:defender:xdr:email_event",
+            "microsoft:defender:xdr:email_url",
+            "microsoft:defender:xdr:email_attachment",
+            "microsoft:defender:xdr:vulnerability",
+            "microsoft:defender:xdr:cloud_app"
+          ],
+          "data_structures": [
+            "email message record",
+            "email URL record",
+            "email attachment record",
+            "TVM vulnerability record",
+            "cloud app activity record"
+          ],
+          "markers": [
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_EMAIL_010",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_EMAIL_URL_011",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_EMAIL_ATTACHMENT_013",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_TVM_VULN_014",
+            "SC4S_MICROSOFT_DEFENDER_XDR_TEST_CLOUDAPP_009"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live Defender tenant export, Event Hub/streaming API delivery, Advanced Hunting export, or collector relay was exercised by adding this harness.",
+        "The harness uses synthetic-equivalent fixture JSON and does not prove API pagination, checkpoint custody, collector envelope metadata, incident/post-delivery table coverage, or export completeness.",
+        "Passing the harness would be lab replay/read-back evidence for this fixture route only, not field validation for a real Defender tenant."
+      ]
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "microsoft_defender_xdr_json",
+      "label": "Microsoft Defender XDR synthetic-equivalent JSON records",
+      "path": "test-events/microsoft_defender_xdr_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 14,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_PROCESS_001",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_NETWORK_002",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_FILE_003",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_ALERTINFO_004",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_EVIDENCE_005",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_IDENTITY_LOGON_006",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_IDENTITY_DIRECTORY_007",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_IDENTITY_QUERY_008",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_CLOUDAPP_009",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_EMAIL_010",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_EMAIL_URL_011",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_REGISTRY_012",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_EMAIL_ATTACHMENT_013",
+        "SC4S_MICROSOFT_DEFENDER_XDR_TEST_TVM_VULN_014"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "Timestamp",
+        "primary_timezone": "UTC when ISO-8601 Z suffix is present",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "Defender/collector timestamp normalization policy"
+        ],
+        "notes": "Fixtures use UTC ISO-8601 Timestamp values. Production collectors must preserve or map this field."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping; fixtures use example domains and RFC5737 documentation IPs",
+        "notes": "Process command line, network, file, registry, email, attachment, alert/evidence, identity, cloud app, TVM vulnerability, URL/IP, and object context are retained for reduction review."
+      },
+      "expected_families": [
+        "device_process",
+        "device_network",
+        "file_event",
+        "alert_info",
+        "alert_evidence",
+        "identity_logon",
+        "identity_directory",
+        "identity_query",
+        "cloud_app",
+        "email_event",
+        "email_url",
+        "device_registry",
+        "email_attachment",
+        "vulnerability"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-microsoft_defender_xdr.conf",
+      "target_path": "local/config/app_parsers/syslog/app-microsoft_defender_xdr.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/microsoft_defender_xdr.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/microsoft_defender_xdr_overview.xml",
+      "target_path": "splunk/default/data/ui/views/microsoft_defender_xdr_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/microsoft_defender_xdr_test_events.txt",
+      "target_path": "test-events/microsoft_defender_xdr_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20067.sh",
+      "target_path": "scripts/send_tcp_20067.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "description": "Disposable Docker Compose Splunk TEST + SC4S TEST replay/read-back harness requirements for Microsoft Defender XDR fixtures."
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/microsoft_defender_xdr_reduction_candidates.csv",
+      "target_path": "docs/microsoft_defender_xdr_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_07",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-07.md",
+      "target_path": "validation/preflight-2026-06-07.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Microsoft Learn Defender XDR advanced hunting schema table documentation for endpoint, alert, identity, email-security, TVM vulnerability, registry, and cloud app tables; fixtures are synthetic-equivalent examples shaped to public table fields.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example.test identities and RFC5737/documentation IP ranges; no customer or tenant data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-07",
+      "notes": "Created from the v1 high-value pack backlog as a conservative endpoint/security-alert pack; expanded in 2026-06 with public-schema-grounded Defender for Identity and Defender for Cloud Apps fixture shapes. Expanded on 2026-06-15 with public Microsoft Learn-grounded email-security and registry event table fixtures; expanded on 2026-06-16 with EmailAttachmentInfo and DeviceTvmSoftwareVulnerabilities fixtures."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "AccountUpn",
+            "InitiatingProcessAccountUpn",
+            "TargetAccountUpn",
+            "SenderFromAddress",
+            "SenderMailFromAddress",
+            "RecipientEmailAddress",
+            "process_user",
+            "mail_from"
+          ],
+          "status": "partial",
+          "notes": "Actor or process account where present."
+        },
+        "src": {
+          "source_fields": [
+            "IPAddress",
+            "LocalIP"
+          ],
+          "status": "partial",
+          "notes": "Local endpoint IP for network events."
+        },
+        "dest": {
+          "source_fields": [
+            "DeviceName",
+            "RemoteIP",
+            "RemoteUrl",
+            "DestinationDeviceName",
+            "ObjectName",
+            "Url",
+            "UrlDomain",
+            "RegistryKey",
+            "dest",
+            "dest_device",
+            "app_instance_id"
+          ],
+          "status": "partial",
+          "notes": "Device or remote endpoint context depending on family."
+        },
+        "action": {
+          "source_fields": [
+            "ActionType",
+            "ActivityType",
+            "DeliveryAction",
+            "action",
+            "delivery_action"
+          ],
+          "status": "partial",
+          "notes": "Native Defender action type; not normalized to a complete action taxonomy."
+        },
+        "signature": {
+          "source_fields": [
+            "ActionType",
+            "ActivityType",
+            "Title",
+            "ThreatTypes",
+            "RegistryKey",
+            "service_source",
+            "detection_source"
+          ],
+          "status": "partial",
+          "notes": "Alert title or native action grouping."
+        },
+        "severity": {
+          "source_fields": [
+            "Severity"
+          ],
+          "status": "partial",
+          "notes": "Alert severity when present."
+        },
+        "process": {
+          "source_fields": [
+            "FileName",
+            "ProcessCommandLine",
+            "InitiatingProcessFileName",
+            "process_user",
+            "parent_process_hash"
+          ],
+          "status": "partial",
+          "notes": "Process and parent-process context."
+        },
+        "app": {
+          "source_fields": [
+            "Application",
+            "app_instance_id",
+            "activity_type"
+          ],
+          "status": "partial",
+          "notes": "Identity and CloudAppEvents application label where present."
+        },
+        "object": {
+          "source_fields": [
+            "ObjectName",
+            "ObjectType",
+            "object_name",
+            "object_type"
+          ],
+          "status": "partial",
+          "notes": "Cloud app object context where present."
+        },
+        "query": {
+          "source_fields": [
+            "Query",
+            "QueryType"
+          ],
+          "status": "partial",
+          "notes": "IdentityQueryEvents query context where present."
+        },
+        "email": {
+          "source_fields": [
+            "NetworkMessageId",
+            "InternetMessageId",
+            "SenderFromAddress",
+            "RecipientEmailAddress",
+            "Subject",
+            "DeliveryAction",
+            "ThreatTypes",
+            "EmailAttachmentInfo",
+            "FileName",
+            "FileType",
+            "SHA256",
+            "mail_from",
+            "internet_message_id",
+            "delivery_location",
+            "detection_methods",
+            "confidence_level",
+            "email_direction"
+          ],
+          "status": "partial",
+          "notes": "Defender for Office 365 email-message triage context; not complete Email data model parity."
+        },
+        "registry": {
+          "source_fields": [
+            "RegistryKey",
+            "RegistryValueName",
+            "RegistryValueData"
+          ],
+          "status": "partial",
+          "notes": "DeviceRegistryEvents key/value context for endpoint change triage."
+        },
+        "vulnerability": {
+          "source_fields": [
+            "CveId",
+            "VulnerabilitySeverityLevel",
+            "SoftwareVendor",
+            "SoftwareName",
+            "SoftwareVersion",
+            "RecommendedSecurityUpdate"
+          ],
+          "status": "partial",
+          "notes": "TVM vulnerability row context for endpoint vulnerability triage; not complete Vulnerabilities data model parity."
+        },
+        "file_rename": {
+          "source_fields": [
+            "PreviousFileName",
+            "PreviousFolderPath",
+            "previous_file_name",
+            "previous_file_path"
+          ],
+          "status": "partial",
+          "notes": "DeviceFileEvents prior file name/path context for rename or move-style endpoint activity; not complete file-lifecycle validation."
+        },
+        "alert_source": {
+          "source_fields": [
+            "ServiceSource",
+            "DetectionSource",
+            "service_source",
+            "detection_source"
+          ],
+          "status": "partial",
+          "notes": "AlertInfo service/detection source context for triage grouping; not a validated Microsoft alert taxonomy."
+        }
+      },
+      "notes": "Partial Endpoint/Alerts/Network Traffic/Authentication/Change/Application CIM guidance only; not full Microsoft/Splunk TA parity."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "AccountUpn",
+            "InitiatingProcessAccountUpn",
+            "TargetAccountUpn",
+            "process_user",
+            "mail_from"
+          ],
+          "status": "partial",
+          "notes": "Actor/process user."
+        },
+        "device.hostname": {
+          "source_fields": [
+            "DeviceName",
+            "dest",
+            "dest_device"
+          ],
+          "status": "partial",
+          "notes": "Endpoint hostname."
+        },
+        "activity_name": {
+          "source_fields": [
+            "ActionType",
+            "Title",
+            "ActivityType",
+            "action",
+            "delivery_action"
+          ],
+          "status": "partial",
+          "notes": "Native action or alert title."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "LocalIP",
+            "IPAddress"
+          ],
+          "status": "partial",
+          "notes": "Local endpoint IP."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "RemoteIP"
+          ],
+          "status": "partial",
+          "notes": "Remote endpoint IP."
+        },
+        "severity": {
+          "source_fields": [
+            "Severity"
+          ],
+          "status": "partial",
+          "notes": "Alert severity token."
+        },
+        "app_name": {
+          "source_fields": [
+            "Application",
+            "app_instance_id",
+            "activity_type"
+          ],
+          "status": "partial",
+          "notes": "Application/cloud app context."
+        },
+        "email.uid": {
+          "source_fields": [
+            "NetworkMessageId",
+            "InternetMessageId",
+            "internet_message_id"
+          ],
+          "status": "partial",
+          "notes": "Email correlation identifiers."
+        },
+        "email.sender": {
+          "source_fields": [
+            "SenderFromAddress",
+            "SenderMailFromAddress",
+            "mail_from"
+          ],
+          "status": "partial",
+          "notes": "Email sender address."
+        },
+        "email.recipients": {
+          "source_fields": [
+            "RecipientEmailAddress"
+          ],
+          "status": "partial",
+          "notes": "Email recipient address."
+        },
+        "registry.key": {
+          "source_fields": [
+            "RegistryKey",
+            "RegistryValueName",
+            "RegistryValueData"
+          ],
+          "status": "partial",
+          "notes": "Registry object context."
+        },
+        "vulnerability.cve": {
+          "source_fields": [
+            "CveId"
+          ],
+          "status": "partial",
+          "notes": "CVE identifier from DeviceTvmSoftwareVulnerabilities."
+        },
+        "file.name": {
+          "source_fields": [
+            "FileName",
+            "previous_file_name",
+            "previous_file_path"
+          ],
+          "status": "partial",
+          "notes": "File or email attachment name depending on family."
+        },
+        "finding.src_url.category": {
+          "source_fields": [
+            "ServiceSource",
+            "DetectionSource",
+            "service_source",
+            "detection_source"
+          ],
+          "status": "partial",
+          "notes": "Alert source grouping helper only; not complete OCSF finding classification."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "AccountUpn",
+            "InitiatingProcessAccountUpn",
+            "TargetAccountUpn",
+            "process_user",
+            "mail_from"
+          ],
+          "status": "partial",
+          "notes": "Actor/process user."
+        },
+        "host.name": {
+          "source_fields": [
+            "DeviceName",
+            "dest",
+            "dest_device"
+          ],
+          "status": "partial",
+          "notes": "Endpoint hostname."
+        },
+        "event.action": {
+          "source_fields": [
+            "ActionType",
+            "ActivityType",
+            "action",
+            "delivery_action"
+          ],
+          "status": "partial",
+          "notes": "Native Defender action type."
+        },
+        "event.id": {
+          "source_fields": [
+            "ReportId",
+            "AlertId"
+          ],
+          "status": "partial",
+          "notes": "Report or alert identifier."
+        },
+        "process.command_line": {
+          "source_fields": [
+            "ProcessCommandLine",
+            "InitiatingProcessCommandLine",
+            "parent_process_command_line"
+          ],
+          "status": "partial",
+          "notes": "Process command-line context."
+        },
+        "source.ip": {
+          "source_fields": [
+            "LocalIP",
+            "IPAddress"
+          ],
+          "status": "partial",
+          "notes": "Local IP for network event."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "RemoteIP"
+          ],
+          "status": "partial",
+          "notes": "Remote IP for network/evidence."
+        },
+        "rule.name": {
+          "source_fields": [
+            "Title",
+            "AttackTechniques",
+            "ServiceSource",
+            "DetectionSource",
+            "service_source",
+            "detection_source"
+          ],
+          "status": "partial",
+          "notes": "Alert/rule context when present."
+        },
+        "related.user": {
+          "source_fields": [
+            "AccountUpn",
+            "TargetAccountUpn"
+          ],
+          "status": "partial",
+          "notes": "Identity actor and target user context."
+        },
+        "query": {
+          "source_fields": [
+            "Query",
+            "QueryType"
+          ],
+          "status": "partial",
+          "notes": "Identity query text/type retained for audit challenge."
+        },
+        "email.message_id": {
+          "source_fields": [
+            "NetworkMessageId",
+            "InternetMessageId",
+            "internet_message_id"
+          ],
+          "status": "partial",
+          "notes": "Email event correlation identifiers."
+        },
+        "email.from.address": {
+          "source_fields": [
+            "SenderFromAddress",
+            "SenderMailFromAddress",
+            "mail_from"
+          ],
+          "status": "partial",
+          "notes": "Email sender address."
+        },
+        "email.to.address": {
+          "source_fields": [
+            "RecipientEmailAddress"
+          ],
+          "status": "partial",
+          "notes": "Email recipient address."
+        },
+        "registry.key": {
+          "source_fields": [
+            "RegistryKey"
+          ],
+          "status": "partial",
+          "notes": "Registry key path."
+        },
+        "registry.value": {
+          "source_fields": [
+            "RegistryValueName",
+            "RegistryValueData"
+          ],
+          "status": "partial",
+          "notes": "Registry value name/data context."
+        },
+        "vulnerability.id": {
+          "source_fields": [
+            "CveId"
+          ],
+          "status": "partial",
+          "notes": "CVE identifier from TVM rows."
+        },
+        "file.name": {
+          "source_fields": [
+            "FileName",
+            "previous_file_name"
+          ],
+          "status": "partial",
+          "notes": "File or attachment filename."
+        },
+        "file.path": {
+          "source_fields": [
+            "FolderPath",
+            "PreviousFolderPath",
+            "file_path",
+            "previous_file_path"
+          ],
+          "status": "partial",
+          "notes": "Current and prior endpoint file paths where present in DeviceFileEvents."
+        },
+        "process.hash.sha256": {
+          "source_fields": [
+            "InitiatingProcessSHA256",
+            "parent_process_hash"
+          ],
+          "status": "partial",
+          "notes": "Parent process SHA256 where present in Defender device tables."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/microsoft_defender_xdr/sc4s/app_parsers/syslog/app-microsoft_defender_xdr.conf": "sha256:4915bc7b9e25ab2f80e6b799710dc34ab6fdd7ad59bf28cc1bdd524aa3c39555",
+      "packs/microsoft_defender_xdr/sc4s/env.example": "sha256:6d8299f1dd8fe3c7ec440c541494cca6dc971c103ad0ed5349c17bb44034afe6",
+      "packs/microsoft_defender_xdr/splunk/default/props.conf": "sha256:a837aa854f06f63260720895a859c42a9eff5b011326ab88b044f8af437d15bd",
+      "packs/microsoft_defender_xdr/splunk/default/transforms.conf": "sha256:0336be6f0d2141930c9774b6370f29c04092162819e779c78e16bc1ea7274ca1",
+      "packs/microsoft_defender_xdr/splunk/default/eventtypes.conf": "sha256:8ef41d4899ce8c73e25dc282988168d280252c46d06664f06bca46603f5a8e11",
+      "packs/microsoft_defender_xdr/splunk/default/tags.conf": "sha256:f38f54ff7df2ecf993f961fe2a8a2d2b0ba42366fc855c854a65d36138e85e92",
+      "packs/microsoft_defender_xdr/test-events/microsoft_defender_xdr_test_events.txt": "sha256:3b9af72308ad307dea0f45dc67c1f0f3b51fbd6f16e5cbdc170c4506587c54cb",
+      "packs/microsoft_defender_xdr/scripts/send_tcp_20067.sh": "sha256:7fd5ff20956e3791e1a02be0e4e15905dd2248e096e484124777834eced13339",
+      "packs/microsoft_defender_xdr/docs/microsoft_defender_xdr_reduction_candidates.csv": "sha256:9d7b874280ae1fea2a1ef7299d8affd78cdb9cae909f5530a4f484787ba8ba59",
+      "packs/microsoft_defender_xdr/validation/preflight-2026-06-07.md": "sha256:6a9fb634f93caf788dcbfd74ff14ab25e57ac74a84aa856b93eea078ddc46468",
+      "packs/microsoft_defender_xdr/README.md": "sha256:f53b3dacec1db58597a333558982101e379f6f40ae77af61cffe6b347f2da7fa",
+      "packs/microsoft_defender_xdr/splunk/default/data/ui/views/microsoft_defender_xdr_overview.xml": "sha256:8de92d6cb81542c45216ab9eca2c531bf7ad009e0ae477589fed3c9eda95ad49",
+      "packs/microsoft_defender_xdr/scripts/e2e_docker_compose.sh": "sha256:cc82e900428502724d006c74470f472d2b6753c63d385dbbba1b688456b07f24"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-24",
+    "last_tested": "2026-06-24"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "endpoint",
+    "edr",
+    "security",
+    "alert",
+    "microsoft",
+    "identity",
+    "cloud_app",
+    "saas",
+    "authentication",
+    "email_security",
+    "registry"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "json_relay",
+      "label": "Defender XDR JSON relay",
+      "description": "Default variant for Defender XDR API/Event Hub/Cribl relays that preserve one JSON object per event and the originating Microsoft Defender XDR advanced-hunting table name, including selected endpoint, alert, identity, cloud app, email-security, and registry event tables.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "advanced_hunting_export",
+        "streaming_api",
+        "event_hub",
+        "cribl_relay",
+        "hec_style_json_relay",
+        "defender_for_identity",
+        "defender_for_cloud_apps",
+        "defender_for_office_365",
+        "device_registry_events"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "device_process",
+        "device_network",
+        "file_event",
+        "alert_info",
+        "alert_evidence",
+        "identity_logon",
+        "identity_directory",
+        "identity_query",
+        "cloud_app",
+        "email_event",
+        "email_url",
+        "device_registry"
+      ],
+      "test_event_sets": [
+        "microsoft_defender_xdr_json"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live Defender relay replay/read-back captured.",
+        "Collector wrappers may rename or nest fields and must be compared locally.",
+        "Fixture coverage is representative for selected public Defender table names, including selected email and registry tables, not exhaustive Microsoft Defender XDR schema coverage."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/microsoft_defender_xdr_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "Table",
+        "category",
+        "ActionType",
+        "AlertId",
+        "DeviceName",
+        "ServiceSource",
+        "IdentityLogonEvents",
+        "IdentityDirectoryEvents",
+        "IdentityQueryEvents",
+        "CloudAppEvents",
+        "EmailEvents",
+        "EmailUrlInfo",
+        "DeviceRegistryEvents",
+        "NetworkMessageId",
+        "RegistryKey"
+      ],
+      "notes": "Use after sampling the local Defender feed. Do not drop command line, alert evidence, file path/hash, URL/IP, or account context by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live Defender relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real tenant records.",
+    "SC4S emits pack-defined family sourcetypes; exact collector wrapping/source names and table availability need local comparison.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included.",
+    "Identity and CloudAppEvents coverage is synthetic-equivalent and limited to selected public advanced hunting table names.",
+    "Defender for Office 365 email, DeviceRegistryEvents, and TVM coverage is limited to selected public advanced-hunting table fields; incidents, EmailPostDeliveryEvents, device assessment joins, exposure-score/remediation workflow fields, and full schema parity remain future work."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Microsoft Defender XDR intake",
+      "description": "Dedicated listener, parser, fixtures, and JSON Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-microsoft_defender_xdr.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard Defender analyst knowledge",
+      "description": "Adds eventtypes/tags for device process, network, file, registry, alert info/evidence, identity logon/directory/query, email, email URL, and cloud app families. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed Defender reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/microsoft_defender_xdr_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "api_eventhub_json_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "Defender XDR records are collector/API/Event Hub JSON relays.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "microsoft_defender_xdr_overview_splunk_test",
+      "title": "Microsoft Defender XDR — dashboard example",
+      "source_path": "dashboards/screenshots/microsoft-defender-xdr-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Microsoft Defender XDR dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

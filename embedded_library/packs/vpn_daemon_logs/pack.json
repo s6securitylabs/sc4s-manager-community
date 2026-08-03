@@ -1,0 +1,1094 @@
+{
+  "schema_version": "0.1",
+  "id": "vpn_daemon_logs",
+  "version": "0.1.6",
+  "url": "https://github.com/OpenVPN/openvpn",
+  "description": "Curated SecHub Resources SC4S pack for narrow OpenVPN and strongSwan daemon syslog relay records with fixture-backed connection, verification, session/pool assignment, authentication-failure, and tunnel up/down families.",
+  "display_name": "VPN daemon logs",
+  "vendor": "vpn_daemon",
+  "product": "openvpn_strongswan",
+  "default_index": "netauth",
+  "default_source": "vpn_daemon_logs",
+  "listener": {
+    "source_id": "VPN_DAEMON_LOGS",
+    "transport": "tcp",
+    "port": 20078,
+    "env": {
+      "SC4S_LISTEN_VPN_DAEMON_LOGS_TCP_PORT": "20078",
+      "SOURCE_ALL_SET_APPEND": "VPN_DAEMON_LOGS"
+    }
+  },
+  "sourcetypes": {
+    "openvpn_peer_connection": "vpn:openvpn:peer",
+    "openvpn_certificate_verify": "vpn:openvpn:verify",
+    "openvpn_session": "vpn:openvpn:session",
+    "openvpn_auth_failed": "vpn:openvpn:auth",
+    "strongswan_updown": "vpn:strongswan:updown"
+  },
+  "event_families": [
+    {
+      "id": "openvpn_peer_connection",
+      "label": "OpenVPN peer connection initiated",
+      "match_engine": "pcre",
+      "match": "openvpn\\[\\d+\\]: .*Peer Connection Initiated with \\[AF_INET\\]",
+      "expected_sourcetype": "vpn:openvpn:peer",
+      "primary_id_field": "client_context",
+      "required_fields": [
+        "client_context",
+        "src_ip",
+        "src_port",
+        "action"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "openvpn_certificate_verify",
+      "label": "OpenVPN certificate verification OK",
+      "match_engine": "pcre",
+      "match": "openvpn\\[\\d+\\]: .*VERIFY OK: depth=\\d+,",
+      "expected_sourcetype": "vpn:openvpn:verify",
+      "primary_id_field": "certificate_subject",
+      "required_fields": [
+        "cert_depth",
+        "certificate_subject",
+        "action"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "openvpn_session",
+      "label": "OpenVPN session initialized, virtual IP assigned, or pool return logged",
+      "match_engine": "pcre",
+      "match": "openvpn\\[\\d+\\]: .*(Initialization Sequence Completed|MULTI: primary virtual IP|MULTI_sva: pool returned)",
+      "expected_sourcetype": "vpn:openvpn:session",
+      "primary_id_field": "client_context",
+      "required_fields": [
+        "action",
+        "result"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "openvpn_auth_failed",
+      "label": "OpenVPN authentication or cipher negotiation failure",
+      "match_engine": "pcre",
+      "match": "openvpn\\[\\d+\\]: .*AUTH_FAILED",
+      "expected_sourcetype": "vpn:openvpn:auth",
+      "primary_id_field": "client_context",
+      "required_fields": [
+        "client_context",
+        "reason",
+        "action",
+        "result"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    },
+    {
+      "id": "strongswan_updown",
+      "label": "strongSwan _updown tunnel create/delete",
+      "match_engine": "pcre",
+      "match": "vpn: [+-] \\S+  \\d+\\.\\d+\\.\\d+\\.\\d+ -- \\d+\\.\\d+\\.\\d+\\.\\d+ == \\S+",
+      "expected_sourcetype": "vpn:strongswan:updown",
+      "primary_id_field": "peer_id",
+      "required_fields": [
+        "vendor_raw_action",
+        "peer_id",
+        "peer_ip",
+        "local_ip",
+        "tunnel_network"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "VPN daemon source family",
+    "product": "OpenVPN or strongSwan component identity",
+    "vendor_product": "vpn_daemon:<component>",
+    "syslog_timestamp": "RFC3164-style payload timestamp",
+    "host": "Relay host token",
+    "process_id": "OpenVPN process ID where present",
+    "client_context": "OpenVPN client/common-name and remote endpoint context",
+    "peer_id": "strongSwan peer identity",
+    "peer_ip": "strongSwan peer IP",
+    "local_ip": "strongSwan local endpoint IP",
+    "tunnel_network": "strongSwan protected/tunnel network",
+    "vendor_raw_action": "Raw strongSwan _updown action token + or -",
+    "action": "Fixture-backed analyst action",
+    "result": "Derived success/failure/end result",
+    "signature": "Family grouping label",
+    "signature_id": "Raw template/action identifier",
+    "src": "Alias for source endpoint",
+    "src_ip": "Source endpoint or tunnel IP",
+    "src_port": "Source endpoint port",
+    "dest": "Alias for local endpoint",
+    "dest_ip": "Local endpoint IP",
+    "user": "Peer/client identity where present",
+    "certificate_subject": "OpenVPN certificate subject",
+    "cert_depth": "OpenVPN certificate verification depth",
+    "tunnel_ip": "OpenVPN assigned virtual IP",
+    "reason": "OpenVPN AUTH_FAILED reason",
+    "marker": "Synthetic fixture marker only",
+    "pool_ipv4": "OpenVPN MULTI_sva pool-return IPv4 assignment where present",
+    "pool_ipv6": "OpenVPN MULTI_sva pool-return IPv6 state/value where present"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-vpn_daemon_logs.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/vpn_daemon_logs_overview.xml"
+    ],
+    "test_events": [
+      "test-events/vpn_daemon_logs_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20078.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/vpn_daemon_logs_reduction_candidates.csv",
+      "validation/preflight-2026-06-08.md",
+      "validation/e2e-lab-2026-06-26.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / VPN daemon relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20078,
+      "notes": "Dedicated TCP listener for one VPN daemon log record per line.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "custom_application"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20078,
+      "notes": "Preferred for production if TLS is provisioned for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "custom_application"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "OpenVPN source-template rows and strongSwan _updown syslog relay rows",
+    "min": null,
+    "max": null,
+    "notes": "Grounded in public upstream source/doc structures; exact distro syslog/journald wrappers require local validation."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-08",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "Public source/doc structures and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent VPN daemon records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live VPN daemon relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for VPN daemon log relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "vpn_daemon_log_records"
+      ],
+      "event_count": 8,
+      "marker_prefix": "SC4S_VPN_DAEMON_LOGS_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20078.sh"
+    },
+    "readback": {
+      "spl": "index=netauth sechub_fixture_marker=\"SC4S_VPN_DAEMON_LOGS_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product action result signature signature_id host process_id client_context peer_id peer_ip local_ip tunnel_network src src_ip src_port tunnel_ip pool_ipv4 pool_ipv6 user certificate_subject reason marker _raw",
+      "expected_count": 8,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "component identity",
+        "raw vendor action/status tokens",
+        "family-specific fields",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "indexed_readback",
+      "date": "2026-06-26",
+      "summary": "Disposable lab run reached healthy Splunk TEST and SC4S TEST containers and attempted VPN fixture replay through TCP 20078, but Splunk read-back returned no matching SC4S_VPN_DAEMON_LOGS_TEST_ events. The harness now fails closed unless exactly eight fixture events are indexed.",
+      "evidence_path": "validation/e2e-lab-2026-06-26.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing VPN daemon TCP listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      },
+      {
+        "type": "blocked_lab_attempt",
+        "path": "validation/e2e-lab-2026-06-26.md",
+        "summary": "Remote disposable lab attempt reached healthy containers but indexed read-back returned no VPN daemon fixture events; not validation evidence."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20078,
+          "protocol": "line_delimited_syslog",
+          "purpose": "Dedicated VPN daemon log relay listener"
+        }
+      ],
+      "required_indexes": [
+        "netauth"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to netauth",
+        "Search role can read netauth"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "vpn_daemon_logs_compose_e2e",
+      "status": "blocked_indexed_readback",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/vpn_daemon_logs/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/vpn_daemon_logs/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/vpn_daemon_logs/compose.yaml",
+      "compose_project": "sechub-vpn-daemon-logs-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "netauth index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/vpn_daemon_logs/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/vpn_daemon_logs/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/vpn_daemon_logs/scripts/send_tcp_20078.sh 127.0.0.1 20078",
+        "splunk_summary_readback": "index=netauth \"SC4S_VPN_DAEMON_LOGS_TEST_\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=netauth \"SC4S_VPN_DAEMON_LOGS_TEST_\" earliest=-2h | table _time index sourcetype source vendor product action result signature signature_id host process_id client_context peer_id peer_ip local_ip tunnel_network src src_ip src_port tunnel_ip pool_ipv4 pool_ipv6 user certificate_subject cert_depth reason marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "netauth",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/vpn_daemon_logs/splunk -> /opt/splunk/etc/apps/sechub_vpn_daemon_logs (writable disposable TEST mount for Splunk entrypoint chown)"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20078,
+          "host_port_env": "SC4S_VPN_DAEMON_LOGS_PORT",
+          "source_id": "VPN_DAEMON_LOGS"
+        },
+        "parser_mount": "packs/vpn_daemon_logs/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "openvpn",
+          "source_shape": "rfc3164_style_syslog_template",
+          "event_family": "openvpn_peer_connection",
+          "sourcetype": "vpn:openvpn:peer",
+          "data_structures": [
+            "OpenVPN peer connection initiated row"
+          ],
+          "markers": [
+            "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_PEER_001"
+          ]
+        },
+        {
+          "source": "openvpn",
+          "source_shape": "rfc3164_style_syslog_template",
+          "event_family": "openvpn_certificate_verify",
+          "sourcetype": "vpn:openvpn:verify",
+          "data_structures": [
+            "OpenVPN VERIFY OK certificate row"
+          ],
+          "markers": [
+            "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_VERIFY_002"
+          ]
+        },
+        {
+          "source": "openvpn",
+          "source_shape": "rfc3164_style_syslog_template",
+          "event_family": "openvpn_session",
+          "sourcetype": "vpn:openvpn:session",
+          "data_structures": [
+            "OpenVPN initialization, tunnel-IP assignment, and pool-return rows"
+          ],
+          "markers": [
+            "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_INIT_003",
+            "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_VIP_004",
+            "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_POOL_005"
+          ]
+        },
+        {
+          "source": "openvpn",
+          "source_shape": "rfc3164_style_syslog_template",
+          "event_family": "openvpn_auth_failed",
+          "sourcetype": "vpn:openvpn:auth",
+          "data_structures": [
+            "OpenVPN AUTH_FAILED row"
+          ],
+          "markers": [
+            "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_AUTH_FAILED_006"
+          ]
+        },
+        {
+          "source": "strongswan",
+          "source_shape": "updown_syslog_row",
+          "event_family": "strongswan_updown",
+          "sourcetype": "vpn:strongswan:updown",
+          "data_structures": [
+            "strongSwan _updown tunnel create/delete row"
+          ],
+          "markers": [
+            "SC4S_VPN_DAEMON_LOGS_TEST_STRONGSWAN_UP_007",
+            "SC4S_VPN_DAEMON_LOGS_TEST_STRONGSWAN_DOWN_008"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live OpenVPN or strongSwan daemon source-version emission replay/read-back.",
+        "No distro syslog/journald wrapper, TLS/RFC5425 production transport, collector envelope, or source-local timezone proof.",
+        "No broader strongSwan charon/IKE/CHILD_SA parser coverage proof beyond documented _updown vpn: rows.",
+        "No WireGuard routine audit coverage; kernel-debug/journald evidence remains required before adding a parser-backed variant.",
+        "No production or field validation; synthetic-equivalent fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for declared OpenVPN/strongSwan one-line relay shapes, not live VPN daemon source/collector validation or field validation.",
+      "last_lab_attempt": {
+        "date": "2026-06-26",
+        "status": "blocked",
+        "blocked_layer": "indexed_readback",
+        "evidence_path": "validation/e2e-lab-2026-06-26.md",
+        "summary": "Healthy disposable lab containers; no SC4S_VPN_DAEMON_LOGS_TEST_ events returned by Splunk read-back after replay."
+      }
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "vpn_daemon_log_records",
+      "label": "OpenVPN and strongSwan synthetic-equivalent daemon records",
+      "path": "test-events/vpn_daemon_logs_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "rfc3164_style_vpn_daemon_message_payload",
+      "envelope": "none",
+      "serialization": "plain_text",
+      "event_count": 8,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_PEER_001",
+        "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_VERIFY_002",
+        "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_INIT_003",
+        "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_VIP_004",
+        "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_POOL_005",
+        "SC4S_VPN_DAEMON_LOGS_TEST_OPENVPN_AUTH_FAILED_006",
+        "SC4S_VPN_DAEMON_LOGS_TEST_STRONGSWAN_UP_007",
+        "SC4S_VPN_DAEMON_LOGS_TEST_STRONGSWAN_DOWN_008"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "receiver_time",
+        "primary_field": "syslog payload timestamp",
+        "primary_timezone": "not present in RFC3164-style fixture payload",
+        "fallback_fields": [
+          "RFC5424/RFC5425 relay envelope timestamp when provided by collector"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "syslog envelope timezone or receiver time policy"
+        ],
+        "notes": "Fixtures use RFC3164-style month/day/time payload timestamps with no timezone/year."
+      },
+      "field_delimiting": {
+        "style": "plain_text_with_daemon_specific_tokens",
+        "field_separator": "space, punctuation, and daemon message templates",
+        "quote_character": "double quotes for synthetic marker only",
+        "escape_policy": "Synthetic values use RFC5737 documentation addresses and example identities",
+        "notes": "Each line is one VPN daemon message. OpenVPN MULTI_sva pool-return rows preserve comma-delimited IPv4/IPv6 assignment text. WireGuard kernel debug rows are not included in this fixture set."
+      },
+      "expected_families": [
+        "openvpn_peer_connection",
+        "openvpn_certificate_verify",
+        "openvpn_session",
+        "openvpn_auth_failed",
+        "strongswan_updown"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-vpn_daemon_logs.conf",
+      "target_path": "local/config/app_parsers/syslog/app-vpn_daemon_logs.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/vpn_daemon_logs.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/vpn_daemon_logs_overview.xml",
+      "target_path": "splunk/default/data/ui/views/vpn_daemon_logs_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/vpn_daemon_logs_test_events.txt",
+      "target_path": "test-events/vpn_daemon_logs_test_events.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20078.sh",
+      "target_path": "scripts/send_tcp_20078.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/vpn_daemon_logs_reduction_candidates.csv",
+      "target_path": "docs/vpn_daemon_logs_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_lab_2026_06_26",
+      "group": "docs",
+      "source_path": "validation/e2e-lab-2026-06-26.md",
+      "target_path": "validation/e2e-lab-2026-06-26.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "docs/evidence/vpn-daemon-logs-evidence-scan-20260608.md; OpenVPN upstream source templates; strongSwan _updown documentation/source examples",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use generic hosts, client/peer identities, tunnel networks, markers, and RFC5737 documentation IPs; no customer VPN logs or proprietary TA content are included."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-08",
+      "notes": "Selected from Milestone 8 P2 next-build queue after evidence scan confirmed conservative OpenVPN and strongSwan scope was actionable while WireGuard remained debug/testbed-gated."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user",
+            "client_context",
+            "peer_id"
+          ],
+          "status": "partial",
+          "notes": "VPN client/peer identity where present."
+        },
+        "src": {
+          "source_fields": [
+            "src_ip",
+            "peer_ip",
+            "tunnel_ip",
+            "pool_ipv4"
+          ],
+          "status": "partial",
+          "notes": "Remote peer or assigned tunnel endpoint context; OpenVPN pool-return IPv4 is included when present."
+        },
+        "dest": {
+          "source_fields": [
+            "dest_ip",
+            "local_ip"
+          ],
+          "status": "partial",
+          "notes": "Local VPN endpoint context where present."
+        },
+        "action": {
+          "source_fields": [
+            "vendor_raw_action",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Raw strongSwan + or - action and derived OpenVPN/strongSwan actions."
+        },
+        "signature": {
+          "source_fields": [
+            "signature",
+            "reason"
+          ],
+          "status": "partial",
+          "notes": "Family grouping or failure reason."
+        },
+        "signature_id": {
+          "source_fields": [
+            "signature_id"
+          ],
+          "status": "partial",
+          "notes": "Template/action identifier, not a global event ID."
+        },
+        "pool_ipv6": {
+          "source_fields": [
+            "pool_ipv6"
+          ],
+          "status": "partial",
+          "notes": "OpenVPN MULTI_sva IPv6 pool-return state/value for analyst context; not a CIM standard field."
+        }
+      },
+      "notes": "Partial VPN/network/authentication mapping only; not complete CIM compliance."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "actor.user.name": {
+          "source_fields": [
+            "user",
+            "client_context",
+            "peer_id"
+          ],
+          "status": "partial",
+          "notes": "VPN peer/client identity."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "src_ip",
+            "peer_ip",
+            "tunnel_ip",
+            "pool_ipv4"
+          ],
+          "status": "partial",
+          "notes": "Remote peer or tunnel endpoint; OpenVPN pool-return IPv4 is included when present."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "dest_ip",
+            "local_ip"
+          ],
+          "status": "partial",
+          "notes": "Local endpoint."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action",
+            "vendor_raw_action"
+          ],
+          "status": "partial",
+          "notes": "Derived and raw action tokens."
+        },
+        "connection_info.protocol_name": {
+          "source_fields": [
+            "product"
+          ],
+          "status": "partial",
+          "notes": "Daemon family indicates OpenVPN or strongSwan, not wire protocol validation."
+        },
+        "openvpn.pool_ipv6": {
+          "source_fields": [
+            "pool_ipv6"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped OpenVPN IPv6 pool-return state/value retained for analyst context."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "user.name": {
+          "source_fields": [
+            "user",
+            "client_context",
+            "peer_id"
+          ],
+          "status": "partial",
+          "notes": "VPN peer/client identity."
+        },
+        "source.ip": {
+          "source_fields": [
+            "src_ip",
+            "peer_ip",
+            "tunnel_ip",
+            "pool_ipv4"
+          ],
+          "status": "partial",
+          "notes": "Remote peer or tunnel endpoint; OpenVPN pool-return IPv4 is included when present."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "dest_ip",
+            "local_ip"
+          ],
+          "status": "partial",
+          "notes": "Local endpoint."
+        },
+        "event.action": {
+          "source_fields": [
+            "action",
+            "vendor_raw_action"
+          ],
+          "status": "partial",
+          "notes": "Derived and raw action tokens."
+        },
+        "event.reason": {
+          "source_fields": [
+            "reason"
+          ],
+          "status": "partial",
+          "notes": "OpenVPN failure reason where present."
+        },
+        "network.name": {
+          "source_fields": [
+            "tunnel_network"
+          ],
+          "status": "partial",
+          "notes": "strongSwan protected/tunnel network."
+        },
+        "openvpn.pool_ipv6": {
+          "source_fields": [
+            "pool_ipv6"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped OpenVPN IPv6 pool-return state/value."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/vpn_daemon_logs/README.md": "sha256:1055be69cfe7c77f5b5224d923b92258f76928271eabde08724be0186d0ca343",
+      "packs/vpn_daemon_logs/sc4s/app_parsers/syslog/app-vpn_daemon_logs.conf": "sha256:5a57b128c7eb45466b48368a69a041c6acd4912ec12b7f5cd34cf222d1dccbf8",
+      "packs/vpn_daemon_logs/sc4s/env.example": "sha256:2b0a5167771c086f9ae3f00287a1509686c9676cc875df182a78a1514b73662f",
+      "packs/vpn_daemon_logs/splunk/default/props.conf": "sha256:1a35730ccd004a256c2addc49eaee40d4acf47f2b105ab99d90b13e8e4b6a114",
+      "packs/vpn_daemon_logs/splunk/default/transforms.conf": "sha256:75ae30b2c2c1da157031bbb76357c6dbe548a9e4076199ff90c131b2bc2dca87",
+      "packs/vpn_daemon_logs/splunk/default/eventtypes.conf": "sha256:c97320e21d0416291ba05205b660df48ebfe1d2d3e42187b59f9e35210463976",
+      "packs/vpn_daemon_logs/splunk/default/tags.conf": "sha256:d956b494dff8eb4af0d0793374bbf33349bcaf146d8c83c24410f625b0588c97",
+      "packs/vpn_daemon_logs/test-events/vpn_daemon_logs_test_events.txt": "sha256:8dd6417a3af0d7c43e905f002d67c79124bf75dd288586e51605047cb6e840b0",
+      "packs/vpn_daemon_logs/scripts/send_tcp_20078.sh": "sha256:e259ade8d76db0662dc427b35480491f610b2524297f5f0487dda84948eddb62",
+      "packs/vpn_daemon_logs/docs/vpn_daemon_logs_reduction_candidates.csv": "sha256:3ec64c1cd90a5482188109e3d5b83b6ea7f759ed140811e0d863f83a0857f426",
+      "packs/vpn_daemon_logs/validation/preflight-2026-06-08.md": "sha256:f88cea049e60c7ba8beb7ecb145253fb368b305050f0e3a4a349d5ef4cc9813c",
+      "packs/vpn_daemon_logs/splunk/default/data/ui/views/vpn_daemon_logs_overview.xml": "sha256:787ed6189ac739088c757fe10f1daf544b128d2bc2fb8316f8e4547b4080db47",
+      "packs/vpn_daemon_logs/scripts/e2e_docker_compose.sh": "sha256:ff1468099ea1ded97f9d6c6d3a411043ecd9f696def818c68f4c71d9164f8443",
+      "packs/vpn_daemon_logs/validation/e2e-lab-2026-06-26.md": "sha256:9f8e2fa19c22bd55bde910e26c25301bd95f7b17ef433cb26b225a2241a8f49a"
+    },
+    "tested_commit": "01103bc",
+    "last_updated": "2026-06-27",
+    "last_tested": "2026-06-26"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "vpn",
+    "remote_access",
+    "network",
+    "authentication",
+    "syslog"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "openvpn_strongswan_syslog_relay",
+      "label": "OpenVPN and strongSwan syslog relay",
+      "description": "Default initial variant for one OpenVPN or documented strongSwan _updown message per line, including OpenVPN session and MULTI_sva pool-return rows, optionally syslog-wrapped by a collector relay.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "syslog_relay",
+        "file_agent_relay",
+        "journald_relay",
+        "cribl_relay"
+      ],
+      "payload_formats": [
+        "plain_text",
+        "rfc3164_style"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "openvpn_peer_connection",
+        "openvpn_certificate_verify",
+        "openvpn_session",
+        "openvpn_auth_failed",
+        "strongswan_updown"
+      ],
+      "test_event_sets": [
+        "vpn_daemon_log_records"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "syslog_ng",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent fixtures only; no live VPN daemon relay capture or Splunk read-back.",
+        "strongSwan structured coverage is limited to documented _updown vpn: rows; broader charon logs are not parsed.",
+        "WireGuard is not parser-backed until kernel-debug/journald evidence exists."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/vpn_daemon_logs_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "product",
+        "client_context",
+        "peer_id",
+        "src_ip",
+        "peer_ip",
+        "local_ip",
+        "tunnel_network",
+        "action",
+        "reason",
+        "sc4s_marker"
+      ],
+      "notes": "Use only after sampling the actual VPN relay schema. Do not drop peer identity, endpoint, tunnel, failure reason, or marker context by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live OpenVPN/strongSwan/WireGuard relay, SC4S runtime replay, HEC delivery, Splunk read-back, Manager apply, or production evidence captured.",
+    "Synthetic-equivalent fixtures are public source/doc-shaped and do not prove source validation.",
+    "OpenVPN official web manual returned HTTP 403 from this host during evidence capture; upstream source templates are the primary public OpenVPN evidence recorded.",
+    "strongSwan coverage is limited to _updown rows; broader charon IKE/CHILD_SA logs need exact samples or lab capture.",
+    "WireGuard remains blocked/deferred except for a future explicitly kernel-debug/journald-scoped variant.",
+    "RFC3164-style payload timestamps lack timezone/year unless wrapped by a timezone-qualified relay envelope."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic VPN daemon intake",
+      "description": "Dedicated listener, SC4S parser, fixture-backed VPN daemon families, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-vpn_daemon_logs.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard VPN analyst knowledge",
+      "description": "Adds eventtypes/tags for fixture-backed OpenVPN and strongSwan groupings. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed VPN reduction candidates",
+      "description": "Review-only candidate list for future collector/Cribl reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/vpn_daemon_logs_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local replay/read-back validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "custom_application_syslog",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "OpenVPN/strongSwan daemon syslog records; no API collector required. Fixture-backed OpenVPN coverage includes MULTI_sva pool-return rows.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "vpn_daemon_logs_overview_splunk_test",
+      "title": "VPN daemon logs — dashboard example",
+      "source_path": "dashboards/screenshots/vpn-daemon-logs-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the VPN daemon logs dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}

@@ -117,6 +117,9 @@ def _validate_artifact_install_surface(package_root: Path) -> list[str]:
         "deploy/compose/manager.env.example",
         "deploy/install/install.sh",
         "deploy/upgrade/upgrade.sh",
+        "deploy/rollback/rollback.sh",
+        "scripts/preflight.py",
+        "LICENSE",
         "Dockerfile",
         ".github/workflows/release.yml",
         "frontend/dist/index.html",
@@ -135,7 +138,7 @@ def _validate_artifact_install_surface(package_root: Path) -> list[str]:
             "/opt/sc4s/archive:/var/lib/syslog-ng/archive",
             "/opt/sc4s/tls:/etc/syslog-ng/tls",
             "splunk-sc4s-var:/var/lib/syslog-ng",
-            "ghcr.io/splunk/splunk-connect-for-syslog/container3:3.43.0",
+            "ghcr.io/splunk/splunk-connect-for-syslog/container3:3.46.0",
             "ghcr.io/s6securitylabs/sc4s-manager",
         ]
         for snippet in expected_snippets:
@@ -201,23 +204,27 @@ def main() -> int:
     if args.dry_run:
         install_ok: bool | None = None
         install_notes = "dry-run: structure check only"
+        upgrade_dry_run_ok: bool | None = None
+        rollback_dry_run_ok: bool | None = None
         if extracted_package_root is not None and not artifact_issues:
-            install_cmd = ["bash", str(extracted_package_root / "deploy" / "install" / "install.sh"), "--dry-run"]
-            install_result = subprocess.run(
-                install_cmd,
-                text=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                cwd=str(extracted_package_root),
-            )
-            commands.append({
-                "argv": [_redact(a) for a in install_cmd],
-                "mode": "artifact-install-dry-run",
-                "ok": install_result.returncode == 0,
-                "stdout_summary": _redact(install_result.stdout[:500]),
-                "stderr_summary": _redact(install_result.stderr[:500]),
-            })
-            install_ok = install_result.returncode == 0
+            backup_fixture = workdir / "rollback-backup.fixture"
+            backup_fixture.write_text("dry-run fixture", encoding="utf-8")
+            planner_commands = [
+                ("artifact-install-dry-run", ["bash", str(extracted_package_root / "deploy/install/install.sh"), "--dry-run"]),
+                ("artifact-upgrade-dry-run", ["bash", str(extracted_package_root / "deploy/upgrade/upgrade.sh"), "--artifact", str(Path(args.artifact).resolve()), "--dry-run"]),
+                ("artifact-rollback-dry-run", ["bash", str(extracted_package_root / "deploy/rollback/rollback.sh"), "--backup", str(backup_fixture), "--dry-run"]),
+            ]
+            planner_results: dict[str, bool] = {}
+            for mode, cmd in planner_commands:
+                result = subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=str(extracted_package_root))
+                planner_results[mode] = result.returncode == 0
+                commands.append({
+                    "argv": [_redact(a) for a in cmd], "mode": mode, "ok": result.returncode == 0,
+                    "stdout_summary": _redact(result.stdout[:500]), "stderr_summary": _redact(result.stderr[:500]),
+                })
+            install_ok = planner_results["artifact-install-dry-run"]
+            upgrade_dry_run_ok = planner_results["artifact-upgrade-dry-run"]
+            rollback_dry_run_ok = planner_results["artifact-rollback-dry-run"]
             install_notes = "artifact install dry-run executed"
         if artifact_issues:
             install_ok = False
@@ -230,29 +237,49 @@ def main() -> int:
         backups_preserved: bool | None = None
         audit_preserved: bool | None = None
     else:
-        install_result = _run_check(
-            ["bash", str(ROOT / "deploy" / "install" / "install.sh"), "--dry-run"],
-            workdir,
-            dry_run=False,
+        # Install/upgrade/rollback scripts are planners, not disposable-host lifecycle
+        # executors. Do not mislabel a dry-run planner invocation as live lifecycle
+        # evidence — fail closed until a real host drill exists.
+        install_ok = False
+        install_notes = (
+            "live lifecycle not executed; install/upgrade/rollback scripts are planners only. "
+            "Use --dry-run for planner checks, or capture disposable-host package-drill evidence separately."
         )
-        commands.append(install_result)
-        install_ok = install_result["ok"]
-        install_notes = "live install attempted"
-        upgrade_ok = None
-        rollback_ok = None
-        manager_state = "unknown"
-        control_daemon_state = "unknown"
+        upgrade_ok = False
+        rollback_ok = False
+        upgrade_dry_run_ok = None
+        rollback_dry_run_ok = None
+        manager_state = "not-run"
+        control_daemon_state = "not-run"
         imports_preserved = None
         backups_preserved = None
         audit_preserved = None
+        commands.append({
+            "argv": ["live-lifecycle"],
+            "mode": "live",
+            "ok": False,
+            "stdout_summary": "",
+            "stderr_summary": install_notes,
+        })
 
     finished_at = _now_utc()
 
     all_text = json.dumps({"artifact_sha256": artifact_sha256, "version": version})
     redaction_findings = _redact_findings(all_text)
 
+    planner_gate_ok = install_ok is True and upgrade_dry_run_ok is True and rollback_dry_run_ok is True
+    lifecycle_gate_ok = install_ok is True and upgrade_ok is True and rollback_ok is True
     evidence: dict[str, Any] = {
-        "ok": artifact_ok and (install_ok is not False),
+        # dry-run without --artifact is a skeleton evidence write; with --artifact it
+        # requires the full planner gate. Non-dry-run requires real lifecycle evidence
+        # (currently unavailable, so fail closed).
+        "ok": (
+            artifact_ok and planner_gate_ok if args.dry_run and args.artifact
+            else artifact_ok if args.dry_run
+            else artifact_ok and lifecycle_gate_ok
+        ),
+        "planner_gate_ok": planner_gate_ok,
+        "lifecycle_gate_ok": lifecycle_gate_ok,
         "version": version,
         "artifact_sha256": artifact_sha256,
         "install": {
@@ -263,9 +290,11 @@ def main() -> int:
         },
         "upgrade": {
             "ok": upgrade_ok,
+            "dry_run_ok": upgrade_dry_run_ok,
         },
         "rollback": {
             "ok": rollback_ok,
+            "dry_run_ok": rollback_dry_run_ok,
         },
         "service_state": {
             "manager": manager_state,

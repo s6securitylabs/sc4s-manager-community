@@ -1,0 +1,6 @@
+field_or_event,default_posture,why_sensitive_or_noisy,pre_enable_requirement,rollback
+src_ip,retain,Source IP is security-critical and may also be personal data,Replay/read-back plus privacy approval before masking,Disable masking/removal rule and restore raw field
+actor/author identity fields,retain,Actor email/name/id proves administrative accountability,Replay/read-back plus legal/privacy approval before redaction,Disable redaction and replay fixture set
+entity_path/target_details,retain,Project/group/user target context is needed for incident reconstruction,Replay/read-back against representative events before trimming,Disable trimming and restore full target context
+details object,retain,GitLab details carries version-moving event context and change/from/to values,Only remove specific high-volume keys after local evidence proves they are redundant,Remove the reduction template and re-index from retained raw source if available
+duplicate streamed events,document_only,GitLab streaming may deliver the same id more than once; dedupe is search/collector policy not parser dropping,Local replay/read-back proving id-based dedupe does not hide unique changes,Disable dedupe and search by event_id/id

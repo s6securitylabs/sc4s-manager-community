@@ -1,0 +1,37 @@
+<form version="1.1" theme="light">
+  <label>Slack Audit Logs Overview</label>
+  <description>Fixture-backed Slack Audit Logs API relay triage. This dashboard is an operator example only and is not validation evidence.</description>
+  <fieldset submitButton="true">
+    <input type="time" token="time_range">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Slack audit events by family/action</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="slack:audit" | stats count by slack_audit_family action | sort - count</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Actor, source, session, and target context</title>
+      <table>
+        <search>
+          <query>index=netauth sourcetype="slack:audit" | table _time slack_audit_family action event_id user src_ip user_agent session_id workspace_domain object_type object reason marker</query>
+          <earliest>$time_range.earliest$</earliest>
+          <latest>$time_range.latest$</latest>
+        </search>
+      </table>
+    </panel>
+  </row>
+</form>

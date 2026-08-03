@@ -254,42 +254,36 @@ Example skeleton:
 
 The SecHub Resources SC4S pack contract treats `sc4s/app_parsers`, `sc4s/filters`, `sc4s/postfilters`, `sc4s/selectors`, and `sc4s/context` as canonical file-backed artifact directories. Reduction rules must reference reviewable `sc4s/postfilters/*.conf` artifacts rather than embedded parser text.
 
-## `GET /api/library/*` — SecHub Resources import/apply contract
+## `GET /api/library/*` — embedded offline Library contract
 
-These endpoints are Manager-only. They expose remote SecHub Resources content separately from local curated packs and never imply that a downloaded bundle is already active. The former marketplace-era remote-library endpoints were removed in the 2026-06-11 taxonomy hard migration; clients must use the Library endpoints below.
+These endpoints expose the committed embedded snapshot separately from local staged/applied state. The single `source_id` is `embedded`; snapshot provenance includes an immutable source revision. Normal operation has no remote source, manifest, polling, entry, URL, or cache dependency.
 
-Protected routes:
-
-- `GET /api/library/sources` — source registry, cache metadata, primary URL
-- `POST /api/library/sync` — refresh catalogue + downloads manifest cache for a source
-- `GET /api/library/catalogue` — remote catalogue list with `source_id`, `downloadable_only`, and `search`
-- `GET /api/library/entry` — remote entry detail plus apply-eligibility summary
-- `POST /api/library/download` — fetch bundle, reject redirects, verify SHA256, and cache the zip only
-- `POST /api/library/import/validate` — extract the verified bundle into Manager state, split runtime-safe vs reference-only artifacts, validate any embedded `pack.json`, and create an import record
+- `GET /api/library/sources` — embedded snapshot identity and provenance
+- `GET /api/library/source-health` — local snapshot integrity check; no network request
+- `GET /api/library/catalogue` — local pack list with `downloadable_only` and `search`
+- `GET /api/library/entry` — local pack detail and apply-eligibility summary
+- `POST /api/library/import/validate` — stage local files, split runtime versus reference roles, and create an import record
 - `GET /api/library/imports` — staged import records available for review/apply
-- `POST /api/library/import/apply` — revalidate the staged runtime plan, back up changed targets, apply runtime-safe files only, validate locally, reload via control path, and roll back on validation failure
+- `POST /api/library/import/apply` — revalidate the staged runtime plan, back up changed targets, apply runtime-safe files only, validate locally, reload via control path, and retain rollback evidence
 
-V1 source behavior:
+There are no Library sync or download endpoints. Remote source identifiers are rejected. Snapshot provenance remains advisory source material: it does not set local validation or live state.
 
-- `sechub.s6ops.com` is the canonical V1 SecHub public source for Manager catalogue sync.
-- Do not point Manager at retired SecHub Resources hostnames or repository-only URLs for runtime catalogue sync.
-- Private/automation paths may fetch `s6securitylabs/sechub-resources`, check out reviewed `main` or an approved release tag, and consume generated artifacts from that clean checkout.
-- The Manager import/apply contract is unchanged: all remote or repository-built artifacts are untrusted until local checksum, schema, fixture, preview, runtime, and optional Splunk/readback validation passes.
+Package action boundary:
 
-Bundle contract:
+- Manager stages only declared `export_artifacts` whose targets are below `local/config/` or `local/context/`.
+- Splunk TAs, scripts, docs, and fixtures are copied as reference material only. Product TA filenames, URLs, and titles never grant installability.
+- Snapshot availability and source metadata do not set local validation or live state.
 
-- bundle `manifest.json` identifies the pack with `pack_id` and `pack_version`, plus `schema_version` and per-artifact `source_path`/`target_path`/`sha256`
-- bundles that carry the full pack contract embed `pack.json`; when present it is validated with the local pack schema/fixture validators and the import record stores the result under `pack_validation`
-- bundles without `pack.json` stay importable; `pack_validation` records that the embedded manifest check was skipped
+Snapshot contract:
+
+- `embedded_library/SNAPSHOT.json` declares source repository/ref/revision/tree, the exact pack count, and a deterministic content SHA256.
+- Every snapshot pack has a local `pack.json`; declared artifacts must resolve below the selected pack directory.
+- Runtime target paths must be relative, traversal-free, and under `local/config/` or `local/context/`.
+- Snapshot content-hash, manifest, and artifact failures fail closed before an import record is created.
 
 State layout under `MANAGER_ROOT/state/library/`:
 
 ```text
-sources.json
-catalogue/<source_id>.json
-downloads-manifest-<source_id>.json
-entries/<source_id>/<entry_id>.json
-downloads/<source_id>/<filename>
 imports/<import_id>/bundle/
 imports/<import_id>/reference/
 imports/<import_id>/runtime-plan.json
@@ -298,29 +292,28 @@ imports/<import_id>/record.json
 
 Safety contract:
 
-- only HTTPS URLs from the configured source allowlist are permitted
-- redirects are rejected for catalogue JSON, entry JSON, and bundle downloads
-- bundle members must reject traversal, symlinks, duplicates, oversized payloads, and unsafe targets
-- only `local/config/` and `local/context/` are runtime-safe apply targets
-- `env_file.d/`, `splunk_app/`, `test-events/`, `scripts/`, and docs remain reference-only staged artifacts
+- no network source, URL allowlist, redirect, or download path participates in normal operation
+- snapshot artifacts and runtime targets must reject traversal and paths outside their allowlisted local roots
+- only declared runtime artifacts under `local/config/` and `local/context/` are staged for apply
+- all other snapshot files remain reference-only staged artifacts and are never applied
 - import/apply is explicit two-step operator flow: validate first, then apply
 - backups are taken before overwriting existing runtime files
-- failed validation, reload, or explicit negative post-check triggers rollback and an audit trail rather than partial activation; after a control action has run, Manager re-issues reload for restored files and returns separate rollback runtime evidence
+- failed validation triggers rollback and an audit trail rather than partial activation
 
 Example validate response skeleton:
 
 ```json
 {
   "ok": true,
-  "import_id": "imp_pan_panos_20260601T000000000000Z",
-  "source_id": "official",
+  "import_id": "imp_pan-panos-sc4s_20260601T000000000000Z",
+  "source_id": "embedded",
   "entry_id": "pan_panos",
   "apply_allowed": true,
   "reference_only": false,
   "runtime_files": [
     {
-      "kind": "config",
-      "source_path": "local/config/app_parsers/panos.conf",
+      "kind": "runtime",
+      "source_path": "sc4s/app_parsers/syslog/app-pan_panos.conf",
       "target_path": "local/config/app_parsers/panos.conf",
       "sha256": "..."
     }
@@ -333,11 +326,7 @@ Example validate response skeleton:
       "sha256": "..."
     }
   ],
-  "verification": {
-    "zip_sha256": "...",
-    "manifest_verified": true,
-    "artifact_count": 4
-  }
+  "snapshot": {"source_revision": "839c21b2e8d2739b84eaf2075cad8a7d9ee0710f"}
 }
 ```
 

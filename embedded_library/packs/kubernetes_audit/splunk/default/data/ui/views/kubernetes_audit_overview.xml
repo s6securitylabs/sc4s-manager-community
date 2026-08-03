@@ -1,0 +1,184 @@
+<form version="1.1" theme="dark">
+  <label>Kubernetes Audit - Overview</label>
+  <description>Fixture-backed Kubernetes API server audit JSON relay overview for RBAC changes, secret access, workload changes, pod exec, authorization denials, impersonated requests, and service-account token requests. Panels use fields proven by synthetic-equivalent fixtures and Splunk props; this dashboard is not replay/read-back validation.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_tok" searchWhenChanged="true">
+      <label>Time range</label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="host_tok" searchWhenChanged="true">
+      <label>Host filter</label>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+  </fieldset>
+
+  <row>
+    <panel>
+      <title>Total Kubernetes audit events</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Authorization forbidden</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ (kubernetes_audit_family="authz_forbidden" OR status="Forbidden" OR status=403) | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Secret access</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ kubernetes_audit_family="secret_access" | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Privileged API paths</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ (kubernetes_audit_family="exec_subresource" OR kubernetes_audit_family="impersonated_request" OR kubernetes_audit_family="serviceaccount_token_request") | stats count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="drilldown">all</option>
+      </single>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Audit volume over time by family</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ | timechart count by kubernetes_audit_family</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Family distribution</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ | stats count by kubernetes_audit_family action status | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Top API actors and source IPs</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ | stats count values(src_ip) as source_ips values(action) as actions values(kubernetes_resource) as resources by user | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>RBAC, workload, and protected-resource activity</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ (kubernetes_audit_family="rbac_change" OR kubernetes_audit_family="workload_change" OR kubernetes_audit_family="secret_access") | table _time user src_ip action kubernetes_namespace kubernetes_resource kubernetes_resource_name status kubernetes_audit_id marker | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Exec, impersonation, token-request, and authorization-denial review</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ (kubernetes_audit_family="exec_subresource" OR kubernetes_audit_family="impersonated_request" OR kubernetes_audit_family="serviceaccount_token_request" OR kubernetes_audit_family="authz_forbidden" OR kubernetes_subresource="exec" OR kubernetes_subresource="token" OR impersonated_user=* OR status="Forbidden" OR status=403) | table _time user impersonated_user src_ip user_agent action kubernetes_namespace kubernetes_resource kubernetes_resource_name kubernetes_subresource request_kind token_audience token_expiration_seconds bound_object_kind bound_object_name status url kubernetes_audit_id marker | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Namespace, resource, and verb coverage</title>
+      <chart>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ | stats count values(action) as verbs values(status) as statuses by kubernetes_namespace kubernetes_resource | sort -count | head 20</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Source, sourcetype, and host onboarding coverage</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ | stats count min(_time) as first_seen max(_time) as last_seen values(kubernetes_audit_family) as families by index sourcetype source host | convert ctime(first_seen) ctime(last_seen) | sort -count</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="drilldown">row</option>
+      </table>
+    </panel>
+  </row>
+
+  <row>
+    <panel>
+      <title>Recent raw Kubernetes audit context</title>
+      <table>
+        <search>
+          <query>index=main sourcetype="kubernetes:audit" host=$host_tok$ | table _time host source user impersonated_user src_ip user_agent action status signature signature_id kubernetes_audit_family kubernetes_namespace kubernetes_resource kubernetes_resource_name kubernetes_subresource request_kind token_audience token_expiration_seconds bound_object_kind bound_object_name url marker _raw | sort -_time | head 50</query>
+          <earliest>$time_tok.earliest$</earliest>
+          <latest>$time_tok.latest$</latest>
+        </search>
+        <option name="count">10</option>
+        <option name="wrap">true</option>
+        <option name="drilldown">row</option>
+      </table>
+    </panel>
+  </row>
+</form>

@@ -1,0 +1,5 @@
+id,family,candidate,security_relevant_default,requires_replay_readback,rollback,notes
+http_static_2xx,http_request,"Optional trim of repetitive static-asset 2xx request rows",false,true,"Disable collector rule or enhanced preset","Retain RayID, URI, method, source IP, user agent, status, cache and security context until local replay proves no investigation impact."
+http_referrer_useragent,http_request,"Optional truncation of very long referrer/user-agent strings",false,true,"Restore full-field preservation","Can reduce storage but may harm phishing, bot, and exploit triage. Disabled by default."
+gateway_allowed_noise,gateway_dns_gateway_http,"Optional suppression of high-volume allowed Gateway DNS/HTTP rows",false,true,"Remove allow-noise filter and replay markers","Never drop blocked/isolated/quarantined actions, policy identifiers, user/device, query/URL, or source IP."
+audit_metadata,audit_log,"Optional pruning of verbose action-specific audit Metadata subkeys",false,true,"Restore full Metadata object","Metadata often contains before/after configuration context; prune only after action-by-action review."

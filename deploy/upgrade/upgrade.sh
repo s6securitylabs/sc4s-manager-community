@@ -74,10 +74,21 @@ if ! tar -tf "$artifact" >/dev/null 2>&1; then
   exit 1
 fi
 
-if ! tar -tf "$artifact" | grep -Eq '(^|/)src/sc4s_manager/app\.py$'; then
-  echo "error: artifact does not contain src/sc4s_manager/app.py" >&2
-  exit 1
-fi
+archive_members="$(tar -tf "$artifact")"
+required_members=(
+  "src/sc4s_manager/app.py"
+  "deploy/compose/compose.yaml"
+  "deploy/install/install.sh"
+  "deploy/upgrade/upgrade.sh"
+  "deploy/rollback/rollback.sh"
+  "LICENSE"
+)
+for required in "${required_members[@]}"; do
+  if ! grep -Fqx "sc4s-manager/$required" <<<"$archive_members"; then
+    echo "error: artifact does not contain $required" >&2
+    exit 1
+  fi
+done
 
 verify_frontend_artifact_if_available() {
   local frontend_dir="$repo_root/frontend"

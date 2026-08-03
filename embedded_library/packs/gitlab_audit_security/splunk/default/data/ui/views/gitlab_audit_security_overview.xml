@@ -1,0 +1,33 @@
+<form version="1.1" theme="light">
+  <label>GitLab Audit and Security Events Overview</label>
+  <description>Sanitized dashboard example for GitLab audit-event JSON relay fixtures. This is analyst usability content, not validation evidence.</description>
+  <fieldset submitButton="false">
+    <input type="time" token="time_range">
+      <label>Time range</label>
+      <default><earliest>-24h</earliest><latest>now</latest></default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>GitLab audit events by family</title>
+      <chart>
+        <search><query>index=gitops sourcetype="gitlab:audit:json" | stats count by gitlab_audit_family</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search>
+        <option name="charting.chart">column</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Source IPs and actors</title>
+      <table>
+        <search><query>index=gitops sourcetype="gitlab:audit:json" | stats count values(src_ip) as src_ip by src_user</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Recent audit changes</title>
+      <table>
+        <search><query>index=gitops sourcetype="gitlab:audit:json" | table _time gitlab_audit_family event_id event_type src_user entity_type entity_path target_type target_details action change from to custom_message src_ip marker</query><earliest>$time_range.earliest$</earliest><latest>$time_range.latest$</latest></search>
+      </table>
+    </panel>
+  </row>
+</form>

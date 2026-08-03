@@ -1,0 +1,44 @@
+<form version="1.1" theme="light">
+  <label>Microsoft Defender for Cloud SOC Overview</label>
+  <description>Onboarding and triage view for Microsoft Defender for Cloud alert, recommendation, assessment, secure-score-control, and regulatory-compliance-control JSON relay sourcetypes. Synthetic-equivalent fixtures are not live source validation.</description>
+  <fieldset submitButton="false" autoRun="true">
+    <input type="time" token="time_range" searchWhenChanged="true">
+      <label>Time range</label>
+      <default><earliest>-24h@h</earliest><latest>now</latest></default>
+    </input>
+  </fieldset>
+  <search id="base_mdfc">
+    <query>index=epintel (sourcetype="microsoft:defender:cloud:security_alert" OR sourcetype="microsoft:defender:cloud:recommendation" OR sourcetype="microsoft:defender:cloud:assessment" OR sourcetype="microsoft:defender:cloud:secure_score_control" OR sourcetype="microsoft:defender:cloud:regulatory_compliance")
+| eval family=case(sourcetype="microsoft:defender:cloud:security_alert","security_alert", sourcetype="microsoft:defender:cloud:recommendation","recommendation", sourcetype="microsoft:defender:cloud:assessment","assessment", sourcetype="microsoft:defender:cloud:secure_score_control","secure_score_control", sourcetype="microsoft:defender:cloud:regulatory_compliance","regulatory_compliance", true(), sourcetype)
+| eval sub=coalesce(subscription_id, subscriptionId), rg=coalesce(resource_group, resourceGroup), res=coalesce(resource_id, resourceId, event_id, id), res_name=coalesce(affected_resource, compromisedEntity, resource_name, name), sev=coalesce(severity, recommendationSeverity, 'metadata.severity'), state=coalesce(status, state, status_code, 'status.code', compliance_state, 'properties.state'), title=coalesce(signature, alertDisplayName, recommendationDisplayName, displayName, secure_score_control, 'properties.displayName', 'properties.description'), mitre_tactics=coalesce(tactics, mvjoin(spath(_raw,"tactics{}"),",")), mitre_techniques=coalesce(techniques, mvjoin(spath(_raw,"techniques{}"),",")), score_pct=coalesce(secure_score_percentage, 'properties.score.percentage'), healthy=coalesce(healthy_resource_count, 'properties.healthyResourceCount'), unhealthy=coalesce(unhealthy_resource_count, 'properties.unhealthyResourceCount'), passed=coalesce(passed_assessments, 'properties.passedAssessments'), failed=coalesce(failed_assessments, 'properties.failedAssessments'), marker_value=coalesce(marker, mvindex(spath(_raw,"marker"),0))</query>
+    <earliest>$time_range.earliest$</earliest>
+    <latest>$time_range.latest$</latest>
+  </search>
+  <row>
+    <panel><title>Total Defender for Cloud events</title><single><search base="base_mdfc"><query>| stats count</query></search><option name="underLabel">Alerts + posture records</option></single></panel>
+    <panel><title>Security alerts</title><single><search base="base_mdfc"><query>| search family="security_alert" | stats count</query></search><option name="underLabel">Microsoft.Security/alerts</option></single></panel>
+    <panel><title>Unhealthy posture records</title><single><search base="base_mdfc"><query>| search family IN ("recommendation","assessment","regulatory_compliance") state IN ("Unhealthy","Active","Failed") | stats count</query></search><option name="underLabel">Fixture-backed state/status values</option></single></panel>
+    <panel><title>Subscriptions observed</title><single><search base="base_mdfc"><query>| stats dc(sub)</query></search><option name="underLabel">Distinct subscription IDs</option></single></panel>
+  </row>
+  <row>
+    <panel><title>Arrivals by family</title><chart><search base="base_mdfc"><query>| timechart span=15m count by family limit=10</query></search><option name="charting.chart">area</option><option name="charting.chart.stackMode">stacked</option></chart></panel>
+    <panel><title>Severity and status</title><chart><search base="base_mdfc"><query>| stats count by sev state | sort - count</query></search><option name="charting.chart">bar</option></chart></panel>
+  </row>
+  <row>
+    <panel><title>Affected resources and subscriptions</title><table><search base="base_mdfc"><query>| stats count values(family) as families values(sev) as severities values(state) as states values(title) as titles by sub rg res_name res | sort - count | head 25</query></search><option name="count">25</option></table></panel>
+    <panel><title>MITRE tactics / techniques from alert fixtures</title><table><search base="base_mdfc"><query>| search family="security_alert" | stats count values(title) as alerts values(mitre_techniques) as techniques values(res_name) as resources by mitre_tactics | sort - count</query></search><option name="count">20</option></table></panel>
+  </row>
+  <row>
+    <panel><title>Recommendations and compliance posture</title><table><search base="base_mdfc"><query>| search family IN ("recommendation","assessment","regulatory_compliance") | table _time sub rg res_name recommendation assessment_name assessment_key compliance_control compliance_control_description secure_score_control score_impact sev state status_code policy_definition_id passed failed marker_value | sort - _time | head 30</query></search><option name="count">30</option></table></panel>
+  </row>
+  <row>
+    <panel><title>Secure score controls</title><table><search base="base_mdfc"><query>| search family="secure_score_control" | table _time sub secure_score_control secure_score_current secure_score_max score_pct healthy unhealthy not_applicable_resource_count weight marker_value | sort - _time | head 30</query></search><option name="count">30</option></table></panel>
+    <panel><title>Regulatory compliance controls</title><table><search base="base_mdfc"><query>| search family="regulatory_compliance" | table _time sub compliance_control title state passed failed skipped_assessments marker_value | sort - _time | head 30</query></search><option name="count">30</option></table></panel>
+  </row>
+  <row>
+    <panel><title>Onboarding coverage by source, host, and sourcetype</title><table><search base="base_mdfc"><query>| stats count dc(marker_value) as fixture_markers min(_time) as first_seen max(_time) as last_seen by index source host sourcetype | convert ctime(first_seen) ctime(last_seen) | sort - count</query></search><option name="count">25</option></table></panel>
+  </row>
+  <row>
+    <panel><title>Recent raw Defender for Cloud context</title><table><search base="base_mdfc"><query>| table _time index sourcetype source host family sub rg res_name title sev state score_pct healthy unhealthy passed failed mitre_tactics mitre_techniques marker_value _raw | sort - _time | head 50</query></search><option name="count">20</option><option name="wrap">true</option></table></panel>
+  </row>
+</form>

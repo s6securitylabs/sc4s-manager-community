@@ -1,0 +1,19 @@
+<dashboard version="1.1" theme="light">
+  <label>TrueNAS storage platform telemetry Overview</label>
+  <description>Operator overview for curated SecHub Resources synthetic-equivalent fixtures. Use only after local SC4S/Splunk replay validation.</description>
+  <fieldset submitButton="false">
+    <input type="text" token="index"><label>Index</label><default>*</default></input>
+    <input type="time" token="time"><label>Time range</label><default><earliest>-24h</earliest><latest>now</latest></default></input>
+  </fieldset>
+  <row>
+    <panel><title>Total events by sourcetype</title><chart><search><query>index=$index$ (sourcetype="truenas:middleware:auth" OR sourcetype="truenas:storage:pool" OR sourcetype="truenas:storage:snapshot" OR sourcetype="truenas:hardware:disk" OR sourcetype="truenas:replication" OR sourcetype="truenas:host:auth") earliest=$time.earliest$ latest=$time.latest$ | timechart count by sourcetype</query></search><option name="charting.chart">column</option></chart></panel>
+    <panel><title>Top hosts and sources</title><table><search><query>index=$index$ (sourcetype="truenas:middleware:auth" OR sourcetype="truenas:storage:pool" OR sourcetype="truenas:storage:snapshot" OR sourcetype="truenas:hardware:disk" OR sourcetype="truenas:replication" OR sourcetype="truenas:host:auth") earliest=$time.earliest$ latest=$time.latest$ | stats count by host source sourcetype | sort - count | head 20</query></search></table></panel>
+  </row>
+  <row>
+    <panel><title>Event family breakdown</title><table><search><query>index=$index$ (sourcetype="truenas:middleware:auth" OR sourcetype="truenas:storage:pool" OR sourcetype="truenas:storage:snapshot" OR sourcetype="truenas:hardware:disk" OR sourcetype="truenas:replication" OR sourcetype="truenas:host:auth") earliest=$time.earliest$ latest=$time.latest$ | stats count by sourcetype action result status | sort - count</query></search></table></panel>
+    <panel><title>Recent high-context events</title><table><search><query>index=$index$ (sourcetype="truenas:middleware:auth" OR sourcetype="truenas:storage:pool" OR sourcetype="truenas:storage:snapshot" OR sourcetype="truenas:hardware:disk" OR sourcetype="truenas:replication" OR sourcetype="truenas:host:auth") earliest=$time.earliest$ latest=$time.latest$ | table _time index sourcetype source host vendor product action result status user src pool dataset snapshot device serial severity status task bytes marker _raw | sort - _time | head 50</query></search></table></panel>
+  </row>
+  <row>
+    <panel><title>Validation markers</title><table><search><query>index=$index$ (sourcetype="truenas:middleware:auth" OR sourcetype="truenas:storage:pool" OR sourcetype="truenas:storage:snapshot" OR sourcetype="truenas:hardware:disk" OR sourcetype="truenas:replication" OR sourcetype="truenas:host:auth") earliest=$time.earliest$ latest=$time.latest$ marker=* | stats count min(_time) as first_time max(_time) as last_time values(sourcetype) as sourcetypes values(host) as hosts by marker</query></search></table></panel>
+  </row>
+</dashboard>

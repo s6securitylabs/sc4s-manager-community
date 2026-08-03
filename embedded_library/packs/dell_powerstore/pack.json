@@ -1,0 +1,695 @@
+{
+  "schema_version": "0.1",
+  "id": "dell_powerstore",
+  "version": "0.1.3",
+  "url": "https://www.dell.com/support/kbdoc/en-us/000130110/powerstore-info-hub-product-documentation-videos",
+  "description": "Curated SecHub Resources SC4S pack for Dell PowerStore remote logging. Extends upstream SC4S PowerStore routing with conservative metadata, synthetic smoke fixtures, and explicit evidence gaps.",
+  "display_name": "Dell PowerStore remote logging",
+  "vendor": "dell",
+  "product": "powerstore",
+  "default_index": "infraops",
+  "default_source": "dell_powerstore",
+  "listener": {
+    "source_id": "DELL_POWERSTORE",
+    "transport": "tls",
+    "port": 20091,
+    "env": {
+      "SC4S_LISTEN_DELL_POWERSTORE_TLS_PORT": "20091",
+      "SOURCE_ALL_SET_APPEND": "DELL_POWERSTORE"
+    }
+  },
+  "sourcetypes": {
+    "powerstore": "dell:emc:powerstore"
+  },
+  "event_families": [
+    {
+      "id": "powerstore",
+      "label": "PowerStore audit and alert/event remote logging",
+      "match_engine": "pcre",
+      "match": "\\[PowerStore_[A-Za-z_]+@1139",
+      "expected_sourcetype": "dell:emc:powerstore",
+      "primary_id_field": "event_code",
+      "required_fields": [
+        "PowerStore structured-data marker"
+      ],
+      "timestamp_fields": [
+        "syslog_header"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "Dell",
+    "product": "Dell PowerStore remote logging",
+    "vendor_product": "dell:powerstore",
+    "event_code": "PowerStore event/alert code extracted from structured-data fixture fields.",
+    "severity": "PowerStore severity token extracted from structured-data fixture fields.",
+    "event_type": "PowerStore event type/source action token extracted from structured-data fixture fields.",
+    "alert_raised": "PowerStore alert-raised flag extracted from structured-data fixture fields.",
+    "call_home": "PowerStore call-home flag extracted from structured-data fixture fields.",
+    "kb_article": "PowerStore knowledge-base article identifier extracted from structured-data fixture fields.",
+    "message": "PowerStore event message extracted from structured-data fixture fields.",
+    "action": "Alias of fixture-backed event_type for analyst grouping.",
+    "signature": "Alias of fixture-backed message for analyst grouping.",
+    "signature_id": "Alias of fixture-backed event_code for analyst grouping.",
+    "marker": "Synthetic-equivalent fixture marker used for replay/read-back tests."
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-dell_powerstore.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/dell_powerstore_overview.xml"
+    ],
+    "test_events": [
+      "test-events/dell_powerstore_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tls_20091.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tls_rfc5425",
+      "label": "TLS syslog RFC5425",
+      "transport": "tls",
+      "recommended": true,
+      "default_port": 20091,
+      "notes": "Recommended where supported; PowerStore docs describe TLS certificate options for remote logging.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "raw"
+    },
+    {
+      "id": "udp_syslog",
+      "label": "Legacy UDP syslog",
+      "transport": "udp",
+      "recommended": false,
+      "default_port": 514,
+      "notes": "Upstream SC4S docs describe legacy BSD/default port 514. Use only where TLS/TCP is unavailable.",
+      "syslog_protocol": "udp_syslog",
+      "framing": "datagram",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "tls_rfc5425",
+  "source_log_version": {
+    "name": "Dell PowerStore remote logging",
+    "min": "unknown",
+    "max": null,
+    "notes": "Upstream SC4S parser/docs, Dell PowerStore Monitoring Your System remote logging docs, and Dell PowerStore Events and Alerts Reference Guide March 2026."
+  },
+  "validation": {
+    "date_validated": "not lab validated; curated 2026-06-05",
+    "validated_by": "Hermes deep-research curation (documentation-grounded only)",
+    "source_log_version": "Upstream SC4S parser/docs, Dell PowerStore Monitoring Your System remote logging docs, and Dell PowerStore Events and Alerts Reference Guide March 2026.",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Documentation and upstream parser evidence only; no real PowerStore syslog replay/read-back captured."
+  },
+  "test_event_sets": [
+    {
+      "id": "dell_powerstore_structured_data_smoke",
+      "label": "PowerStore structured-data-marker smoke fixtures",
+      "path": "test-events/dell_powerstore_test_events.txt",
+      "format": "ietf",
+      "wire_format": "rfc5424_with_powerstore_structured_data_marker",
+      "envelope": "ietf_rfc5424",
+      "serialization": "structured_data_kv",
+      "event_count": 2,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_DELL_POWERSTORE_TEST_REMOTE_SYSLOG_FAIL_001",
+        "SC4S_DELL_POWERSTORE_TEST_REMOTE_SYSLOG_OK_002"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "syslog_header_timezone",
+        "primary_field": "rfc5424_header",
+        "primary_timezone": "offset included in fixture timestamps",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "rfc5424_header"
+        ],
+        "notes": "Exact PowerStore payload time fields require real capture."
+      },
+      "field_delimiting": {
+        "style": "rfc5424_structured_data_key_values",
+        "field_separator": "space",
+        "quote_character": "double quote",
+        "escape_policy": "Synthetic smoke only; replace with real PowerStore escaping after capture.",
+        "notes": "One event per line."
+      },
+      "expected_families": [
+        "powerstore"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-dell_powerstore.conf",
+      "target_path": "local/config/app_parsers/syslog/app-dell_powerstore.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/dell_powerstore.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/dell_powerstore_test_events.txt",
+      "target_path": "test-events/dell_powerstore_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tls_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tls_20091.sh",
+      "target_path": "scripts/send_tls_20091.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/dell_powerstore_overview.xml",
+      "target_path": "splunk/default/data/ui/views/dell_powerstore_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Upstream SC4S app-syslog-dell_powerstore.conf and emc_powerstore.md; Dell PowerStore Monitoring Your System manual60020558; Dell PowerStore Events and Alerts Reference Guide manual39097742.",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Committed fixtures are synthetic-equivalent and contain only documentation/RFC example identities. They are not real customer or appliance captures."
+    },
+    "curation": {
+      "reviewed_by": "Hermes deep research",
+      "reviewed_at": "2026-06-05",
+      "notes": "Created after web/vendor/upstream research. Kept conservative because real raw appliance syslog capture is still required."
+    }
+  },
+  "relationship_to_upstream": "extends_upstream",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "signature_id": {
+          "source_fields": [
+            "event_code"
+          ],
+          "status": "partial",
+          "notes": "Dell Events and Alerts Reference Guide event code."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Critical/Major/Minor/Info."
+        },
+        "signature": {
+          "source_fields": [
+            "message"
+          ],
+          "status": "partial",
+          "notes": "Human-readable event message."
+        },
+        "vendor_product": {
+          "source_fields": [
+            "vendor_product"
+          ],
+          "status": "partial",
+          "notes": "Splunk props derive dellemc:powerstore for read-back grouping; not a source-emitted field."
+        },
+        "action": {
+          "source_fields": [
+            "event_type",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Analyst grouping derived from fixture-backed PowerStore event_type; not a full action taxonomy."
+        }
+      },
+      "notes": "Partial event/inventory mapping only."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "event.code": {
+          "source_fields": [
+            "event_code"
+          ],
+          "status": "partial",
+          "notes": "Best-effort."
+        },
+        "activity_name": {
+          "source_fields": [
+            "event_type",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "PowerStore event type only; not a complete OCSF activity mapping."
+        }
+      },
+      "notes": "Not complete."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.code": {
+          "source_fields": [
+            "event_code"
+          ],
+          "status": "partial",
+          "notes": "Best-effort."
+        },
+        "event.severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "Best-effort."
+        },
+        "event.action": {
+          "source_fields": [
+            "event_type",
+            "action"
+          ],
+          "status": "partial",
+          "notes": "Derived from fixture-backed PowerStore event_type for analyst grouping."
+        },
+        "event.reason": {
+          "source_fields": [
+            "message",
+            "signature"
+          ],
+          "status": "partial",
+          "notes": "Human-readable PowerStore message preserved as read-back context; not a complete ECS event reason taxonomy."
+        }
+      },
+      "notes": "Not complete."
+    }
+  },
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic Dell PowerStore remote logging ingestion",
+      "description": "Parser, listener env example, synthetic smoke fixtures, and minimal Splunk props. No drops or reductions.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-dell_powerstore.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; preserves events."
+    }
+  ],
+  "ci": {
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-05",
+    "tested_commit": "8a45005",
+    "tested_artifact_hashes": {
+      "packs/dell_powerstore/README.md": "sha256:fd8c5ea2c56ac7a69b683a2918ea05d4c1145ee75b9633d400dfc5d83d70d59a",
+      "packs/dell_powerstore/sc4s/app_parsers/syslog/app-dell_powerstore.conf": "sha256:1d94222fe1db5a3f2e6f158111b836d1d314c86d73731bb11df218d7b10c7e5f",
+      "packs/dell_powerstore/sc4s/env.example": "sha256:07f1271b419f75e3b86f95ac14279a4a5470e61e66a77e66f124a6c555db0343",
+      "packs/dell_powerstore/scripts/send_tls_20091.sh": "sha256:39dfcca65bc10d991ef7d2387736b9b7e6bebd30ccfd0f6393f06bd94df8c179",
+      "packs/dell_powerstore/splunk/default/eventtypes.conf": "sha256:bbb8f72439c6c634e1d92a6ded1e23a7d40fe160e9ed153b12a9b98d43ab7b4e",
+      "packs/dell_powerstore/splunk/default/props.conf": "sha256:8be208d02f36b1c6cdc0ae3cad04f8285353734d101d4e311e2f6cb68974c894",
+      "packs/dell_powerstore/splunk/default/tags.conf": "sha256:cfd13ddaa60d1658c26bb003c7ff0e657ef54e80241e60c6f2122d8a26268567",
+      "packs/dell_powerstore/splunk/default/transforms.conf": "sha256:fd20abebffcaabc823b27eab16debc59d6bb4635e564f1c0f4d74bc0e25baa1a",
+      "packs/dell_powerstore/test-events/dell_powerstore_test_events.txt": "sha256:3228b9552f23f57290b5c74a8c87911e069274c959cd1d5f044b7ac9aff9c662",
+      "packs/dell_powerstore/validation/preflight-2026-06-08.md": "sha256:de1f4f427c19119133f9b3bfb0a346359bddc951dabd976ff9b12c0f9bad3738",
+      "packs/dell_powerstore/splunk/default/data/ui/views/dell_powerstore_overview.xml": "sha256:411b7a13cd1df10187adf2d80407382fbfe7717385ccd74d9eff7644ab5e63c7",
+      "packs/dell_powerstore/scripts/e2e_docker_compose.sh": "sha256:d01dec7a94d31dd953987f6e8fdb39fcfad4c6e1f7e3aa5072b7b3aee0cb14a3"
+    }
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for Dell PowerStore remote logging structured-data syslog",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "dell_powerstore_structured_data_smoke"
+      ],
+      "event_count": 2,
+      "marker_prefix": "SC4S_DELL_POWERSTORE_TEST_",
+      "transport": "tls_rfc5425",
+      "framing": "octet_counted",
+      "script": "scripts/send_tls_20091.sh"
+    },
+    "readback": {
+      "spl": "index=infraops sechub_fixture_marker=\"SC4S_DELL_POWERSTORE_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product vendor_product event_code severity event_type action alert_raised call_home kb_article message signature signature_id marker _raw",
+      "expected_count": 2,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "PowerStore structured-data marker",
+        "event code",
+        "severity/event_type",
+        "message",
+        "vendor_product",
+        "action/signature/signature_id aliases",
+        "timestamp"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-08",
+      "summary": "2026-06-08 local preflight found no TCP listener on 127.0.0.1:20091 and local Splunk TEST ports 8089/8000 refused TCP connections. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-08.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-08.md",
+        "summary": "Command-grounded local preflight evidence for missing Dell PowerStore remote logging structured-data syslog listener and unavailable local Splunk TEST ports; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tls",
+          "port": 20091,
+          "protocol": "rfc5425_octet_counted_powerstore_structured_data",
+          "purpose": "Dedicated Dell PowerStore TLS/RFC5425 remote logging listener"
+        }
+      ],
+      "required_indexes": [
+        "infraops"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to infraops",
+        "Search role can read infraops"
+      ]
+    },
+    "e2e_docker_harness": {
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/dell_powerstore/scripts/e2e_docker_compose.sh run",
+      "commands": {
+        "plan": "packs/dell_powerstore/scripts/e2e_docker_compose.sh plan",
+        "write_compose": "packs/dell_powerstore/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/dell_powerstore/scripts/e2e_docker_compose.sh run",
+        "down": "packs/dell_powerstore/scripts/e2e_docker_compose.sh down"
+      },
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "splunk_requirements": {
+        "required_index": "infraops",
+        "hec_enabled": true,
+        "search_required": true,
+        "readback_spl": "index=infraops sechub_fixture_marker=\"SC4S_DELL_POWERSTORE_TEST_*\" earliest=-2h | table _time index sourcetype source host vendor product vendor_product event_code severity event_type action alert_raised call_home kb_article message signature signature_id marker _raw"
+      },
+      "sc4s_requirements": {
+        "listener": {
+          "source_id": "DELL_POWERSTORE",
+          "transport": "tls",
+          "port": 20091,
+          "framing": "rfc5425_octet_counted",
+          "env_var": "SC4S_LISTEN_DELL_POWERSTORE_TLS_PORT"
+        },
+        "parser_artifact": "sc4s/app_parsers/syslog/app-dell_powerstore.conf"
+      },
+      "coverage_matrix": [
+        {
+          "source_shape_variant": "powerstore_structured_data_syslog",
+          "fixture_set": "dell_powerstore_structured_data_smoke",
+          "event_family": "powerstore",
+          "sourcetype": "dell:emc:powerstore",
+          "event_count": 2,
+          "markers": [
+            "SC4S_DELL_POWERSTORE_TEST_REMOTE_SYSLOG_FAIL_001",
+            "SC4S_DELL_POWERSTORE_TEST_REMOTE_SYSLOG_OK_002"
+          ],
+          "required_fields": [
+            "vendor",
+            "product",
+            "vendor_product",
+            "event_code",
+            "severity",
+            "event_type",
+            "action",
+            "alert_raised",
+            "call_home",
+            "kb_article",
+            "message",
+            "signature",
+            "signature_id",
+            "marker"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "Does not prove a real Dell PowerStore appliance, PowerStoreOS version, remote-log category mix, or production logging configuration.",
+        "Does not prove exact vendor structured-data escaping, UDP/BSD legacy variants, collector wrapper behavior, or source-local timezone handling.",
+        "Does not provide field validation; sanctioned PowerStore appliance output or vendor-certified examples are still required for trust/quality promotion."
+      ]
+    }
+  },
+  "source_delivery": {
+    "mode": "sc4s_syslog_native",
+    "sc4s_native": true,
+    "collector_required": false,
+    "payload_format": "raw_syslog",
+    "supported_transport_refs": [
+      "tls_rfc5425",
+      "udp_syslog"
+    ],
+    "notes": "PowerStore remote logging is syslog-style source delivery.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "dell_powerstore_overview_splunk_test",
+      "title": "Dell PowerStore remote logging — dashboard example",
+      "source_path": "dashboards/screenshots/dell-powerstore-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the Dell PowerStore remote logging dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards"
+  ],
+  "adapters": {
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: native syslog listener or relay-to-syslog path; preserve the pack sourcetype/source routing and validate listener framing locally. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  }
+}

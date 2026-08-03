@@ -1,0 +1,22 @@
+/*
+ * SecHub Resources Splunk Edge Processor pipeline template candidate: zeek_json_routine_conn_reduce
+ * Source: Zeek JSON logs line relay
+ * Sourcetypes/source-type definitions: zeek:json
+ * Status: conservative candidate only; NOT validated in Splunk Edge Processor.
+ * Default behavior: route unchanged events to $destination. No drops, masking, or field deletion are enabled.
+ * Optional reduction ideas (must be implemented only after preview/replay/read-back validation):
+ * - Consider reducing only validated routine `conn` success summaries for trusted internal-to-internal traffic where alternate flow telemetry exists and detection owners approve.
+ * - Always retain notice, dns/http/ssl/ssh/files/x509 tied to alerts/watched assets, failed/unusual states, external exposure, and unknown log types by default.
+ * Rollback: disable this pipeline/template and route the source directly to the destination/index `netids`.
+ */
+
+$source = ${source};
+$destination = ${destination};
+
+$pipeline =
+  | from $source
+  | eval sechub_edge_template_id = "zeek_json_routine_conn_reduce"
+  | eval sechub_edge_template_status = "candidate_not_validated"
+  /* Insert local, approved reduction predicates here after Edge Processor preview/install/read-back validation. */
+  /* Example shape only: | where NOT (<local_allowlisted_low_value_condition>) */
+  | into $destination;

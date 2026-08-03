@@ -1,0 +1,61 @@
+{
+  "artifacts": {
+    "module": "edge-processor/modules/suricata_eve_flow_reduce.spl2",
+    "parsed_sample": "edge-processor/samples/suricata_eve_flow_reduce.parsed.jsonl",
+    "preflight": "edge-processor/validation/suricata_eve_flow_reduce-preflight.md",
+    "raw_sample": "edge-processor/samples/suricata_eve_flow_reduce.raw.txt"
+  },
+  "display_name": "Suricata EVE flow/stat reduction candidate",
+  "lossy_behavior": {
+    "candidate_reduction_notes": [
+      "Consider reducing high-volume `flow`/`stats`/routine protocol metadata only when equivalent NetFlow/Zeek/EDR coverage and detection impact have been validated.",
+      "Always retain alerts, anomalies, fileinfo, and protocol events tied to alerts or watched assets by default."
+    ],
+    "default_lossy": false,
+    "enabled_by_default": false,
+    "must_retain_by_default": "security signals, denials/failures, privileged/admin changes, detections, unknown/unclassified event families, and raw vendor context unless local validation approves otherwise"
+  },
+  "notes": "Suricata EVE can produce very high-volume flow/protocol telemetry; alerts and anomalies are high-value and should not be dropped by default.",
+  "pack_id": "suricata_eve_json",
+  "pipeline_taxonomy": {
+    "destinations": [
+      {
+        "default_index_hint": "netids",
+        "placeholder": "$destination"
+      }
+    ],
+    "pipeline": "source-type definitions + transforms + destination(s)",
+    "source_type_definitions": [
+      "suricata:eve"
+    ],
+    "transforms": [
+      "annotate template id/status only by default",
+      "optional local allowlist/drop predicates require validation before enablement"
+    ]
+  },
+  "quality_posture": "curated_artifact_only_unverified",
+  "review_status": "candidate_not_edge_processor_validated",
+  "rollback": [
+    "Disable or detach the Edge Processor pipeline template",
+    "route source directly to the original Splunk destination/index",
+    "replay a held-out sample to verify full-fidelity ingestion restored",
+    "retain pre/post event counts and affected search evidence"
+  ],
+  "source": {
+    "default_index": "netids",
+    "name": "Suricata EVE JSON line relay",
+    "sample_source": "test-events/suricata_eve_json_test_events.txt",
+    "sourcetypes": [
+      "suricata:eve"
+    ]
+  },
+  "template_id": "suricata_eve_flow_reduce",
+  "template_type": "splunk_edge_processor_pipeline_candidate",
+  "validation_required": [
+    "Edge Processor preview parses module and sample source",
+    "non-production install/enable test",
+    "replay fixture and representative production-equivalent sample",
+    "destination read-back verifies event count, sourcetype/source/index, timestamps, required normalized fields, and retained raw context",
+    "compare detection/search results before and after reduction"
+  ]
+}

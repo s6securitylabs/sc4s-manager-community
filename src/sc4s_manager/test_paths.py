@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import tempfile
 from pathlib import Path
 
@@ -17,15 +18,19 @@ def _user_id(user_id: int | None = None) -> int:
 
 
 def _dir_is_writable(path: Path) -> bool:
-    if path.exists():
-        return path.is_dir() and os.access(path, os.W_OK | os.X_OK)
-    return os.access(path.parent, os.W_OK | os.X_OK)
+    candidate = path if path.exists() else path.parent
+    mode = candidate.stat().st_mode
+    has_write_bit = bool(mode & (stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH))
+    has_execute_bit = bool(mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
+    return (not path.exists() or path.is_dir()) and has_write_bit and has_execute_bit and os.access(candidate, os.W_OK | os.X_OK)
 
 
 def _file_is_writable(path: Path) -> bool:
-    if path.exists():
-        return path.is_file() and os.access(path, os.W_OK)
-    return os.access(path.parent, os.W_OK | os.X_OK)
+    candidate = path if path.exists() else path.parent
+    mode = candidate.stat().st_mode
+    has_write_bit = bool(mode & (stat.S_IWUSR | stat.S_IWGRP | stat.S_IWOTH))
+    access_mode = os.W_OK if path.exists() else os.W_OK | os.X_OK
+    return (not path.exists() or path.is_file()) and has_write_bit and os.access(candidate, access_mode)
 
 
 def _user_scoped_dir_name(stem: str, user_id: int) -> str:

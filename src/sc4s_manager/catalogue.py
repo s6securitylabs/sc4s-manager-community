@@ -15,7 +15,7 @@ VALIDATION_OUTPUT_SUBDIR = Path("catalogue/generated/validation")
 REQUIRED_VERIFICATION_STAGES = ("syslog_ng_syntax", "runtime_pack_validation", "splunk_readback")
 DRIFT_REPORT_PATH = UPSTREAM_OUTPUT_SUBDIR / "drift-report.json"
 UPSTREAM_ORIGINS = {"sc4s-inbuilt", "sc4s-inbuilt-lite"}
-NEXT_ORIGIN = "sechub-resource"
+NEXT_ORIGIN = "sechub-resources-pack"
 COMMUNITY_ORIGIN = "community-extra"
 COMMUNITY_DEFAULT_SOURCE_STATUS = "candidate"
 COMMUNITY_DEFAULT_TRUST_LEVEL = "community_submitted"
@@ -715,7 +715,8 @@ def _matches_query(entry: dict[str, Any], query: str) -> bool:
 FACET_LABELS = {
     "sc4s-inbuilt": "SC4S built-in",
     "sc4s-inbuilt-lite": "SC4S built-in Lite",
-    "sechub-resource": "SecHub Resources SC4S pack",
+    "sechub-resource": "SC4S Library pack (legacy provenance)",
+    "sechub-resources-pack": "SC4S Library pack",
     "community-extra": "Community extra",
     "parser": "Parser",
     "filters": "Filters",

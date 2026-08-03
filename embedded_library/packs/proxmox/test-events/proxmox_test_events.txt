@@ -1,0 +1,6 @@
+2026-06-08T10:00:01Z pve-node-a pvedaemon[1234]: authentication failure; rhost=198.51.100.24 user=alice@example.test@pve msg=invalid credentials marker=SC4S_PROXMOX_TEST_AUTH_FAILURE_001
+2026-06-08T10:00:11Z pve-node-a pvedaemon[1235]: successful auth for user 'root@pam' marker=SC4S_PROXMOX_TEST_AUTH_SUCCESS_002
+2026-06-08T10:01:00Z pve-node-a pvedaemon[1240]: starting service pveproxy: UPID:pve-node-a:00001234:0000ABCD:6936F000:srvstart:pveproxy:root@pam: marker=SC4S_PROXMOX_TEST_SERVICE_START_003
+2026-06-08T10:01:30Z pve-node-a pvedaemon[1241]: stopping service pvedaemon: UPID:pve-node-a:00001235:0000ABCE:6936F01E:srvstop:pvedaemon:root@pam: marker=SC4S_PROXMOX_TEST_SERVICE_STOP_004
+2026-06-08T10:02:00Z pve-node-a pvedaemon[1242]: end task UPID:pve-node-a:00001236:0000ABCF:6936F03C:vzstart:101:root@pam: marker=SC4S_PROXMOX_TEST_TASK_END_005
+2026-06-08T10:02:30Z pve-node-a pvedaemon[1243]: all VMs and CTs stopped marker=SC4S_PROXMOX_TEST_NODE_SUMMARY_006

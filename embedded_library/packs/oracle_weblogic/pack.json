@@ -1,0 +1,1050 @@
+{
+  "schema_version": "0.1",
+  "id": "oracle_weblogic",
+  "version": "0.2.2",
+  "url": "https://docs.oracle.com/en/middleware/fusion-middleware/weblogic-server/14.1.2/wllog/logging_services.html",
+  "description": "Curated fixture-backed alpha slice for Oracle WebLogic server and access log relay records, plus catalogue-only definitions for audit provider, Node Manager, and Fusion Middleware diagnostics. Synthetic-equivalent fixtures are source-shape-derived from Oracle documentation and public ecosystem evidence; no live WebLogic, SC4S replay, HEC delivery, or Splunk read-back has passed.",
+  "display_name": "Oracle WebLogic Server logs",
+  "vendor": "oracle",
+  "product": "weblogic",
+  "default_index": "infraops",
+  "default_source": "oracle_weblogic",
+  "listener": {
+    "source_id": "ORACLE_WEBLOGIC",
+    "transport": "tcp",
+    "port": 20102,
+    "env": {
+      "SC4S_LISTEN_ORACLE_WEBLOGIC_TCP_PORT": "20102",
+      "SOURCE_ALL_SET_APPEND": "ORACLE_WEBLOGIC"
+    }
+  },
+  "sourcetypes": {
+    "oracle_weblogic_server": "oracle:weblogic:server",
+    "oracle_weblogic_access": "oracle:weblogic:access",
+    "oracle_weblogic_audit": "oracle:weblogic:audit",
+    "oracle_weblogic_node_manager": "oracle:weblogic:nodemanager",
+    "oracle_fusion_middleware": "oracle:fusion_middleware:diagnostic",
+    "oracle_fusion_middleware_forms_trace": "oracle:fusion_middleware:forms_trace",
+    "oracle_soa_audit": "oracle:soa:audit",
+    "oracle_discoverer_server": "oracle:discoverer:server"
+  },
+  "event_families": [
+    {
+      "id": "oracle_weblogic_server",
+      "label": "Server/domain log events",
+      "match_engine": "pcre",
+      "match": "SC4S_ORACLE_WEBLOGIC_TEST_SERVER_",
+      "expected_sourcetype": "oracle:weblogic:server",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "severity",
+        "subsystem",
+        "message_id",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "WebLogic server log timestamp"
+      ]
+    },
+    {
+      "id": "oracle_weblogic_access",
+      "label": "HTTP access logs",
+      "match_engine": "pcre",
+      "match": "SC4S_ORACLE_WEBLOGIC_TEST_ACCESS_",
+      "expected_sourcetype": "oracle:weblogic:access",
+      "primary_id_field": "sechub_fixture_marker",
+      "required_fields": [
+        "src_ip",
+        "http_method",
+        "status",
+        "sechub_fixture_marker"
+      ],
+      "timestamp_fields": [
+        "WebLogic access log timestamp"
+      ]
+    },
+    {
+      "id": "oracle_weblogic_audit",
+      "label": "Security/audit provider events",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_WEBLOGIC_ORACLE_WEBLOGIC_AUDIT_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:weblogic:audit",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_weblogic_node_manager",
+      "label": "Node Manager lifecycle logs",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_WEBLOGIC_ORACLE_WEBLOGIC_NODE_MANAGER_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:weblogic:nodemanager",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    },
+    {
+      "id": "oracle_fusion_middleware",
+      "label": "Fusion Middleware SOA/OSB/BPM diagnostics",
+      "match_engine": "pcre",
+      "match": "EVIDENCE_REQUIRED_ORACLE_WEBLOGIC_ORACLE_FUSION_MIDDLEWARE_DO_NOT_ROUTE",
+      "expected_sourcetype": "oracle:fusion_middleware:diagnostic",
+      "primary_id_field": "source_shape_evidence_required",
+      "required_fields": [
+        "event_time",
+        "source_shape_evidence"
+      ],
+      "timestamp_fields": [
+        "source timestamp field requires validation"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "event_timestamp": "Preserve event_timestamp when present in the exact source shape; do not invent or derive without evidence.",
+    "domain_name": "Preserve domain_name when present in the exact source shape; do not invent or derive without evidence.",
+    "server_name": "Preserve server_name when present in the exact source shape; do not invent or derive without evidence.",
+    "machine_name": "Preserve machine_name when present in the exact source shape; do not invent or derive without evidence.",
+    "application": "Preserve application when present in the exact source shape; do not invent or derive without evidence.",
+    "subsystem": "Preserve subsystem when present in the exact source shape; do not invent or derive without evidence.",
+    "severity": "Preserve severity when present in the exact source shape; do not invent or derive without evidence.",
+    "message_id": "Preserve message_id when present in the exact source shape; do not invent or derive without evidence.",
+    "user": "Preserve user when present in the exact source shape; do not invent or derive without evidence.",
+    "src_ip": "Preserve src_ip when present in the exact source shape; do not invent or derive without evidence.",
+    "action": "Preserve action when present in the exact source shape; do not invent or derive without evidence.",
+    "status": "Preserve status when present in the exact source shape; do not invent or derive without evidence.",
+    "thread_id": "Preserve thread_id when present in the exact source shape; do not invent or derive without evidence.",
+    "diagnostic_context_id": "Preserve diagnostic_context_id when present in the exact source shape; do not invent or derive without evidence.",
+    "message": "Preserve message when present in the exact source shape; do not invent or derive without evidence."
+  },
+  "artifacts": {
+    "docs": [
+      "README.md",
+      "validation/preflight-2026-06-08.md",
+      "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "docs/research/elastic-weblogic-log-source-shape-20260701.md",
+      "validation/fixture-ivv-2026-07-01.md",
+      "docs/research/weblogic-log-source-shape-20260701.md",
+      "validation/demo-lab-data-acquisition-plan-2026-07-02.md",
+      "docs/collection/oracle-fmw-weblogic-soa-discoverer-splunk-onboarding.md"
+    ],
+    "test_events": [
+      "test-events/oracle_weblogic_server_access.txt",
+      "test-events/source_shape_required.txt"
+    ],
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-oracle_weblogic.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/oracle_weblogic_server_access_overview.xml",
+      "splunk/metadata/default.meta",
+      "splunk/default/inputs.conf.example"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20102.sh"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "oracle_weblogic_tcp_log_relay",
+      "label": "Oracle WebLogic server/access TCP relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20102,
+      "notes": "Dedicated TCP listener for sanitized fixture-backed relay records; not native Oracle collection proof.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "raw"
+    }
+  ],
+  "recommended_transport": "oracle_weblogic_tcp_log_relay",
+  "source_log_version": {
+    "name": "Oracle WebLogic Server logs",
+    "min": "public Oracle evidence scan 2026-06-08",
+    "max": null,
+    "notes": "Exact product version/source mode required before parser fixtures or deployment routing."
+  },
+  "validation": {
+    "date_validated": "not validated; fixture-backed alpha curated 2026-07-01, dashboard added 2026-07-03, disabled collection guidance added 2026-07-06",
+    "validated_by": "Hermes local fixture/artifact/dashboard-XML checks only; no validated/verified status stated",
+    "source_log_version": "Synthetic-equivalent fixtures derived from public source-shape evidence",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Local fixture/parser/search-time/dashboard artifacts only for WebLogic server/access. Disabled inputs.conf examples and FMW/SOA/Discoverer collection guidance are operator scaffolds, not validation evidence. No live source, SC4S replay, HEC delivery, Splunk read-back, Manager collector read-back, or production-equivalent validation captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "Source-shape then replay/readback gate for Oracle WebLogic Server logs",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "oracle_weblogic_server_access"
+      ],
+      "event_count": 6,
+      "marker_prefix": "SC4S_ORACLE_WEBLOGIC_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited_syslog_raw",
+      "script": "scripts/send_tcp_20102.sh"
+    },
+    "readback": {
+      "spl": "index=infraops (sourcetype=\"oracle:weblogic:server\" OR sourcetype=\"oracle:weblogic:access\") (sechub_fixture_marker=\"SC4S_ORACLE_WEBLOGIC_TEST_SERVER_*\" OR sechub_fixture_marker=\"SC4S_ORACLE_WEBLOGIC_TEST_ACCESS_*\") earliest=-2h | table _time index sourcetype source host severity status subsystem message_id src_ip http_method uri_path sechub_fixture_marker _raw",
+      "expected_count": 6,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "host",
+        "timestamp",
+        "marker fields",
+        "raw preservation",
+        "no sensitive values exposed"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "indexed_readback",
+      "date": "2026-07-01",
+      "summary": "Fixture-backed artifacts were authored, but live SC4S TEST -> HEC -> Splunk TEST replay/read-back has not yet run.",
+      "evidence_path": "validation/fixture-ivv-2026-07-01.md"
+    },
+    "evidence": [
+      {
+        "type": "source_shape_acquisition_plan",
+        "path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+        "summary": "Blocker/acquisition plan retained; fixture alpha does not promote trust."
+      },
+      {
+        "type": "fixture_ivv",
+        "path": "validation/fixture-ivv-2026-07-01.md",
+        "summary": "Local fixture/artifact evidence only; not replay/read-back validation."
+      },
+      {
+        "type": "source_shape_reference",
+        "path": "docs/research/elastic-weblogic-log-source-shape-20260701.md",
+        "summary": "Public source-shape reference; raw third-party logs not copied."
+      },
+      {
+        "type": "source_shape_reference",
+        "path": "docs/research/weblogic-log-source-shape-20260701.md",
+        "summary": "Azure MIT, Datadog BSD, Elastic, and Oracle docs source-shape reference for synthetic WebLogic server/access fixtures; no trust promotion."
+      },
+      {
+        "type": "demo_lab_data_acquisition_plan",
+        "path": "validation/demo-lab-data-acquisition-plan-2026-07-02.md",
+        "summary": "Free/developer lab-data acquisition route identified; not validation evidence and no trust promotion."
+      }
+    ]
+  },
+  "test_event_sets": [
+    {
+      "id": "oracle_weblogic_server_access",
+      "label": "Synthetic-equivalent fixture-backed relay events",
+      "path": "test-events/oracle_weblogic_server_access.txt",
+      "format": "raw",
+      "wire_format": "tcp_syslog_payload",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "serialization": "raw_text",
+      "event_count": 6,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_ORACLE_WEBLOGIC_TEST_SERVER_STARTING_001",
+        "SC4S_ORACLE_WEBLOGIC_TEST_SERVER_RETRY_001",
+        "SC4S_ORACLE_WEBLOGIC_TEST_SERVER_WORKMANAGER_001",
+        "SC4S_ORACLE_WEBLOGIC_TEST_SERVER_SECURITY_WARNING_001",
+        "SC4S_ORACLE_WEBLOGIC_TEST_ACCESS_CONSOLE_001",
+        "SC4S_ORACLE_WEBLOGIC_TEST_ACCESS_404_001"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "source record timestamp",
+        "primary_timezone": "explicit_in_record",
+        "fallback_fields": [],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "UTC",
+        "notes": "Synthetic-equivalent fixtures only; verify with live replay/read-back before promotion.",
+        "requires_source_timezone_when_fields_missing": []
+      },
+      "field_delimiting": {
+        "style": "source_specific_text",
+        "field_separator": "source_specific",
+        "quote_character": "source_specific",
+        "escape_policy": "preserve raw source text",
+        "notes": "Source-shape-derived fixture, not real customer/product output."
+      },
+      "expected_families": [
+        "oracle_weblogic_server",
+        "oracle_weblogic_access"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-oracle_weblogic.conf",
+      "target_path": "local/config/app_parsers/syslog/app-oracle_weblogic.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "c60460aa9a68ef7a7cbd5f0629f59fded197703a6e7009e3dfcf48789c1e6d7c"
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/oracle_weblogic.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "54d79bcdbc6ab78c5fdd90cab3c7f22c193058aefe7f5ee42750322f56657296"
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "67905ebcab8f7a13415d58c9e1d443dce554a74df9e5abe3d4847ec8672f4247"
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "3b802dcac19f41fee28413b3ebb9145b6076aeaf9c687b5c4547cd4cbbe7b5b7"
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "374322a735e0f40caa2356b9d51ad7edd7b67b8f5d660cca6b7462fe35d51eb9"
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "6a652e566bf2a142df60b15f9e6761e9e0516949841ef0cf85325ca4f88b5b51"
+    },
+    {
+      "id": "splunk_dashboard",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/oracle_weblogic_server_access_overview.xml",
+      "target_path": "splunk/default/data/ui/views/oracle_weblogic_server_access_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "26657f141016f1d15704c66e8155c9127b10cc84ed8371417e8be4af97f84bc4"
+    },
+    {
+      "id": "splunk_metadata",
+      "group": "splunk",
+      "source_path": "splunk/metadata/default.meta",
+      "target_path": "splunk/metadata/default.meta",
+      "kind": "splunk_metadata",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "8e0c1f78b2c3e4414fa4f50f758b886f74570c880cd91f0b12cd1dba251aa8ea"
+    },
+    {
+      "id": "splunk_inputs_conf_example",
+      "group": "splunk",
+      "source_path": "splunk/default/inputs.conf.example",
+      "target_path": "splunk/default/inputs.conf.example",
+      "kind": "splunk_inputs_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "5b8bc008707221ab3282e9d70b84a65daaa4e606420a64ad2b45dd849c0ec51c"
+    },
+    {
+      "id": "oracle_weblogic_server_access",
+      "group": "test_events",
+      "source_path": "test-events/oracle_weblogic_server_access.txt",
+      "target_path": "test-events/oracle_weblogic_server_access.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "ada2b3f1a9b1e9f389602ffe023d7b02461b85be42e2913f55ba618e3048d3e7"
+    },
+    {
+      "id": "send_tcp_20102",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20102.sh",
+      "target_path": "scripts/send_tcp_20102.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "3e1f3cd7f9b377fc0912569981416710dc3e86c35b12dd93cc6338b088f682c2"
+    },
+    {
+      "id": "README",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "ad74f3ab0eb8a303d97f3a85677c80c2ba540775beddb09d6777536a3fdcaffd"
+    },
+    {
+      "id": "preflight_2026_06_08",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-08.md",
+      "target_path": "validation/preflight-2026-06-08.md",
+      "kind": "validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "e51564cf005537d6d902af34a07e3e548e92f44f15aabd50737e5ccdee73f7f7"
+    },
+    {
+      "id": "source_shape_acquisition_plan_2026_06_20",
+      "group": "docs",
+      "source_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "target_path": "validation/source-shape-acquisition-plan-2026-06-20.md",
+      "kind": "validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "5186b75705fd8602b2a1678326847dc12ea67be2a59d9d667142c3add333c709"
+    },
+    {
+      "id": "elastic_weblogic_log_source_shape_20260701",
+      "group": "docs",
+      "source_path": "docs/research/elastic-weblogic-log-source-shape-20260701.md",
+      "target_path": "docs/research/elastic-weblogic-log-source-shape-20260701.md",
+      "kind": "research_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "bfc1711964082b30474ed26fc005bb065f628aeab0ca93d50c57c6425b8dfa73"
+    },
+    {
+      "id": "fixture_ivv_2026_07_01",
+      "group": "docs",
+      "source_path": "validation/fixture-ivv-2026-07-01.md",
+      "target_path": "validation/fixture-ivv-2026-07-01.md",
+      "kind": "validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "419d25612b022a9390d241e8cce9463958d6f333c6cf2e9f725ae2e60bc79392"
+    },
+    {
+      "id": "weblogic_log_source_shape_20260701",
+      "group": "docs",
+      "source_path": "docs/research/weblogic-log-source-shape-20260701.md",
+      "target_path": "docs/research/weblogic-log-source-shape-20260701.md",
+      "kind": "research_note",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "fbbee653e380e3c90ad4fe133df2f6c038abd43a8b2a1ed5ee8e22d6447d9bd5"
+    },
+    {
+      "id": "demo_lab_data_acquisition_plan_2026_07_02",
+      "group": "docs",
+      "source_path": "validation/demo-lab-data-acquisition-plan-2026-07-02.md",
+      "target_path": "validation/demo-lab-data-acquisition-plan-2026-07-02.md",
+      "kind": "validation_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "56646b97dd744596c6f5a0105eace84226944be578963793448c431c5b2c58a5"
+    },
+    {
+      "id": "fmw_splunk_onboarding_guidance",
+      "group": "docs",
+      "source_path": "docs/collection/oracle-fmw-weblogic-soa-discoverer-splunk-onboarding.md",
+      "target_path": "docs/collection/oracle-fmw-weblogic-soa-discoverer-splunk-onboarding.md",
+      "kind": "collection_guidance",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false,
+      "sha256": "159372de98ac0858f168a36a8be2081da0a164fd5e45c079bc8fd9cfe946147f"
+    },
+    {
+      "id": "source_shape_required_placeholder",
+      "group": "test_events",
+      "source_path": "test-events/source_shape_required.txt",
+      "target_path": "test-events/source_shape_required.txt",
+      "kind": "fixture_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true,
+      "sha256": "4ac9681f8a34ff0651bb65c9d9bbbb0c7fe7aa141af293a5b823edfaddea82d1"
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "vendor_docs",
+      "reference": "docs/evidence/oracle-platform-evidence-scan-20260608.md plus Oracle WebLogic public documentation and acquisition plan validation/source-shape-acquisition-plan-2026-06-20.md.",
+      "redistribution": "unknown",
+      "sanitisation_status": "unknown",
+      "notes": "No source samples are redistributed; pack definitions record source-shape requirements only. Public WebLogic docs support server/access log planning but not native syslog validation."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent with subagent planning",
+      "reviewed_at": "2026-06-20",
+      "notes": "Created from Oracle platform backlog/subagent plan as catalogue-first definitions for Manager/SecHub; 2026-06-20 WebLogic evidence pass added a source-shape acquisition plan while keeping routing disabled until source evidence exists."
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "user": {
+          "source_fields": [
+            "user"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "src": {
+          "source_fields": [
+            "src"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "signature": {
+          "source_fields": [
+            "signature"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "severity": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        },
+        "status": {
+          "source_fields": [
+            "status"
+          ],
+          "status": "unknown",
+          "notes": "Requires exact source-shape evidence."
+        }
+      },
+      "notes": "Planning note only; no parser/read-back evidence."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "metadata.original_event": {
+          "source_fields": [
+            "_raw"
+          ],
+          "status": "unknown",
+          "notes": "Raw event retention required once source exists."
+        }
+      },
+      "notes": "Source-family planning only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "event.action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "unknown",
+          "notes": "Requires evidence."
+        }
+      },
+      "notes": "Optional helper mapping only."
+    }
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "middleware",
+    "application",
+    "security"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "oracle_weblogic_server",
+      "label": "Server/domain log events",
+      "description": "Server/domain log events: server/domain log file tail or collector relay.",
+      "default": true,
+      "evidence_status": "curated",
+      "implementation_status": "fixture_backed_alpha_replay_required",
+      "source_modes": [
+        "server/domain log file tail or collector relay"
+      ],
+      "payload_formats": [
+        "weblogic_server_text"
+      ],
+      "envelopes": [
+        "tcp_syslog_relay_one_complete_record_per_message"
+      ],
+      "event_families": [
+        "oracle_weblogic_server"
+      ],
+      "test_event_sets": [
+        "oracle_weblogic_server_access"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "sc4s_parser",
+        "sc4s_env_example",
+        "splunk_props",
+        "splunk_transforms",
+        "splunk_eventtypes",
+        "splunk_tags",
+        "splunk_dashboard",
+        "splunk_metadata",
+        "oracle_weblogic_server_access",
+        "send_tcp_20102",
+        "elastic_weblogic_log_source_shape_20260701",
+        "weblogic_log_source_shape_20260701",
+        "fixture_ivv_2026_07_01",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "splunk_inputs_example",
+        "fmw_splunk_onboarding_guidance"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent WebLogic server fixtures only; no live WebLogic source or read-back evidence."
+      ],
+      "event_boundary": "line (####< header per fixture record); native stack traces can span lines and require local proof",
+      "events_per_file_or_message": "multiple records per server/domain log file",
+      "uniqueness_or_multiline": "single-line fixture events with unique markers; native multiline behavior unproven",
+      "field_delimiting_or_escaping": "angle-bracket-delimited header attributes",
+      "timestamp_timezone": "%b %d, %Y %I:%M:%S,%3N %p %Z header timestamp with explicit timezone token"
+    },
+    {
+      "id": "oracle_weblogic_access",
+      "label": "HTTP access logs",
+      "description": "HTTP access logs: access log file tail/collector relay.",
+      "default": false,
+      "evidence_status": "curated",
+      "implementation_status": "fixture_backed_alpha_replay_required",
+      "source_modes": [
+        "access log file tail/collector relay"
+      ],
+      "payload_formats": [
+        "common_access_log_text"
+      ],
+      "envelopes": [
+        "tcp_syslog_relay_one_complete_record_per_message"
+      ],
+      "event_families": [
+        "oracle_weblogic_access"
+      ],
+      "test_event_sets": [
+        "oracle_weblogic_server_access"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "sc4s_parser",
+        "sc4s_env_example",
+        "splunk_props",
+        "splunk_transforms",
+        "splunk_eventtypes",
+        "splunk_tags",
+        "splunk_dashboard",
+        "splunk_metadata",
+        "oracle_weblogic_server_access",
+        "send_tcp_20102",
+        "elastic_weblogic_log_source_shape_20260701",
+        "weblogic_log_source_shape_20260701",
+        "fixture_ivv_2026_07_01",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "splunk_inputs_example",
+        "fmw_splunk_onboarding_guidance"
+      ],
+      "known_limitations": [
+        "Synthetic-equivalent WebLogic access fixtures only; no exact site access-log configuration or read-back evidence."
+      ],
+      "event_boundary": "line",
+      "events_per_file_or_message": "multiple records per access log file",
+      "uniqueness_or_multiline": "single-line events with unique markers; no multiline",
+      "field_delimiting_or_escaping": "space-delimited common log format with quoted request field",
+      "timestamp_timezone": "%d/%b/%Y:%H:%M:%S %z bracketed timestamp"
+    },
+    {
+      "id": "oracle_weblogic_audit",
+      "label": "Security/audit provider events",
+      "description": "Security/audit provider events: security audit provider/server security events.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "security audit provider/server security events"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_weblogic_audit"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "preflight_2026_06_08",
+        "source_shape_acquisition_plan_2026_06_20",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "splunk_inputs_example",
+        "fmw_splunk_onboarding_guidance"
+      ],
+      "known_limitations": [
+        "Blocked until exact audit provider output examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured.",
+        "2026-06-20 acquisition plan documents public planning evidence only; exact emitted records and replay/read-back remain required."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_weblogic_node_manager",
+      "label": "Node Manager lifecycle logs",
+      "description": "Node Manager lifecycle logs: node manager log files.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "node manager log files"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_weblogic_node_manager"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "preflight_2026_06_08",
+        "source_shape_acquisition_plan_2026_06_20",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "splunk_inputs_example",
+        "fmw_splunk_onboarding_guidance"
+      ],
+      "known_limitations": [
+        "Blocked until exact emitted examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured.",
+        "2026-06-20 acquisition plan documents public planning evidence only; exact emitted records and replay/read-back remain required."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    },
+    {
+      "id": "oracle_fusion_middleware",
+      "label": "Fusion Middleware SOA/OSB/BPM diagnostics",
+      "description": "Fusion Middleware SOA/OSB/BPM diagnostics: SOA Suite, Service Bus, BPM diagnostic/audit/invocation logs.",
+      "default": false,
+      "evidence_status": "catalogued",
+      "implementation_status": "blocked_missing_source_shape_evidence",
+      "source_modes": [
+        "SOA Suite",
+        "Service Bus",
+        "BPM diagnostic/audit/invocation logs"
+      ],
+      "payload_formats": [
+        "unknown_requires_evidence"
+      ],
+      "envelopes": [
+        "unknown_requires_evidence"
+      ],
+      "event_families": [
+        "oracle_fusion_middleware"
+      ],
+      "test_event_sets": [],
+      "supported_targets": [
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "README",
+        "preflight_2026_06_08",
+        "source_shape_acquisition_plan_2026_06_20",
+        "demo_lab_data_acquisition_plan_2026_07_02",
+        "splunk_inputs_example",
+        "fmw_splunk_onboarding_guidance"
+      ],
+      "known_limitations": [
+        "Blocked until exact emitted examples exist.",
+        "No parser fixture, SC4S replay, Splunk read-back, or field validation has been captured.",
+        "2026-06-20 acquisition plan documents public planning evidence only; exact emitted records and replay/read-back remain required."
+      ],
+      "event_boundary": "unknown_requires_evidence",
+      "events_per_file_or_message": "unknown_requires_evidence",
+      "uniqueness_or_multiline": "unknown_requires_evidence",
+      "field_delimiting_or_escaping": "unknown_requires_evidence",
+      "timestamp_timezone": "unknown_requires_evidence",
+      "fixture_status": "none_source_shape_required"
+    }
+  ],
+  "adapters": {
+    "generic": {
+      "manager_visibility": "catalog_only",
+      "routing_enabled": false,
+      "sechub_detection_claims": "none",
+      "notes": "Manager/SecHub should surface this as a source-shape checklist, not a deployable parser."
+    },
+    "cribl": {
+      "default_behavior": "preserve_all_fields",
+      "notes": "Collector serialization and redaction policy required before route design."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "implementation_status": "fixture_backed_alpha_replay_required",
+  "manager_visibility": "available_with_limitations",
+  "sechub_detection_claims": "fixture_backed_alpha_only",
+  "routing_enabled": true,
+  "fixture_policy": "synthetic-equivalent fixtures from public source-shape evidence; not production validation",
+  "sc4s_adapter_enabled": true,
+  "known_limitations": [
+    "Trust remains unverified and quality remains catalogued; do not promote from CI or pack presence.",
+    "Oracle logs/exports may contain sensitive users, SQL text/binds, business data, OCIDs, hostnames, request parameters, or tenant identifiers; sample capture requires sanitisation.",
+    "2026-06-20 WebLogic evidence pass found public planning evidence for server/access log shapes, but no redistributable fixtures or proven native syslog/SC4S relay envelope.",
+    "Fixture-backed alpha only; no live replay/read-back evidence exists.",
+    "Production ready: no. Beta: no. Keep trust unverified until SC4S/Splunk read-back passes.",
+    "splunk/default/inputs.conf.example is disabled operator scaffolding only; enabling any stanza requires local source-shape and Splunk read-back evidence.",
+    "2026-07-06 inputs.conf.example stanzas for FMW/SOA/Discoverer are disabled collection scaffolds only; they do not prove sourcetype parsing, line breaking, or source validation."
+  ],
+  "logging_presets": [],
+  "reduction_rules": [],
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "local source-shape fixture marker/count/family audit and dashboard XML parse; no replay/read-back",
+    "tested_artifact_hashes": {
+      "packs/oracle_weblogic/README.md": "sha256:ad74f3ab0eb8a303d97f3a85677c80c2ba540775beddb09d6777536a3fdcaffd",
+      "packs/oracle_weblogic/docs/collection/oracle-fmw-weblogic-soa-discoverer-splunk-onboarding.md": "sha256:159372de98ac0858f168a36a8be2081da0a164fd5e45c079bc8fd9cfe946147f",
+      "packs/oracle_weblogic/docs/research/elastic-weblogic-log-source-shape-20260701.md": "sha256:bfc1711964082b30474ed26fc005bb065f628aeab0ca93d50c57c6425b8dfa73",
+      "packs/oracle_weblogic/docs/research/weblogic-log-source-shape-20260701.md": "sha256:fbbee653e380e3c90ad4fe133df2f6c038abd43a8b2a1ed5ee8e22d6447d9bd5",
+      "packs/oracle_weblogic/sc4s/app_parsers/syslog/app-oracle_weblogic.conf": "sha256:c60460aa9a68ef7a7cbd5f0629f59fded197703a6e7009e3dfcf48789c1e6d7c",
+      "packs/oracle_weblogic/sc4s/env.example": "sha256:54d79bcdbc6ab78c5fdd90cab3c7f22c193058aefe7f5ee42750322f56657296",
+      "packs/oracle_weblogic/scripts/send_tcp_20102.sh": "sha256:3e1f3cd7f9b377fc0912569981416710dc3e86c35b12dd93cc6338b088f682c2",
+      "packs/oracle_weblogic/splunk/default/data/ui/views/oracle_weblogic_server_access_overview.xml": "sha256:26657f141016f1d15704c66e8155c9127b10cc84ed8371417e8be4af97f84bc4",
+      "packs/oracle_weblogic/splunk/default/eventtypes.conf": "sha256:374322a735e0f40caa2356b9d51ad7edd7b67b8f5d660cca6b7462fe35d51eb9",
+      "packs/oracle_weblogic/splunk/default/inputs.conf.example": "sha256:5b8bc008707221ab3282e9d70b84a65daaa4e606420a64ad2b45dd849c0ec51c",
+      "packs/oracle_weblogic/splunk/default/props.conf": "sha256:67905ebcab8f7a13415d58c9e1d443dce554a74df9e5abe3d4847ec8672f4247",
+      "packs/oracle_weblogic/splunk/default/tags.conf": "sha256:6a652e566bf2a142df60b15f9e6761e9e0516949841ef0cf85325ca4f88b5b51",
+      "packs/oracle_weblogic/splunk/default/transforms.conf": "sha256:3b802dcac19f41fee28413b3ebb9145b6076aeaf9c687b5c4547cd4cbbe7b5b7",
+      "packs/oracle_weblogic/splunk/metadata/default.meta": "sha256:8e0c1f78b2c3e4414fa4f50f758b886f74570c880cd91f0b12cd1dba251aa8ea",
+      "packs/oracle_weblogic/test-events/oracle_weblogic_server_access.txt": "sha256:ada2b3f1a9b1e9f389602ffe023d7b02461b85be42e2913f55ba618e3048d3e7",
+      "packs/oracle_weblogic/test-events/source_shape_required.txt": "sha256:4ac9681f8a34ff0651bb65c9d9bbbb0c7fe7aa141af293a5b823edfaddea82d1",
+      "packs/oracle_weblogic/validation/demo-lab-data-acquisition-plan-2026-07-02.md": "sha256:56646b97dd744596c6f5a0105eace84226944be578963793448c431c5b2c58a5",
+      "packs/oracle_weblogic/validation/fixture-ivv-2026-07-01.md": "sha256:419d25612b022a9390d241e8cce9463958d6f333c6cf2e9f725ae2e60bc79392",
+      "packs/oracle_weblogic/validation/preflight-2026-06-08.md": "sha256:e51564cf005537d6d902af34a07e3e548e92f44f15aabd50737e5ccdee73f7f7",
+      "packs/oracle_weblogic/validation/source-shape-acquisition-plan-2026-06-20.md": "sha256:5186b75705fd8602b2a1678326847dc12ea67be2a59d9d667142c3add333c709"
+    },
+    "tested_commit": "not_committed_yet",
+    "last_updated": "2026-07-08",
+    "last_tested": "2026-07-08 local CI pending final commit"
+  },
+  "source_delivery": {
+    "mode": "sc4s_tcp_relay_alpha",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "raw",
+    "supported_transport_refs": [
+      "oracle_weblogic_tcp_log_relay"
+    ],
+    "notes": "Fixture-backed alpha relay only; source-side collector must preserve one complete sanitized source record per syslog message.",
+    "validation_status": "local_fixture_schema_only; does not imply live replay/read-back validation"
+  }
+}

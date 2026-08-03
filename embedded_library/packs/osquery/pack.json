@@ -1,0 +1,1777 @@
+{
+  "schema_version": "0.1",
+  "id": "osquery",
+  "version": "0.1.7",
+  "url": "https://osquery.readthedocs.io/en/stable/deployment/logging/",
+  "description": "Curated SecHub Resources SC4S pack for osquery result/status logs relayed as one JSON object per line, with fixture-backed result/status, endpoint activity, hardware device, user/session/scheduled-task, SSH authorized-key, SUID binary, and startup-item families.",
+  "display_name": "osquery Result and Status Logs",
+  "vendor": "osquery",
+  "product": "osquery",
+  "default_index": "osnix",
+  "default_source": "osquery",
+  "listener": {
+    "source_id": "OSQUERY",
+    "transport": "tcp",
+    "port": 20085,
+    "env": {
+      "SC4S_LISTEN_OSQUERY_TCP_PORT": "20085",
+      "SOURCE_ALL_SET_APPEND": "OSQUERY"
+    }
+  },
+  "sourcetypes": {
+    "result_added": "osquery:results",
+    "result_removed": "osquery:results",
+    "snapshot": "osquery:results",
+    "status": "osquery:status",
+    "inventory": "osquery:results",
+    "endpoint_activity": "osquery:results",
+    "hardware_change": "osquery:results",
+    "user_account": "osquery:results",
+    "user_session": "osquery:results",
+    "scheduled_task": "osquery:results",
+    "ssh_authorized_key": "osquery:results",
+    "suid_binary": "osquery:results",
+    "startup_item": "osquery:results"
+  },
+  "event_families": [
+    {
+      "id": "result_added",
+      "label": "osquery differential result additions",
+      "match_engine": "pcre",
+      "match": "\"action\"\\s*:\\s*\"added\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "action",
+        "columns"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "result_removed",
+      "label": "osquery differential result removals",
+      "match_engine": "pcre",
+      "match": "\"action\"\\s*:\\s*\"removed\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "action",
+        "columns"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "snapshot",
+      "label": "osquery snapshot results",
+      "match_engine": "pcre",
+      "match": "\"action\"\\s*:\\s*\"snapshot\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "action",
+        "columns"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "status",
+      "label": "osquery status logs",
+      "match_engine": "pcre",
+      "match": "\"severity\"\\s*:\\s*\"?[0-9]",
+      "expected_sourcetype": "osquery:status",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "severity",
+        "message"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "inventory",
+      "label": "osquery inventory result rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"(processes|process_snapshot|listening_ports)\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "columns"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "endpoint_activity",
+      "label": "osquery endpoint activity evented table rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"(process_events|file_events|socket_events)\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "action",
+        "columns"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "hardware_change",
+      "label": "osquery hardware device change event rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"hardware_events\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "action",
+        "columns"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime",
+        "columns.time"
+      ]
+    },
+    {
+      "id": "user_account",
+      "label": "osquery local user account inventory rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"users\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "columns.uid",
+        "columns.username"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "user_session",
+      "label": "osquery logged-in user session rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"logged_in_users\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "columns.user",
+        "columns.tty",
+        "columns.time"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime",
+        "columns.time"
+      ]
+    },
+    {
+      "id": "scheduled_task",
+      "label": "osquery crontab scheduled task rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"crontab\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "columns.command"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "ssh_authorized_key",
+      "label": "osquery SSH authorized key rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"authorized_keys\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "columns.uid",
+        "columns.algorithm",
+        "columns.key_file"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "suid_binary",
+      "label": "osquery SUID binary inventory rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"suid_bin\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "columns.path",
+        "columns.username",
+        "columns.permissions"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    },
+    {
+      "id": "startup_item",
+      "label": "osquery startup item inventory rows",
+      "match_engine": "pcre",
+      "match": "\"name\"\\s*:\\s*\"startup_items\"",
+      "expected_sourcetype": "osquery:results",
+      "primary_id_field": "counter",
+      "required_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "columns.name",
+        "columns.path",
+        "columns.status"
+      ],
+      "timestamp_fields": [
+        "calendarTime",
+        "unixTime"
+      ]
+    }
+  ],
+  "normalized_fields": {
+    "vendor": "osquery",
+    "product": "osquery",
+    "vendor_product": "osquery:osquery",
+    "osquery_log_type": "Derived result, snapshot, or status family",
+    "query_name": "osquery query name from name",
+    "hostIdentifier": "osquery host identifier preserved from the source log",
+    "action": "osquery result action such as added, removed, or snapshot; status logs derive action=status",
+    "severity": "osquery status severity token where present",
+    "status": "Result action or status severity",
+    "result": "Result action or status message",
+    "signature": "Query name for results or filename for status logs",
+    "signature_id": "Counter/line context used only as local triage aid",
+    "process_name": "columns.name for process-oriented result rows",
+    "pid": "columns.pid for process/listening-port rows",
+    "port": "columns.port or columns.local_port for listening-port rows",
+    "protocol": "columns.protocol or columns.type normalized to uppercase where present",
+    "marker": "Synthetic fixture marker only",
+    "file_path": "columns.path or columns.target_path for process/file activity rows",
+    "cmdline": "columns.cmdline for process execution rows; preserved by default because it is analyst-critical and may be sensitive/noisy",
+    "uid": "columns.uid for process/file ownership or execution context",
+    "local_address": "columns.local_address for socket activity rows",
+    "remote_address": "columns.remote_address for socket activity rows",
+    "local_port": "columns.local_port for socket/listening-port rows",
+    "remote_port": "columns.remote_port for socket activity rows",
+    "hardware_action": "columns.action from hardware_events rows; distinct from top-level osquery result action",
+    "hardware_path": "columns.path local device path assigned by osquery hardware_events when present",
+    "hardware_type": "columns.type hardware/device event type from osquery hardware_events",
+    "hardware_driver": "columns.driver driver stating the hardware device when present",
+    "hardware_vendor": "columns.vendor hardware device vendor string from osquery hardware_events",
+    "hardware_vendor_id": "columns.vendor_id hex-encoded hardware vendor identifier from osquery hardware_events",
+    "hardware_model": "columns.model hardware device model string from osquery hardware_events",
+    "hardware_model_id": "columns.model_id hex-encoded hardware model identifier from osquery hardware_events",
+    "hardware_serial": "columns.serial device serial from osquery hardware_events fixture; sensitive and retained by default for audit correlation",
+    "hardware_revision": "columns.revision device revision from osquery hardware_events",
+    "user_name": "columns.username or columns.user for account/session rows",
+    "user_shell": "columns.shell for local account inventory rows",
+    "user_home": "columns.directory for local account home directory context",
+    "session_tty": "columns.tty for logged-in user session rows",
+    "session_host": "columns.host for logged-in user remote host context",
+    "session_time": "columns.time source timestamp for logged-in user session rows",
+    "cron_command": "columns.command for crontab scheduled task rows; retained by default because it is analyst-critical and may be sensitive/noisy",
+    "cron_path": "columns.path for crontab source file path when present",
+    "cron_schedule": "derived minute/hour/day/month/day-of-week schedule string from crontab columns",
+    "ssh_key_algorithm": "columns.algorithm for authorized_keys rows; key material itself is not surfaced as a normalized field",
+    "ssh_key_comment": "columns.comment for authorized_keys rows; sensitive in production and retained only as audit context",
+    "ssh_key_file": "columns.key_file path for authorized_keys rows",
+    "ssh_key_options": "columns.options for authorized_keys rows when present",
+    "suid_path": "columns.path for suid_bin rows",
+    "suid_owner": "columns.username for suid_bin owner context",
+    "suid_group": "columns.groupname for suid_bin group context",
+    "suid_permissions": "columns.permissions for suid_bin rows",
+    "startup_name": "columns.name for startup_items rows",
+    "startup_path": "columns.path for startup_items rows",
+    "startup_args": "columns.args for startup_items rows; may include sensitive command arguments and is retained by default",
+    "startup_type": "columns.type for startup_items rows",
+    "startup_source": "columns.source for startup_items rows",
+    "startup_status": "columns.status for startup_items rows",
+    "startup_user": "columns.username for startup_items rows"
+  },
+  "artifacts": {
+    "sc4s": [
+      "sc4s/app_parsers/syslog/app-osquery.conf",
+      "sc4s/env.example"
+    ],
+    "splunk": [
+      "splunk/default/props.conf",
+      "splunk/default/transforms.conf",
+      "splunk/default/eventtypes.conf",
+      "splunk/default/tags.conf",
+      "splunk/default/data/ui/views/osquery_overview.xml"
+    ],
+    "test_events": [
+      "test-events/osquery_test_events.txt"
+    ],
+    "scripts": [
+      "scripts/send_tcp_20085.sh",
+      "scripts/e2e_docker_compose.sh"
+    ],
+    "docs": [
+      "README.md",
+      "docs/osquery_reduction_candidates.csv",
+      "validation/preflight-2026-06-13.md"
+    ]
+  },
+  "supported_transports": [
+    {
+      "id": "tcp_syslog",
+      "label": "TCP syslog / osquery NDJSON relay",
+      "transport": "tcp",
+      "recommended": true,
+      "default_port": 20085,
+      "notes": "Dedicated TCP listener for one osquery result/status JSON record per line from filesystem/TLS logger output or a collector relay.",
+      "syslog_protocol": "tcp_syslog",
+      "framing": "line_delimited",
+      "envelope": "bsd_rfc3164_or_headerless",
+      "payload_format": "json"
+    },
+    {
+      "id": "rfc5425_tls",
+      "label": "TLS/RFC5425 syslog",
+      "transport": "tls",
+      "recommended": false,
+      "default_port": 20085,
+      "notes": "Preferred for production if the local SC4S deployment provisions TLS for this source.",
+      "syslog_protocol": "rfc5425",
+      "framing": "octet_counted",
+      "envelope": "ietf_rfc5424",
+      "payload_format": "json"
+    }
+  ],
+  "recommended_transport": "tcp_syslog",
+  "source_log_version": {
+    "name": "osquery result/status JSON logs",
+    "min": "public osquery logging documentation current as of 2026-06-13",
+    "max": null,
+    "notes": "Grounded in public osquery logging documentation and synthetic-equivalent fixtures; deployed osquery version, query pack, logger options, collector wrapping, and columns schemas must be validated before promotion."
+  },
+  "validation": {
+    "date_validated": "not validated; curated 2026-06-13",
+    "validated_by": "Hermes curation only; no validated/verified status stated",
+    "source_log_version": "osquery public logging documentation and synthetic-equivalent fixtures only",
+    "sc4s_version": "not lab validated",
+    "splunk_version": "not lab validated",
+    "evidence": "Repository schema/fixture checks exercise synthetic-equivalent osquery result/status JSON records only. Local replay preflight is blocked by missing SC4S listener/Splunk testbed; no live osquery relay, SC4S replay, HEC delivery, or Splunk read-back captured."
+  },
+  "validation_harness": {
+    "status": "blocked",
+    "required_for_quality_promotion": true,
+    "harness": "SC4S TEST -> Splunk TEST replay/readback for osquery JSON relay",
+    "pack_aware": true,
+    "replay": {
+      "fixture_sets": [
+        "osquery_mixed"
+      ],
+      "event_count": 15,
+      "marker_prefix": "SC4S_OSQUERY_TEST_",
+      "transport": "tcp_syslog",
+      "framing": "line_delimited",
+      "script": "scripts/send_tcp_20085.sh"
+    },
+    "readback": {
+      "spl": "index=osnix sechub_fixture_marker=\"SC4S_OSQUERY_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product osquery_log_type query_name hostIdentifier action severity status result process_name pid port protocol file_path cmdline uid local_address remote_address local_port remote_port hardware_action hardware_path hardware_type hardware_driver hardware_vendor hardware_vendor_id hardware_model hardware_model_id hardware_serial hardware_revision user_name user_home user_shell session_tty session_host session_time cron_schedule cron_command cron_path ssh_key_algorithm ssh_key_comment ssh_key_file ssh_key_options suid_path suid_owner suid_group suid_permissions startup_name startup_path startup_args startup_type startup_source startup_status startup_user marker _raw",
+      "expected_count": 15,
+      "must_verify": [
+        "event count",
+        "index",
+        "sourcetype",
+        "source",
+        "vendor",
+        "product",
+        "osquery log type",
+        "query name",
+        "hostIdentifier",
+        "action/severity",
+        "selected columns",
+        "timestamp",
+        "raw JSON",
+        "endpoint activity rows",
+        "file/process/socket context",
+        "hardware device changes",
+        "hardware vendor/model/serial/revision context",
+        "user/account rows",
+        "logged-in user session rows",
+        "scheduled task rows",
+        "SSH authorized key rows",
+        "SUID binary rows",
+        "startup item rows"
+      ]
+    },
+    "last_attempt": {
+      "status": "blocked",
+      "blocked_layer": "listener",
+      "date": "2026-06-13",
+      "summary": "2026-06-13 local preflight found no available osquery TCP listener/Splunk TEST route in this repository run. Fixture replay, SC4S/syslog-ng counter checks, HEC delivery, and Splunk indexed read-back were not run.",
+      "evidence_path": "validation/preflight-2026-06-13.md"
+    },
+    "evidence": [
+      {
+        "type": "blocked_preflight",
+        "path": "validation/preflight-2026-06-13.md",
+        "summary": "Command-grounded local preflight evidence for missing osquery listener/testbed; not replay/read-back validation."
+      }
+    ],
+    "preflight": {
+      "required_listeners": [
+        {
+          "transport": "tcp",
+          "port": 20085,
+          "protocol": "line_delimited_json_syslog",
+          "purpose": "Dedicated osquery result/status JSON relay listener"
+        }
+      ],
+      "required_indexes": [
+        "osnix"
+      ],
+      "required_splunk_capabilities": [
+        "SC4S/HEC path can write to osnix",
+        "Search role can read osnix"
+      ]
+    },
+    "e2e_docker_harness": {
+      "id": "osquery_compose_e2e",
+      "status": "ready_for_lab_run",
+      "script": "scripts/e2e_docker_compose.sh",
+      "one_shot_command": "packs/osquery/scripts/e2e_docker_compose.sh run",
+      "plan_command": "packs/osquery/scripts/e2e_docker_compose.sh plan",
+      "compose_file": ".tmp/e2e/osquery/compose.yaml",
+      "compose_project": "sechub-osquery-e2e",
+      "docker_required": true,
+      "idempotency": [
+        "named Compose project",
+        "force-recreate",
+        "renew anonymous volumes",
+        "down -v cleanup",
+        "osnix index read-back preflight"
+      ],
+      "required_stages": [
+        "splunk_test_ready",
+        "sc4s_listener_ready",
+        "fixture_replay_sent",
+        "sc4s_syslog_ng_counter_delta",
+        "hec_delivery",
+        "splunk_indexed_readback",
+        "coverage_matrix_review"
+      ],
+      "commands": {
+        "write_compose": "packs/osquery/scripts/e2e_docker_compose.sh write-compose",
+        "one_shot_compose": "packs/osquery/scripts/e2e_docker_compose.sh run",
+        "replay_only": "packs/osquery/scripts/send_tcp_20085.sh 127.0.0.1 20085",
+        "splunk_summary_readback": "index=osnix sechub_fixture_marker=\"SC4S_OSQUERY_TEST_*\" earliest=-2h | stats count by sourcetype source host",
+        "splunk_detail_readback": "index=osnix sechub_fixture_marker=\"SC4S_OSQUERY_TEST_*\" earliest=-2h | table _time index sourcetype source vendor product osquery_log_type query_name hostIdentifier action severity status result process_name pid port protocol file_path cmdline uid local_address remote_address local_port remote_port hardware_action hardware_path hardware_type hardware_driver hardware_vendor hardware_vendor_id hardware_model hardware_model_id hardware_serial hardware_revision user_name user_home user_shell session_tty session_host session_time cron_schedule cron_command cron_path ssh_key_algorithm ssh_key_comment ssh_key_file ssh_key_options suid_path suid_owner suid_group suid_permissions startup_name startup_path startup_args startup_type startup_source startup_status startup_user marker _raw"
+      },
+      "splunk_requirements": {
+        "container_image_env": "SPLUNK_IMAGE",
+        "default_image": "splunk/splunk:9.4",
+        "required_index": "osnix",
+        "hec_token_env": "SPLUNK_HEC_TOKEN",
+        "admin_password_env": "SPLUNK_PASSWORD",
+        "knowledge_mount": "packs/osquery/splunk -> /opt/splunk/etc/apps/sechub_osquery:ro"
+      },
+      "sc4s_requirements": {
+        "container_image_env": "SC4S_IMAGE",
+        "default_image": "ghcr.io/splunk/splunk-connect-for-syslog/container3:latest",
+        "listener": {
+          "transport": "tcp",
+          "container_port": 20085,
+          "host_port_env": "SC4S_OSQUERY_PORT",
+          "source_id": "OSQUERY"
+        },
+        "parser_mount": "packs/osquery/sc4s/app_parsers/syslog -> /opt/sc4s/local/config/app_parsers/syslog:ro"
+      },
+      "coverage_matrix": [
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "result_added",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery differential result additions"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_RESULT_ADDED_001"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "result_removed",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery differential result removals"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_RESULT_REMOVED_002"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "snapshot",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery snapshot results"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_SNAPSHOT_003"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "status",
+          "sourcetype": "osquery:status",
+          "data_structures": [
+            "osquery status logs"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_STATUS_004"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "inventory",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery inventory result rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_INVENTORY_005"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "endpoint_activity",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery endpoint activity evented table rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_PROCESS_EVENT_006",
+            "SC4S_OSQUERY_TEST_FILE_EVENT_007",
+            "SC4S_OSQUERY_TEST_SOCKET_EVENT_008"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "hardware_change",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery hardware device change event rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_HARDWARE_EVENT_009"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "user_account",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery local user account inventory rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_USER_ACCOUNT_010"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "user_session",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery logged-in user session rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_LOGGED_IN_USER_011"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "scheduled_task",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery crontab scheduled task rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_CRONTAB_012"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "ssh_authorized_key",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery SSH authorized key rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_AUTHORIZED_KEY_013"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "suid_binary",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery SUID binary inventory rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_SUID_BIN_014"
+          ]
+        },
+        {
+          "source": "osquery_result_status_logs",
+          "source_shape": "json_line_relay",
+          "event_family": "startup_item",
+          "sourcetype": "osquery:results",
+          "data_structures": [
+            "osquery startup item inventory rows"
+          ],
+          "markers": [
+            "SC4S_OSQUERY_TEST_STARTUP_ITEM_015"
+          ]
+        }
+      ],
+      "explicit_gaps": [
+        "No live endpoint osquery emission or deployed osquery source-version replay/read-back.",
+        "No deployed query-pack coverage, logger buffering/replay, filesystem/TLS logger configuration, or collector wrapper proof.",
+        "No local OS event publisher validation for process_events, file_events, socket_events, or hardware_events.",
+        "No privacy review proof for command lines, hardware serials, SSH key comments, startup arguments, and user/session context.",
+        "No production or field validation; synthetic-equivalent fixtures only."
+      ],
+      "evidence_boundary": "Runnable disposable lab runbook only; success would prove fixture-route SC4S TEST -> Splunk TEST read-back for the declared osquery JSON relay shape, not live endpoint/collector validation or field validation."
+    }
+  },
+  "test_event_sets": [
+    {
+      "id": "osquery_mixed",
+      "label": "osquery result/status synthetic-equivalent events",
+      "path": "test-events/osquery_test_events.txt",
+      "format": "custom_application",
+      "wire_format": "json_line_payload",
+      "envelope": "none",
+      "serialization": "json",
+      "event_count": 15,
+      "events_per_file": "multiple",
+      "event_boundary": "line",
+      "record_separator": "\n",
+      "one_event_per_line": true,
+      "multiline": false,
+      "unique_events": true,
+      "marker_tokens": [
+        "SC4S_OSQUERY_TEST_RESULT_ADDED_001",
+        "SC4S_OSQUERY_TEST_RESULT_REMOVED_002",
+        "SC4S_OSQUERY_TEST_SNAPSHOT_003",
+        "SC4S_OSQUERY_TEST_STATUS_004",
+        "SC4S_OSQUERY_TEST_INVENTORY_005",
+        "SC4S_OSQUERY_TEST_PROCESS_EVENT_006",
+        "SC4S_OSQUERY_TEST_FILE_EVENT_007",
+        "SC4S_OSQUERY_TEST_SOCKET_EVENT_008",
+        "SC4S_OSQUERY_TEST_HARDWARE_EVENT_009",
+        "SC4S_OSQUERY_TEST_USER_ACCOUNT_010",
+        "SC4S_OSQUERY_TEST_LOGGED_IN_USER_011",
+        "SC4S_OSQUERY_TEST_CRONTAB_012",
+        "SC4S_OSQUERY_TEST_AUTHORIZED_KEY_013",
+        "SC4S_OSQUERY_TEST_SUID_BIN_014",
+        "SC4S_OSQUERY_TEST_STARTUP_ITEM_015"
+      ],
+      "timestamp_policy": {
+        "source_time_mode": "field_with_timezone",
+        "primary_field": "calendarTime",
+        "primary_timezone": "UTC in fixture calendarTime field",
+        "fallback_fields": [
+          "unixTime"
+        ],
+        "fallback_time_mode": "receiver_time",
+        "fallback_timezone": "receiver_default",
+        "requires_source_timezone_when_fields_missing": [
+          "osquery logger timestamp policy"
+        ],
+        "notes": "Fixtures use documented osquery calendarTime strings with UTC plus unixTime for ordering/audit context."
+      },
+      "field_delimiting": {
+        "style": "json",
+        "field_separator": "JSON object per line",
+        "quote_character": "double quote",
+        "escape_policy": "JSON escaping",
+        "notes": "Each record is compact osquery JSON with query-dependent columns and a synthetic marker field for fixture validation only."
+      },
+      "expected_families": [
+        "result_added",
+        "result_removed",
+        "snapshot",
+        "status",
+        "inventory",
+        "endpoint_activity",
+        "hardware_change",
+        "user_account",
+        "user_session",
+        "scheduled_task",
+        "ssh_authorized_key",
+        "suid_binary",
+        "startup_item"
+      ]
+    }
+  ],
+  "export_artifacts": [
+    {
+      "id": "sc4s_parser",
+      "group": "sc4s",
+      "source_path": "sc4s/app_parsers/syslog/app-osquery.conf",
+      "target_path": "local/config/app_parsers/syslog/app-osquery.conf",
+      "kind": "syslog_ng_parser",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "sc4s_env_example",
+      "group": "sc4s",
+      "source_path": "sc4s/env.example",
+      "target_path": "env_file.d/osquery.env.example",
+      "kind": "env_example",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_props",
+      "group": "splunk",
+      "source_path": "splunk/default/props.conf",
+      "target_path": "splunk/default/props.conf",
+      "kind": "splunk_props",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "splunk_transforms",
+      "group": "splunk",
+      "source_path": "splunk/default/transforms.conf",
+      "target_path": "splunk/default/transforms.conf",
+      "kind": "splunk_transforms",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_eventtypes",
+      "group": "splunk",
+      "source_path": "splunk/default/eventtypes.conf",
+      "target_path": "splunk/default/eventtypes.conf",
+      "kind": "splunk_eventtypes",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_tags",
+      "group": "splunk",
+      "source_path": "splunk/default/tags.conf",
+      "target_path": "splunk/default/tags.conf",
+      "kind": "splunk_tags",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "splunk_dashboard_overview",
+      "group": "splunk",
+      "source_path": "splunk/default/data/ui/views/osquery_overview.xml",
+      "target_path": "splunk/default/data/ui/views/osquery_overview.xml",
+      "kind": "splunk_dashboard",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "test_events",
+      "group": "test_events",
+      "source_path": "test-events/osquery_test_events.txt",
+      "target_path": "test-events/osquery_test_events.txt",
+      "kind": "test_events",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "send_tcp_helper",
+      "group": "scripts",
+      "source_path": "scripts/send_tcp_20085.sh",
+      "target_path": "scripts/send_tcp_20085.sh",
+      "kind": "send_helper",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "e2e_docker_harness",
+      "group": "scripts",
+      "source_path": "scripts/e2e_docker_compose.sh",
+      "target_path": "scripts/e2e_docker_compose.sh",
+      "kind": "e2e_docker_harness",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "readme",
+      "group": "docs",
+      "source_path": "README.md",
+      "target_path": "README.md",
+      "kind": "pack_readme",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": true
+    },
+    {
+      "id": "reduction_candidates",
+      "group": "docs",
+      "source_path": "docs/osquery_reduction_candidates.csv",
+      "target_path": "docs/osquery_reduction_candidates.csv",
+      "kind": "reduction_candidate_csv",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    },
+    {
+      "id": "preflight_2026_06_13",
+      "group": "docs",
+      "source_path": "validation/preflight-2026-06-13.md",
+      "target_path": "validation/preflight-2026-06-13.md",
+      "kind": "validation_preflight_evidence",
+      "rendered": false,
+      "contains_secrets": false,
+      "required": false
+    }
+  ],
+  "provenance": {
+    "origin": "sechub-resources-pack",
+    "pack_class": "sechub-resources-pack",
+    "community_promotion": false,
+    "source": {
+      "type": "mixed",
+      "reference": "Official osquery logging documentation; official upstream osquery table specs for process_events, file_events, socket_events, and hardware_events; ecosystem corroboration from Elastic, Wazuh, and Splunk Add-on for osquery; fixtures are synthetic-equivalent examples shaped to public documentation.; official upstream osquery users table spec; official upstream osquery logged_in_users table spec; official upstream osquery crontab table spec; official upstream osquery authorized_keys, suid_bin, and startup_items table specs",
+      "redistribution": "synthetic_only",
+      "sanitisation_status": "synthetic_equivalent",
+      "notes": "Fixtures use example hostnames, harmless query values, documentation IP/address context, and synthetic markers; no customer, tenant, user, token, or production endpoint data."
+    },
+    "curation": {
+      "reviewed_by": "Hermes Agent",
+      "reviewed_at": "2026-06-13",
+      "notes": "Selected from the 2026-06-13 hourly source-gap queue after Vault; osquery had public result/status logging evidence sufficient for conservative fixture authoring."
+    },
+    "upstream": {
+      "repo": "https://github.com/splunk/splunk-connect-for-syslog",
+      "ref": "main",
+      "commit": null,
+      "sc4s_version": null,
+      "paths": []
+    }
+  },
+  "relationship_to_upstream": "new_pack",
+  "trust_level": "unverified",
+  "quality_status": "curated",
+  "field_contract": {
+    "cim": {
+      "mapping_status": "partial",
+      "primary": true,
+      "fields": {
+        "src": {
+          "source_fields": [
+            "hostIdentifier",
+            "columns.local_address"
+          ],
+          "status": "partial",
+          "notes": "Endpoint host identifier or socket local address when present; not complete network source validation."
+        },
+        "action": {
+          "source_fields": [
+            "action"
+          ],
+          "status": "partial",
+          "notes": "osquery result action such as added/removed/snapshot; status logs derive action=status."
+        },
+        "signature": {
+          "source_fields": [
+            "name",
+            "filename"
+          ],
+          "status": "partial",
+          "notes": "Query name or status source file triage value."
+        },
+        "signature_id": {
+          "source_fields": [
+            "counter",
+            "line"
+          ],
+          "status": "partial",
+          "notes": "Counter/line context only; not a global event ID."
+        },
+        "process_name": {
+          "source_fields": [
+            "columns.name"
+          ],
+          "status": "partial",
+          "notes": "Process inventory/query column when present."
+        },
+        "pid": {
+          "source_fields": [
+            "columns.pid"
+          ],
+          "status": "partial",
+          "notes": "Process ID query column when present."
+        },
+        "dest_port": {
+          "source_fields": [
+            "columns.port",
+            "columns.local_port",
+            "columns.remote_port"
+          ],
+          "status": "partial",
+          "notes": "Listening-port or socket remote-port query column when present."
+        },
+        "process": {
+          "source_fields": [
+            "columns.path",
+            "columns.cmdline",
+            "columns.pid"
+          ],
+          "status": "partial",
+          "notes": "Process execution/inventory context when present; command line is retained by default."
+        },
+        "file_path": {
+          "source_fields": [
+            "columns.target_path",
+            "columns.path"
+          ],
+          "status": "partial",
+          "notes": "File path or executable path from file/process event rows."
+        },
+        "user_id": {
+          "source_fields": [
+            "columns.uid",
+            "columns.auid"
+          ],
+          "status": "partial",
+          "notes": "Numeric local UID/AUID context only."
+        },
+        "dest": {
+          "source_fields": [
+            "columns.remote_address"
+          ],
+          "status": "partial",
+          "notes": "Socket remote address when present."
+        },
+        "src_port": {
+          "source_fields": [
+            "columns.local_port"
+          ],
+          "status": "partial",
+          "notes": "Socket local port when present."
+        },
+        "hardware_type": {
+          "source_fields": [
+            "columns.type"
+          ],
+          "status": "partial",
+          "notes": "Hardware event/device type from osquery hardware_events; partial endpoint hardware context only."
+        },
+        "hardware_vendor": {
+          "source_fields": [
+            "columns.vendor",
+            "columns.vendor_id"
+          ],
+          "status": "partial",
+          "notes": "Hardware vendor string/identifier from osquery hardware_events."
+        },
+        "hardware_model": {
+          "source_fields": [
+            "columns.model",
+            "columns.model_id"
+          ],
+          "status": "partial",
+          "notes": "Hardware model string/identifier from osquery hardware_events."
+        },
+        "hardware_serial": {
+          "source_fields": [
+            "columns.serial"
+          ],
+          "status": "partial",
+          "notes": "Hardware serial is retained as audit context; sensitive in production and not a validation statement."
+        },
+        "hardware_action": {
+          "source_fields": [
+            "columns.action"
+          ],
+          "status": "partial",
+          "notes": "Hardware add/remove/change token from osquery hardware_events; distinct from top-level result action."
+        },
+        "user": {
+          "source_fields": [
+            "columns.username",
+            "columns.user"
+          ],
+          "status": "partial",
+          "notes": "Local account username or logged-in session user from selected osquery table rows."
+        },
+        "user_shell": {
+          "source_fields": [
+            "columns.shell"
+          ],
+          "status": "partial",
+          "notes": "Local account shell context; not full identity validation."
+        },
+        "session_host": {
+          "source_fields": [
+            "columns.host"
+          ],
+          "status": "partial",
+          "notes": "Remote host for logged-in session rows when present."
+        },
+        "cron_command": {
+          "source_fields": [
+            "columns.command"
+          ],
+          "status": "partial",
+          "notes": "Scheduled command text from crontab rows; sensitive and retained by default for audit."
+        },
+        "ssh_key_file": {
+          "source_fields": [
+            "columns.key_file"
+          ],
+          "status": "partial",
+          "notes": "Authorized_keys file path context only; not key validation."
+        },
+        "ssh_key_algorithm": {
+          "source_fields": [
+            "columns.algorithm"
+          ],
+          "status": "partial",
+          "notes": "SSH public-key algorithm token from authorized_keys rows; key material is not normalized."
+        },
+        "suid_path": {
+          "source_fields": [
+            "columns.path"
+          ],
+          "status": "partial",
+          "notes": "SUID binary path from suid_bin rows."
+        },
+        "startup_item": {
+          "source_fields": [
+            "columns.name",
+            "columns.path",
+            "columns.args",
+            "columns.status"
+          ],
+          "status": "partial",
+          "notes": "Startup-item inventory context, not complete autorun validation."
+        }
+      },
+      "notes": "Partial endpoint/inventory/change guidance only; not full CIM certification."
+    },
+    "ocsf": {
+      "mapping_status": "partial",
+      "secondary": true,
+      "fields": {
+        "device.hostname": {
+          "source_fields": [
+            "hostIdentifier"
+          ],
+          "status": "partial",
+          "notes": "osquery host identifier."
+        },
+        "activity_name": {
+          "source_fields": [
+            "action",
+            "severity",
+            "name",
+            "columns.action"
+          ],
+          "status": "partial",
+          "notes": "Result action/status severity/query context."
+        },
+        "metadata.uid": {
+          "source_fields": [
+            "counter",
+            "line"
+          ],
+          "status": "partial",
+          "notes": "Local log counter/line context."
+        },
+        "process.name": {
+          "source_fields": [
+            "columns.name"
+          ],
+          "status": "partial",
+          "notes": "Process query column when present."
+        },
+        "process.pid": {
+          "source_fields": [
+            "columns.pid"
+          ],
+          "status": "partial",
+          "notes": "Process query column when present."
+        },
+        "connection_info.protocol_name": {
+          "source_fields": [
+            "columns.protocol",
+            "columns.type"
+          ],
+          "status": "partial",
+          "notes": "Listening-port protocol column when present."
+        },
+        "file.path": {
+          "source_fields": [
+            "columns.target_path",
+            "columns.path"
+          ],
+          "status": "partial",
+          "notes": "File/executable path context."
+        },
+        "process.cmd_line": {
+          "source_fields": [
+            "columns.cmdline"
+          ],
+          "status": "partial",
+          "notes": "Command line preserved when present; sensitive and should not be dropped without validation."
+        },
+        "src_endpoint.ip": {
+          "source_fields": [
+            "columns.local_address"
+          ],
+          "status": "partial",
+          "notes": "Socket local address when present."
+        },
+        "dst_endpoint.ip": {
+          "source_fields": [
+            "columns.remote_address"
+          ],
+          "status": "partial",
+          "notes": "Socket remote address when present."
+        },
+        "dst_endpoint.port": {
+          "source_fields": [
+            "columns.remote_port",
+            "columns.local_port",
+            "columns.port"
+          ],
+          "status": "partial",
+          "notes": "Socket/listening port context when present."
+        },
+        "device.hardware_info": {
+          "source_fields": [
+            "columns.type",
+            "columns.driver",
+            "columns.vendor",
+            "columns.vendor_id",
+            "columns.model",
+            "columns.model_id",
+            "columns.serial",
+            "columns.revision"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped hardware event context from osquery hardware_events; not complete OCSF hardware inventory classification."
+        },
+        "user.name": {
+          "source_fields": [
+            "columns.username",
+            "columns.user"
+          ],
+          "status": "partial",
+          "notes": "Local account/session user context from osquery table rows."
+        },
+        "user.uid": {
+          "source_fields": [
+            "columns.uid"
+          ],
+          "status": "partial",
+          "notes": "Numeric local UID when present."
+        },
+        "device.session.uid": {
+          "source_fields": [
+            "columns.tty",
+            "columns.host",
+            "columns.time"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped logged-in user session helper context, not full OCSF session classification."
+        },
+        "scheduled_job.command_line": {
+          "source_fields": [
+            "columns.command"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped crontab command context; not a complete scheduled-job taxonomy."
+        },
+        "file.path#authorized_key": {
+          "source_fields": [
+            "columns.key_file"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped authorized_keys file path context."
+        },
+        "file.path#suid_binary": {
+          "source_fields": [
+            "columns.path"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped SUID binary path context for suid_bin rows."
+        },
+        "scheduled_job.name": {
+          "source_fields": [
+            "columns.name",
+            "columns.path"
+          ],
+          "status": "partial",
+          "notes": "Profile-scoped startup item name/path context; not complete OCSF scheduled-job classification."
+        }
+      },
+      "notes": "OCSF mapping is helper guidance only."
+    },
+    "ecs": {
+      "mapping_status": "partial",
+      "optional": true,
+      "fields": {
+        "host.name": {
+          "source_fields": [
+            "hostIdentifier"
+          ],
+          "status": "partial",
+          "notes": "osquery host identifier."
+        },
+        "event.action": {
+          "source_fields": [
+            "action",
+            "columns.action"
+          ],
+          "status": "partial",
+          "notes": "Result action."
+        },
+        "event.dataset": {
+          "source_fields": [
+            "name"
+          ],
+          "status": "partial",
+          "notes": "Query name/dataset context."
+        },
+        "event.id": {
+          "source_fields": [
+            "counter"
+          ],
+          "status": "partial",
+          "notes": "Local log counter only."
+        },
+        "log.level": {
+          "source_fields": [
+            "severity"
+          ],
+          "status": "partial",
+          "notes": "osquery status severity token."
+        },
+        "process.name": {
+          "source_fields": [
+            "columns.name"
+          ],
+          "status": "partial",
+          "notes": "Process query column when present."
+        },
+        "process.pid": {
+          "source_fields": [
+            "columns.pid"
+          ],
+          "status": "partial",
+          "notes": "Process query column when present."
+        },
+        "network.transport": {
+          "source_fields": [
+            "columns.protocol",
+            "columns.type"
+          ],
+          "status": "partial",
+          "notes": "Listening-port protocol column when present."
+        },
+        "file.path": {
+          "source_fields": [
+            "columns.target_path",
+            "columns.path"
+          ],
+          "status": "partial",
+          "notes": "File/executable path context."
+        },
+        "process.command_line": {
+          "source_fields": [
+            "columns.cmdline"
+          ],
+          "status": "partial",
+          "notes": "Command line preserved when present."
+        },
+        "source.ip": {
+          "source_fields": [
+            "columns.local_address"
+          ],
+          "status": "partial",
+          "notes": "Socket local address when present."
+        },
+        "destination.ip": {
+          "source_fields": [
+            "columns.remote_address"
+          ],
+          "status": "partial",
+          "notes": "Socket remote address when present."
+        },
+        "destination.port": {
+          "source_fields": [
+            "columns.remote_port",
+            "columns.local_port",
+            "columns.port"
+          ],
+          "status": "partial",
+          "notes": "Socket/listening port context when present."
+        },
+        "user.id": {
+          "source_fields": [
+            "columns.uid",
+            "columns.auid"
+          ],
+          "status": "partial",
+          "notes": "Numeric local UID/AUID when present."
+        },
+        "observer.vendor": {
+          "source_fields": [
+            "columns.vendor",
+            "columns.vendor_id"
+          ],
+          "status": "partial",
+          "notes": "Hardware vendor context from osquery hardware_events, not the pack vendor."
+        },
+        "observer.product": {
+          "source_fields": [
+            "columns.model",
+            "columns.model_id"
+          ],
+          "status": "partial",
+          "notes": "Hardware model context from osquery hardware_events."
+        },
+        "user.name": {
+          "source_fields": [
+            "columns.username",
+            "columns.user"
+          ],
+          "status": "partial",
+          "notes": "Local account/session user context."
+        },
+        "user.home": {
+          "source_fields": [
+            "columns.directory"
+          ],
+          "status": "partial",
+          "notes": "Local account home directory context."
+        },
+        "source.address": {
+          "source_fields": [
+            "columns.host"
+          ],
+          "status": "partial",
+          "notes": "Logged-in session remote host when present."
+        },
+        "file.path#authorized_key": {
+          "source_fields": [
+            "columns.key_file"
+          ],
+          "status": "partial",
+          "notes": "Authorized_keys file path context."
+        },
+        "file.path#suid_binary": {
+          "source_fields": [
+            "columns.path"
+          ],
+          "status": "partial",
+          "notes": "SUID binary path context."
+        },
+        "process.command_line#startup_item": {
+          "source_fields": [
+            "columns.args"
+          ],
+          "status": "partial",
+          "notes": "Startup item arguments where present; sensitive and retained by default."
+        },
+        "user.name#startup_or_suid": {
+          "source_fields": [
+            "columns.username"
+          ],
+          "status": "partial",
+          "notes": "Startup item associated user or SUID owner context."
+        }
+      },
+      "notes": "ECS mapping is partial and field-name guidance only."
+    }
+  },
+  "ci": {
+    "pack_validation": "scripts/run_ci.sh",
+    "fixture_validation": "scripts/run_ci.sh",
+    "tested_artifact_hashes": {
+      "packs/osquery/README.md": "sha256:a2d7ab9017b4dda7373b1fd4b539a2df7adc248624499f86d096a615bfc7ee92",
+      "packs/osquery/docs/osquery_reduction_candidates.csv": "sha256:4f170c0971a96237b4b86d8bf5bea28b723fa71e324004ebe4c876696ce3cefd",
+      "packs/osquery/sc4s/app_parsers/syslog/app-osquery.conf": "sha256:3c1aac28356163b746575b288b64ec71c4b16f1a81e1f3fc66b32d4172fcb240",
+      "packs/osquery/sc4s/env.example": "sha256:187e1313bba5e51c0cb86c85b8a698d1fc53883e6e8dd876b4743cdf2b4cea46",
+      "packs/osquery/scripts/send_tcp_20085.sh": "sha256:4e4639739c53669ee514cdd7d2cd7ac8eddeda43d6d6189066b7d747575eefd2",
+      "packs/osquery/splunk/default/eventtypes.conf": "sha256:da42b456ecf05b60d2370be129295d5191ada23352b27b49e7baeac5556a0efb",
+      "packs/osquery/splunk/default/props.conf": "sha256:31f9c81d977b1d57eea85be2cdcd73c7aba3a2187818510cd2dfb5f7f6352d14",
+      "packs/osquery/splunk/default/tags.conf": "sha256:aa2dbaf108e12c316413b1a929760fd1d8d7796c6a11908e806d4cbdeeed4f80",
+      "packs/osquery/splunk/default/transforms.conf": "sha256:be56c43d93ad461f701cb2c9af520f49b6fe86669ac4b21a66191929117b369d",
+      "packs/osquery/splunk/default/data/ui/views/osquery_overview.xml": "sha256:d42099feb67f70c65d235b2015fb7a7dbea69160e55ee5191606cf6c05380fb6",
+      "packs/osquery/test-events/osquery_test_events.txt": "sha256:01c4a80ffbd5a0767a50921ba9714ef154591132937a704f6342f7635ad32548",
+      "packs/osquery/validation/preflight-2026-06-13.md": "sha256:fcb3f0febaa6d54613dc95551eab681ad0d88dfd68161009ecc8bf0ef05bb9a2",
+      "packs/osquery/scripts/e2e_docker_compose.sh": "sha256:831e3c3c418f089901d7e89a72826529a11732366473144a95c02d554c2588f2"
+    },
+    "tested_commit": null,
+    "last_updated": "2026-06-25",
+    "last_tested": "2026-06-25"
+  },
+  "source_pack_kind": "sc4s_source_pack",
+  "source_categories": [
+    "endpoint",
+    "inventory",
+    "audit",
+    "json",
+    "security_operations"
+  ],
+  "supported_targets": [
+    "sc4s",
+    "splunk",
+    "syslog_ng",
+    "vector",
+    "cribl",
+    "fluent_bit",
+    "data_prepper",
+    "opensearch_dashboards",
+    "generic"
+  ],
+  "pack_variants": [
+    {
+      "id": "result_status_json_relay",
+      "label": "osquery result/status JSON relay",
+      "description": "osquery result and status JSON records preserving query name, host identifier, result action, status severity/message, and query-dependent columns.",
+      "default": true,
+      "evidence_status": "curated",
+      "source_modes": [
+        "osquery_filesystem_logger_json",
+        "osquery_tls_logger_json",
+        "fluent_bit_relay",
+        "vector_relay",
+        "cribl_relay",
+        "syslog_wrapped_json"
+      ],
+      "payload_formats": [
+        "json"
+      ],
+      "envelopes": [
+        "none",
+        "bsd_rfc3164_or_headerless",
+        "ietf_rfc5424"
+      ],
+      "event_families": [
+        "result_added",
+        "result_removed",
+        "snapshot",
+        "status",
+        "inventory",
+        "endpoint_activity",
+        "hardware_change",
+        "user_account",
+        "user_session",
+        "scheduled_task",
+        "ssh_authorized_key",
+        "suid_binary",
+        "startup_item"
+      ],
+      "test_event_sets": [
+        "osquery_mixed"
+      ],
+      "supported_targets": [
+        "sc4s",
+        "splunk",
+        "vector",
+        "cribl",
+        "fluent_bit",
+        "data_prepper",
+        "opensearch_dashboards",
+        "generic"
+      ],
+      "artifact_references": [
+        "sc4s_parser",
+        "splunk_props",
+        "reduction_candidates"
+      ],
+      "known_limitations": [
+        "No live osquery relay replay/read-back captured.",
+        "Only one-line JSON result/status logs are fixture-backed; batched results, local logger options, and collector wrapping need local validation.",
+        "Query-dependent columns are represented by selected process/listening-port examples only and do not state full osquery schema coverage.",
+        "Evented table fixtures are limited to process_events, file_events, and socket_events schemas from public osquery table specs; local auditing/event-publisher configuration still needs validation.",
+        "Hardware events are represented from the public upstream hardware_events table spec only; local UDEV/IOKit event publisher behavior and hardware telemetry completeness need validation.",
+        "User/account, logged-in session, and crontab scheduled-task rows are schema-grounded but not live endpoint validated.",
+        "SSH authorized key, SUID binary, and startup item fixtures are schema-grounded only; local query scheduling, OS support, privacy review, and key-material handling need validation."
+      ]
+    }
+  ],
+  "adapters": {
+    "cribl": {
+      "reduction_candidate_artifact": "docs/osquery_reduction_candidates.csv",
+      "default_behavior": "preserve_all_fields",
+      "routing_hint_fields": [
+        "name",
+        "hostIdentifier",
+        "calendarTime",
+        "unixTime",
+        "action",
+        "severity",
+        "columns"
+      ],
+      "notes": "Use only after sampling the local osquery feed. Do not drop hostIdentifier, name, calendarTime, unixTime, action, severity, message, columns, or raw JSON by default."
+    },
+    "vector": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "sources -> transforms -> sinks",
+      "primary_config_formats": [
+        "toml",
+        "yaml",
+        "json"
+      ],
+      "validation_commands": [
+        "vector validate <config>",
+        "vector test <config>"
+      ],
+      "notes": "Vector support is recorded as a conservative sources/transforms/sinks mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Vector config artifact is generated by this pack yet."
+    },
+    "fluent_bit": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "collector_pipeline",
+      "config_model": "input -> parser/filter -> output",
+      "primary_config_formats": [
+        "yaml",
+        "classic_conf"
+      ],
+      "validation_commands": [
+        "fluent-bit --dry-run -c <config>",
+        "fluent-bit --help"
+      ],
+      "notes": "Fluent Bit support is recorded as a conservative collector/pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Fluent Bit config artifact is generated by this pack yet."
+    },
+    "data_prepper": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "opensearch_ingestion_pipeline",
+      "config_model": "source -> processor(s) -> sink(s)",
+      "primary_config_formats": [
+        "yaml"
+      ],
+      "validation_commands": [
+        "data-prepper --help",
+        "Start Data Prepper with the generated pipelines.yaml in a disposable test container and confirm pipeline startup before replay/read-back."
+      ],
+      "notes": "Data Prepper support is recorded as a conservative OpenSearch ingestion pipeline mapping only: collector/API relay path; keep credential custody and checkpoints outside this pack and preserve source timestamps and raw payloads. No Data Prepper pipeline artifact is generated by this pack yet."
+    },
+    "opensearch_dashboards": {
+      "support_status": "metadata_mapping_only",
+      "artifact_status": "not_generated",
+      "validation_status": "not_validated",
+      "requires_local_validation": true,
+      "default_behavior": "preserve_events_and_fields",
+      "target_kind": "visualization_saved_objects",
+      "config_model": "index pattern/data view -> saved objects NDJSON -> dashboard/visualizations",
+      "primary_config_formats": [
+        "ndjson",
+        "json"
+      ],
+      "validation_commands": [
+        "Import exported NDJSON into a disposable OpenSearch Dashboards space and confirm data view/index-pattern resolution."
+      ],
+      "notes": "OpenSearch Dashboards support is recorded as visualization-target metadata only. Splunk dashboards, where present, have not been automatically translated to OpenSearch saved objects or live-tested."
+    }
+  },
+  "known_limitations": [
+    "No live osquery relay, SC4S runtime replay, or Splunk read-back evidence; keep curated/unverified and do not promote to validated/verified.",
+    "Fixtures are synthetic-equivalent examples, not real endpoint osquery records.",
+    "Selected result/status and evented-table JSON shapes are covered; query-dependent columns, batched result lines, local logger/event-publisher options, buffering/replay behavior, and collector envelopes remain future coverage.",
+    "Hardware_events fixtures are synthetic-equivalent and schema-grounded only; local UDEV/IOKit publisher behavior, serial handling, and collector envelopes remain future coverage.",
+    "User/account, logged-in session, and crontab fixtures are synthetic-equivalent and public table-spec-grounded only; local OS support, privacy handling, and query scheduling need validation.",
+    "SSH authorized-key, SUID binary, and startup-item rows are synthetic-equivalent and public table-spec-grounded only; local OS support, query scheduling, key-material handling, and privacy review need validation.",
+    "Reduction candidates are opt-in and review-required; no default lossy drops are included."
+  ],
+  "logging_presets": [
+    {
+      "id": "basic",
+      "label": "Basic osquery JSON intake",
+      "description": "Dedicated listener, parser, fixtures, and Splunk props. Preserves events and fields.",
+      "enabled_by_default": true,
+      "artifact_references": [
+        {
+          "artifact_id": "sc4s_parser",
+          "path": "sc4s/app_parsers/syslog/app-osquery.conf",
+          "kind": "syslog_ng_parser"
+        },
+        {
+          "artifact_id": "splunk_props",
+          "path": "splunk/default/props.conf",
+          "kind": "splunk_props"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Safe default; no drops or field removal."
+    },
+    {
+      "id": "standard",
+      "label": "Standard osquery analyst knowledge",
+      "description": "Adds eventtypes/tags for result additions/removals, snapshots, status logs, inventory rows, endpoint activity, hardware device changes, user accounts, logged-in sessions, scheduled tasks, SSH authorized keys, SUID binaries, and startup items. No drops or field removal.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "splunk_eventtypes",
+          "path": "splunk/default/eventtypes.conf",
+          "kind": "splunk_eventtypes"
+        },
+        {
+          "artifact_id": "splunk_tags",
+          "path": "splunk/default/tags.conf",
+          "kind": "splunk_tags"
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Non-lossy analyst discovery metadata."
+    },
+    {
+      "id": "enhanced",
+      "label": "Enhanced reviewed osquery reduction candidates",
+      "description": "Review-only candidate list for optional collector reduction. Not enabled by default; no SC4S reduction rule is shipped.",
+      "enabled_by_default": false,
+      "artifact_references": [
+        {
+          "artifact_id": "reduction_candidates",
+          "path": "docs/osquery_reduction_candidates.csv",
+          "kind": "reduction_candidate_csv",
+          "notes": "Candidate fields/events require local readback validation before enablement."
+        }
+      ],
+      "reduction_rules": [],
+      "notes": "Use only after local sampling and approval."
+    }
+  ],
+  "reduction_rules": [],
+  "source_delivery": {
+    "mode": "json_native_relay",
+    "sc4s_native": false,
+    "collector_required": true,
+    "payload_format": "json",
+    "supported_transport_refs": [
+      "tcp_syslog",
+      "rfc5425_tls"
+    ],
+    "notes": "osquery result/status JSON logs require logger/collector relay to SC4S.",
+    "validation_status": "metadata_classification_only; does not imply live replay/read-back validation"
+  },
+  "dashboard_screenshots": [
+    {
+      "id": "osquery_overview_splunk_test",
+      "title": "osquery Result and Status Logs — dashboard example",
+      "source_path": "dashboards/screenshots/osquery-overview-splunk-test.png",
+      "format": "png",
+      "sanitized": true,
+      "caption": "Real Splunk TEST UI screenshot of the osquery Result and Status Logs dashboard populated with synthetic fixture-like events in a disposable test index.",
+      "provenance": "Captured from the disposable Splunk TEST UI on 2026-06-20 during run SECHUB_DASH_SCREENSHOT_20260620T174842Z after loading the pack dashboard XML and indexing synthetic fixture-like events. No customer data or production Splunk data is present.",
+      "scope": "splunk_test_documentation_example_only",
+      "example_only": true,
+      "artifact_id": "splunk_dashboard_overview"
+    }
+  ]
+}
