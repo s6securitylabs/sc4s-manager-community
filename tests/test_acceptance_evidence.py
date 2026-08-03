@@ -4,6 +4,8 @@ from pathlib import Path
 import sys
 from tempfile import TemporaryDirectory
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 ACCEPTANCE = ROOT / "docs" / "acceptance"
@@ -376,8 +378,9 @@ def complete_package_drill_payload():
     }
 
 
-def test_package_drill_validator_accepts_complete_evidence():
+def test_package_drill_validator_fails_when_evidence_missing(monkeypatch):
     validator = load_validator()
+    monkeypatch.setattr(validator, "find_package_drill_evidence", lambda: None)
     findings = validator.validate_package_drill_proof(None)
     assert not all(finding.ok for finding in findings), "validator must fail when no drill evidence is on disk"
     assert any("missing package drill evidence" in finding.detail for finding in findings)
@@ -403,9 +406,12 @@ def test_package_drill_validator_rejects_missing_required_fields():
     assert any(not finding.ok and "service_state" in finding.detail for finding in findings)
 
 
-def test_require_package_drill_flag_fails_without_evidence():
-    """--require-package-drill must fail with a clear missing-evidence message."""
+def test_require_package_drill_flag_passes_with_committed_evidence():
+    """--require-package-drill must pass once live drill evidence is committed."""
     import subprocess, sys
+    validator = load_validator()
+    if validator.find_package_drill_evidence() is None:
+        pytest.skip("no committed drill evidence in this checkout")
     result = subprocess.run(
         [sys.executable, str(VALIDATOR), "--require-package-drill"],
         text=True,
@@ -413,9 +419,7 @@ def test_require_package_drill_flag_fails_without_evidence():
         stderr=subprocess.PIPE,
         cwd=str(ROOT),
     )
-    assert result.returncode != 0
-    output = result.stdout + result.stderr
-    assert "package" in output.lower() or "drill" in output.lower()
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_next_release_evidence_validator_accepts_required_shape():

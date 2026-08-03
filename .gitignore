@@ -14,3 +14,5 @@ frontend/dist/
 dist/
 .venv/
 *.log
+# Embedded Library test-event fixtures are release-hashed content; never drop them.
+!embedded_library/**/*.log
