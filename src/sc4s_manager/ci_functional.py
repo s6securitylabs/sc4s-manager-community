@@ -9,8 +9,16 @@ import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import urlparse
 
 from sc4s_manager.packs import load_packs
+
+
+def url_points_to_login(url: str) -> bool:
+    """True when a URL targets the identity provider login boundary."""
+    parsed = urlparse(str(url))
+    host = (parsed.hostname or "").lower()
+    return host == "login.s6ops.com" or host.endswith(".login.s6ops.com") or "application/o/authorize" in parsed.path.lower()
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_UI_STATIC_PAGES = [
@@ -305,7 +313,7 @@ def validate_ci_evidence(evidence: dict[str, Any], *, release_mode: bool = False
         if page.get("critical_api_failures"):
             findings.append({"ok": False, "detail": f"UI route {route} has critical API failures"})
         redirect_url = str(page.get("redirect_url", "")).lower()
-        if page.get("status") in {302, 303} or "application/o/authorize" in redirect_url or "login.s6ops.com" in redirect_url:
+        if page.get("status") in {302, 303} or url_points_to_login(redirect_url):
             findings.append({"ok": False, "detail": f"UI route {route} authenticated page appears to be a login redirect"})
 
     for row in evidence.get("pack_matrix", []):

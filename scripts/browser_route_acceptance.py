@@ -442,6 +442,13 @@ class BrowserRouteRunner:
         return repo_relative(path)
 
 
+def url_points_to_login(url: str) -> bool:
+    """True when a URL targets the identity provider login boundary."""
+    parsed = urllib.parse.urlparse(str(url))
+    host = (parsed.hostname or "").lower()
+    return host == "login.s6ops.com" or host.endswith(".login.s6ops.com") or "application/o/authorize" in parsed.path.lower()
+
+
 def utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
@@ -614,7 +621,7 @@ def summarize_public_result(name: str, result: FetchResult, public_base: str) ->
         "final_url": result.final_url,
         "content_type": result.content_type,
         "body_prefix": excerpt(result.body_text, limit=500),
-        "login_boundary_seen": ("login.s6ops.com" in location.lower()) or ("application/o/authorize" in result.body_text.lower()),
+        "login_boundary_seen": url_points_to_login(location) or ("application/o/authorize" in result.body_text.lower()),
         "public_base": public_base,
     })
 

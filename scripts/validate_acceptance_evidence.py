@@ -13,6 +13,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -61,16 +62,28 @@ def text_has_secret_shape(path: Path) -> str | None:
     return None
 
 
+def url_points_to_login(url: str) -> bool:
+    """True when a URL targets the identity provider login boundary."""
+    parsed = urlparse(str(url))
+    host = (parsed.hostname or "").lower()
+    return host == "login.s6ops.com" or host.endswith(".login.s6ops.com") or "application/o/authorize" in parsed.path.lower()
+
+
+def content_mentions_login(text: str) -> bool:
+    """True when page/evidence content references the identity provider login boundary."""
+    lowered = str(text).lower()
+    return "login.s6ops.com" in lowered or "application/o/authorize" in lowered
+
+
 def is_login_html(data: dict[str, Any]) -> bool:
     body = f"{data.get('body_prefix', '')} {data.get('body', '')}".lower()
     content_type = str(data.get("content_type", "")).lower()
     redirect_url = str(data.get("redirect_url", "")).lower()
     return (
         "<!doctype html" in body
-        or "login.s6ops.com" in body
-        or "application/o/authorize" in body
+        or content_mentions_login(body)
         or "text/html" in content_type
-        or "application/o/authorize" in redirect_url
+        or url_points_to_login(redirect_url)
     )
 
 
@@ -170,7 +183,7 @@ def validate_browser_proof(path: Path = BROWSER_PROOF) -> list[Finding]:
                 if not entry.get("api_summary"):
                     findings.append(Finding(str(path), False, f"route {route} is shell-only; api_summary/readback evidence is required"))
             rendered = json.dumps(entry, sort_keys=True)
-            if "login.s6ops.com" in rendered or "application/o/authorize" in rendered:
+            if content_mentions_login(rendered):
                 findings.append(Finding(str(path), False, f"route {route} appears to contain login redirect evidence instead of authenticated app output"))
 
     checks = data.get("checks")

@@ -57,6 +57,7 @@ def send_tcp(host: str, port: int, payload: bytes, timeout: float) -> Attempt:
 def send_tls(host: str, port: int, payload: bytes, timeout: float, verify: bool) -> Attempt:
     try:
         context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
         if not verify:
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
