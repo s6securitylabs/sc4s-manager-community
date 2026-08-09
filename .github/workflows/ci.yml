@@ -20,7 +20,7 @@ jobs:
       RELEASE_VERSION: 0.0.0-ci
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Verify Python tooling
         run: |
@@ -34,7 +34,7 @@ jobs:
           rm -rf /tmp/sc4s-manager-ci-venv-check
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -62,10 +62,10 @@ jobs:
             --evidence-out "dist/release/package-install-dry-run.json"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build Docker image without push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false
@@ -77,7 +77,7 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
 
       - name: Upload package dry-run evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: package-install-dry-run
           path: dist/release/package-install-dry-run.json
